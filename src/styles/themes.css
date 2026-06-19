@@ -1,0 +1,357 @@
+/*============================================================================
+  RankLock skins — five user-switchable themes (requirements §9.3).
+
+  Each skin is a pure CSS-variable override under [data-theme="…"]. The base
+  token set in tokens.css IS the "aether" skin; [data-theme="aether"] below
+  re-states its accent so the switcher has an explicit, robust selection (and so
+  switching back from another skin is a single attribute write, never a reload).
+
+  PROMOTED user options: foundry (molten orange) + arcane (violet) — the pair the
+  ThemeSwitcher offers prominently. gaslamp (brass/leather), aether (cyan HUD),
+  and obsidian (brushed steel) are the secondary "more skins" set.
+
+  Ported verbatim from the prototype theme-steampunk.css param blocks.
+============================================================================*/
+
+/* ============================================================
+   AETHER — electric-cyan HUD (the base skin, made explicit)
+   ============================================================ */
+[data-theme='aether'] {
+  --ink: #0a0e17;
+  --surface: #141a26;
+  --raised: #1e2633;
+  --overlay: #232c3b;
+  --border: #2a3340;
+  --border-soft: #222a36;
+  --text: #f1f5f9;
+  --text-2: #cbd5e1;
+  --muted: #94a3b8;
+  --faint: #64748b;
+  --cyan-bright: #22d3ee;
+  --cyan: #06b6d4;
+  --cyan-deep: #0891b2;
+  --cyan-deeper: #0e7490;
+  --glow-you: rgba(34, 211, 238, 0.4);
+  --brass-1: #e8c987;
+  --brass-2: #c79a4e;
+  --brass-3: #9a6f30;
+  --brass-4: #6b4a21;
+  --brass-edge: #d8b066;
+  --display: 'Chakra Petch', system-ui, sans-serif;
+  --r-pill: 4px;
+  --r-card: 8px;
+  --r-panel: 12px;
+}
+
+/* ============================================================
+   GASLAMP — brass & leather (warmer, heavier, mechanical)
+   ============================================================ */
+[data-theme='gaslamp'] {
+  /* warm leather/brass ramp */
+  --ink: #141009;
+  --surface: #1f160d;
+  --raised: #2a1e11;
+  --overlay: #352716;
+  --border: #4d3920;
+  --border-soft: #3a2b18;
+
+  --text: #f4e9d4;
+  --text-2: #dac6a3;
+  --muted: #a78f66;
+  --faint: #79633f;
+
+  /* oxidized-copper "aether" glow replaces neon cyan */
+  --cyan-bright: #63d8c6;
+  --cyan: #41c0b0;
+  --cyan-deep: #2f9789;
+  --cyan-deeper: #236f64;
+  --glow-you: rgba(99, 216, 198, 0.45);
+
+  /* warmer, brighter brass */
+  --brass-1: #f2da9c;
+  --brass-2: #d2a958;
+  --brass-3: #a0772f;
+  --brass-4: #6f4f20;
+  --brass-edge: #e9c87c;
+  --brass-shadow: #3a2710;
+
+  --display: 'Cinzel', Georgia, 'Times New Roman', serif;
+  --r-pill: 3px;
+  --r-card: 6px;
+  --r-panel: 9px;
+}
+
+/* engraved titles, mechanical readouts */
+[data-theme='gaslamp'] .h-hero {
+  letter-spacing: 0.005em;
+  font-weight: 700;
+}
+[data-theme='gaslamp'] .kicker {
+  letter-spacing: 0.28em;
+}
+[data-theme='gaslamp'] .tnum,
+[data-theme='gaslamp'] .statrow .sv,
+[data-theme='gaslamp'] .tscore,
+[data-theme='gaslamp'] .wm-text {
+  font-family: var(--mono);
+  font-feature-settings: 'tnum' 1;
+}
+[data-theme='gaslamp'] .wm-text {
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+[data-theme='gaslamp'] .dt thead th {
+  font-family: var(--display);
+  letter-spacing: 0.12em;
+  font-size: 10.5px;
+}
+
+/* warm vignette + faint brushed-metal field */
+[data-theme='gaslamp'] .app-bg {
+  background:
+    radial-gradient(1100px 640px at 50% -8%, rgba(233, 200, 124, 0.1), transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, rgba(99, 216, 198, 0.05), transparent 55%),
+    radial-gradient(1000px 800px at 0% 100%, rgba(120, 70, 30, 0.1), transparent 60%),
+    var(--ink);
+}
+[data-theme='gaslamp'] .app-bg::before {
+  opacity: calc(0.4 * var(--brass-op));
+  background-image:
+    repeating-linear-gradient(90deg, rgba(233, 200, 124, 0.05) 0 1px, transparent 1px 3px),
+    linear-gradient(rgba(77, 57, 32, 0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(77, 57, 32, 0.35) 1px, transparent 1px);
+  background-size:
+    auto,
+    64px 64px,
+    64px 64px;
+}
+
+/* panels = riveted brass plates */
+[data-theme='gaslamp'] .panel {
+  background: linear-gradient(180deg, #221810, #19120a);
+  border-color: var(--border);
+  box-shadow:
+    inset 0 0 0 1px rgba(233, 200, 124, 0.06),
+    inset 0 1px 0 rgba(233, 200, 124, 0.12);
+}
+[data-theme='gaslamp'] .panel::after {
+  background: linear-gradient(90deg, transparent, rgba(233, 200, 124, 0.22), transparent);
+}
+[data-theme='gaslamp'] .tile,
+[data-theme='gaslamp'] .field,
+[data-theme='gaslamp'] .chip,
+[data-theme='gaslamp'] .brkfilter,
+[data-theme='gaslamp'] .mvp {
+  background: linear-gradient(180deg, #2a1e12, #221710);
+}
+
+/* riveted corners on brass-framed panels (rivets via radial dots) */
+[data-theme='gaslamp'] .brass-frame {
+  background:
+    linear-gradient(180deg, #221811, #16100a) padding-box,
+    linear-gradient(160deg, var(--brass-1), var(--brass-3) 45%, var(--brass-shadow)) border-box;
+  border: 2px solid transparent;
+  box-shadow:
+    0 2px 18px -10px rgba(0, 0, 0, 0.8),
+    inset 0 0 30px -18px rgba(233, 200, 124, 0.4);
+}
+[data-theme='gaslamp'] .brass-frame::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 0 0, var(--brass-edge) 1.6px, transparent 2.2px) 2px 2px / 100% 100% no-repeat,
+    radial-gradient(circle at 100% 0, var(--brass-edge) 1.6px, transparent 2.2px) -2px 2px / 100% 100% no-repeat,
+    radial-gradient(circle at 0 100%, var(--brass-edge) 1.6px, transparent 2.2px) 2px -2px / 100% 100% no-repeat,
+    radial-gradient(circle at 100% 100%, var(--brass-edge) 1.6px, transparent 2.2px) -2px -2px / 100% 100% no-repeat;
+  opacity: calc(0.85 * var(--rivet-op));
+}
+
+/* nav = aged brass bar */
+[data-theme='gaslamp'] .nav {
+  background: linear-gradient(180deg, rgba(42, 30, 18, 0.94), rgba(26, 18, 10, 0.92));
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(90deg, var(--brass-4), var(--brass-edge), var(--brass-4)) 1;
+  backdrop-filter: blur(10px);
+}
+[data-theme='gaslamp'] .navlink.active {
+  background: rgba(99, 216, 198, 0.1);
+}
+
+/* brass buttons everywhere */
+[data-theme='gaslamp'] .btn-primary {
+  background: linear-gradient(180deg, var(--brass-1), var(--brass-3));
+  border: 1px solid var(--brass-edge);
+  color: #2a1c08;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+[data-theme='gaslamp'] .btn-primary:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 22px -10px rgba(233, 200, 124, 0.6);
+}
+[data-theme='gaslamp'] .btn {
+  background: linear-gradient(180deg, #2c2013, #22180e);
+  border-color: var(--border);
+}
+
+/* tables warmer, header like an engraved plate */
+[data-theme='gaslamp'] .dt thead th {
+  background: linear-gradient(180deg, #3a2a18, #281c10);
+  border-bottom: 1px solid var(--brass-4);
+  color: var(--brass-1);
+}
+[data-theme='gaslamp'] .dt tbody tr:hover {
+  background: rgba(99, 216, 198, 0.05);
+}
+[data-theme='gaslamp'][data-table='zebra'] .dt tbody tr:nth-child(even) {
+  background: rgba(233, 200, 124, 0.03);
+}
+
+/* deco rule + corners glow brass */
+[data-theme='gaslamp'] .deco-rule .dia {
+  box-shadow: 0 0 9px rgba(233, 200, 124, 0.6);
+}
+
+/* scrollbar */
+[data-theme='gaslamp'] ::-webkit-scrollbar-thumb {
+  background: #3a2a18;
+  border-color: var(--ink);
+}
+
+/* stat-tile readout = gauge-ish */
+[data-theme='gaslamp'] .statile {
+  background: linear-gradient(180deg, #2a1e12, #1d150c);
+}
+
+/* ============================================================
+   ARCANE — sapphire occult violet (PROMOTED)
+   ============================================================ */
+[data-theme='arcane'] {
+  --ink: #0c0a16;
+  --surface: #161228;
+  --raised: #201936;
+  --overlay: #291f47;
+  --border: #372c5e;
+  --border-soft: #2a2148;
+  --text: #f1ecff;
+  --text-2: #cbc2e8;
+  --muted: #968cc0;
+  --faint: #635a8c;
+  --cyan-bright: #bb9bf7;
+  --cyan: #9f7aea;
+  --cyan-deep: #805ad5;
+  --cyan-deeper: #6b46c1;
+  --glow-you: rgba(187, 155, 247, 0.5);
+  --brass-1: #e6c98a;
+  --brass-2: #c39b4e;
+  --brass-3: #8f6c30;
+  --brass-4: #5e4720;
+  --brass-edge: #d8b76a;
+}
+[data-theme='arcane'] .app-bg {
+  background:
+    radial-gradient(1100px 680px at 50% -8%, rgba(159, 122, 234, 0.14), transparent 60%),
+    radial-gradient(900px 600px at 100% 10%, rgba(139, 92, 246, 0.1), transparent 55%),
+    radial-gradient(900px 700px at 0% 100%, rgba(76, 29, 149, 0.16), transparent 60%),
+    var(--ink);
+}
+[data-theme='arcane'] .panel {
+  box-shadow: inset 0 1px 0 rgba(187, 155, 247, 0.1);
+}
+[data-theme='arcane'] .nav {
+  background: rgba(16, 12, 30, 0.86);
+}
+
+/* ============================================================
+   FOUNDRY — molten amber / iron industrial (PROMOTED · default)
+   ============================================================ */
+[data-theme='foundry'] {
+  --ink: #120c08;
+  --surface: #1e140d;
+  --raised: #281a10;
+  --overlay: #342114;
+  --border: #4e3420;
+  --border-soft: #3a271680;
+  --text: #fdecd6;
+  --text-2: #eccca6;
+  --muted: #b08e63;
+  --faint: #7d6038;
+  --cyan-bright: #fb923c;
+  --cyan: #f97316;
+  --cyan-deep: #ea580c;
+  --cyan-deeper: #c2410c;
+  --glow-you: rgba(251, 146, 60, 0.5);
+  --brass-1: #f3b765;
+  --brass-2: #d2843a;
+  --brass-3: #9c5722;
+  --brass-4: #6b3a18;
+  --brass-edge: #ec9a4a;
+}
+[data-theme='foundry'] .app-bg {
+  background:
+    radial-gradient(1000px 620px at 50% -8%, rgba(249, 115, 22, 0.14), transparent 58%),
+    radial-gradient(800px 600px at 100% 100%, rgba(194, 65, 12, 0.18), transparent 55%),
+    radial-gradient(700px 600px at 0% 90%, rgba(120, 40, 10, 0.16), transparent 60%),
+    var(--ink);
+}
+[data-theme='foundry'] .panel {
+  background: linear-gradient(180deg, #211610, #16100b);
+  box-shadow: inset 0 1px 0 rgba(251, 146, 60, 0.12);
+}
+[data-theme='foundry'] .nav {
+  background: rgba(26, 16, 10, 0.88);
+}
+[data-theme='foundry'] .dt thead th {
+  background: linear-gradient(180deg, #3a2615, #281910);
+}
+
+/* ============================================================
+   OBSIDIAN — brushed-steel minimal (restrained)
+   ============================================================ */
+[data-theme='obsidian'] {
+  --ink: #0b0d10;
+  --surface: #14171c;
+  --raised: #1c2027;
+  --overlay: #242932;
+  --border: #2e343d;
+  --border-soft: #23282f;
+  --text: #f4f6f8;
+  --text-2: #cdd3da;
+  --muted: #8b939e;
+  --faint: #5e6670;
+  --cyan-bright: #38bdf8;
+  --cyan: #0ea5e9;
+  --cyan-deep: #0284c7;
+  --cyan-deeper: #0369a1;
+  --glow-you: rgba(56, 189, 248, 0.32);
+  /* "brass" becomes brushed steel — quiet, modern */
+  --brass-1: #d3dae1;
+  --brass-2: #9ca6b1;
+  --brass-3: #6c757f;
+  --brass-4: #464d56;
+  --brass-edge: #bcc5ce;
+  --brass-shadow: #2a2f36;
+}
+[data-theme='obsidian'] .app-bg {
+  background:
+    radial-gradient(1100px 640px at 50% -10%, rgba(56, 189, 248, 0.06), transparent 60%),
+    var(--ink);
+}
+[data-theme='obsidian'] .app-bg::before {
+  opacity: 0;
+}
+[data-theme='obsidian'] .kicker {
+  letter-spacing: 0.18em;
+}
+[data-theme='obsidian'] .btn-brass,
+[data-theme='obsidian'] .btn-primary {
+  background: linear-gradient(180deg, var(--cyan), var(--cyan-deep));
+  border-color: var(--cyan-deep);
+  color: #04141a;
+  text-shadow: none;
+}
+[data-theme='obsidian'] .corner {
+  opacity: calc(0.4 * var(--corner-op));
+}

@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Styleguide from '../components/react/Styleguide';
+
+//Living styleguide for the gaslamp design system (C3). Internal/dev surface —
+//noindex'd so it never enters the SEO index. The whole gallery is one CSR island
+//(client:only="react"): it ships no server HTML, mounts purely client-side, and
+//exercises every token + component + chart so the system can be reviewed and
+//theme-switched live. The eslint client:* guard enforces the directive.
+---
+
+<BaseLayout title="Styleguide — RankLock" description="RankLock gaslamp design system reference.">
+  <meta slot="head" name="robots" content="noindex, nofollow" />
+  <Styleguide client:only="react" />
+</BaseLayout>

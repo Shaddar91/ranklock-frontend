@@ -1,0 +1,86 @@
+/*============================================================================
+  RankLock design tokens — the gaslamp command-console base.
+
+  Ported from the prototype (ranklock-app/styles.css :root). Dark-only by design
+  (requirements §4). These are the BASE token set = the implicit "aether" skin
+  (electric-cyan HUD over deep ink). Every other skin (gaslamp / arcane / foundry
+  / obsidian) is a pure CSS-variable override under [data-theme="…"] in themes.css
+  — switching the attribute recolors the whole app with NO layout shift.
+
+  Fonts (Chakra Petch / Cinzel / JetBrains Mono) are loaded via <link> in
+  BaseLayout.astro (preconnect + stylesheet) rather than a render-blocking CSS
+  @import, so the token sheet stays self-contained and CI-cacheable.
+============================================================================*/
+
+:root {
+  /* neutral ramp (widened for real elevation) */
+  --ink: #0a0e17;
+  --surface: #141a26;
+  --raised: #1e2633;
+  --overlay: #232c3b;
+  --border: #2a3340;
+  --border-soft: #222a36;
+
+  /* text ramp */
+  --text: #f1f5f9;
+  --text-2: #cbd5e1;
+  --muted: #94a3b8;
+  --faint: #64748b;
+
+  /* electric HUD accent family (the "aether" primary) */
+  --cyan-bright: #22d3ee;
+  --cyan: #06b6d4;
+  --cyan-deep: #0891b2;
+  --cyan-deeper: #0e7490;
+
+  /* semantic */
+  --win: #34d399;
+  --loss: #f87171;
+  --gold: #fbbf24;
+  --info: #60a5fa;
+
+  /* team identities (semantic — kept stable across skins) */
+  --amber: #f59e0b;
+  --amber-acc: #fbbf24;
+  --sapphire: #8b5cf6;
+  --sapphire-acc: #a78bfa;
+
+  /* "you" focus glow (re-skinned per theme) */
+  --glow-you: rgba(34, 211, 238, 0.4);
+
+  /* brass / patina (built from gradients, never raster) */
+  --brass-1: #e8c987;
+  --brass-2: #c79a4e;
+  --brass-3: #9a6f30;
+  --brass-4: #6b4a21;
+  --brass-edge: #d8b066;
+  --brass-shadow: #3a2912;
+  --patina: #3f6b5e;
+
+  /* type */
+  --display: 'Chakra Petch', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --body: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* radii */
+  --r-pill: 4px;
+  --r-card: 8px;
+  --r-panel: 12px;
+
+  /* motion */
+  --t-fast: 0.12s ease;
+  --t-med: 0.14s ease;
+
+  /* brass intensity knobs — overridden by [data-brass="minimal"] */
+  --brass-op: 1; /* opacity of decorative brass */
+  --brass-frame: 1px; /* frame thickness multiplier presence */
+  --corner-op: 1; /* filigree corners */
+  --rivet-op: 1;
+}
+
+/* a calmer, brass-light mode (toggleable independently of theme) */
+[data-brass='minimal'] {
+  --brass-op: 0;
+  --corner-op: 0;
+  --rivet-op: 0;
+}

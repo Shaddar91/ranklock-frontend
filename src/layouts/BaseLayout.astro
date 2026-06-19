@@ -2,9 +2,9 @@
 import '../styles/global.css';
 
 //Base HTML frame. The SEO meta layer (per-route OG/Twitter/JSON-LD/canonical +
-//hreflang) is added in C7; the full gaslamp token sets + foundry/arcane switcher
-//land in C3 (§9.3). This base only wires the slots + a flash-free theme bootstrap
-//so C3/C7 drop into a known frame.
+//hreflang) is added in C7. The full gaslamp design system (token sets + 5 skins +
+//foundry/arcane switcher, §9.3) landed in C3: styles/global.css is the entry, the
+//fonts are loaded here via <link>, and the default skin is `foundry`.
 interface Props {
   title?: string;
   description?: string;
@@ -18,21 +18,32 @@ const {
 ---
 
 <!doctype html>
-<html lang={lang} data-theme="gaslamp">
+<html lang={lang} data-theme="foundry">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <meta name="description" content={description} />
+
+    <!-- gaslamp display/mono fonts (Chakra Petch / Cinzel / JetBrains Mono). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Cinzel:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+
     <slot name="head" />
     <script is:inline>
-      //Apply the persisted foundry/arcane choice before paint to avoid a flash.
-      //The full switcher + token sets are added in C3.
+      //Apply the persisted skin before first paint to avoid a flash. Mirrors
+      //lib/theme (STORAGE_KEY 'ranklock-theme', default already on <html>); kept
+      //inline + duplicated because is:inline scripts cannot import a module.
       (() => {
         try {
+          const valid = ['foundry', 'arcane', 'aether', 'gaslamp', 'obsidian'];
           const t = localStorage.getItem('ranklock-theme');
-          if (t) document.documentElement.dataset.theme = t;
+          if (t && valid.includes(t)) document.documentElement.dataset.theme = t;
         } catch {
           /* ignore storage access errors (private mode / disabled cookies) */
         }

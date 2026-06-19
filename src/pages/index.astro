@@ -1,16 +1,26 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LiveStatusIsland from '../components/react/LiveStatusIsland';
+import ThemeSwitcher from '../components/react/ThemeSwitcher';
 ---
 
 <BaseLayout title="RankLock — Deadlock stats & guides">
   <main class="wrap">
     <header>
-      <p class="kicker">RankLock</p>
+      <div class="between" style="gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+        <p class="kicker" style="margin:0;">RankLock</p>
+        <!--
+          The theme switcher (foundry ⇄ arcane + more skins) wired live so the
+          choice persists across reloads. client:load → SSR'd + hydrated; the
+          eslint client:* guard enforces the directive.
+        -->
+        <ThemeSwitcher client:load />
+      </div>
       <h1 class="h-hero">Deadlock stats, guides &amp; coaching</h1>
       <p class="muted">
         Hero &amp; item win-rates by rank, player profiles, match deep-dives, and a per-player
-        coaching story. Scaffold — pages are built out in C3–C9.
+        coaching story. Scaffold — pages are built out in C3–C9. See the
+        <a href="/styleguide">design-system styleguide</a>.
       </p>
     </header>
 
