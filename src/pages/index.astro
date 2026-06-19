@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LiveStatusIsland from '../components/react/LiveStatusIsland';
+---
+
+<BaseLayout title="RankLock — Deadlock stats & guides">
+  <main class="wrap">
+    <header>
+      <p class="kicker">RankLock</p>
+      <h1 class="h-hero">Deadlock stats, guides &amp; coaching</h1>
+      <p class="muted">
+        Hero &amp; item win-rates by rank, player profiles, match deep-dives, and a per-player
+        coaching story. Scaffold — pages are built out in C3–C9.
+      </p>
+    </header>
+
+    <!--
+      A hydrated island (client:load): proves the React + TanStack Query + typed
+      apiClient pipeline end-to-end. The eslint `client:*` guard fails the build
+      if this directive is ever dropped (turning Astro's silent inert-island
+      failure into a loud error — requirements §9).
+    -->
+    <section class="panel">
+      <h2>API status</h2>
+      <LiveStatusIsland client:load />
+    </section>
+  </main>
+</BaseLayout>

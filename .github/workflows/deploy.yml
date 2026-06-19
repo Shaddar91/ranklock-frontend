@@ -1,0 +1,77 @@
+name: Build & Deploy (Cloudflare static assets)
+
+#RankLock frontend CI/CD. The owner's OWN CI builds (`astro build`) and uploads
+#dist/ to Cloudflare static assets via wrangler — Cloudflare's own build system
+#is NOT used (requirements §9.2). Cloudflare = pure static hosting; uploads and
+#serving are unlimited and free ($0 baseline).
+#
+#NOTE: the Terraform-created repo may have GitHub Actions disabled
+#(enable_gh_actions=false). This workflow is authored for the owner's own
+#CI/runner regardless; if Actions is off, run the same steps on the self-hosted
+#runner / pipeline. Every value is variable-ized (no literal secrets / account
+#ids / host paths / domains) per the repo-sterilization rules.
+
+on:
+  #1. Deploy on code change.
+  push:
+    branches: [master, main, 'feat/astro-rebuild-v1']
+  #2. Manual trigger.
+  workflow_dispatch: {}
+  #3. data_version rebuild hook (requirements §8.4 / §9.2): when the analytics
+  #   worker commits a new data_version, the Kafka pipeline POSTs a
+  #   repository_dispatch (type "data_version") to the GitHub API. The build
+  #   re-pulls the SEO pages' data from the API at build time and redeploys —
+  #   event-driven, fires exactly when data lands, never on no-change.
+  repository_dispatch:
+    types: [data_version]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (incl. the client:* island guard)
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run type-check
+
+      #ts-rs type generation (architecture §7.3 / requirements §A.2): when the
+      #Rust DTOs derive ts_rs::TS, regenerate src/types/api.ts here BEFORE the
+      #build so islands are typed against the real API shapes. The backend does
+      #not derive TS yet, so this is a documented placeholder (no-op today).
+      #- name: Generate API types from Rust DTOs (ts-rs)
+      #  run: |
+      #    # cargo test export_bindings in the backend repo, then copy the
+      #    # generated *.ts into src/types/. Wire up when the DTOs derive TS.
+
+      #Build-time data fetch hits the single-region API; keep the build resilient
+      #(retry + last-good fallback inside the .astro fetch — architecture §7.2) so
+      #a flaky origin during deploy doesn't fail the build.
+      - name: Build (astro build → ./dist)
+        env:
+          PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
+          PUBLIC_MATOMO_URL: ${{ vars.PUBLIC_MATOMO_URL }}
+          PUBLIC_MATOMO_SITE_ID: ${{ vars.PUBLIC_MATOMO_SITE_ID }}
+          PUBLIC_ADSENSE_CLIENT: ${{ vars.PUBLIC_ADSENSE_CLIENT }}
+        run: npm run build
+
+      - name: Upload dist/ to Cloudflare static assets (wrangler)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

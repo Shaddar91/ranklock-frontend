@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import type { LeaderboardEntry } from '../types/api';
+
+//SSG (prerendered) — leaderboard (requirements §B.1). C4 bakes the rows via a
+//build-time fetch (api.getLeaderboard) with retry + last-good fallback.
+const rows: LeaderboardEntry[] = [];
+---
+
+<BaseLayout title="Leaderboard — RankLock" description="Top Deadlock players by rank.">
+  <main class="wrap">
+    <p class="kicker">Ranked</p>
+    <h1 class="h-hero">Leaderboard</h1>
+    {
+      rows.length === 0 ? (
+        <p class="muted">Leaderboard is wired but not yet served. (C4)</p>
+      ) : (
+        <ol>
+          {rows.map((r) => (
+            <li>{r.steam_name}</li>
+          ))}
+        </ol>
+      )
+    }
+  </main>
+</BaseLayout>

@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { HeroSummary } from '../../types/api';
+
+//SSG (prerendered) — the heroes meta table is the most-visited page
+//(requirements §B.2). In C4 this frontmatter does a BUILD-TIME fetch with retry
+//+ last-good fallback (architecture §7.2) to bake the rows into the HTML, e.g.:
+//   import { api } from '../../lib/apiClient';
+//   const heroes = await api.getHeroes().catch(() => [] as HeroSummary[]);
+//For the scaffold we render an empty state so the build never depends on a live
+//origin (build-ahead, §8.1).
+const heroes: HeroSummary[] = [];
+---
+
+<BaseLayout title="Heroes — RankLock" description="Deadlock hero win-rates by rank bracket.">
+  <main class="wrap">
+    <p class="kicker">Meta</p>
+    <h1 class="h-hero">Heroes</h1>
+    {
+      heroes.length === 0 ? (
+        <p class="muted">Hero meta table is wired but not yet served. (C4)</p>
+      ) : (
+        <ul>
+          {heroes.map((h) => (
+            <li>{h.hero_name}</li>
+          ))}
+        </ul>
+      )
+    }
+  </main>
+</BaseLayout>

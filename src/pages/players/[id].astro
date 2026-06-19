@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PlayerProfileIsland from '../../components/react/PlayerProfileIsland';
+
+//Per-user page: a prerendered static SHELL hosting a CSR React island that reads
+//the id from the URL and fetches the API (architecture §4 — "Per-user/per-match
+//bulk"). The millions of /players/<id> URLs are NEVER prebuilt. getStaticPaths
+//emits a single placeholder shell so the route builds; production serving of an
+//arbitrary id off this shell (SPA-style fallback / prefix rewrite) is finalized
+//in C5/C10. prerender stays true (Astro default) → the shell is a free static asset.
+export function getStaticPaths() {
+  return [{ params: { id: 'example' } }];
+}
+---
+
+<BaseLayout title="Player profile — RankLock">
+  <main class="wrap">
+    <!--
+      client:only="react": the shell ships NO server HTML for this island; the
+      browser mounts it and fetches the player by id. The eslint client:* guard
+      enforces the directive.
+    -->
+    <PlayerProfileIsland client:only="react" />
+  </main>
+</BaseLayout>

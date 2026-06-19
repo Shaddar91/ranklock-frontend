@@ -1,0 +1,46 @@
+---
+import '../styles/global.css';
+
+//Base HTML frame. The SEO meta layer (per-route OG/Twitter/JSON-LD/canonical +
+//hreflang) is added in C7; the full gaslamp token sets + foundry/arcane switcher
+//land in C3 (§9.3). This base only wires the slots + a flash-free theme bootstrap
+//so C3/C7 drop into a known frame.
+interface Props {
+  title?: string;
+  description?: string;
+  lang?: string;
+}
+const {
+  title = 'RankLock — Deadlock stats & guides',
+  description = 'Deadlock hero/item win-rates, player profiles, match deep-dives, and coaching.',
+  lang = 'en',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang={lang} data-theme="gaslamp">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <slot name="head" />
+    <script is:inline>
+      //Apply the persisted foundry/arcane choice before paint to avoid a flash.
+      //The full switcher + token sets are added in C3.
+      (() => {
+        try {
+          const t = localStorage.getItem('ranklock-theme');
+          if (t) document.documentElement.dataset.theme = t;
+        } catch {
+          /* ignore storage access errors (private mode / disabled cookies) */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="app-bg" aria-hidden="true"></div>
+    <slot />
+  </body>
+</html>
