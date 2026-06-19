@@ -5,6 +5,8 @@
 //shift — the success criterion). NOT shipped on the SEO surface.
 import { useState } from 'react';
 import ThemeSwitcher from './ThemeSwitcher';
+import ConsentManager from './privacy/ConsentManager';
+import { reopenBanner } from '../../lib/consent';
 import {
   AdSlot,
   BracketFilter,
@@ -338,6 +340,28 @@ export default function Styleguide() {
           <AdSlot kind="banner" />
           <AdSlot kind="rect" />
         </div>
+        <p className="faint" style={{ fontSize: 12, marginTop: 10 }}>
+          Consent-gated: the AdSense fill loads only after "ads/marketing" consent + a
+          configured publisher/slot id. Otherwise this gaslamp placeholder shows — never a
+          network call.
+        </p>
+      </Section>
+
+      <Section kicker="Privacy" title="Consent (gaslamp re-skin)">
+        <p className="muted" style={{ fontSize: 13, margin: '0 0 14px', maxWidth: '64ch' }}>
+          Two-category consent (analytics + ads/marketing), persisted to{' '}
+          <code className="mono">localStorage['ranklock-consent']</code>. The same controls
+          live on <a href="/privacy#consent">/privacy</a>. Nothing tracks until accepted.
+        </p>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          style={{ marginBottom: 16 }}
+          onClick={() => reopenBanner()}
+        >
+          <Icon name="shield" size={15} /> Preview the consent banner
+        </button>
+        <ConsentManager />
       </Section>
 
       <Section kicker="Reference" title="Leaderboard rows">

@@ -9,7 +9,6 @@ import Styleguide from '../components/react/Styleguide';
 //theme-switched live. The eslint client:* guard enforces the directive.
 ---
 
-<BaseLayout title="Styleguide — RankLock" description="RankLock gaslamp design system reference.">
-  <meta slot="head" name="robots" content="noindex, nofollow" />
+<BaseLayout title="Styleguide — RankLock" description="RankLock gaslamp design system reference." noindex={true} chrome={false}>
   <Styleguide client:only="react" />
 </BaseLayout>

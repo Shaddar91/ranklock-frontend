@@ -178,3 +178,11 @@ Thumbs.db
 #ignores all *.md; negate just the README so it is committed. No other markdown
 #is committed (agent analysis stays under the gitignored docs/).
 !README.md
+
+#Blog/guide content (Astro content collection) is USER-FACING site content, not
+#operator analysis — it must commit even though the canonical block ignores all
+#*.md. Negate the whole blog content tree (no parent dir is ignored, so this
+#re-includes the markdown posts the /blog routes build from).
+!/src/content/
+!/src/content/blog/
+!/src/content/blog/**

@@ -26,6 +26,30 @@ import react from '@astrojs/react';
 export default defineConfig({
   site: 'https://ranklock.app',
   output: 'static',
+  //i18n routing (C7) — path-prefix locales, English at the ROOT (no prefix), per
+  //the authoritative i18n design (frontend-i18n-design.md): /heroes = en,
+  ///ru/heroes = Russian, etc. The 7 launched locales mirror lib/i18n.ts (the
+  //single source of truth for the SEO layer); keep the two lists in sync.
+  //
+  //`fallbackType: 'rewrite'` is the whole interim-locale mechanism: no /ru, /fr…
+  //page files exist yet, so every non-default locale route is generated at build
+  //by RE-RENDERING the English page at the localized URL (it SERVES English, not
+  //a redirect — requirements §8.2). Those pages are then marked noindex +
+  //canonical→English in BaseLayout/Seo until real translations land, so the
+  //duplicate English content never dilutes the en ranking. This needs ZERO page
+  //duplication — when a locale is translated, drop /<locale>/*.astro overrides
+  //and flip its `translated` flag in lib/i18n.ts. `redirectToDefaultLocale:false`
+  //keeps the root path canonical English (never a /en/ redirect).
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'ru', 'fr', 'zh', 'sr', 'sv', 'no'],
+    routing: {
+      prefixDefaultLocale: false,
+      redirectToDefaultLocale: false,
+      fallbackType: 'rewrite',
+    },
+    fallback: { ru: 'en', fr: 'en', zh: 'en', sr: 'en', sv: 'en', no: 'en' },
+  },
   integrations: [react()],
   vite: {
     build: {

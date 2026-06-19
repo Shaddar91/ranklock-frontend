@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BuildLabIsland from '../components/react/BuildLabIsland';
+import { breadcrumbJsonLd } from '../lib/seo';
+
+//Build Lab (requirements §A.4) — wires /heroes/base-stats + /items/modifiers,
+//warmed backends with no prior consumer. CSR-only (no build-time seed): the
+//hero_base_stats table is empty locally until the patch snapshot hook runs, so
+//baking build-time rows would bake an empty/incidental "live" snapshot. The
+//island fetches client-side and empty-states until the data is primed (§8.1).
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = breadcrumbJsonLd(origin, [
+  { name: 'Home', path: '/' },
+  { name: 'Build Lab', path: '/build-lab' },
+]);
+---
+
+<BaseLayout
+  title="Deadlock Build Lab — hero base stats & item modifiers | RankLock"
+  description="Inspect Deadlock hero base stats per patch and every buildable item's modifiers — the raw numbers behind theorycrafting builds."
+  canonicalPath="/build-lab"
+  jsonLd={jsonLd}
+>
+  <main class="container">
+    <div class="kicker">Theorycraft</div>
+    <h1 class="h-page">Build Lab</h1>
+    <p class="page-intro">
+      The raw numbers behind builds — each hero's base starting stats by patch, and every buildable item with its
+      modifiers, slot, tier and cost. Fills in as the stats snapshot and item cache warm.
+    </p>
+    <div style="margin-top:20px;">
+      <BuildLabIsland client:load />
+    </div>
+  </main>
+</BaseLayout>

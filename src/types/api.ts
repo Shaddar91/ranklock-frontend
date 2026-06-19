@@ -76,10 +76,23 @@ export interface MatchupEntry {
   win_rate: number;
 }
 
-//GET /heroes/:id/counters  and  /heroes/:id/synergies pass through upstream/
-//analytics shapes that are not yet frozen — keep loose until wired (C9).
+//GET /heroes/:id/counters passes through an upstream/analytics shape that is not
+//yet frozen — keep loose (the Matchups tab is powered by /heroes/:id/matchups).
 export type HeroCountersResponse = unknown;
-export type HeroSynergiesResponse = unknown;
+
+//GET /heroes/:id/synergies — the backend filters the upstream `hero-synergy-stats`
+//rows down to pairs that include this hero (hero_id1 OR hero_id2) and passes them
+//through verbatim (main.rs::get_hero_synergies). Model the fields the matrix needs
+//and keep the row extensible (the upstream blob carries more we don't render).
+export interface HeroSynergyRow {
+  hero_id1: number;
+  hero_id2: number;
+  wins: number;
+  matches_played: number;
+  //upstream carries additional aggregates (kills/deaths/…); not rendered.
+  [extra: string]: number;
+}
+export type HeroSynergiesResponse = HeroSynergyRow[];
 
 //---- hero builds (GET /heroes/:id/builds → struct TrimmedBuild[]) ------------
 
@@ -372,11 +385,75 @@ export interface RankBucket {
   player_count: number;
 }
 
-//---- patches (GET /patches*, fully built backend, zero FE refs today) -------
-//Shapes not yet frozen in a shared struct; keep loose until the patch UI (C9).
-export type PatchListResponse = unknown;
-export type PatchDetailResponse = unknown;
-export type PatchMoversResponse = unknown;
+//---- patches (GET /patches*, fully built backend; wired in C9) ---------------
+//Modeled on the backend structs in deadlock-backend/src/handlers/patches.rs.
+
+//GET /patches → Patch[]   and   GET /patches/current → Patch   (struct Patch)
+export interface Patch {
+  patch_id: string;
+  version_label: string;
+  released_at: string;
+  ended_at: string | null;
+  notes_url: string | null;
+  notes_summary: string | null;
+  is_current: boolean;
+}
+
+//One hero's per-bracket stat line within a patch (struct PatchHeroStat). The
+//`delta_*` fields are null on the first seeded patch (no previous to diff).
+export interface PatchHeroStat {
+  hero_id: number;
+  hero_name: string;
+  icon_url: string | null;
+  bracket: number;
+  pick_rate: number;
+  win_rate: number | null;
+  matches: number;
+  delta_pick_rate: number | null;
+  delta_win_rate: number | null;
+}
+
+//GET /patches/:id?bracket=   (struct PatchDetail)
+export interface PatchDetail {
+  patch: Patch;
+  prev_patch_id: string | null;
+  hero_stats: PatchHeroStat[];
+}
+
+//GET /patches/:id/movers?bracket=&limit=   (struct Movers) — top gainers/losers
+//by delta_pick_rate; both arrays empty when delta_pick_rate IS NULL.
+export interface PatchMovers {
+  gainers: PatchHeroStat[];
+  losers: PatchHeroStat[];
+}
+
+//---- Build Lab (GET /heroes/base-stats, /items/modifiers) --------------------
+//Modeled on deadlock-backend/src/handlers/builds.rs.
+
+//GET /heroes/base-stats?patch_id=  and  /heroes/:id/base-stats (struct HeroBaseStats).
+//`stats` is the raw upstream starting_stats object — keyed display labels are a UI
+//concern. `source` is "snapshot" (versioned table) or "live" (assets-API fallback).
+export interface HeroBaseStats {
+  hero_id: number;
+  hero_name: string;
+  patch_id: string;
+  fetched_at: string | null;
+  source: string;
+  stats: Record<string, unknown>;
+}
+
+//GET /items/modifiers?slot=&tier=  — the buildable-item modifier blob (builds.rs
+//build_item_modifiers). `modifiers` is the raw upstream property rows; rendered as
+//a count + on demand. Keep extensible.
+export interface ItemModifier {
+  item_id: number | null;
+  item_name: string | null;
+  item_slot_type: string | null;
+  item_tier: number | null;
+  shop_image_webp: string | null;
+  cost: number | null;
+  modifiers: unknown[];
+}
 
 //---- auth / session ---------------------------------------------------------
 

@@ -21,17 +21,22 @@ import type {
   HealthResponse,
   HeroBracket,
   HeroCountersResponse,
+  HeroBaseStats,
   HeroLedgerRow,
   HeroPlayed,
   HeroSummary,
   HeroSynergiesResponse,
   ImproveResponse,
+  ItemModifier,
   ItemStat,
   LeaderboardEntry,
   MatchDetail,
   MatchRow,
   MatchupEntry,
   MMRHistoryRow,
+  Patch,
+  PatchDetail,
+  PatchMovers,
   PerformanceResponse,
   PlayerMatchRow,
   PlayerProfileResponse,
@@ -140,7 +145,7 @@ export const queryKeys = {
     ['hero', id, 'matchups', bracket ?? null] as const,
   heroCounters: (id: number) => ['hero', id, 'counters'] as const,
   heroSynergies: (id: number) => ['hero', id, 'synergies'] as const,
-  items: () => ['items'] as const,
+  items: (bracket?: number) => ['items', bracket ?? 0] as const,
   recentMatches: () => ['matches', 'recent'] as const,
   match: (id: number) => ['match', id] as const,
   search: (q: string) => ['search', q] as const,
@@ -154,6 +159,16 @@ export const queryKeys = {
   playerCompare: (id: number, params?: Query) => ['player', id, 'compare', params ?? {}] as const,
   playerImprove: (id: number, params?: Query) => ['player', id, 'improve', params ?? {}] as const,
   rankDistribution: () => ['stats', 'rank-distribution'] as const,
+  //patch tracking surface (C9)
+  patches: () => ['patches'] as const,
+  patchCurrent: () => ['patches', 'current'] as const,
+  patch: (id: string, params?: Query) => ['patches', id, params ?? {}] as const,
+  patchMovers: (id: string, params?: Query) => ['patches', id, 'movers', params ?? {}] as const,
+  //Build Lab surface (C9)
+  heroBaseStats: (params?: Query) => ['build-lab', 'hero-base-stats', params ?? {}] as const,
+  heroBaseStatsOne: (id: number, params?: Query) =>
+    ['build-lab', 'hero-base-stats', id, params ?? {}] as const,
+  itemModifiers: (params?: Query) => ['build-lab', 'item-modifiers', params ?? {}] as const,
   me: () => ['me'] as const,
 };
 
@@ -175,7 +190,10 @@ export const api = {
     apiFetch<MatchupEntry[]>(`/heroes/${id}/matchups`, { query: { bracket } }),
   getHeroCounters: (id: number) => apiFetch<HeroCountersResponse>(`/heroes/${id}/counters`),
   getHeroSynergies: (id: number) => apiFetch<HeroSynergiesResponse>(`/heroes/${id}/synergies`),
-  getItems: () => apiFetch<ItemStat[]>('/items/stats'),
+  //Items use an INTEGER badge-bucket (0..5; 0 = all) — see lib/brackets.ts. The
+  //label fix (badge tiers, not MMR ranges) lives in the UI; this just forwards
+  //the bucket the backend's `bracket_badge_range` expects.
+  getItems: (bracket?: number) => apiFetch<ItemStat[]>('/items/stats', { query: { bracket } }),
   getRecentMatches: () => apiFetch<MatchRow[]>('/matches/recent'),
 
   //per-match / per-user surface (CSR islands)
@@ -194,6 +212,23 @@ export const api = {
     apiFetch<CompareResponse>(`/players/${id}/compare`, { query: params }),
   getPlayerImprove: (id: number, params?: { hero?: number; window?: string; vs_tier?: number }) =>
     apiFetch<ImproveResponse>(`/players/${id}/improve`, { query: params }),
+
+  //patch tracking (C9) — fully built backend, previously zero FE refs (§A.4).
+  getPatches: () => apiFetch<Patch[]>('/patches'),
+  getCurrentPatch: () => apiFetch<Patch>('/patches/current'),
+  getPatch: (id: string, bracket?: number) =>
+    apiFetch<PatchDetail>(`/patches/${id}`, { query: { bracket } }),
+  getPatchMovers: (id: string, params?: { bracket?: number; limit?: number }) =>
+    apiFetch<PatchMovers>(`/patches/${id}/movers`, { query: params }),
+
+  //Build Lab (C9) — base stats + item modifiers (§A.4). Note: hero_base_stats is
+  //empty locally until the patch snapshot hook runs, so these empty-state.
+  getHeroBaseStats: (patch_id?: string) =>
+    apiFetch<HeroBaseStats[]>('/heroes/base-stats', { query: { patch_id } }),
+  getHeroBaseStatsOne: (id: number, patch_id?: string) =>
+    apiFetch<HeroBaseStats>(`/heroes/${id}/base-stats`, { query: { patch_id } }),
+  getItemModifiers: (params?: { slot?: string; tier?: number }) =>
+    apiFetch<ItemModifier[]>('/items/modifiers', { query: params }),
 
   //stats + session
   getRankDistribution: () => apiFetch<RankBucket[]>('/stats/rank-distribution'),

@@ -1,38 +1,214 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import LiveStatusIsland from '../components/react/LiveStatusIsland';
-import ThemeSwitcher from '../components/react/ThemeSwitcher';
+import Glyph from '../components/Glyph.astro';
+import WinRate from '../components/WinRate.astro';
+import SearchBox from '../components/react/SearchBox';
+import { getCollection } from 'astro:content';
+import { api } from '../lib/apiClient';
+import { buildFetch } from '../lib/buildData';
+import { count, shortDate } from '../lib/format';
+import { websiteJsonLd, orgJsonLd, SITE_TAGLINE } from '../lib/seo';
+import type { HeroSummary, LeaderboardEntry } from '../types/api';
+
+//SSG home (requirements §B.0). Build-time data is fetched with a timeout + empty
+//fallback (build-ahead, §8.1) so a cold API never fails the build — the page
+//just prerenders its empty states. The value-prop copy + entry cards are static
+//(crawlable internal links); the player search is the one island.
+const heroesRaw = await buildFetch(api.getHeroes(), [] as HeroSummary[]);
+const topHeroes = [...heroesRaw]
+  .filter((h) => h.win_rate != null)
+  .sort((a, b) => (b.win_rate ?? 0) - (a.win_rate ?? 0))
+  .slice(0, 5);
+const leaders = await buildFetch(api.getLeaderboard({ limit: 5 }), [] as LeaderboardEntry[]);
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
+  .slice(0, 2);
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = [websiteJsonLd(origin), orgJsonLd(origin)];
+
+const entries = [
+  { href: '/heroes', icon: 'flame', title: 'Hero meta', blurb: 'Win-rates, tiers and 7-day momentum by rank bracket.' },
+  { href: '/items', icon: 'coins', title: 'Item win-rates', blurb: 'What wins at your rank — labelled by badge tier, not MMR.' },
+  { href: '/leaderboard', icon: 'trophy', title: 'Leaderboard', blurb: 'The global ranked ladder, top to bottom.' },
+  { href: '/matches', icon: 'swords', title: 'Recent matches', blurb: 'Fresh games with team economy and scoreboards.' },
+  { href: '/blog', icon: 'book', title: 'Guides', blurb: 'Strategy fused with live stats that never go stale.' },
+  { href: '/support', icon: 'spark', title: 'Support', blurb: 'Go ad-free and back the project.' },
+] as const;
 ---
 
-<BaseLayout title="RankLock — Deadlock stats & guides">
-  <main class="wrap">
-    <header>
-      <div class="between" style="gap:16px;flex-wrap:wrap;margin-bottom:14px;">
-        <p class="kicker" style="margin:0;">RankLock</p>
-        <!--
-          The theme switcher (foundry ⇄ arcane + more skins) wired live so the
-          choice persists across reloads. client:load → SSR'd + hydrated; the
-          eslint client:* guard enforces the directive.
-        -->
-        <ThemeSwitcher client:load />
-      </div>
-      <h1 class="h-hero">Deadlock stats, guides &amp; coaching</h1>
-      <p class="muted">
-        Hero &amp; item win-rates by rank, player profiles, match deep-dives, and a per-player
-        coaching story. Scaffold — pages are built out in C3–C9. See the
-        <a href="/styleguide">design-system styleguide</a>.
-      </p>
-    </header>
+<BaseLayout title={`RankLock — ${SITE_TAGLINE}`} canonicalPath="/" jsonLd={jsonLd}>
+  <main class="container">
+    <div class="fresh-banner">
+      <span class="flex" style="align-items:center; gap:8px;">
+        <span class="livedot"></span> Live Deadlock stats — refreshed every patch
+      </span>
+      <span>Hero & item win-rates · player profiles · coaching</span>
+    </div>
 
-    <!--
-      A hydrated island (client:load): proves the React + TanStack Query + typed
-      apiClient pipeline end-to-end. The eslint `client:*` guard fails the build
-      if this directive is ever dropped (turning Astro's silent inert-island
-      failure into a loud error — requirements §9).
-    -->
-    <section class="panel">
-      <h2>API status</h2>
-      <LiveStatusIsland client:load />
+    <section class="home-hero">
+      <div>
+        <div class="kicker" style="margin-bottom:14px;">Deadlock intelligence · meta at your rank</div>
+        <h1 class="h-hero" style="margin-bottom:18px; max-width:560px;">
+          The meta, <span class="cyan-c">your rank</span>, and guides that update every patch.
+        </h1>
+        <p style="font-size:16px; color:var(--text-2); max-width:520px; margin-bottom:22px; line-height:1.55;">
+          Per-rank hero & item win-rates, deep match analysis, and a coaching layer that shows how your
+          game compares — minute by minute — to the rank you're chasing.
+        </p>
+        <div style="margin-bottom:16px;">
+          <SearchBox variant="large" client:load />
+        </div>
+        <div class="flex" style="gap:12px; flex-wrap:wrap;">
+          <a class="btn btn-primary" href="/heroes"><Glyph name="flame" size={16} /> Browse the meta</a>
+          <a class="btn btn-ghost" href="/blog">Read the guides <Glyph name="arrowR" size={15} /></a>
+        </div>
+      </div>
+
+      <div class="brass-frame" style="padding:22px;">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="between" style="margin-bottom:14px;">
+          <span class="label-xs">Live meta snapshot</span>
+          <a href="/heroes" style="font-size:12px;">All heroes →</a>
+        </div>
+        {
+          topHeroes.length === 0 ? (
+            <p class="muted" style="font-size:13px; margin:0;">
+              The meta loads here once the stats API is online.
+            </p>
+          ) : (
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              {topHeroes.slice(0, 3).map((h) => (
+                <div class="flex" style="align-items:center; gap:10px;">
+                  {h.icon_url && (
+                    <span class="hav" style="width:28px; height:28px;">
+                      <img src={h.icon_url} alt={h.hero_name} loading="lazy" />
+                    </span>
+                  )}
+                  <a
+                    href={`/heroes/${h.hero_id}`}
+                    class="display"
+                    style="flex:1; font-weight:600; color:var(--text); text-decoration:none;"
+                  >
+                    {h.hero_name}
+                  </a>
+                  <WinRate wr={h.win_rate} width={56} />
+                </div>
+              ))}
+            </div>
+          )
+        }
+      </div>
     </section>
+
+    <h2 class="h-sec" style="margin-bottom:14px;">Explore</h2>
+    <div class="entry-grid" style="margin-bottom:28px;">
+      {
+        entries.map((e) => (
+          <a class="panel entrycard" href={e.href}>
+            <div class="between" style="margin-bottom:10px;">
+              <span class="flex" style="align-items:center; gap:9px;">
+                <Glyph name={e.icon} size={18} color="var(--cyan-bright)" />
+                <span class="h-sec" style="font-size:16px;">{e.title}</span>
+              </span>
+              <span class="ec-go"><Glyph name="arrowR" size={16} /></span>
+            </div>
+            <p class="muted" style="font-size:13px; margin:0;">{e.blurb}</p>
+          </a>
+        ))
+      }
+    </div>
+
+    <div class="grid" style="grid-template-columns:1.4fr 1fr; align-items:start; gap:16px;">
+      <div class="panel" style="padding:0; overflow:hidden;">
+        <div class="between" style="padding:16px 18px;">
+          <span class="flex" style="align-items:center; gap:9px;">
+            <Glyph name="flame" size={17} color="var(--cyan-bright)" />
+            <span class="h-sec" style="font-size:17px;">Top meta heroes</span>
+          </span>
+          <a href="/heroes" style="font-size:13px;">All heroes →</a>
+        </div>
+        {
+          topHeroes.length === 0 ? (
+            <p class="muted" style="padding:0 18px 18px;">Hero meta loads when the API is online.</p>
+          ) : (
+            <table class="dt">
+              <thead>
+                <tr>
+                  <th><span class="th-static">Hero</span></th>
+                  <th class="num"><span class="th-static">Win rate</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {topHeroes.map((h) => (
+                  <tr>
+                    <td>
+                      <a href={`/heroes/${h.hero_id}`} class="flex" style="align-items:center; gap:10px; text-decoration:none;">
+                        {h.icon_url && (
+                          <span class="hav" style="width:30px; height:30px;">
+                            <img src={h.icon_url} alt={h.hero_name} loading="lazy" />
+                          </span>
+                        )}
+                        <span class="display" style="font-weight:600; color:var(--text);">{h.hero_name}</span>
+                      </a>
+                    </td>
+                    <td class="num"><WinRate wr={h.win_rate} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
+        }
+      </div>
+
+      <div class="panel" style="padding:16px 18px;">
+        <div class="between" style="margin-bottom:12px;">
+          <span class="flex" style="align-items:center; gap:9px;">
+            <Glyph name="trophy" size={16} color="var(--gold)" />
+            <span class="h-sec" style="font-size:17px;">Leaderboard</span>
+          </span>
+          <a href="/leaderboard" style="font-size:13px;">Full →</a>
+        </div>
+        {
+          leaders.length === 0 ? (
+            <p class="muted">The ladder loads when the API is online.</p>
+          ) : (
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              {leaders.map((p, i) => (
+                <a
+                  href={`/players/${p.account_id}`}
+                  class="flex"
+                  style="align-items:center; gap:11px; padding:8px 0; border-bottom:1px solid var(--border-soft); text-decoration:none;"
+                >
+                  <span class="rank-num">{i + 1}</span>
+                  <span style="flex:1; font-weight:500; color:var(--text);">{p.steam_name}</span>
+                  <span class="mono" style="font-size:12px; color:var(--muted);">{count(p.matches)}</span>
+                </a>
+              ))}
+            </div>
+          )
+        }
+      </div>
+    </div>
+
+    <div class="panel panel-pad" style="margin-top:16px;">
+      <div class="flex" style="align-items:center; gap:9px; margin-bottom:14px;">
+        <Glyph name="book" size={16} color="var(--cyan-bright)" />
+        <span class="h-sec" style="font-size:17px;">Latest guides</span>
+      </div>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px;">
+        {
+          posts.map((post) => (
+            <a class="tile entrycard" href={`/blog/${post.id}`}>
+              <div class="display" style="font-weight:700; font-size:15px; color:var(--text); margin-bottom:6px;">
+                {post.data.title}
+              </div>
+              <p class="muted" style="font-size:13px; margin:0 0 8px;">{post.data.description}</p>
+              <span class="label-xs" style="font-size:10px;">{shortDate(post.data.pubDate.toISOString())}</span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
   </main>
 </BaseLayout>

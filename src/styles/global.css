@@ -9,6 +9,8 @@
     base       → reset, document chrome, type scale, layout primitives
     components → the reusable instrument set (panels, tables, badges, chips, nav,
                  skeleton, empty-state, theme-switcher)
+    pages      → composition styles for the SEO surface (C4): nav/footer chrome,
+                 search dropdown, entry cards, podium, hero-entity, blog prose
 
   Fonts are loaded via <link> (preconnect + stylesheet) in BaseLayout.astro, not
   a CSS @import, so this sheet carries no render-blocking remote import.
@@ -17,3 +19,4 @@
 @import './themes.css';
 @import './base.css';
 @import './components.css';
+@import './pages.css';

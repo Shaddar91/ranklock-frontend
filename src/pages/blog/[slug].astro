@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GuideLiveStats from '../../components/react/GuideLiveStats';
+import { getCollection, render } from 'astro:content';
+import { breadcrumbJsonLd, SITE_NAME } from '../../lib/seo';
+import { shortDate } from '../../lib/format';
+
+//SSG guide article (requirements §B.11). One prerendered page per post; the
+//markdown body renders to static HTML (SEO), and the "live stats in this guide"
+//strip is a client:visible island that pulls current win-rates for the heroes/
+//items the post references (build-ahead: falls back to plain name chips offline).
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const canonicalPath = `/blog/${post.id}`;
+const published = post.data.pubDate.toISOString();
+const modified = (post.data.updatedDate ?? post.data.pubDate).toISOString();
+const url = new URL(canonicalPath, origin).toString();
+
+const jsonLd = [
+  breadcrumbJsonLd(origin, [
+    { name: 'Home', path: '/' },
+    { name: 'Guides', path: '/blog' },
+    { name: post.data.title, path: canonicalPath },
+  ]),
+  {
+    '@type': 'BlogPosting',
+    headline: post.data.title,
+    description: post.data.description,
+    datePublished: published,
+    dateModified: modified,
+    author: { '@type': 'Person', name: post.data.author },
+    mainEntityOfPage: url,
+    publisher: { '@type': 'Organization', name: SITE_NAME },
+  },
+];
+
+const hasLive = post.data.liveHeroes.length > 0 || post.data.liveItems.length > 0;
+---
+
+<BaseLayout
+  title={`${post.data.title} — RankLock`}
+  description={post.data.description}
+  canonicalPath={canonicalPath}
+  ogType="article"
+  jsonLd={jsonLd}
+  publishedTime={published}
+  modifiedTime={modified}
+>
+  <main class="container">
+    <nav class="kicker" style="margin-bottom:14px;">
+      <a href="/blog" style="color:var(--muted);">← All guides</a>
+    </nav>
+    <article>
+      <h1 class="h-page" style="max-width:26ch;">{post.data.title}</h1>
+      <div class="flex" style="gap:10px; align-items:center; margin:10px 0 20px; color:var(--muted); font-size:13px;">
+        <span>{post.data.author}</span>
+        <span aria-hidden="true">·</span>
+        <span>{shortDate(published)}</span>
+      </div>
+
+      {
+        hasLive && (
+          <div class="panel panel-pad" style="margin-bottom:22px;">
+            <div class="label-xs" style="margin-bottom:10px;">Live stats in this guide</div>
+            <GuideLiveStats heroes={post.data.liveHeroes} items={post.data.liveItems} client:visible />
+          </div>
+        )
+      }
+
+      <div class="prose">
+        <Content />
+      </div>
+    </article>
+  </main>
+</BaseLayout>

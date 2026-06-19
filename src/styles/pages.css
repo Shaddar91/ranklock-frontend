@@ -1,0 +1,419 @@
+/*============================================================================
+  RankLock page layer (C4) — composition styles for the SEO surface: the shared
+  nav/footer chrome, the search dropdown, home entry cards, the leaderboard
+  podium, hero-entity headers, and the blog/guide cards + article prose. Ported
+  from the prototype (ranklock-app/styles.css) where a class existed; new pieces
+  follow the same token-driven gaslamp system. Theme-driven via CSS vars — no
+  layout shift on skin switch.
+============================================================================*/
+
+/* ---------- nav chrome ---------- */
+.nav-links {
+  gap: 2px;
+  margin-left: 18px;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-links::-webkit-scrollbar {
+  display: none;
+}
+.nav-tools {
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+@media (max-width: 1100px) {
+  .nav-tools .themesw-lbl {
+    display: none;
+  }
+}
+@media (max-width: 860px) {
+  .nav-tools .searchbig {
+    display: none;
+  }
+}
+
+/* ---------- player search dropdown ---------- */
+.search-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 6px;
+  box-shadow: 0 18px 48px -16px rgba(0, 0, 0, 0.7);
+}
+.search-note {
+  padding: 12px 10px;
+  font-size: 13px;
+}
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-card);
+  text-decoration: none;
+}
+.search-row:hover {
+  background: rgba(34, 211, 238, 0.06);
+  text-decoration: none;
+}
+
+/* ---------- page header ---------- */
+.page-intro {
+  color: var(--muted);
+  max-width: 72ch;
+  margin-top: 10px;
+  line-height: 1.6;
+}
+
+/* ---------- home ---------- */
+.fresh-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 0 16px;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.home-hero {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 32px;
+  align-items: center;
+  margin-bottom: 36px;
+}
+@media (max-width: 880px) {
+  .home-hero {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}
+
+/* ---------- entry cards ---------- */
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.entrycard {
+  display: block;
+  padding: 18px;
+  cursor: pointer;
+  transition: var(--t-med);
+  text-decoration: none;
+  color: inherit;
+}
+.entrycard:hover {
+  transform: translateY(-2px);
+  border-color: #3a4452;
+  text-decoration: none;
+}
+.entrycard:hover .ec-go {
+  color: var(--cyan-bright);
+  transform: translateX(3px);
+}
+.ec-go {
+  transition: var(--t-med);
+  color: var(--faint);
+}
+
+/* ---------- leaderboard podium ---------- */
+.podium-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 720px) {
+  .podium-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.top3 {
+  position: relative;
+  transition: var(--t-med);
+}
+.top3:hover {
+  transform: translateY(-2px);
+}
+.top3-medal {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--ink);
+  border: 1px solid;
+  border-radius: 5px;
+  padding: 1px 5px;
+  line-height: 1.3;
+}
+
+/* ---------- stat-tile grid (hero detail headline stats) ---------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+/* ---------- hero entity header ---------- */
+.entity-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.entity-art {
+  width: 76px;
+  height: 76px;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--overlay);
+  flex: none;
+}
+.entity-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
+  display: block;
+}
+
+/* ---------- blog / guides ---------- */
+.blog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+.blogcard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: var(--t-med);
+}
+.blogcard:hover {
+  transform: translateY(-2px);
+  border-color: #3a4452;
+  text-decoration: none;
+}
+.blogcard .bc-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--text);
+  line-height: 1.25;
+}
+.blogcard .bc-desc {
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.55;
+  flex: 1;
+}
+.blog-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.blog-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cyan-bright);
+  background: rgba(34, 211, 238, 0.08);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  border-radius: var(--r-pill);
+  padding: 2px 8px;
+}
+
+/* article prose (markdown body) */
+.prose {
+  max-width: 72ch;
+  color: var(--text-2);
+  font-size: 15.5px;
+  line-height: 1.7;
+}
+.prose h2 {
+  font-size: 22px;
+  margin: 1.6em 0 0.5em;
+}
+.prose h3 {
+  font-size: 18px;
+  margin: 1.4em 0 0.4em;
+}
+.prose p {
+  margin: 0 0 1.1em;
+}
+.prose ul,
+.prose ol {
+  margin: 0 0 1.1em;
+  padding-left: 1.3em;
+}
+.prose li {
+  margin: 0.3em 0;
+}
+.prose a {
+  color: var(--cyan-bright);
+}
+.prose strong {
+  color: var(--text);
+}
+.prose code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.prose blockquote {
+  margin: 0 0 1.1em;
+  padding: 6px 16px;
+  border-left: 3px solid var(--cyan-deep);
+  color: var(--muted);
+}
+
+/* ---------- footer ---------- */
+.site-footer {
+  border-top: 1px solid var(--border);
+  position: relative;
+  z-index: 1;
+  margin-top: 40px;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(3, 1fr);
+  gap: 24px;
+}
+@media (max-width: 760px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.footer-link {
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.footer-link:hover {
+  color: var(--cyan-bright);
+  text-decoration: none;
+}
+
+/*============================================================================
+  C5 — per-user / per-match dashboard layout. Ported from the prototype
+  (ranklock-app/styles.css): the player-header art band + 3-column grid and the
+  categorized-panel controls. Token-driven; collapses to a single column on
+  narrow viewports with no layout shift on theme switch.
+============================================================================*/
+
+/* ---------- player profile header ---------- */
+.ph-art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center 24%;
+  opacity: 0.42;
+  pointer-events: none;
+  border-radius: inherit;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 55%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 55%);
+}
+.ph-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--surface) 0%, color-mix(in srgb, var(--surface) 50%, transparent) 40%, transparent 80%);
+}
+.ph-grid {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
+  align-items: center;
+  padding: 22px 26px;
+  position: relative;
+  z-index: 1;
+}
+.ph-mid {
+  text-align: center;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 0 24px;
+}
+@media (max-width: 920px) {
+  .ph-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .ph-mid {
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid var(--border);
+    padding: 16px 0 0;
+    text-align: left;
+  }
+}
+
+/* ---------- categorized-panel controls ---------- */
+.cat-expand {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.015);
+  border: none;
+  border-top: 1px solid var(--border-soft);
+  color: var(--muted);
+  font-family: var(--display);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 9px;
+  cursor: pointer;
+  transition: var(--t-fast);
+}
+.cat-expand:hover {
+  background: rgba(34, 211, 238, 0.06);
+  color: var(--cyan-bright);
+}
+.minitog {
+  background: transparent;
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 5px 11px;
+  cursor: pointer;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: var(--t-fast);
+  white-space: nowrap;
+}
+.minitog:hover {
+  color: var(--text-2);
+}
+.minitog.on {
+  background: var(--raised);
+  color: var(--cyan-bright);
+  box-shadow: 0 0 0 1px var(--cyan-deep) inset;
+}

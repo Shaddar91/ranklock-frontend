@@ -1,0 +1,63 @@
+---
+//Site-wide sticky nav (C4) — shared internal-linking chrome for the SEO surface.
+//Brand mark + primary nav are STATIC Astro markup (server-rendered, no JS, good
+//for crawlers); only the genuinely interactive bits are islands: the player
+//SearchBox and the foundry⇄arcane ThemeSwitcher (both client:load — the eslint
+//client:* guard enforces the directive).
+import SearchBox from './react/SearchBox';
+import ThemeSwitcher from './react/ThemeSwitcher';
+
+const links = [
+  { href: '/heroes', label: 'Heroes' },
+  { href: '/items', label: 'Items' },
+  { href: '/patches', label: 'Patches' },
+  { href: '/build-lab', label: 'Build Lab' },
+  { href: '/leaderboard', label: 'Leaderboard' },
+  { href: '/matches', label: 'Matches' },
+  { href: '/blog', label: 'Guides' },
+  { href: '/support', label: 'Support' },
+];
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href || path === href + '/' || path.startsWith(href + '/');
+---
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="wordmark" href="/" aria-label="RankLock home">
+      <svg class="wm-mark" width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="brassNav" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#e8c987"></stop>
+            <stop offset=".5" stop-color="#c79a4e"></stop>
+            <stop offset="1" stop-color="#6b4a21"></stop>
+          </linearGradient>
+        </defs>
+        <path d="M20 2 35 7v12c0 9-7 15-15 19C12 34 5 28 5 19V7L20 2Z" fill="#10151e" stroke="url(#brassNav)" stroke-width="2"></path>
+        <path d="M20 7l9 3v8.5c0 6-4.5 10.5-9 13" stroke="var(--cyan-bright)" stroke-width="1.2" opacity=".55" fill="none"></path>
+        <circle cx="20" cy="17" r="4" fill="none" stroke="url(#brassNav)" stroke-width="2.2"></circle>
+        <path d="M20 20.5 18.5 28h3L20 20.5Z" fill="url(#brassNav)"></path>
+        <path d="M14 13.5 20 11l6 2.5" stroke="var(--cyan-bright)" stroke-width="1.6" stroke-linecap="round" fill="none"></path>
+      </svg>
+      <span class="wm-text">Rank<b>Lock</b></span>
+    </a>
+
+    <nav class="flex nav-links" aria-label="Primary">
+      {
+        links.map((l) => (
+          <a
+            class={'navlink' + (isActive(l.href) ? ' active' : '')}
+            href={l.href}
+            aria-current={isActive(l.href) ? 'page' : undefined}
+          >
+            {l.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="nav-tools flex">
+      <SearchBox variant="compact" client:load />
+      <ThemeSwitcher compact client:load />
+    </div>
+  </div>
+</header>

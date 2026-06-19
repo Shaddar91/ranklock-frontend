@@ -1,0 +1,198 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ConsentManager from '../components/react/privacy/ConsentManager';
+import ForgetMeButton from '../components/react/privacy/ForgetMeButton';
+
+//Privacy & cookie policy (C6) — static Astro page adapted from cloud-lord's
+//Privacy.jsx (requirements §8.3), re-skinned to the gaslamp system and extended
+//for RankLock's second consent category (ads/marketing → AdSense cookies). The
+//two interactive controls (live consent toggles + forget-me) are React islands
+//(client:load — the eslint client:* guard enforces the directive); everything
+//else is server-rendered prose. Legal basis: GDPR Art. 6(1)(a) + Serbian ZZPL.
+const LAST_UPDATED = '2026-06-19';
+const CONTACT = 'privacy@ranklock.app';
+
+//First-party cookies, set ONLY after the matching consent category is granted.
+const cookies = [
+  ['_pk_id', 'Analytics', 'Matomo', "Persistent visitor ID — groups your visits so repeat visits don't count as new visitors", '13 months'],
+  ['_pk_ses', 'Analytics', 'Matomo', 'Active-session marker — tells Matomo the current visit is still ongoing', '30 minutes'],
+  ['_pk_ref', 'Analytics', 'Matomo', 'Remembers which referrer originally brought you to the site', '6 months'],
+  ['__gads', 'Ads', 'Google AdSense', 'Ad delivery, frequency capping and aggregated ad reporting', 'up to 13 months'],
+  ['__gpi', 'Ads', 'Google AdSense', 'Stores an ad-personalization identifier used by Google', 'up to 13 months'],
+];
+---
+
+<BaseLayout
+  title="Privacy & cookies — RankLock"
+  description="What RankLock collects, why, how long it is kept, and how to change or withdraw your consent at any time. Self-hosted analytics, GDPR + Serbian ZZPL."
+  canonicalPath="/privacy"
+>
+  <main class="container" style="padding-top:40px; padding-bottom:64px;">
+    <div class="legal">
+      <div class="kicker" style="margin-bottom:10px;">Last updated · {LAST_UPDATED}</div>
+      <h1 class="h-hero" style="font-size:clamp(32px,5vw,48px); margin-bottom:14px;">Privacy &amp; cookies</h1>
+      <p style="font-size:16px; color:var(--text-2); max-width:72ch; margin-bottom:8px;">
+        RankLock keeps data handling small and explicit. This page tells you exactly what is
+        collected, why, how long it sticks around, and how to make it stop. Nothing —
+        analytics or ads — loads until you choose on the consent banner. If anything here is
+        unclear, write to <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
+      </p>
+
+      <h2>1. Who runs this site</h2>
+      <div class="dualcard" style="margin:8px 0 4px;">
+        <div class="dc-label">Data controller</div>
+        <p style="margin:0;">
+          RankLock is an independent, unofficial Deadlock statistics project operated from
+          Serbia. The operator is the sole data controller. There is no company behind the
+          site, no co-controllers, and no third-party processors beyond the infrastructure
+          and ad providers named in sections 4 and 10. Contact:
+          <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
+        </p>
+      </div>
+
+      <h2>2. What data is collected</h2>
+      <p>With <strong>analytics</strong> consent enabled, a self-hosted Matomo instance records:</p>
+      <ul>
+        <li><strong>Pageviews</strong> — which pages you opened and in what order</li>
+        <li><strong>Referrers</strong> — the link or search result that sent you here (if any)</li>
+        <li><strong>Country</strong> — derived from an anonymized IP (the last two bytes are stripped before storage)</li>
+        <li><strong>Device basics</strong> — screen size, browser name, operating-system family</li>
+        <li><strong>Session duration</strong> — how long the visit lasted</li>
+      </ul>
+      <p>
+        With <strong>ads/marketing</strong> consent enabled, Google AdSense serves ads and may
+        set its own cookies (section 4) to deliver, cap and measure them. RankLock does not
+        receive your identity from Google; it receives only aggregate ad-performance reporting.
+      </p>
+
+      <h2>3. What is NOT collected</h2>
+      <ul>
+        <li><strong>No names, email addresses, or user accounts</strong> — there are no logins on the stats surface</li>
+        <li><strong>No tracking before you consent</strong> — no script loads and no cookie is set until you accept the matching category</li>
+        <li><strong>No selling or sharing of analytics data</strong> — Matomo data stays on our own server and is never handed to third parties</li>
+        <li><strong>No heatmaps, session replay, or fingerprinting</strong></li>
+        <li><strong>No analytics signal to Google</strong> — Google Consent Mode's <code>analytics_storage</code> is left denied; only ad signals are sent, and only with ads consent</li>
+      </ul>
+
+      <h2>4. Cookies used</h2>
+      <p>
+        Cookies are set <strong>only after</strong> you grant the matching consent category on
+        the banner. Analytics cookies are first-party (this domain). Ad cookies are set by
+        Google AdSense when ads consent is granted.
+      </p>
+      <table class="ctable">
+        <thead>
+          <tr><th>Name</th><th>Category</th><th>Set by</th><th>Purpose</th><th>Lifetime</th></tr>
+        </thead>
+        <tbody>
+          {cookies.map(([name, cat, by, purpose, life]) => (
+            <tr>
+              <td><b>{name}</b></td>
+              <td>{cat}</td>
+              <td>{by}</td>
+              <td>{purpose}</td>
+              <td>{life}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>
+        Your consent choice and your theme preference are stored in this browser's
+        <code>localStorage</code> (keys <code>ranklock-consent</code> and
+        <code>ranklock-theme</code>), not in cookies, and never leave your device.
+        Clearing the cookies above detaches you from any existing analytics record.
+      </p>
+
+      <h2>5. Legal basis</h2>
+      <p>
+        RankLock has visitors from both Serbia and the EU/EEA, so both frameworks apply. In
+        both, the basis is the same: your explicit consent, given through the banner.
+      </p>
+      <div class="dualcol">
+        <div class="dualcard">
+          <div class="dc-label">Visitors in Serbia</div>
+          <p style="margin:0;">
+            Processing is based on your unambiguous consent under the Serbian Law on Personal
+            Data Protection (Zakon o zaštiti podataka o ličnosti). You can withdraw consent at
+            any time using the controls in section 7, and withdrawal is as easy as giving it.
+          </p>
+          <div class="dc-cite"><b>Art. 12 ZZPL</b> — consent</div>
+        </div>
+        <div class="dualcard">
+          <div class="dc-label">Visitors in the EU / EEA</div>
+          <p style="margin:0;">
+            Processing is based on your freely given, specific, informed and unambiguous
+            consent under the GDPR. The same withdrawal controls apply, and withdrawing
+            consent does not affect the lawfulness of processing before the withdrawal.
+          </p>
+          <div class="dc-cite"><b>Art. 6(1)(a) GDPR</b> — consent</div>
+        </div>
+      </div>
+
+      <h2>6. Your rights</h2>
+      <p>Under both the GDPR and the Serbian ZZPL you have the right to:</p>
+      <ul>
+        <li><strong>Access</strong> — ask what data, if any, is tied to your visitor ID</li>
+        <li><strong>Rectification</strong> — correct inaccurate data</li>
+        <li><strong>Deletion</strong> — ask that records tied to your visitor ID be removed</li>
+        <li><strong>Restriction</strong> — ask that processing of your records be paused</li>
+        <li><strong>Objection</strong> — object to the processing described here</li>
+        <li><strong>Data portability</strong> — receive your records in a machine-readable export</li>
+        <li><strong>Withdrawal of consent</strong> — revoke consent at any time (section 7)</li>
+      </ul>
+      <p>
+        To exercise any of these, email <a href={`mailto:${CONTACT}`}>{CONTACT}</a>. Because
+        analytics data is pseudonymous — tied to a cookie-held visitor ID, not a name — please
+        include the value of your <code>_pk_id</code> cookie so the right records can be found.
+        Under GDPR Art. 11 (and the ZZPL equivalent) we are not required to collect extra
+        identifying data just to answer a request; clearing your <code>_pk_*</code> cookies
+        detaches you from any future session regardless.
+      </p>
+
+      <h2 id="consent">7. Your choices</h2>
+      <p>
+        Enable or disable each category at any time, and erase the data already stored about
+        this browser. Changes take effect immediately — no reload needed.
+      </p>
+      <ConsentManager client:load />
+      <ForgetMeButton client:load />
+
+      <h2>8. Right to complain</h2>
+      <p>If you believe your data has been handled improperly, you can complain to your supervisory authority.</p>
+      <div class="dualcol">
+        <div class="dualcard">
+          <div class="dc-label">If you are in Serbia</div>
+          <p style="margin:0;">File with the Commissioner for Information of Public Importance and Personal Data Protection (Poverenik).</p>
+          <div class="dc-cite"><a href="https://www.poverenik.rs/" target="_blank" rel="noopener noreferrer">poverenik.rs →</a></div>
+        </div>
+        <div class="dualcard">
+          <div class="dc-label">If you are in the EU / EEA</div>
+          <p style="margin:0;">File with your national Data Protection Authority. The full list is maintained by the European Data Protection Board.</p>
+          <div class="dc-cite"><a href="https://edpb.europa.eu/about-edpb/about-edpb/members_en" target="_blank" rel="noopener noreferrer">edpb.europa.eu →</a></div>
+        </div>
+      </div>
+
+      <h2>9. Retention periods</h2>
+      <ul>
+        <li><strong>Raw analytics logs</strong> — deleted after <strong>12 months</strong>; the Matomo server auto-removes raw visit rows at that age</li>
+        <li><strong>Aggregated reports</strong> — retained for <strong>24 months</strong>; anonymous traffic summaries with no record-level detail</li>
+        <li><strong>Consent records</strong> — kept for the duration of your consent plus <strong>2 years</strong>, so a regulator asking "did you have consent on date X" can be answered</li>
+        <li><strong>Ad cookies</strong> — governed by Google's retention for the cookies in section 4; cleared when you withdraw ads consent or clear cookies</li>
+      </ul>
+
+      <h2>10. Where the data lives</h2>
+      <ul>
+        <li><strong>Analytics stored in the EU/EEA</strong> on self-operated infrastructure (Hetzner, Germany) — no managed-analytics SaaS</li>
+        <li><strong>Ad serving by Google</strong> under its own terms when ads consent is granted; see Google's privacy &amp; ads policies</li>
+        <li><strong>Encrypted backups</strong> are GPG-encrypted locally before upload, so the storage provider never sees plaintext</li>
+        <li><strong>No transfer of analytics data to third parties</strong> beyond the infrastructure provider</li>
+      </ul>
+
+      <h2>11. Last updated</h2>
+      <p>
+        This policy was last updated on <strong>{LAST_UPDATED}</strong>. Material changes will
+        be noted here with a new date; trivial copy edits do not bump the date.
+      </p>
+    </div>
+  </main>
+</BaseLayout>

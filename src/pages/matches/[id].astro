@@ -1,20 +1,28 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import MatchDetailIsland from '../../components/react/MatchDetailIsland';
+import MatchInspectorIsland from '../../components/react/MatchInspectorIsland';
 
-//Per-match page: a CSR body shell (the match-detail island lands in C5). The
-//per-match OG share card (<meta og:image> served by `ranklock-dynamic`, §9.1) is
-//a SEPARATE pulsar plan (ranklock-og-card-*); generic OG meta is added in C7.
-//This scaffold adds NO Cloudflare Worker / prerender=false route — the build
-//stays 100% static. getStaticPaths emits one placeholder shell so the route builds.
+//Per-match page (C5): a prerendered static SHELL hosting CSR React islands that
+//read the match id from the URL and fetch /matches/:id. The millions of
+///matches/<id> URLs are NEVER prebuilt (architecture §4 — matches are data, not
+//pages); getStaticPaths emits a single placeholder shell so the route builds.
+//Production serving of an arbitrary id off this shell (SPA fallback / rewrite) is
+//a deploy concern (C10). prerender stays true → the shell is a free static asset.
+//noindex: the empty per-match shell carries no SEO content, so it must not be
+//indexed (the SEO surface is the SSG routes in C4).
+//
+//The scoreboard (MatchDetailIsland) is client:only and paints first; the HEAVY
+//per-player inspect matrix is a SEPARATE client:visible island so it hydrates
+//only when scrolled into view and never blocks paint (requirements §6.4).
 export function getStaticPaths() {
   return [{ params: { id: 'example' } }];
 }
 ---
 
-<BaseLayout title="Match — RankLock">
+<BaseLayout title="Match — RankLock" noindex={true}>
   <main class="wrap">
-    <p class="kicker">Match</p>
-    <h1 class="h-hero">Match detail</h1>
-    <p class="muted">Match detail is a CSR island (built in C5).</p>
+    <MatchDetailIsland client:only="react" />
+    <MatchInspectorIsland client:visible />
   </main>
 </BaseLayout>

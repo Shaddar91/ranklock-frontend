@@ -1,0 +1,36 @@
+---
+//Static win-rate readout (server-rendered, JS-free) — a mirror of the React
+//WinBar for use inside prerendered SEO tables (home spotlights, matches). Same
+//30–70% band scaling + green/red semantics as WinBar.tsx so the look matches.
+import { pct } from '../lib/format';
+
+interface Props {
+  wr: number | null | undefined;
+  width?: number;
+}
+const { wr, width = 64 } = Astro.props;
+const has = wr != null && !Number.isNaN(wr);
+const value = has ? (wr as number) : 0;
+const good = value >= 50;
+const fill = Math.max(0, Math.min(100, ((value - 30) / 40) * 100));
+---
+
+{
+  has ? (
+    <span class="flex" style="align-items:center; gap:9px; justify-content:flex-end;">
+      <span
+        class="tnum"
+        style={`color:${good ? 'var(--win)' : 'var(--loss)'}; font-weight:600; min-width:46px; text-align:right;`}
+      >
+        {pct(wr)}
+      </span>
+      <span class="wbar" style={`width:${width}px`}>
+        <i
+          style={`width:${fill}%; background:${good ? 'linear-gradient(90deg,#1f8a5b,var(--win))' : 'linear-gradient(90deg,#b13a3a,var(--loss))'}`}
+        />
+      </span>
+    </span>
+  ) : (
+    <span class="faint">—</span>
+  )
+}

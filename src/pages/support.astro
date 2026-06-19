@@ -1,0 +1,79 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Glyph from '../components/Glyph.astro';
+import CryptoDonate from '../components/react/donate/CryptoDonate';
+import { KOFI_URL, kofiConfigured } from '../config/donation';
+
+//Support page (C8, requirements §9.4) — the voluntary-support surface the rest of
+//the app links to (the AdSlot "go ad-free" hook and the nav "Support" chip both
+//point at /support). We LEAD WITH VOLUNTARY SUPPORT (Ko-fi for fiat, crypto for
+//on-chain) and frame ads as the secondary, opt-in way to help. Static Astro
+//chrome + prose; only the crypto widget is a CSR React island (client:load — the
+//eslint client:* guard enforces the directive). The Ko-fi affordance is a plain
+//<a> (no third-party JS, so no consent gate needed). prerender stays true → free
+//static asset on Cloudflare.
+const hasKofi = kofiConfigured();
+---
+
+<BaseLayout
+  title="Support RankLock — Ko-fi & crypto"
+  description="RankLock is an independent, ad-light Deadlock stats project. Support it voluntarily via Ko-fi (card / PayPal) or a direct crypto donation — no fees, no middleman, no account."
+  canonicalPath="/support"
+>
+  <main class="container">
+    <div class="support">
+      <div class="kicker" style="margin-bottom:10px;">Keep RankLock independent</div>
+      <h1 class="h-hero" style="font-size:clamp(30px,5vw,46px); margin-bottom:14px;">Support RankLock</h1>
+      <p class="support-lede">
+        RankLock is built and run by one person, with no company and no paywall. Voluntary
+        support is what keeps it fast, independent, and light on ads. If it’s useful to you,
+        a one-off tip helps more than you’d think — and it’s entirely optional.
+      </p>
+
+      <!-- 1) Ko-fi — voluntary fiat support, led first -->
+      <section class="panel panel-pad support-card" aria-labelledby="kofi-h">
+        <div class="support-card-head">
+          <span class="support-ic"><Glyph name="flame" size={20} /></span>
+          <div>
+            <h2 id="kofi-h" class="h-sec">Tip with card or PayPal</h2>
+            <p class="support-sub">One-off or monthly, via Ko-fi — the quickest way to chip in.</p>
+          </div>
+        </div>
+        {
+          hasKofi ? (
+            <a class="btn btn-primary support-cta" href={KOFI_URL} target="_blank" rel="noopener noreferrer">
+              Support on Ko-fi →
+            </a>
+          ) : (
+            <div class="support-soon" role="status">
+              Ko-fi link coming soon — crypto donations below already work.
+            </div>
+          )
+        }
+      </section>
+
+      <div class="deco-rule" style="margin:26px 0;"><span class="dia"></span></div>
+
+      <!-- 2) Crypto — direct, no processor, no fees -->
+      <section class="support-card" aria-labelledby="crypto-h">
+        <div class="support-card-head" style="margin-bottom:6px;">
+          <span class="support-ic"><Glyph name="coins" size={20} /></span>
+          <div>
+            <h2 id="crypto-h" class="h-sec">Donate crypto directly</h2>
+            <p class="support-sub">
+              Send from any wallet on a low-gas network — no payment processor, no fees, no signup.
+              The receive address is public; nothing here ever touches a private key.
+            </p>
+          </div>
+        </div>
+        <CryptoDonate client:load />
+      </section>
+
+      <!-- 3) Ads framed as the secondary, opt-in alternative -->
+      <p class="support-ads">
+        Prefer not to donate? Allowing the occasional non-intrusive ad is another way to help —
+        you’re always in control of that in your <a href="/privacy#consent">cookie settings</a>.
+      </p>
+    </div>
+  </main>
+</BaseLayout>

@@ -1,31 +1,47 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import HeroesTable from '../../components/react/HeroesTable';
+import { api } from '../../lib/apiClient';
+import { buildFetch } from '../../lib/buildData';
+import { breadcrumbJsonLd, itemListJsonLd } from '../../lib/seo';
 import type { HeroSummary } from '../../types/api';
 
-//SSG (prerendered) — the heroes meta table is the most-visited page
-//(requirements §B.2). In C4 this frontmatter does a BUILD-TIME fetch with retry
-//+ last-good fallback (architecture §7.2) to bake the rows into the HTML, e.g.:
-//   import { api } from '../../lib/apiClient';
-//   const heroes = await api.getHeroes().catch(() => [] as HeroSummary[]);
-//For the scaffold we render an empty state so the build never depends on a live
-//origin (build-ahead, §8.1).
-const heroes: HeroSummary[] = [];
+//SSG heroes meta table (requirements §B.2, the most-visited page). Rows are
+//fetched at BUILD time and handed to the island as initialRows, so the island's
+//server render bakes the real table into static HTML (SEO without JS); the rank
+//bucket filter then refetches client-side. Build-ahead: empty on a cold API.
+const heroes = await buildFetch(api.getHeroes(), [] as HeroSummary[]);
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const topNames = [...heroes]
+  .filter((h) => h.win_rate != null)
+  .sort((a, b) => (b.win_rate ?? 0) - (a.win_rate ?? 0))
+  .slice(0, 20)
+  .map((h) => h.hero_name);
+const jsonLd = [
+  breadcrumbJsonLd(origin, [
+    { name: 'Home', path: '/' },
+    { name: 'Heroes', path: '/heroes' },
+  ]),
+  itemListJsonLd('Deadlock hero meta', topNames),
+];
 ---
 
-<BaseLayout title="Heroes — RankLock" description="Deadlock hero win-rates by rank bracket.">
-  <main class="wrap">
-    <p class="kicker">Meta</p>
-    <h1 class="h-hero">Heroes</h1>
-    {
-      heroes.length === 0 ? (
-        <p class="muted">Hero meta table is wired but not yet served. (C4)</p>
-      ) : (
-        <ul>
-          {heroes.map((h) => (
-            <li>{h.hero_name}</li>
-          ))}
-        </ul>
-      )
-    }
+<BaseLayout
+  title="Hero meta & win-rates — RankLock"
+  description="Deadlock hero win-rates, meta tier list, pick rates and 7-day momentum by rank bracket. Find the best heroes at your rank."
+  canonicalPath="/heroes"
+  jsonLd={jsonLd}
+>
+  <main class="container">
+    <div class="kicker">The meta</div>
+    <h1 class="h-page">Hero win-rates</h1>
+    <p class="page-intro">
+      Every Deadlock hero ranked by win-rate, with a meta tier, pick share and 7-day momentum. Filter by rank
+      band to see the meta at your level — labelled by rank emblem, not MMR.
+    </p>
+    <div style="margin-top:20px;">
+      <HeroesTable initialRows={heroes} client:load />
+    </div>
   </main>
 </BaseLayout>

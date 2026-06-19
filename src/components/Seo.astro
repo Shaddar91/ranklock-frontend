@@ -1,0 +1,110 @@
+---
+//Per-route SEO meta layer (C4) + the cross-cutting locale SEO infra (C7):
+//<title>, description, canonical, OpenGraph, Twitter card, JSON-LD, hreflang
+//alternates, and the untranslated-locale noindex/canonical→English policy.
+//Rendered inside BaseLayout's <head>; the `locale` prop is the resolved
+//Astro.currentLocale forwarded by BaseLayout (lib/i18n is the source of truth).
+import { SITE_NAME, DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, TWITTER_HANDLE } from '../lib/seo';
+import {
+  resolveLocale,
+  isDefaultLocale,
+  stripLocalePrefix,
+  localePath,
+  hreflangAlternates,
+} from '../lib/i18n';
+
+interface Props {
+  title: string;
+  description?: string;
+  //path used for the canonical/OG url; defaults to the current route. Pages pass
+  //the de-localized (English, no-prefix) path — the locale logic re-prefixes it.
+  canonicalPath?: string;
+  //OG/Twitter image (path or absolute); defaults to the generic share image.
+  image?: string;
+  ogType?: string;
+  //one schema.org node or an array — emitted as a single @graph.
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  noindex?: boolean;
+  publishedTime?: string;
+  modifiedTime?: string;
+  //resolved current-locale code (from BaseLayout via Astro.currentLocale).
+  locale?: string;
+}
+
+const {
+  title,
+  description = DEFAULT_DESCRIPTION,
+  canonicalPath,
+  image = DEFAULT_OG_IMAGE,
+  ogType = 'website',
+  jsonLd,
+  noindex = false,
+  publishedTime,
+  modifiedTime,
+  locale,
+} = Astro.props;
+
+const site = Astro.site ?? new URL('https://ranklock.app');
+const localeDef = resolveLocale(locale);
+
+//Logical (English, no-prefix) path for this route — pages pass an en canonicalPath
+//(e.g. "/heroes"); fall back to the live pathname with any locale prefix stripped
+//(covers routes that don't set canonicalPath, e.g. the CSR /players/:id shell).
+const logicalPath = stripLocalePrefix(canonicalPath ?? Astro.url.pathname);
+
+//Canonical: self for the default (en) locale AND for any translated locale; an
+//UNTRANSLATED non-default locale canonicalizes to its English equivalent — it
+//serves duplicate English content until translated, so consolidate to en.
+const selfCanonical = isDefaultLocale(localeDef.code) || localeDef.translated;
+const canonicalTarget = selfCanonical ? localePath(localeDef.code, logicalPath) : logicalPath;
+const canonical = new URL(canonicalTarget, site).toString();
+
+//Interim policy: noindex untranslated non-default locales (they serve English).
+//`follow` lets crawlers reach the canonical en pages; the explicit per-page
+//`noindex` prop (cold-API placeholders, CSR shells, /styleguide) keeps its
+//original `nofollow`.
+const localeNoindex = !isDefaultLocale(localeDef.code) && !localeDef.translated;
+const robotsContent = noindex ? 'noindex, nofollow' : localeNoindex ? 'noindex, follow' : null;
+
+//hreflang cluster (translated locales + x-default), absolute per the design doc.
+const alternates = hreflangAlternates(logicalPath).map((a) => ({
+  hreflang: a.hreflang,
+  href: new URL(a.path, site).toString(),
+}));
+
+const ogImage = new URL(image, site).toString();
+
+const ldNodes = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+const ldGraph = ldNodes.length ? { '@context': 'https://schema.org', '@graph': ldNodes } : null;
+//Escape "<" so a stray "</script>" inside data can never break out of the tag.
+const ldJson = ldGraph ? JSON.stringify(ldGraph).replace(/</g, '\\u003c') : null;
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{robotsContent && <meta name="robots" content={robotsContent} />}
+
+<!-- hreflang alternates (C7). Only translated locales + x-default are advertised
+     (untranslated locales are noindex). x-default and en both point at the
+     no-prefix English URL; each newly-translated locale joins this cluster. -->
+{alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
+
+<!-- OpenGraph -->
+<meta property="og:site_name" content={SITE_NAME} />
+<meta property="og:type" content={ogType} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImage} />
+{publishedTime && <meta property="article:published_time" content={publishedTime} />}
+{modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content={TWITTER_HANDLE} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+
+{ldJson && <script is:inline type="application/ld+json" set:html={ldJson} />}

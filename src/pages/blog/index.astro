@@ -1,15 +1,62 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { breadcrumbJsonLd, SITE_NAME } from '../../lib/seo';
+import { shortDate } from '../../lib/format';
 
-//SSG (prerendered) — blog / guides index, the icy-veins SEO surface
-//(requirements §B.11). C4 enumerates slugs via getStaticPaths over the content
-//collection; this scaffold is an empty index.
+//SSG guides index (requirements §B.11) — the icy-veins-style SEO surface, built
+//from the blog content collection. Card grid of published posts, newest first.
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
+);
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = [
+  breadcrumbJsonLd(origin, [
+    { name: 'Home', path: '/' },
+    { name: 'Guides', path: '/blog' },
+  ]),
+  { '@type': 'Blog', name: `${SITE_NAME} Guides`, url: new URL('/blog', origin).toString() },
+];
 ---
 
-<BaseLayout title="Guides — RankLock" description="Deadlock guides fused with live self-updating stats.">
-  <main class="wrap">
-    <p class="kicker">Guides</p>
-    <h1 class="h-hero">Blog &amp; Guides</h1>
-    <p class="muted">Guides surface is wired but has no posts yet. (C4)</p>
+<BaseLayout
+  title="Deadlock guides & strategy — RankLock"
+  description="Deadlock hero guides, item builds and fundamentals — fused with live win-rates that update every patch, so the advice never goes stale."
+  canonicalPath="/blog"
+  jsonLd={jsonLd}
+>
+  <main class="container">
+    <div class="kicker">Guides fused with live stats</div>
+    <h1 class="h-page">Guides</h1>
+    <p class="page-intro">
+      Hero guides, builds and fundamentals — each one embeds live win-rates pulled from the current patch, so the
+      numbers never go stale.
+    </p>
+
+    {
+      posts.length === 0 ? (
+        <p class="muted" style="margin-top:20px;">No guides published yet — check back soon.</p>
+      ) : (
+        <div class="blog-grid" style="margin-top:20px;">
+          {posts.map((post) => (
+            <a class="panel blogcard" href={`/blog/${post.id}`}>
+              <div class="bc-title">{post.data.title}</div>
+              <p class="bc-desc">{post.data.description}</p>
+              <div class="between" style="margin-top:auto;">
+                <span class="label-xs" style="font-size:10px;">{shortDate(post.data.pubDate.toISOString())}</span>
+                {post.data.tags.length > 0 && (
+                  <div class="blog-tags">
+                    {post.data.tags.slice(0, 2).map((t) => (
+                      <span class="blog-tag">{t}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </a>
+          ))}
+        </div>
+      )
+    }
   </main>
 </BaseLayout>

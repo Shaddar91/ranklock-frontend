@@ -1,19 +1,53 @@
 ---
 import '../styles/global.css';
+import Seo from '../components/Seo.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import TrackingProvider from '../components/react/TrackingProvider';
+import ConsentBanner from '../components/react/ConsentBanner';
+import { resolveLocale } from '../lib/i18n';
 
-//Base HTML frame. The SEO meta layer (per-route OG/Twitter/JSON-LD/canonical +
-//hreflang) is added in C7. The full gaslamp design system (token sets + 5 skins +
-//foundry/arcane switcher, §9.3) landed in C3: styles/global.css is the entry, the
-//fonts are loaded here via <link>, and the default skin is `foundry`.
+//Base HTML frame + the gaslamp design system (C3) + the SEO meta layer (per-route
+//C4 + cross-cutting locale infra C7, both via <Seo>). Site chrome (sticky nav +
+//footer) wraps the page slot unless a page opts out with `chrome={false}` (e.g.
+//the /styleguide demo). <html lang> + hreflang + the untranslated-locale
+//noindex/canonical policy are driven by Astro.currentLocale (set from the URL
+//prefix by the i18n routing in astro.config.mjs); lib/i18n is the source of
+//truth. Pages can still inject per-route <link> tags via the named `head` slot.
+//Default skin is `foundry` (lib/theme).
 interface Props {
   title?: string;
   description?: string;
   lang?: string;
+  canonicalPath?: string;
+  image?: string;
+  ogType?: string;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  noindex?: boolean;
+  publishedTime?: string;
+  modifiedTime?: string;
+  //render the shared nav + footer (default true).
+  chrome?: boolean;
 }
+
+//Current locale from the URL (en at root, /ru/… etc.). Fallback-rewritten pages
+//(/ru/heroes …) report their prefix locale here, so <html lang> + the SEO layer
+//localize automatically with no per-page wiring.
+const currentLocale = resolveLocale(Astro.currentLocale);
+
 const {
   title = 'RankLock — Deadlock stats & guides',
-  description = 'Deadlock hero/item win-rates, player profiles, match deep-dives, and coaching.',
-  lang = 'en',
+  description,
+  //<html lang> defaults to the route's locale (BCP-47 tag); a page may override.
+  lang = currentLocale.hreflang,
+  canonicalPath,
+  image,
+  ogType,
+  jsonLd,
+  noindex = false,
+  publishedTime,
+  modifiedTime,
+  chrome = true,
 } = Astro.props;
 ---
 
@@ -23,8 +57,19 @@ const {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
+
+    <Seo
+      title={title}
+      description={description}
+      canonicalPath={canonicalPath}
+      image={image}
+      ogType={ogType}
+      jsonLd={jsonLd}
+      noindex={noindex}
+      publishedTime={publishedTime}
+      modifiedTime={modifiedTime}
+      locale={currentLocale.code}
+    />
 
     <!-- gaslamp display/mono fonts (Chakra Petch / Cinzel / JetBrains Mono). -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -52,6 +97,16 @@ const {
   </head>
   <body>
     <div class="app-bg" aria-hidden="true"></div>
+    {chrome && <SiteHeader />}
     <slot />
+    {chrome && <SiteFooter />}
+    <!-- Consent + analytics layer (C6) — global on EVERY page (incl. chrome=false).
+         TrackingProvider is behavior-only (renders null): consent-gated Matomo +
+         SPA route-change pageviews + Consent Mode v2. ConsentBanner is the
+         gaslamp cookie banner. Both are client:load (the eslint client:* guard
+         enforces the directive). Nothing tracks / no ad script loads until the
+         visitor accepts. -->
+    <TrackingProvider client:load />
+    <ConsentBanner client:load />
   </body>
 </html>

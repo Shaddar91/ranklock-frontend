@@ -1,26 +1,37 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import LeaderboardTable from '../components/react/LeaderboardTable';
+import { api } from '../lib/apiClient';
+import { buildFetch } from '../lib/buildData';
+import { breadcrumbJsonLd } from '../lib/seo';
 import type { LeaderboardEntry } from '../types/api';
 
-//SSG (prerendered) — leaderboard (requirements §B.1). C4 bakes the rows via a
-//build-time fetch (api.getLeaderboard) with retry + last-good fallback.
-const rows: LeaderboardEntry[] = [];
+//SSG leaderboard (requirements §B.1) — top-3 podium + ranked table. Build-time
+//rows seed the island so the server render holds the real ladder (SEO without
+//JS). The rank-band filter is client-side (the endpoint takes no bracket param).
+const rows = await buildFetch(api.getLeaderboard({ limit: 100 }), [] as LeaderboardEntry[]);
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = breadcrumbJsonLd(origin, [
+  { name: 'Home', path: '/' },
+  { name: 'Leaderboard', path: '/leaderboard' },
+]);
 ---
 
-<BaseLayout title="Leaderboard — RankLock" description="Top Deadlock players by rank.">
-  <main class="wrap">
-    <p class="kicker">Ranked</p>
-    <h1 class="h-hero">Leaderboard</h1>
-    {
-      rows.length === 0 ? (
-        <p class="muted">Leaderboard is wired but not yet served. (C4)</p>
-      ) : (
-        <ol>
-          {rows.map((r) => (
-            <li>{r.steam_name}</li>
-          ))}
-        </ol>
-      )
-    }
+<BaseLayout
+  title="Leaderboard — top Deadlock players | RankLock"
+  description="The global Deadlock ranked ladder — the highest-ranked players by rank, win-rate and matches played."
+  canonicalPath="/leaderboard"
+  jsonLd={jsonLd}
+>
+  <main class="container">
+    <div class="kicker">Global ranked ladder</div>
+    <h1 class="h-page">Leaderboard</h1>
+    <p class="page-intro">
+      The highest-ranked Deadlock players, with a podium for the top three. Filter by rank band — emblems, not MMR.
+    </p>
+    <div style="margin-top:20px;">
+      <LeaderboardTable initialRows={rows} client:load />
+    </div>
   </main>
 </BaseLayout>

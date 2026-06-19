@@ -1,0 +1,62 @@
+---
+//Site-wide footer (C4) — static internal links + the Valve disclaimer. All
+//server-rendered (no JS), so it contributes crawlable internal links.
+const cols = [
+  {
+    head: 'Stats',
+    links: [
+      { href: '/heroes', label: 'Hero meta' },
+      { href: '/items', label: 'Item win-rates' },
+      { href: '/leaderboard', label: 'Leaderboard' },
+      { href: '/matches', label: 'Recent matches' },
+    ],
+  },
+  {
+    head: 'Learn',
+    links: [
+      { href: '/blog', label: 'Guides' },
+      { href: '/support', label: 'Support RankLock' },
+    ],
+  },
+  {
+    head: 'About',
+    links: [
+      { href: '/privacy', label: 'Privacy & cookies' },
+      { href: '/privacy#consent', label: 'Cookie settings' },
+      { href: '/support', label: 'Go ad-free' },
+    ],
+  },
+];
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container" style="padding-top:28px; padding-bottom:28px;">
+    <div class="footer-grid">
+      <div>
+        <a class="wordmark" href="/" aria-label="RankLock home" style="margin-bottom:10px;">
+          <span class="wm-text" style="font-size:18px;">Rank<b>Lock</b></span>
+        </a>
+        <p class="faint" style="font-size:12px; max-width:34ch; margin:8px 0 0;">
+          Deadlock hero & item win-rates, player profiles and coaching — refreshed every patch.
+        </p>
+      </div>
+      {
+        cols.map((c) => (
+          <nav class="footer-col" aria-label={c.head}>
+            <div class="label-xs" style="margin-bottom:10px;">{c.head}</div>
+            {c.links.map((l) => (
+              <a class="footer-link" href={l.href}>
+                {l.label}
+              </a>
+            ))}
+          </nav>
+        ))
+      }
+    </div>
+    <div class="deco-rule" style="margin:22px 0 14px;"><span class="dia"></span></div>
+    <p class="faint" style="font-size:11px; text-align:center; margin:0;">
+      © {year} RankLock · Unofficial Deadlock stats — not affiliated with Valve · art © Valve Corporation
+    </p>
+  </div>
+</footer>

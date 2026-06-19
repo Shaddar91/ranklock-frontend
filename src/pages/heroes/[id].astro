@@ -1,0 +1,111 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import HeroDetailExtra from '../../components/react/HeroDetailExtra';
+import { api } from '../../lib/apiClient';
+import { buildFetch } from '../../lib/buildData';
+import { breadcrumbJsonLd } from '../../lib/seo';
+import { count, fixed, kda, metaTier, pct } from '../../lib/format';
+import type { HeroSummary } from '../../types/api';
+
+//SSG hero detail (requirements §B.3) — one prerendered page per hero id. The
+//entity header + headline stats are baked into static HTML for SEO; the deeper
+//matchups/builds tiers mount as ONE client:visible island that empty-states
+//until those endpoints serve (build-ahead). If the hero list is cold at build,
+//a single noindex placeholder keeps the route building.
+export async function getStaticPaths() {
+  const heroes = await buildFetch(api.getHeroes(), [] as HeroSummary[]);
+  if (heroes.length === 0) {
+    return [{ params: { id: 'example' }, props: { hero: null } }];
+  }
+  return heroes.map((h) => ({ params: { id: String(h.hero_id) }, props: { hero: h } }));
+}
+
+interface Props {
+  hero: HeroSummary | null;
+}
+const { hero } = Astro.props;
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const name = hero?.hero_name ?? 'Hero';
+const title = hero
+  ? `${name} — win rate, builds & matchups | RankLock`
+  : 'Hero — RankLock';
+const description = hero
+  ? `${name} Deadlock stats: win-rate, pick rate, KDA, matchups and community builds by rank bracket.`
+  : 'Deadlock hero detail.';
+const canonicalPath = hero ? `/heroes/${hero.hero_id}` : '/heroes';
+const jsonLd = breadcrumbJsonLd(origin, [
+  { name: 'Home', path: '/' },
+  { name: 'Heroes', path: '/heroes' },
+  { name, path: canonicalPath },
+]);
+
+const tier = metaTier(hero?.win_rate);
+const heroKda = kda(hero?.avg_kills, hero?.avg_deaths, hero?.avg_assists);
+---
+
+<BaseLayout title={title} description={description} canonicalPath={canonicalPath} jsonLd={jsonLd} noindex={!hero}>
+  <main class="container">
+    <nav class="kicker" style="margin-bottom:14px;">
+      <a href="/heroes" style="color:var(--muted);">← All heroes</a>
+    </nav>
+
+    {
+      hero ? (
+        <div>
+          <div class="entity-head">
+            <span class="entity-art">
+              {hero.icon_url ? (
+                <img src={hero.icon_url} alt={name} />
+              ) : (
+                <span class="icon-mono" style="font-size:32px; display:flex; width:100%; height:100%; align-items:center; justify-content:center;">
+                  {name.slice(0, 1)}
+                </span>
+              )}
+            </span>
+            <div>
+              <div class="kicker">Hero · Deadlock</div>
+              <h1 class="h-page">{name}</h1>
+              {tier && <span class="chip" style="margin-top:6px;">Meta tier {tier}</span>}
+            </div>
+          </div>
+
+          <div class="stat-grid" style="margin-bottom:24px;">
+            <div class="tile statile">
+              <div class="label-xs">Win rate</div>
+              <div class="display tnum" style="font-size:26px; font-weight:700; color:var(--win);">{pct(hero.win_rate)}</div>
+            </div>
+            <div class="tile statile">
+              <div class="label-xs">Picks</div>
+              <div class="display tnum" style="font-size:26px; font-weight:700;">{count(hero.picks)}</div>
+            </div>
+            <div class="tile statile">
+              <div class="label-xs">KDA</div>
+              <div class="display tnum" style="font-size:26px; font-weight:700;">{fixed(heroKda)}</div>
+            </div>
+            <div class="tile statile">
+              <div class="label-xs">Avg souls</div>
+              <div class="display tnum" style="font-size:26px; font-weight:700; color:var(--gold);">{count(hero.avg_net_worth)}</div>
+            </div>
+          </div>
+
+          <section class="panel panel-pad">
+            <h2 class="h-sec" style="margin-bottom:6px;">Matchups, synergies & builds</h2>
+            <p class="muted" style="font-size:13px; margin:0 0 10px;">
+              Per-bracket counters, best-duo synergies and top community builds — fills in as the analytics pipeline serves.
+            </p>
+            <HeroDetailExtra heroId={hero.hero_id} client:visible />
+          </section>
+        </div>
+      ) : (
+        <div>
+          <h1 class="h-page">Hero stats</h1>
+          <p class="page-intro">
+            Hero detail comes online with the stats API. Browse the <a href="/heroes">hero meta table</a> for the
+            full roster.
+          </p>
+        </div>
+      )
+    }
+  </main>
+</BaseLayout>

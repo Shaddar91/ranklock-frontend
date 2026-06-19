@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PatchTrackerIsland from '../components/react/PatchTrackerIsland';
+import { api } from '../lib/apiClient';
+import { buildFetch } from '../lib/buildData';
+import { breadcrumbJsonLd } from '../lib/seo';
+import type { Patch } from '../types/api';
+
+//SSG patch tracker (requirements §A.4 — the largest backend-ahead block, zero FE
+//refs before C9). The patch LIST is fetched at build time and handed to the
+//island as initialPatches so the page has real patch versions in its first
+//render; the per-patch detail + movers fetch client-side. Build-ahead: empty on
+//a cold patch table (no rows ingested yet).
+const patches = await buildFetch(api.getPatches(), [] as Patch[]);
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = breadcrumbJsonLd(origin, [
+  { name: 'Home', path: '/' },
+  { name: 'Patches', path: '/patches' },
+]);
+---
+
+<BaseLayout
+  title="Deadlock patch tracker — hero meta shifts | RankLock"
+  description="Track how each Deadlock patch shifts the hero meta: pick-rate gainers and losers, win-rate deltas and per-bracket hero stats patch over patch."
+  canonicalPath="/patches"
+  jsonLd={jsonLd}
+>
+  <main class="container">
+    <div class="kicker">Patch tracking</div>
+    <h1 class="h-page">Patch meta shifts</h1>
+    <p class="page-intro">
+      How each Deadlock patch moves the meta — the biggest pick-rate gainers and losers, win-rate deltas, and
+      the full hero stat line by rank bracket. Pick a patch and a rank band to see what changed.
+    </p>
+    <div style="margin-top:20px;">
+      <PatchTrackerIsland initialPatches={patches} client:load />
+    </div>
+  </main>
+</BaseLayout>
