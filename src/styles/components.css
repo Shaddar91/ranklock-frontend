@@ -956,6 +956,53 @@ textarea {
   color: var(--faint);
 }
 
+/* compact nav variant: a single native <select> over all 5 skins.
+   replaces the space-eating .themesw-group button row in the header — same
+   choose()/applyTheme() path, just a denser control. */
+.themesw--compact {
+  gap: 0;
+}
+.themesw-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 30px 6px 12px;
+  background-color: var(--surface);
+  /* down-chevron drawn with a tiny inline SVG data-uri — no icon font, no raster
+     (stays inside the perf budget); neutral grey reads on all 5 skins */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' stroke='%23a8b0bd' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  transition: var(--t-fast);
+}
+.themesw-select:hover {
+  background-color: var(--raised);
+  border-color: var(--cyan);
+}
+.themesw-select:focus-visible {
+  outline: none;
+  border-color: var(--cyan);
+  box-shadow:
+    0 0 0 1px var(--cyan) inset,
+    0 0 18px -8px var(--cyan);
+}
+/* the OS chrome renders the open option list; set readable colors where honored */
+.themesw-select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
 /* ============================================================
    NEW (C6): cookie-consent banner, consent switches, legal prose
    ============================================================ */
