@@ -455,6 +455,47 @@ export interface ItemModifier {
   modifiers: unknown[];
 }
 
+//---- Lane Lab (rich-analytics tier, RICH_ANALYTICS_ENABLED gate) -------------
+//Modeled on deadlock-backend/src/handlers/lane_lab.rs. Cohort curves are
+//reconstructed at READ time from the additive counting histograms, so 501
+//(feature off) / 202 (producers haven't run) are the expected pre-data states —
+//handle via isDisabled/isComputing, never as a hard error.
+
+//GET /lane-lab/economy-curve?band=&metric=  and  /lane-lab/farm-curve (CurveResponse).
+//One point per 180s grid index. p25/p50/p75 are VALUE-BUCKET indices, not raw
+//units — the per-metric encoding (souls = net_worth/1000; last_hits/kills/… = raw
+//count) means real souls = p50 * 1000. p* are null when a minute has no samples.
+//`band` = rank tier (badge/10, 0..11); null when all bands were aggregated.
+export interface LaneCurvePoint {
+  minute_bucket: number;
+  //wall-clock seconds at this point (= minute_bucket * 180).
+  t_seconds: number;
+  sample_players: number;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+}
+export interface LaneCurveResponse {
+  band: number | null;
+  metric: string;
+  points: LaneCurvePoint[];
+}
+
+//GET /lane-lab/early-econ-verdict?band=  (VerdictResponse). Per-9-min-souls-bucket
+//win rate (wins/games, 0..1) — "does your 9-minute economy predict the win?".
+//souls_floor = souls_bucket_9min * 1000 (the bucket's lower souls edge).
+export interface EarlyEconVerdictBucket {
+  souls_bucket_9min: number;
+  souls_floor: number;
+  games: number;
+  wins: number;
+  win_rate: number;
+}
+export interface EarlyEconVerdictResponse {
+  band: number | null;
+  buckets: EarlyEconVerdictBucket[];
+}
+
 //---- auth / session ---------------------------------------------------------
 
 //GET /me   (auth_email::UserContext). 401 when not logged in.

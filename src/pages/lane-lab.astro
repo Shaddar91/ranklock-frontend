@@ -1,13 +1,16 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import LaneLabIsland from '../components/react/LaneLabIsland';
 import { breadcrumbJsonLd } from '../lib/seo';
 
-//Lane Lab (brief §7B — the signature economy-curve coaching surface). PLACEHOLDER
-//route: the backend `ranklock-lane-lab` repo exists but wiring real per-minute
-//economy / soul-curve data is out of scope here. Pure SSG (no island, no data
-//fetch) — static "coming soon" chrome that reuses the shared page-header + panel
-//design system, so it themes with the rest of the app and stays inside the perf
-//budget. Snaps to a real coaching surface once the backend is consumed.
+//Lane Lab (brief §7B — the signature economy-curve coaching surface). The static
+//chrome (page-header + intro copy) is SSG for SEO; the data surface is ONE React
+//island (LaneLabIsland) hydrated client-side that fetches the rich-analytics lane
+//endpoints (/lane-lab/economy-curve + /lane-lab/early-econ-verdict) at runtime.
+//client:visible defers the Recharts bundle until the curve scrolls into view, so
+//the page stays inside the perf budget. The island empty-states (keeping the
+//"coming soon" copy) until RICH_ANALYTICS_ENABLED is on and the lane producers
+//have run — it never white-screens (requirements §8.1).
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
@@ -17,7 +20,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
 
 <BaseLayout
   title="Deadlock Lane Lab — per-minute economy & soul-curve coaching | RankLock"
-  description="Lane Lab: per-minute economy and soul-curve coaching for Deadlock — see your souls over match minutes against the rank you're chasing, with gold-source breakdowns and ranked coaching tips. Coming soon."
+  description="Lane Lab: per-minute economy and soul-curve coaching for Deadlock — see your souls over match minutes against the rank you're chasing, with a 9-minute early-economy win-rate verdict and ranked coaching tips."
   canonicalPath="/lane-lab"
   jsonLd={jsonLd}
 >
@@ -26,16 +29,11 @@ const jsonLd = breadcrumbJsonLd(origin, [
     <h1 class="h-page">Lane Lab</h1>
     <p class="page-intro">
       Per-minute economy and soul-curve coaching — your souls over match minutes against the rank you're
-      chasing, gold-source breakdowns, and ranked coaching tips. The signature "where am I losing the lane"
-      surface.
+      chasing, a 9-minute early-economy win-rate verdict, and where the lane is being lost. The signature
+      "where am I losing the lane" surface.
     </p>
-    <section class="panel panel-pad" aria-labelledby="lanelab-soon-h" style="margin-top:20px;">
-      <h2 id="lanelab-soon-h" class="h-sec">Soul curve vs Oracle</h2>
-      <p class="page-intro" style="margin:8px 0 14px;">
-        Coming soon — a per-minute economy curve plotting your souls against the "Oracle" cohort one tier up,
-        a gold-source breakdown of where the gap opens, and ranked coaching tips on how to close it.
-      </p>
-      <div class="support-soon" role="status">Coming soon — per-minute economy &amp; soul-curve coaching</div>
-    </section>
+    <div style="margin-top:20px;">
+      <LaneLabIsland client:visible />
+    </div>
   </main>
 </BaseLayout>

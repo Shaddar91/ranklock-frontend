@@ -18,6 +18,7 @@ import type {
   BadgeHistoryRow,
   CompareResponse,
   CurrentUser,
+  EarlyEconVerdictResponse,
   HealthResponse,
   HeroBracket,
   HeroCountersResponse,
@@ -29,6 +30,7 @@ import type {
   ImproveResponse,
   ItemModifier,
   ItemStat,
+  LaneCurveResponse,
   LeaderboardEntry,
   MatchDetail,
   MatchRow,
@@ -169,6 +171,9 @@ export const queryKeys = {
   heroBaseStatsOne: (id: number, params?: Query) =>
     ['build-lab', 'hero-base-stats', id, params ?? {}] as const,
   itemModifiers: (params?: Query) => ['build-lab', 'item-modifiers', params ?? {}] as const,
+  //Lane Lab surface (rich-analytics tier) — cohort economy curves + early-econ verdict.
+  laneEconomyCurve: (params?: Query) => ['lane-lab', 'economy-curve', params ?? {}] as const,
+  laneEarlyEconVerdict: (params?: Query) => ['lane-lab', 'early-econ-verdict', params ?? {}] as const,
   me: () => ['me'] as const,
 };
 
@@ -229,6 +234,14 @@ export const api = {
     apiFetch<HeroBaseStats>(`/heroes/${id}/base-stats`, { query: { patch_id } }),
   getItemModifiers: (params?: { slot?: string; tier?: number }) =>
     apiFetch<ItemModifier[]>('/items/modifiers', { query: params }),
+
+  //Lane Lab (rich-analytics tier — RICH_ANALYTICS_ENABLED gate). `band` is the
+  //rank tier (badge/10, 0..11); omit it to aggregate all bands. 501 while the
+  //flag is off, 202 until the lane producers have run — callers empty-state both.
+  getLaneEconomyCurve: (params?: { band?: number; metric?: string }) =>
+    apiFetch<LaneCurveResponse>('/lane-lab/economy-curve', { query: params }),
+  getLaneEarlyEconVerdict: (params?: { band?: number }) =>
+    apiFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
 
   //stats + session
   getRankDistribution: () => apiFetch<RankBucket[]>('/stats/rank-distribution'),
