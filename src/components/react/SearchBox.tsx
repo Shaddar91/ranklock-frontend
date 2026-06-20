@@ -54,11 +54,11 @@ function SearchInner({ variant = 'large', placeholder }: SearchBoxProps) {
   const compact = variant === 'compact';
 
   return (
-    <div className="searchbig" style={compact ? { maxWidth: 230 } : undefined}>
+    <div className="searchbig" style={compact ? { minWidth: 0 } : undefined}>
       <Icon name="search" size={compact ? 16 : 20} style={compact ? { left: 12 } : undefined} />
       <input
         className="field"
-        style={compact ? { height: 38, paddingLeft: 36, fontSize: 13 } : undefined}
+        style={compact ? { height: 38, paddingLeft: 36, fontSize: 13, maxWidth: '100%', minWidth: 0 } : undefined}
         placeholder={placeholder ?? 'Search a player, Steam ID, or hero…'}
         value={raw}
         onChange={(e) => {

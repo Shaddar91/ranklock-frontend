@@ -12,6 +12,7 @@
   gap: 2px;
   margin-left: 18px;
   flex: 1;
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -23,9 +24,26 @@
   gap: 10px;
   flex: none;
 }
+/* Tools group stays flex:none, but its children must be allowed to shrink and the
+   compact search must scale with the viewport — otherwise the fixed-width search +
+   theme switcher overflow into the nav links (and each other) below ~1100px. */
+.nav-tools > * {
+  min-width: 0;
+}
+.nav-tools .searchbig {
+  max-width: clamp(140px, 22vw, 280px);
+  min-width: 0;
+}
 @media (max-width: 1100px) {
   .nav-tools .themesw-lbl {
     display: none;
+  }
+}
+/* Below ~960px compress the search further so it yields width before the nav links
+   get squeezed — search compresses first, then hides entirely at 860px. */
+@media (max-width: 960px) {
+  .nav-tools .searchbig {
+    max-width: 180px;
   }
 }
 @media (max-width: 860px) {
