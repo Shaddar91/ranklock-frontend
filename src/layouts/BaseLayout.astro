@@ -81,14 +81,52 @@ const {
 
     <slot name="head" />
     <script is:inline>
-      //Apply the persisted skin before first paint to avoid a flash. Mirrors
-      //lib/theme (STORAGE_KEY 'ranklock-theme', default already on <html>); kept
-      //inline + duplicated because is:inline scripts cannot import a module.
+      //Apply the persisted skin + art-direction tweaks before first paint to avoid
+      //a flash. Mirrors lib/theme (data-theme) + lib/tweaks (the data-* contract +
+      //the --cyan-* HUD accent); kept inline + duplicated because is:inline scripts
+      //cannot import a module — keep these tables in sync with lib/tweaks.ts.
       (() => {
         try {
-          const valid = ['foundry', 'arcane', 'aether', 'gaslamp', 'obsidian'];
-          const t = localStorage.getItem('ranklock-theme');
-          if (t && valid.includes(t)) document.documentElement.dataset.theme = t;
+          const el = document.documentElement;
+          const get = (k) => {
+            try {
+              return localStorage.getItem(k);
+            } catch {
+              return null;
+            }
+          };
+          //theme (data-theme) — default 'foundry' already on <html>.
+          const themes = ['foundry', 'arcane', 'aether', 'gaslamp', 'obsidian'];
+          const t = get('ranklock-theme');
+          const activeTheme = t && themes.includes(t) ? t : 'foundry';
+          if (t && themes.includes(t)) el.dataset.theme = t;
+          //enum tweaks → data-* attributes (always set, default included).
+          const tweaks = [
+            ['ranklock-atmos', 'data-atmos', ['hero', 'off'], 'hero'],
+            ['ranklock-promo', 'data-promo', ['on', 'off'], 'on'],
+            ['ranklock-brass', 'data-brass', ['bold', 'minimal'], 'bold'],
+            ['ranklock-density', 'data-density', ['compact', 'regular', 'comfy'], 'regular'],
+            ['ranklock-table', 'data-table', ['zebra', 'plain', 'lined'], 'zebra'],
+            ['ranklock-badge', 'data-badge', ['full', 'emblem-only', 'label-only'], 'full'],
+            ['ranklock-radar', 'data-radar', ['filled', 'line'], 'filled'],
+          ];
+          for (const [key, attr, valid, def] of tweaks) {
+            const v = get(key);
+            el.setAttribute(attr, v && valid.includes(v) ? v : def);
+          }
+          //HUD accent → --cyan-* overrides, only while Aether is active.
+          const accents = {
+            '#22d3ee': ['#22d3ee', '#06b6d4', '#0891b2', '#0e7490'],
+            '#a78bfa': ['#a78bfa', '#8b5cf6', '#7c3aed', '#6d28d9'],
+            '#fbbf24': ['#fbbf24', '#f59e0b', '#d97706', '#b45309'],
+          };
+          if (activeTheme === 'aether') {
+            const raw = (get('ranklock-accent') || '').toLowerCase();
+            const steps = accents[raw] || accents['#22d3ee'];
+            ['--cyan-bright', '--cyan', '--cyan-deep', '--cyan-deeper'].forEach((p, i) =>
+              el.style.setProperty(p, steps[i]),
+            );
+          }
         } catch {
           /* ignore storage access errors (private mode / disabled cookies) */
         }
