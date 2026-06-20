@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { breadcrumbJsonLd } from '../lib/seo';
+
+//Lane Lab (brief §7B — the signature economy-curve coaching surface). PLACEHOLDER
+//route: the backend `ranklock-lane-lab` repo exists but wiring real per-minute
+//economy / soul-curve data is out of scope here. Pure SSG (no island, no data
+//fetch) — static "coming soon" chrome that reuses the shared page-header + panel
+//design system, so it themes with the rest of the app and stays inside the perf
+//budget. Snaps to a real coaching surface once the backend is consumed.
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = breadcrumbJsonLd(origin, [
+  { name: 'Home', path: '/' },
+  { name: 'Lane Lab', path: '/lane-lab' },
+]);
+---
+
+<BaseLayout
+  title="Deadlock Lane Lab — per-minute economy & soul-curve coaching | RankLock"
+  description="Lane Lab: per-minute economy and soul-curve coaching for Deadlock — see your souls over match minutes against the rank you're chasing, with gold-source breakdowns and ranked coaching tips. Coming soon."
+  canonicalPath="/lane-lab"
+  jsonLd={jsonLd}
+>
+  <main class="container">
+    <div class="kicker">Coaching</div>
+    <h1 class="h-page">Lane Lab</h1>
+    <p class="page-intro">
+      Per-minute economy and soul-curve coaching — your souls over match minutes against the rank you're
+      chasing, gold-source breakdowns, and ranked coaching tips. The signature "where am I losing the lane"
+      surface.
+    </p>
+    <section class="panel panel-pad" aria-labelledby="lanelab-soon-h" style="margin-top:20px;">
+      <h2 id="lanelab-soon-h" class="h-sec">Soul curve vs Oracle</h2>
+      <p class="page-intro" style="margin:8px 0 14px;">
+        Coming soon — a per-minute economy curve plotting your souls against the "Oracle" cohort one tier up,
+        a gold-source breakdown of where the gap opens, and ranked coaching tips on how to close it.
+      </p>
+      <div class="support-soon" role="status">Coming soon — per-minute economy &amp; soul-curve coaching</div>
+    </section>
+  </main>
+</BaseLayout>
