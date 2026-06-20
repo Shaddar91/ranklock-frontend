@@ -54,6 +54,15 @@ import type {
 export const API_BASE: string =
   import.meta.env.PUBLIC_API_BASE_URL?.replace(/\/+$/, '') ?? 'https://api.ranklock.app';
 
+//Base URL of the standalone Lane Lab service (ranklock-lane-lab; :8100 local). Lane Lab is its OWN
+//service, deployed/scaled/failed independently of the main API ("Lane Lab = its own service" —
+//ranklock-lane-lab/CLAUDE.md). The Lane Lab endpoint methods go through `laneLabFetch` against this
+//base. When PUBLIC_LANE_LAB_BASE_URL is UNSET it falls back to API_BASE, so Lane Lab keeps resolving
+//against whatever serves /lane-lab/* today (the backend) with no behavior change until a real Lane
+//Lab origin is wired in an environment.
+export const LANE_LAB_BASE: string =
+  import.meta.env.PUBLIC_LANE_LAB_BASE_URL?.replace(/\/+$/, '') ?? API_BASE;
+
 //A non-2xx (or transport) failure, carrying the HTTP status so callers can
 //branch on 202/501/401 without re-parsing the response.
 export class ApiError extends Error {
@@ -88,8 +97,8 @@ export const isNotFound = (err: unknown): err is ApiError =>
 
 type Query = Record<string, string | number | boolean | null | undefined>;
 
-function buildUrl(path: string, query?: Query): string {
-  const url = new URL(`${API_BASE}${path.startsWith('/') ? path : `/${path}`}`);
+function buildUrl(base: string, path: string, query?: Query): string {
+  const url = new URL(`${base}${path.startsWith('/') ? path : `/${path}`}`);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined && value !== null && value !== '') {
@@ -101,15 +110,18 @@ function buildUrl(path: string, query?: Query): string {
 }
 
 /**
- * Core fetch. Sends cookies (`credentials: 'include'`) so cross-origin "My
- * Stats" calls to api.ranklock.app carry the session (requirements §A.7), asks
- * for JSON, and throws a typed `ApiError` on any non-2xx. 204/205 → undefined.
+ * Core fetch against an explicit base URL. Sends cookies (`credentials: 'include'`)
+ * so cross-origin "My Stats" calls carry the session (requirements §A.7), asks for
+ * JSON, and throws a typed `ApiError` on any non-2xx. 204/205 → undefined. The base
+ * is a parameter so the same contract serves both the main API (`apiFetch`) and the
+ * standalone Lane Lab service (`laneLabFetch`).
  */
-export async function apiFetch<T>(
+async function fetchFrom<T>(
+  base: string,
   path: string,
   opts: { query?: Query; init?: RequestInit } = {},
 ): Promise<T> {
-  const url = buildUrl(path, opts.query);
+  const url = buildUrl(base, path, opts.query);
   let res: Response;
   try {
     res = await fetch(url, {
@@ -133,6 +145,26 @@ export async function apiFetch<T>(
     return undefined as T;
   }
   return (await res.json()) as T;
+}
+
+/** Fetch against the main API base (api.ranklock.app / PUBLIC_API_BASE_URL). */
+export function apiFetch<T>(
+  path: string,
+  opts: { query?: Query; init?: RequestInit } = {},
+): Promise<T> {
+  return fetchFrom<T>(API_BASE, path, opts);
+}
+
+/**
+ * Fetch against the standalone Lane Lab service base (ranklock-lane-lab / PUBLIC_LANE_LAB_BASE_URL).
+ * Identical credentialed + typed-ApiError contract as `apiFetch`; only the base URL differs, so a
+ * logged-in user's `session_id` cookie (shared via the same Redis store) rides along to Lane Lab.
+ */
+export function laneLabFetch<T>(
+  path: string,
+  opts: { query?: Query; init?: RequestInit } = {},
+): Promise<T> {
+  return fetchFrom<T>(LANE_LAB_BASE, path, opts);
 }
 
 //---- query-key factory (TanStack Query) -------------------------------------
@@ -235,13 +267,18 @@ export const api = {
   getItemModifiers: (params?: { slot?: string; tier?: number }) =>
     apiFetch<ItemModifier[]>('/items/modifiers', { query: params }),
 
-  //Lane Lab (rich-analytics tier — RICH_ANALYTICS_ENABLED gate). `band` is the
-  //rank tier (badge/10, 0..11); omit it to aggregate all bands. 501 while the
-  //flag is off, 202 until the lane producers have run — callers empty-state both.
+  //Lane Lab (rich-analytics tier — RICH_ANALYTICS_ENABLED gate). Served by the standalone Lane Lab
+  //SERVICE (ranklock-lane-lab) via `laneLabFetch`/LANE_LAB_BASE, not the main API. `band` is the
+  //rank tier (badge/10, 0..11); omit it to aggregate all bands. 501 while the flag is off, 202 until
+  //the lane producers have run — callers empty-state both.
+  //NOTE: these `/lane-lab/*` paths mirror deadlock-backend/src/handlers/lane_lab.rs (the API the
+  //frontend was modeled on). The standalone service currently exposes /cohort/economy-curve +
+  ///me/economy-overlay instead — see the C4 deliverable for the route-reconciliation the owner/next
+  //component must land (service grows /lane-lab/* OR this island is reworked to the /cohort/* shape).
   getLaneEconomyCurve: (params?: { band?: number; metric?: string }) =>
-    apiFetch<LaneCurveResponse>('/lane-lab/economy-curve', { query: params }),
+    laneLabFetch<LaneCurveResponse>('/lane-lab/economy-curve', { query: params }),
   getLaneEarlyEconVerdict: (params?: { band?: number }) =>
-    apiFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
+    laneLabFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
 
   //stats + session
   getRankDistribution: () => apiFetch<RankBucket[]>('/stats/rank-distribution'),

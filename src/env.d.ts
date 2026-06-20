@@ -8,6 +8,9 @@
 interface ImportMetaEnv {
   //Base URL of the Rust/Axum JSON API (e.g. https://api.ranklock.app).
   readonly PUBLIC_API_BASE_URL?: string;
+  //Base URL of the standalone Lane Lab service (ranklock-lane-lab; :8100 local). Lane Lab is its
+  //OWN service, separate from the main API. Unset => falls back to PUBLIC_API_BASE_URL.
+  readonly PUBLIC_LANE_LAB_BASE_URL?: string;
   //Self-hosted Matomo base URL.
   readonly PUBLIC_MATOMO_URL?: string;
   //RankLock's Matomo site id.
