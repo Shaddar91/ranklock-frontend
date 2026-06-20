@@ -244,11 +244,15 @@
   --cyan-deep: #805ad5;
   --cyan-deeper: #6b46c1;
   --glow-you: rgba(187, 155, 247, 0.5);
-  --brass-1: #e6c98a;
-  --brass-2: #c39b4e;
-  --brass-3: #8f6c30;
-  --brass-4: #5e4720;
-  --brass-edge: #d8b76a;
+  /* violet-brass: an amethyst/pewter metal family so the brass chrome
+     (.btn-brass, .brass-frame, kickers, corners, section heads) reads
+     cool violet to match the accent — not warm gold copied from foundry. */
+  --brass-1: #c9a8d8;
+  --brass-2: #9d7bb8;
+  --brass-3: #6e5090;
+  --brass-4: #483064;
+  --brass-edge: #b088c0;
+  --brass-shadow: #241830;
 }
 [data-theme='arcane'] .app-bg {
   background:
