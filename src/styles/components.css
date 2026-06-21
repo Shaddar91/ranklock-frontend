@@ -147,6 +147,14 @@
 .btn-ghost {
   background: transparent;
 }
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn:disabled:hover {
+  background: var(--raised);
+  border-color: var(--border);
+}
 
 /* ---------- fields ---------- */
 input,

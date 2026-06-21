@@ -62,3 +62,15 @@ export function heroBracketParam(key: RankBucket['key']): HeroBracket | undefine
 export function itemBracketParam(key: RankBucket['key']): number {
   return typeof key === 'number' ? key : 0;
 }
+
+//A rank band's tiers → the inclusive badge range the backend's /leaderboard
+//filters on (badge = tier*10 + subrank, subranks I–VI). Mirrors the verified
+//items `bracket_badge_range` convention (tier*10+1 … tier*10+6): Oracle–Phantom
+//(tiers 8,9) → 81…96, Ascendant–Eternus (10,11) → 101…116. Empty tiers ("All
+//ranks") → null so the caller omits both params and gets the full ladder.
+export function badgeRangeForTiers(
+  tiers: readonly number[],
+): { min_badge: number; max_badge: number } | null {
+  if (tiers.length === 0) return null;
+  return { min_badge: Math.min(...tiers) * 10 + 1, max_badge: Math.max(...tiers) * 10 + 6 };
+}

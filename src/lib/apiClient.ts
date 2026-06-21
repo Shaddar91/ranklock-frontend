@@ -215,9 +215,18 @@ export const queryKeys = {
 export const api = {
   getHealth: () => apiFetch<HealthResponse>('/health'),
 
-  //SEO / reference surface (SSG build-time fetch + CSR)
-  getLeaderboard: (params?: { patch_id?: number; limit?: number; cursor?: string }) =>
-    apiFetch<LeaderboardEntry[]>('/leaderboard', { query: params }),
+  //SEO / reference surface (SSG build-time fetch + CSR). `offset`/`limit` page the
+  //ladder server-side and `min_badge`/`max_badge` (badge = tier*10+subrank) drive the
+  //rank-band filter — both implemented backend-side (leaderboard Component 1). Omitting
+  //the badge pair returns the full ladder. The old `cursor` param was vestigial — the
+  //backend `/leaderboard` Paging never read it — so it is dropped.
+  getLeaderboard: (params?: {
+    patch_id?: number;
+    limit?: number;
+    offset?: number;
+    min_badge?: number;
+    max_badge?: number;
+  }) => apiFetch<LeaderboardEntry[]>('/leaderboard', { query: params }),
   getHeroes: (params?: { bracket?: HeroBracket; patch_id?: number }) =>
     apiFetch<HeroSummary[]>('/heroes', { query: params }),
   getHeroStats: (id: number, bracket?: HeroBracket) =>

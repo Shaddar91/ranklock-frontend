@@ -1,22 +1,27 @@
 //Leaderboard island (mount with client:load on /leaderboard).
 //
-//Top-3 podium strip + the ranked table below. SSG-friendly: the page bakes the
-//build-time rows as initialRows so the server render holds the real ladder (SEO
-//without JS). The rank-band filter is CLIENT-SIDE (the /leaderboard endpoint
-//takes no bracket param) — it filters the loaded rows by badge tier, labelled by
-//rank emblem, never MMR.
+//Top-3 podium strip + the ranked table below, with Next/Prev paging. SSG-friendly:
+//the page bakes page 1 of the default band as initialRows so the server render
+//holds the real ladder (SEO without JS). The rank-band filter is SERVER-DRIVEN —
+//a band sends min_badge/max_badge (badge tiers, labelled by rank emblem, never
+//MMR) and offset/limit page the ladder; both ride in the React Query key.
 import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
-import { DataTable, type DataTableColumn, RankBadge, WinBar } from './ui/index';
+import { DataTable, type DataTableColumn, Icon, RankBadge, WinBar } from './ui/index';
 import BucketFilter from './ui/BucketFilter';
-import type { RankBucket } from '../../lib/brackets';
+import { badgeRangeForTiers, type RankBucket } from '../../lib/brackets';
 import { rankFromBadge, subLabel } from '../../lib/ranks';
 import { count, DASH } from '../../lib/format';
 import type { LeaderboardEntry } from '../../types/api';
 
 type RankedEntry = LeaderboardEntry & { rank: number };
+
+//Rows per ladder page. Shared with the SSG seed in leaderboard.astro so the
+//build-time fetch and the page-1 client query request the same window (its rows
+//become React Query's initialData for the default band's first page).
+export const LEADERBOARD_PAGE_SIZE = 50;
 
 //Leaderboard-specific bands: top players cluster in the upper tiers, so the
 //filter offers All + the meaningful high/top bands (rank-emblem labelled).
@@ -90,26 +95,53 @@ function Podium({ rows }: { rows: RankedEntry[] }) {
 
 function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) {
   const [bucket, setBucket] = useState<RankBucket['key']>('all');
+  const [offset, setOffset] = useState(0);
 
-  const { data, isPending, isError } = useQuery({
-    queryKey: queryKeys.leaderboard({ limit: 100 }),
-    queryFn: () => api.getLeaderboard({ limit: 100 }),
-    initialData: initialRows,
+  //Server-driven now. The old path loaded a fixed top-100 and filtered bands
+  //CLIENT-SIDE, so picking Oracle/Phantom (tiers 8,9) over a top-100 that is all
+  //tier 10/11 showed an empty table. Instead the band sends min_badge/max_badge
+  //(badge tiers, not a row filter) and offset/limit page the ladder server-side.
+  const band = LEADERBOARD_BUCKETS.find((b) => b.key === bucket);
+  const badgeRange = badgeRangeForTiers(band?.tiers ?? []);
+  const params: { limit: number; offset: number; min_badge?: number; max_badge?: number } = {
+    limit: LEADERBOARD_PAGE_SIZE,
+    offset,
+    ...(badgeRange ?? {}),
+  };
+
+  //offset + band ride in the queryKey (queryKeys.leaderboard spreads params) so
+  //every page/band caches separately; keepPreviousData keeps the prior page
+  //on-screen for a smooth swap. initialData seeds ONLY the SSG default key (all
+  //ranks, page 1) — seeding another page/band with the all-ranks rows is wrong.
+  const isDefaultPage = bucket === 'all' && offset === 0;
+
+  const { data, isPending, isError, isPlaceholderData } = useQuery({
+    queryKey: queryKeys.leaderboard(params),
+    queryFn: () => api.getLeaderboard(params),
+    initialData: isDefaultPage ? initialRows : undefined,
     placeholderData: keepPreviousData,
   });
 
-  const ranked = useMemo<RankedEntry[]>(() => {
-    const all = (data ?? []).map((r, i) => ({ ...r, rank: i + 1 }));
-    const band = LEADERBOARD_BUCKETS.find((b) => b.key === bucket);
-    if (!band || band.tiers.length === 0) return all;
-    return all.filter((r) => {
-      const rk = rankFromBadge(r.badge);
-      return rk != null && band.tiers.includes(rk.tier);
-    });
-  }, [data, bucket]);
+  //# = absolute ladder position for the page/band: page 2 of 50 starts at #51.
+  const ranked = useMemo<RankedEntry[]>(
+    () => (data ?? []).map((r, i) => ({ ...r, rank: offset + i + 1 })),
+    [data, offset],
+  );
 
-  const podium = ranked.slice(0, 3);
-  const rest = ranked.slice(3);
+  //Podium only crowns the first page; deeper pages are a pure table.
+  const podium = offset === 0 ? ranked.slice(0, 3) : [];
+  const rest = offset === 0 ? ranked.slice(3) : ranked;
+
+  const hasPrev = offset > 0;
+  //The endpoint returns a bare array (no total), so a full page implies there may
+  //be more and a short page is the last one.
+  const hasNext = (data?.length ?? 0) >= LEADERBOARD_PAGE_SIZE;
+  const showPager = hasPrev || hasNext;
+
+  function changeBucket(key: RankBucket['key']) {
+    setBucket(key);
+    setOffset(0); //band change → reset to page 1
+  }
 
   const columns = useMemo<DataTableColumn<RankedEntry>[]>(
     () => [
@@ -156,7 +188,7 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
     <div>
       <div className="between" style={{ marginBottom: 16, gap: 16, flexWrap: 'wrap' }}>
         <span className="label-xs">Global ranked ladder</span>
-        <BucketFilter buckets={LEADERBOARD_BUCKETS} value={bucket} onChange={setBucket} ariaLabel="Leaderboard by rank" />
+        <BucketFilter buckets={LEADERBOARD_BUCKETS} value={bucket} onChange={changeBucket} ariaLabel="Leaderboard by rank" />
       </div>
       <Podium rows={podium} />
       <DataTable
@@ -173,6 +205,29 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
             : 'No ranked players for this band yet. Try another bracket or check back after the next data refresh.'
         }
       />
+      {showPager && (
+        <nav className="between" style={{ marginTop: 16, gap: 12, flexWrap: 'wrap' }} aria-label="Leaderboard pages">
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => setOffset((o) => Math.max(0, o - LEADERBOARD_PAGE_SIZE))}
+            disabled={!hasPrev || isPlaceholderData}
+          >
+            <Icon name="arrowR" size={13} style={{ transform: 'scaleX(-1)' }} /> Prev
+          </button>
+          <span className="label-xs tnum" aria-live="polite">
+            {ranked.length > 0 ? `Ranks ${count(offset + 1)}–${count(offset + ranked.length)}` : DASH}
+          </span>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => setOffset((o) => o + LEADERBOARD_PAGE_SIZE)}
+            disabled={!hasNext || isPlaceholderData}
+          >
+            Next <Icon name="arrowR" size={13} />
+          </button>
+        </nav>
+      )}
     </div>
   );
 }
