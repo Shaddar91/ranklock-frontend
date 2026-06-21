@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
+import cloudflare from '@astrojs/cloudflare';
 
 //RankLock frontend — static-first Astro build deployed to Cloudflare static
 //assets ($0 baseline). See the architecture doc (frontend-architecture-and-
@@ -12,13 +13,14 @@ import react from '@astrojs/react';
 //D1 / Durable Objects, and NO per-request edge SSR over the Hetzner origin —
 //those are the metered bill-spike surfaces the whole design avoids.
 //
-//The @astrojs/cloudflare adapter IS installed (package.json, BOM §9) but is
-//deliberately NOT wired here: it is only needed if/when the optional per-match
-//OG-card route (`matches/:id`, prerender=false) is built — and that route is a
-//SEPARATE pulsar plan (ranklock-og-card-*). This build stays 100% static. To
-//enable that one route later, keep `output: 'static'` and add the adapter:
-//   import cloudflare from '@astrojs/cloudflare';
-//   adapter: cloudflare(),   // only the prerender=false route runs on a Worker
+//The @astrojs/cloudflare adapter IS installed (package.json, BOM §9) and is now
+//wired (adapter: cloudflare() below). `output: 'static'` is KEPT: the whole SEO
+//surface still prerenders to static assets; ONLY the on-demand dynamic shells
+//(`players/:id`, `matches/:id`, marked `export const prerender = false`) run on a
+//Cloudflare Worker so an ARBITRARY id is served off the single shell without
+//SSG-emitting a page per id (the millions of URLs are never prebuilt). This is
+//the documented hybrid: keep output:'static' and add the adapter; only the
+//prerender=false routes execute server-side.
 //
 //PUBLIC_* env vars are exposed to client islands via Astro's default Vite
 //envPrefix and are injected at BUILD time by CI (never a committed
@@ -26,6 +28,11 @@ import react from '@astrojs/react';
 export default defineConfig({
   site: 'https://ranklock.app',
   output: 'static',
+  //Static-first hybrid: output stays 'static' (the SSG SEO surface is untouched);
+  //the adapter is here solely so the `prerender = false` dynamic shells
+  //(players/:id, matches/:id) can run on a Cloudflare Worker. No KV/R2/D1 — just
+  //the two on-demand routes.
+  adapter: cloudflare(),
   //i18n routing (C7) — path-prefix locales, English at the ROOT (no prefix), per
   //the authoritative i18n design (frontend-i18n-design.md): /heroes = en,
   ///ru/heroes = Russian, etc. The 7 launched locales mirror lib/i18n.ts (the

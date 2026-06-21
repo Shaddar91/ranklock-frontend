@@ -2,15 +2,14 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PlayerProfileIsland from '../../components/react/PlayerProfileIsland';
 
-//Per-user page: a prerendered static SHELL hosting a CSR React island that reads
+//Per-user page: an on-demand dynamic SHELL hosting a CSR React island that reads
 //the id from the URL and fetches the API (architecture §4 — "Per-user/per-match
-//bulk"). The millions of /players/<id> URLs are NEVER prebuilt. getStaticPaths
-//emits a single placeholder shell so the route builds; production serving of an
-//arbitrary id off this shell (SPA-style fallback / prefix rewrite) is finalized
-//in C5/C10. prerender stays true (Astro default) → the shell is a free static asset.
-export function getStaticPaths() {
-  return [{ params: { id: 'example' } }];
-}
+//bulk"). The millions of /players/<id> URLs are NEVER prebuilt. `prerender = false`
+//makes this route run on a Cloudflare Worker (adapter wired in astro.config.mjs),
+//so an ARBITRARY id is served off the single shell without SSG-emitting a page per
+//id — no getStaticPaths needed. The shell ships no per-id server HTML; the
+//client:only island does the fetch.
+export const prerender = false;
 ---
 
 <BaseLayout title="Player profile — RankLock" noindex={true}>
