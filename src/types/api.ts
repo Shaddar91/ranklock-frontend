@@ -511,6 +511,20 @@ export interface EarlyEconVerdictResponse {
   buckets: EarlyEconVerdictBucket[];
 }
 
+//GET /heroes/:id/item-win-rates?band=  — best items by win rate for a hero, scoped
+//to a rank band (rich-analytics tier, served by the MAIN API under /heroes/*). `band`
+//is the numeric rank tier (badge/10, 0..11); omit to aggregate. The backend struct is
+//not yet ts-rs-frozen, so model the fields the panel renders and keep the optionals
+//loose (mirrors ItemStat). 202/501 are the expected pre-data states — empty-state both.
+export interface HeroItemWinRate {
+  item_id: number;
+  item_name?: string | null;
+  icon_url?: string | null;
+  win_rate?: number | null;
+  matches?: number | null;
+  picks?: number | null;
+}
+
 //---- auth / session ---------------------------------------------------------
 
 //GET /me   (auth_email::UserContext). 401 when not logged in.

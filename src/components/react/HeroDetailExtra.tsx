@@ -10,9 +10,9 @@ import { api, queryKeys } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
 import { EmptyState, GameIcon, WinBar } from './ui/index';
 import { count } from '../../lib/format';
-import type { HeroSummary, HeroSynergyRow, MatchupEntry, TrimmedBuild } from '../../types/api';
+import type { HeroItemWinRate, HeroSummary, HeroSynergyRow, MatchupEntry, TrimmedBuild } from '../../types/api';
 
-type Tab = 'matchups' | 'synergies' | 'builds';
+type Tab = 'matchups' | 'synergies' | 'items' | 'builds';
 
 //Hero reference (id → name + icon) from GET /heroes — shared by the matchups and
 //synergy grids so partner heroes render with their real name/portrait rather than
@@ -134,6 +134,67 @@ function SynergiesTab({ heroId }: { heroId: number }) {
   );
 }
 
+//Best items by win rate (rich-analytics tier) — GET /heroes/:id/item-win-rates.
+//Hero-scoped item win-rates the API serves; sorted best-first, normalized 0..1 or
+//0..100 like the matchups win rate. Empty-states (202/501 build-ahead) until served.
+function ItemsTab({ heroId }: { heroId: number }) {
+  const { data, isPending, isError } = useQuery<HeroItemWinRate[]>({
+    queryKey: queryKeys.heroItemWinRates(heroId),
+    queryFn: () => api.getHeroItemWinRates(heroId),
+    retry: false,
+  });
+
+  const rows = useMemo(
+    () =>
+      [...(data ?? [])]
+        .filter((r) => r.win_rate != null)
+        .sort((a, b) => (b.win_rate ?? 0) - (a.win_rate ?? 0))
+        .slice(0, 20),
+    [data],
+  );
+
+  if (isPending) return <p className="muted" style={{ padding: '14px 2px' }}>Loading item win-rates…</p>;
+  if (isError || rows.length === 0) {
+    return (
+      <EmptyState
+        title="Item win-rates not served yet"
+        message="Best items by win rate come online with the analytics pipeline."
+        icon="book"
+      />
+    );
+  }
+  return (
+    <table className="dt" style={{ marginTop: 6 }}>
+      <thead>
+        <tr>
+          <th><span className="th-static">Item</span></th>
+          <th className="num"><span className="th-static">Win rate</span></th>
+          <th className="num"><span className="th-static">Matches</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => {
+          const wr = r.win_rate as number;
+          return (
+            <tr key={r.item_id}>
+              <td>
+                <div className="flex" style={{ alignItems: 'center', gap: 10 }}>
+                  <GameIcon kind="item" name={r.item_name ?? `Item ${r.item_id}`} src={r.icon_url} size={28} />
+                  <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
+                    {r.item_name ?? `Item ${r.item_id}`}
+                  </span>
+                </div>
+              </td>
+              <td className="num"><WinBar wr={wr <= 1 ? wr * 100 : wr} /></td>
+              <td className="num"><span className="tnum">{count(r.matches)}</span></td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 function BuildsTab({ heroId }: { heroId: number }) {
   const { data, isPending, isError } = useQuery<TrimmedBuild[]>({
     queryKey: queryKeys.heroBuilds(heroId),
@@ -175,6 +236,9 @@ function HeroDetailExtraInner({ heroId }: { heroId: number }) {
         <button type="button" role="tab" aria-selected={tab === 'synergies'} className={'tab' + (tab === 'synergies' ? ' on' : '')} onClick={() => setTab('synergies')}>
           Synergies
         </button>
+        <button type="button" role="tab" aria-selected={tab === 'items'} className={'tab' + (tab === 'items' ? ' on' : '')} onClick={() => setTab('items')}>
+          Best items
+        </button>
         <button type="button" role="tab" aria-selected={tab === 'builds'} className={'tab' + (tab === 'builds' ? ' on' : '')} onClick={() => setTab('builds')}>
           Builds
         </button>
@@ -182,6 +246,7 @@ function HeroDetailExtraInner({ heroId }: { heroId: number }) {
       <div style={{ paddingTop: 8 }}>
         {tab === 'matchups' && <MatchupsTab heroId={heroId} />}
         {tab === 'synergies' && <SynergiesTab heroId={heroId} />}
+        {tab === 'items' && <ItemsTab heroId={heroId} />}
         {tab === 'builds' && <BuildsTab heroId={heroId} />}
       </div>
     </div>

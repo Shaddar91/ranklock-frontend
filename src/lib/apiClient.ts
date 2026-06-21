@@ -23,6 +23,7 @@ import type {
   HealthResponse,
   HeroBracket,
   HeroCountersResponse,
+  HeroItemWinRate,
   HeroBaseStats,
   HeroLedgerRow,
   HeroPlayed,
@@ -180,6 +181,7 @@ export const queryKeys = {
     ['hero', id, 'matchups', bracket ?? null] as const,
   heroCounters: (id: number) => ['hero', id, 'counters'] as const,
   heroSynergies: (id: number) => ['hero', id, 'synergies'] as const,
+  heroItemWinRates: (id: number, params?: Query) => ['hero', id, 'item-win-rates', params ?? {}] as const,
   items: (bracket?: number) => ['items', bracket ?? 0] as const,
   recentMatches: () => ['matches', 'recent'] as const,
   match: (id: number) => ['match', id] as const,
@@ -206,8 +208,9 @@ export const queryKeys = {
   heroBaseStatsOne: (id: number, params?: Query) =>
     ['build-lab', 'hero-base-stats', id, params ?? {}] as const,
   itemModifiers: (params?: Query) => ['build-lab', 'item-modifiers', params ?? {}] as const,
-  //Lane Lab surface (rich-analytics tier) — cohort economy curves + early-econ verdict.
+  //Lane Lab surface (rich-analytics tier) — cohort economy + farm curves + early-econ verdict.
   laneEconomyCurve: (params?: Query) => ['lane-lab', 'economy-curve', params ?? {}] as const,
+  laneFarmCurve: (params?: Query) => ['lane-lab', 'farm-curve', params ?? {}] as const,
   laneEarlyEconVerdict: (params?: Query) => ['lane-lab', 'early-econ-verdict', params ?? {}] as const,
   me: () => ['me'] as const,
 };
@@ -239,6 +242,12 @@ export const api = {
     apiFetch<MatchupEntry[]>(`/heroes/${id}/matchups`, { query: { bracket } }),
   getHeroCounters: (id: number) => apiFetch<HeroCountersResponse>(`/heroes/${id}/counters`),
   getHeroSynergies: (id: number) => apiFetch<HeroSynergiesResponse>(`/heroes/${id}/synergies`),
+  //Best items by win rate for a hero, scoped to a rank band (rich-analytics tier; served
+  //by the MAIN API under /heroes/*, so `apiFetch`). `band` is the numeric rank tier
+  //(badge/10, 0..11); omit to aggregate. 501 while the tier is gated off, 202 until the
+  //analytics pipeline serves — callers empty-state both.
+  getHeroItemWinRates: (id: number, params?: { band?: number }) =>
+    apiFetch<HeroItemWinRate[]>(`/heroes/${id}/item-win-rates`, { query: params }),
   //Items use an INTEGER badge-bucket (0..5; 0 = all) — see lib/brackets.ts. The
   //label fix (badge tiers, not MMR ranges) lives in the UI; this just forwards
   //the bucket the backend's `bracket_badge_range` expects.
@@ -299,6 +308,11 @@ export const api = {
   //component must land (service grows /lane-lab/* OR this island is reworked to the /cohort/* shape).
   getLaneEconomyCurve: (params?: { band?: number; metric?: string }) =>
     laneLabFetch<LaneCurveResponse>('/lane-lab/economy-curve', { query: params }),
+  //Per-minute farm (last-hits) curve; same CurveResponse shape + band/cohort overlay as
+  //the economy curve. The endpoint serves last_hits + souls only — callers default to
+  //last_hits (the farm headline). Same 501/202 build-ahead states.
+  getLaneFarmCurve: (params?: { band?: number; metric?: string }) =>
+    laneLabFetch<LaneCurveResponse>('/lane-lab/farm-curve', { query: params }),
   getLaneEarlyEconVerdict: (params?: { band?: number }) =>
     laneLabFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
 
