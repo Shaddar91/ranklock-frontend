@@ -68,20 +68,38 @@ export default function DataTable<T>({
     const col = columns.find((c) => c.key === sort.key);
     if (!col || !col.sortValue) return rows;
     const sv = col.sortValue;
-    const copy = [...rows];
-    copy.sort((a, b) => {
-      const va = sv(a);
-      const vb = sv(b);
+    //Decorate each row with its STABLE identity (rowKey) before sorting, so the
+    //result is a pure function of (rows, sort) — never of the array's incoming
+    //order. JS Array.sort is stable, so without a tiebreaker equal sortValues keep
+    //their input order, and that order differs every time the rows are refetched
+    //(a heroes rank-bracket switch returns the same tied heroes in a different
+    //order). The rowKey tiebreaker pins ties to ONE deterministic order across
+    //every data update, so tied rows can no longer visibly swap on a rank switch
+    //(the heroes-table sort×rank-switch bug).
+    const decorated = rows.map((row, i) => ({ row, key: rowKey(row, i) }));
+    decorated.sort((a, b) => {
+      const va = sv(a.row);
+      const vb = sv(b.row);
+      let cmp: number;
       //nulls/undefined always sort to the bottom regardless of direction
-      if (va == null && vb == null) return 0;
-      if (va == null) return 1;
-      if (vb == null) return -1;
-      const cmp =
-        typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb));
-      return cmp * sort.dir;
+      if (va == null && vb == null) cmp = 0;
+      else if (va == null) return 1;
+      else if (vb == null) return -1;
+      else {
+        const base =
+          typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb));
+        cmp = base * sort.dir;
+      }
+      if (cmp !== 0) return cmp;
+      //deterministic final tiebreaker: equal primary values resolve by the stable
+      //rowKey (ascending, direction-independent) so order can't drift across data
+      //changes or sort-direction flips.
+      const ka = a.key;
+      const kb = b.key;
+      return typeof ka === 'number' && typeof kb === 'number' ? ka - kb : String(ka).localeCompare(String(kb));
     });
-    return copy;
-  }, [rows, sort, columns]);
+    return decorated.map((d) => d.row);
+  }, [rows, sort, columns, rowKey]);
 
   function onSort(key: string) {
     setSort((s) => (s && s.key === key ? { key, dir: (s.dir === 1 ? -1 : 1) as 1 | -1 } : { key, dir: -1 }));
