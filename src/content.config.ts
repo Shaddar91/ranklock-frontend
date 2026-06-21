@@ -19,6 +19,8 @@ const blog = defineCollection({
     author: z.string().default('RankLock'),
     //optional hero this guide centers on (links back to /heroes/:slug context).
     heroSlug: z.string().optional(),
+    //optional hero/social image (path under /public or absolute URL) for OG cards.
+    heroImage: z.string().optional(),
     tags: z.array(z.string()).default([]),
     //hero/item names whose LIVE win-rates the guide embeds (GuideLiveStats).
     liveHeroes: z.array(z.string()).default([]),
