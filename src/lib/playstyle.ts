@@ -17,7 +17,7 @@
 //a fabricated "skill score".
 //============================================================================
 import type { CompareResponse, ImproveResponse, MetricComparison } from '../types/api';
-import { count, fixed } from './format';
+import { count, fixed, kda } from './format';
 
 const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
 
@@ -45,49 +45,50 @@ export interface RadarAxis {
   served: boolean;
 }
 
-//---- radar ------------------------------------------------------------------
+//---- radar (from /compare aggregates) ---------------------------------------
 
-//Position a metric on a 0..1 axis using the served percentile band: 0.5 sits on
-//the cohort p50; the p25↔p50 and p50↔p75 spreads scale the half below/above so a
-//player exactly at the cohort median reads as the baseline hexagon. Falls back to
-//delta_vs_p50_pct when the band is absent, then to the baseline (0.5). For
-//lower-is-better metrics the position is mirrored so "fewer deaths" bulges out.
-function axisPosition(m: MetricComparison, higherBetter: boolean): number {
-  const { user_avg, cohort_p25, cohort_p50, cohort_p75, delta_vs_p50_pct } = m;
-  let pos: number;
-  if (cohort_p50 != null && cohort_p50 !== 0) {
-    if (user_avg >= cohort_p50) {
-      const span = (cohort_p75 ?? cohort_p50 * 1.25) - cohort_p50;
-      pos = 0.5 + (span > 0 ? 0.5 * clamp((user_avg - cohort_p50) / span, 0, 1) : 0);
-    } else {
-      const span = cohort_p50 - (cohort_p25 ?? cohort_p50 * 0.75);
-      pos = 0.5 - (span > 0 ? 0.5 * clamp((cohort_p50 - user_avg) / span, 0, 1) : 0);
-    }
-  } else if (delta_vs_p50_pct != null) {
-    pos = 0.5 + clamp(delta_vs_p50_pct / 100, -0.45, 0.45);
-  } else {
-    pos = 0.5;
-  }
-  return higherBetter ? pos : 1 - pos;
-}
+//The radar is a PROJECTION of the served /compare aggregates — you vs the cohort
+//one tier up — NOT a separate dataset and NOT the (never-served) /improve percentile
+//radar this used to read. Each axis is the honest ratio of two served per-game
+//averages (you ÷ cohort) mapped onto a 0..1 ring where 0.5 == parity: a player
+//exactly at the cohort average sits on the baseline hexagon and the blob bulges
+//where they beat it. Every axis is higher-is-better (KDA folds deaths in), so no
+//per-axis mirroring is needed. No stat is invented — a missing/zero cohort value
+//can't anchor a ratio, so that axis pins to 0.5 and is flagged `served:false` for
+//the UI to note partial coverage instead of faking a point.
 
-//Six radar axes mapped from the improve metrics. A missing metric yields an axis
-//pinned to the 0.5 baseline and flagged `served:false` so the UI can note partial
-//coverage instead of implying a real measurement.
-const RADAR_AXES: { axis: string; key: keyof ImproveResponse['metrics']; higherBetter: boolean }[] = [
-  { axis: 'Damage', key: 'damage_dealt', higherBetter: true },
-  { axis: 'Farming', key: 'net_worth', higherBetter: true },
-  { axis: 'Last-hits', key: 'last_hits', higherBetter: true },
-  { axis: 'Combat', key: 'kills', higherBetter: true },
-  { axis: 'Survival', key: 'deaths', higherBetter: false },
-  { axis: 'Teamplay', key: 'assists', higherBetter: true },
+//The metric fields shared by CompareYou and CompareCohort that the radar reads — a
+//structural subset both response sides satisfy, so one accessor serves both.
+type CompareSide = Pick<
+  CompareResponse['you'],
+  'souls_per_min' | 'avg_last_hits' | 'avg_denies' | 'avg_kills' | 'avg_deaths' | 'avg_assists'
+>;
+
+const num = (v: number | null | undefined): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+
+//Six axes, each extracting one value from a compare side (you or cohort). KDA is
+//(kills+assists)/max(1,deaths) via the shared format helper — the same KDA shown
+//everywhere else, not a bespoke "skill score".
+const COMPARE_AXES: { axis: string; pick: (s: CompareSide) => number | null }[] = [
+  { axis: 'Souls/min', pick: (s) => num(s.souls_per_min) },
+  { axis: 'Last-hits', pick: (s) => num(s.avg_last_hits) },
+  { axis: 'Kills', pick: (s) => num(s.avg_kills) },
+  { axis: 'Assists', pick: (s) => num(s.avg_assists) },
+  { axis: 'Denies', pick: (s) => num(s.avg_denies) },
+  { axis: 'KDA', pick: (s) => kda(s.avg_kills, s.avg_deaths, s.avg_assists) },
 ];
 
-export function deriveRadar(improve: ImproveResponse): RadarAxis[] {
-  return RADAR_AXES.map(({ axis, key, higherBetter }) => {
-    const m = improve.metrics?.[key];
-    if (!m) return { axis, you: 0.5, cohort: 0.5, served: false };
-    return { axis, you: clamp(axisPosition(m, higherBetter), 0, 1), cohort: 0.5, served: true };
+//Map you÷cohort onto 0..1 with parity at 0.5 (cohort=0.5, you=0.5·ratio, clamped).
+//A null/zero cohort can't anchor a ratio → unserved, pinned to the baseline.
+function compareAxisPos(you: number | null, cohort: number | null): { pos: number; served: boolean } {
+  if (you == null || cohort == null || cohort <= 0) return { pos: 0.5, served: false };
+  return { pos: clamp(0.5 * (you / cohort), 0, 1), served: true };
+}
+
+export function compareRadar(cmp: CompareResponse): RadarAxis[] {
+  return COMPARE_AXES.map(({ axis, pick }) => {
+    const { pos, served } = compareAxisPos(pick(cmp.you), pick(cmp.cohort));
+    return { axis, you: pos, cohort: 0.5, served };
   });
 }
 

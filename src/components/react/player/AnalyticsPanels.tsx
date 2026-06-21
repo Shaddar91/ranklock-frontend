@@ -4,7 +4,9 @@
 //crash, when those endpoints 202 (computing) / 501 (disabled) / 404 (no data) —
 //that is the expected state until the analytics pipeline serves them (§8.1).
 //
-//  • PlaystyleRadarPanel  — playstyle shape vs cohort, derived from /improve.
+//  • PlaystyleRadarPanel  — playstyle shape vs the rank above, derived from the
+//                           SERVED /compare aggregates (mode-separated; the old
+//                           /improve percentile radar was never served).
 //  • EconomyPanel         — soul-curve-vs-cohort + gold-source breakdown. The
 //                           per-minute timeline is an UNBUILT endpoint, so the
 //                           two charts grey out; the served /compare souls/min
@@ -20,7 +22,7 @@ import { EmptyState, Icon } from '../ui/index';
 import RadarChart from '../charts/RadarChart';
 import { CatPanel } from './StatLine';
 import { useCompare, useImprove } from './usePlayer';
-import { combatRows, deriveRadar, economyRows, efficiencyRows, laningRows } from '../../../lib/playstyle';
+import { combatRows, compareRadar, economyRows, efficiencyRows, laningRows } from '../../../lib/playstyle';
 import { count, fixed } from '../../../lib/format';
 
 //Coaching/playstyle are derived from /improve, whose cohort is Normal-only (022). In
@@ -54,10 +56,20 @@ function Loading({ label }: { label: string }) {
 
 //---- playstyle radar --------------------------------------------------------
 
+//Built from the SERVED /compare aggregates (you vs the rank one tier up). The old
+///improve-backed percentile radar was never served, so this panel empty-stated
+//forever; /compare is live. Two consequences vs the old version:
+//  • /compare is mode-separated, so this is NOT Normal-only — in Brawl it shows the
+//    Brawl cohort (or empty-states when there's no Brawl sample). Hence no NormalOnlyNote.
+//  • the cohort is an AVERAGE (not a p50 median), and its label is the SERVED tier
+//    name (dynamic) — never a hardcoded tier. The you/cohort dataKeys stay fixed.
 export function PlaystyleRadarPanel({ id }: { id: number }) {
-  const { data, isPending, isError, error } = useImprove(id);
-  const axes = data ? deriveRadar(data) : [];
+  //'one_up' = the rank you're chasing — matches the sibling EconomyPanel, and the
+  //identical params let react-query dedupe both panels into one /compare fetch.
+  const { data, isPending, isError, error } = useCompare(id, { league_offset: 'one_up' });
+  const axes = data ? compareRadar(data) : [];
   const servedCount = axes.filter((a) => a.served).length;
+  const cohortName = data?.cohort.tier_name ?? null;
 
   return (
     <div className="brass-frame" style={{ padding: '18px 20px' }}>
@@ -68,7 +80,7 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
           Playstyle
         </div>
         <h2 className="h-sec" style={{ fontSize: 17 }}>
-          Your shape vs the rank above
+          Your shape vs {cohortName ?? 'the rank above'}
         </h2>
       </div>
       {isPending ? (
@@ -80,16 +92,15 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
           <RadarChart
             data={axes.map((a) => ({ axis: a.axis, you: a.you, cohort: a.cohort }))}
             youLabel="You"
-            cohortLabel={data ? `${data.bracket_label} median` : 'Tier median'}
+            cohortLabel={cohortName ? `${cohortName} avg` : 'Tier avg'}
           />
           <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
             {servedCount < axes.length
-              ? `Partial — ${servedCount} of ${axes.length} axes served; the rest fill in as the pipeline catches up.`
-              : 'The 0.5 ring is the tier median; your blob bulges where you exceed it.'}
+              ? `Partial — ${servedCount} of ${axes.length} axes served; the rest fill in once the cohort has data on them.`
+              : `The 0.5 ring is the ${cohortName ?? 'tier'} average; your blob bulges where you exceed it.`}
           </p>
         </>
       )}
-      <NormalOnlyNote what="Playstyle axes" />
     </div>
   );
 }
