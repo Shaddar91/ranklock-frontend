@@ -35,22 +35,30 @@ export function useViewer() {
 }
 
 //All id-keyed hooks gate on a positive id so a not-yet-resolved (0) or invalid id
-//never fires a wasted /players/0 fetch. The per-player AGGREGATES (profile, hero
-//ledger, heroes-played, percentiles, compare) are mode-separated (022), so each
-//reads the global game mode and re-keys/refetches when the header toggle flips. The
-//per-MATCH list (usePlayerMatches) is NOT mode-separated — it enumerates matches.
-export const usePlayer = (id: number) => {
-  const { mode } = useGameMode();
-  return useQuery({ queryKey: queryKeys.player(id, mode), queryFn: () => api.getPlayer(id, mode), enabled: id > 0 });
-};
+//never fires a wasted /players/0 fetch. IDENTITY (usePlayer profile + usePlayerHeroes
+//ledger) is mode-AGNOSTIC: it backs the always-on header and must NEVER blank. The
+//per-mode BREAKDOWN hooks (heroes-played, performance, compare) stay mode-separated
+//(022), read the global game mode, and empty-state when a player has no games in that
+//mode. The per-MATCH list (usePlayerMatches) is NOT mode-separated either — it
+//enumerates matches, not an aggregate.
+
+//Player IDENTITY (name, rank/badge, lifetime matches/W, win rate, recent form). It
+//deliberately does NOT read the global game mode — most accounts have zero Brawl
+//games, so filtering identity by the toggle blanked the entire header (— matches /
+//— WR / no rank). getPlayer with no game_mode returns the lifetime profile (backend
+//default Normal); per-mode stat breakdowns live in the tab hooks below.
+export const usePlayer = (id: number) =>
+  useQuery({ queryKey: queryKeys.player(id), queryFn: () => api.getPlayer(id), enabled: id > 0 });
 
 export const usePlayerMatches = (id: number, limit = 20) =>
   useQuery({ queryKey: queryKeys.playerMatches(id, { limit }), queryFn: () => api.getPlayerMatches(id, { limit }), enabled: id > 0 });
 
-export const usePlayerHeroes = (id: number) => {
-  const { mode } = useGameMode();
-  return useQuery({ queryKey: queryKeys.playerHeroes(id, mode), queryFn: () => api.getPlayerHeroes(id, mode), enabled: id > 0 });
-};
+//The hero ledger feeds the IDENTITY header (the avatar hero-art + the "Top heroes"
+//tiles, PlayerHeader) as well as the Heroes tab, so it is mode-agnostic too — a
+//Brawl filter would blank the avatar and top heroes for accounts with no Brawl
+//games. The lifetime ledger (backend default) is the player's true main-hero history.
+export const usePlayerHeroes = (id: number) =>
+  useQuery({ queryKey: queryKeys.playerHeroes(id), queryFn: () => api.getPlayerHeroes(id), enabled: id > 0 });
 
 //The dedicated hero-selector source (§A.4) — the real /heroes-played endpoint,
 //NOT a hero list derived client-side from /matches. Powers the Compare dropdown.

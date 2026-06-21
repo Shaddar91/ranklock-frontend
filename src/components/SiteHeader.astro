@@ -21,6 +21,17 @@ const links = [
 ];
 const path = Astro.url.pathname;
 const isActive = (href: string) => path === href || path === href + '/' || path.startsWith(href + '/');
+
+//The Normal/Brawl game-mode toggle belongs ONLY on the meta-aggregate surfaces
+//whose tables are mode-separated (migration 022): Heroes, Items, Leaderboard and
+//Patches. It is deliberately ABSENT everywhere else — above all the player profile
+//(/players/*), where identity (name, rank, lifetime W/L, hero ledger) is mode-
+//AGNOSTIC and a Brawl filter blanked the header for the many accounts with zero
+//Brawl games; also /matches/* (per-match lists carry no mode) and /lane-lab*
+//(lane analytics are Normal-only). Gated on the route prefix so the island ships
+//only where it actually drives data.
+const GAME_MODE_ROUTES = ['/heroes', '/items', '/leaderboard', '/patches'];
+const showGameMode = GAME_MODE_ROUTES.some((p) => path === p || path.startsWith(p + '/'));
 ---
 
 <header class="nav">
@@ -58,9 +69,11 @@ const isActive = (href: string) => path === href || path === href + '/' || path.
     </nav>
 
     <div class="nav-tools flex">
-      <!-- Global Normal/Brawl selector — drives ?mode for every aggregate surface.
-           Path-aware: locks to "Normal only" on Lane Lab (lane analytics are Normal-only). -->
-      <GameModeToggle currentPath={path} client:load />
+      {/* Global Normal/Brawl selector — drives ?mode for the mode-separated meta
+          tables (Heroes/Items/Leaderboard/Patches). Scoped OUT of the player page,
+          matches and Lane Lab via GAME_MODE_ROUTES so it never blanks an identity
+          surface. currentPath is still passed for the toggle's own Normal-only copy. */}
+      {showGameMode && <GameModeToggle currentPath={path} client:load />}
       <SearchBox variant="compact" client:load />
       <ThemeSwitcher compact client:load />
     </div>
