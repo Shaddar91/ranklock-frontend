@@ -140,6 +140,24 @@ const {
         </div>
       )
     }
+    {
+      /* Left + right sponsor rails flanking the centered content column, gated by
+         the SAME PUBLIC_AD_SLOTS flag as the footer slot above. They're position:fixed
+         in the side gutters (components.css .ad-rail), so the content column never
+         reflows; a min-width:1760px media query hides them below a wide breakpoint,
+         leaving narrow/normal viewports rail-free. Same consent-gated AdSlot
+         placeholder, vertical 'skyscraper' kind. */
+      chrome && AD_SLOTS === 'on' && (
+        <Fragment>
+          <div class="ad-rail left">
+            <AdSlot kind="skyscraper" client:load />
+          </div>
+          <div class="ad-rail right">
+            <AdSlot kind="skyscraper" client:load />
+          </div>
+        </Fragment>
+      )
+    }
     {chrome && <SiteFooter />}
     <!-- Consent + analytics layer (C6) — global on EVERY page (incl. chrome=false).
          TrackingProvider is behavior-only (renders null): consent-gated Matomo +

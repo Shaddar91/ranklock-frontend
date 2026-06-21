@@ -787,6 +787,9 @@ textarea {
 .promo.rect {
   min-height: 250px;
 }
+.promo.skyscraper {
+  min-height: 600px;
+}
 .promo-tag {
   position: absolute;
   top: 6px;
@@ -817,6 +820,31 @@ textarea {
 .promo-support:hover {
   opacity: 1;
   text-decoration: none;
+}
+/* Left/right sponsor rails: position:fixed in the side gutters, flanking the
+   centered 1320px content column (.container, half-width 660px) and vertically
+   centred. Fixed positioning keeps them out of normal flow, so the content column
+   never reflows; the min-width:1760px media query hides them below a wide
+   breakpoint, leaving narrow/normal viewports rail-free. They wrap the same
+   .promo placeholder (skyscraper kind) and inherit the [data-promo='off'] gate. */
+.ad-rail {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 160px;
+  z-index: 1;
+  display: none;
+}
+.ad-rail.left {
+  left: calc(50% - 660px - 24px - 160px);
+}
+.ad-rail.right {
+  right: calc(50% - 660px - 24px - 160px);
+}
+@media (min-width: 1760px) {
+  .ad-rail {
+    display: block;
+  }
 }
 .supporter {
   display: inline-flex;

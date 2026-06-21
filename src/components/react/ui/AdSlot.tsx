@@ -10,12 +10,13 @@ import Icon from './Icon';
 import { getConsent, onConsentChange } from '../../../lib/consent';
 import { adsenseClient, adsenseConfigured, enableAds, pushAd } from '../../../lib/ads';
 
-type AdKind = 'banner' | 'rect' | 'leaderboard';
+type AdKind = 'banner' | 'rect' | 'leaderboard' | 'skyscraper';
 
 const AD_SIZE: Record<AdKind, string> = {
   banner: '970 × 90',
   rect: '300 × 250',
   leaderboard: '728 × 90',
+  skyscraper: '160 × 600',
 };
 
 //Our semantic slot kind → an AdSense responsive format.
@@ -23,6 +24,7 @@ const AD_FORMAT: Record<AdKind, string> = {
   banner: 'horizontal',
   rect: 'rectangle',
   leaderboard: 'horizontal',
+  skyscraper: 'vertical',
 };
 
 interface AdSlotProps {
