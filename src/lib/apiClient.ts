@@ -21,6 +21,7 @@ import type {
   CurrentUser,
   EarlyEconVerdictResponse,
   EconomyOverlayResponse,
+  GameMode,
   HealthResponse,
   HeroBracket,
   HeroCountersResponse,
@@ -173,35 +174,48 @@ export function laneLabFetch<T>(
 
 //---- query-key factory (TanStack Query) -------------------------------------
 //Stable, hierarchical keys so islands can invalidate by prefix.
+//
+//game-mode separation (022): every mode-separated surface carries `game_mode` in
+//its key so Normal and Brawl cache SIDE BY SIDE and never overwrite each other
+//(the cache-key analog of the backend's widened Redis keys). Factories that take a
+//`params` object fold `game_mode` into it at the call site (the params spread into
+//the key already), so only the discrete-arg factories below grow a `game_mode`
+//parameter. Mode-agnostic surfaces (health/me/search/recent-matches/mmr/
+//badge-history/builds/base-stats/patch-list) deliberately do NOT carry it.
 export const queryKeys = {
   health: () => ['health'] as const,
   leaderboard: (params?: Query) => ['leaderboard', params ?? {}] as const,
   heroes: (params?: Query) => ['heroes', params ?? {}] as const,
-  heroStats: (id: number, bracket?: HeroBracket) => ['hero', id, 'stats', bracket ?? null] as const,
+  heroStats: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
+    ['hero', id, 'stats', bracket ?? null, game_mode ?? null] as const,
   heroBuilds: (id: number) => ['hero', id, 'builds'] as const,
-  heroMatchups: (id: number, bracket?: HeroBracket) =>
-    ['hero', id, 'matchups', bracket ?? null] as const,
+  heroMatchups: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
+    ['hero', id, 'matchups', bracket ?? null, game_mode ?? null] as const,
   heroCounters: (id: number) => ['hero', id, 'counters'] as const,
   heroSynergies: (id: number) => ['hero', id, 'synergies'] as const,
   heroItemWinRates: (id: number, params?: Query) => ['hero', id, 'item-win-rates', params ?? {}] as const,
-  items: (bracket?: number) => ['items', bracket ?? 0] as const,
+  items: (bracket?: number, game_mode?: GameMode) => ['items', bracket ?? 0, game_mode ?? null] as const,
   recentMatches: () => ['matches', 'recent'] as const,
   match: (id: number) => ['match', id] as const,
   search: (q: string) => ['search', q] as const,
-  player: (id: number) => ['player', id] as const,
+  player: (id: number, game_mode?: GameMode) => ['player', id, game_mode ?? null] as const,
   playerMatches: (id: number, params?: Query) => ['player', id, 'matches', params ?? {}] as const,
   playerMmr: (id: number) => ['player', id, 'mmr'] as const,
-  playerHeroes: (id: number) => ['player', id, 'heroes'] as const,
-  playerHeroesPlayed: (id: number) => ['player', id, 'heroes-played'] as const,
+  playerHeroes: (id: number, game_mode?: GameMode) => ['player', id, 'heroes', game_mode ?? null] as const,
+  playerHeroesPlayed: (id: number, game_mode?: GameMode) =>
+    ['player', id, 'heroes-played', game_mode ?? null] as const,
   playerBadgeHistory: (id: number) => ['player', id, 'badge-history'] as const,
-  playerPerformance: (id: number) => ['player', id, 'performance'] as const,
+  playerPerformance: (id: number, game_mode?: GameMode) =>
+    ['player', id, 'performance', game_mode ?? null] as const,
   playerCompare: (id: number, params?: Query) => ['player', id, 'compare', params ?? {}] as const,
   playerComparePlayer: (id: number, params?: Query) =>
     ['player', id, 'compare-player', params ?? {}] as const,
   playerImprove: (id: number, params?: Query) => ['player', id, 'improve', params ?? {}] as const,
   //per-player economy aggregate (backs the Lane Lab player overlay).
-  playerEconomy: (id: number) => ['player', id, 'economy'] as const,
-  rankDistribution: () => ['stats', 'rank-distribution'] as const,
+  playerEconomy: (id: number, game_mode?: GameMode) => ['player', id, 'economy', game_mode ?? null] as const,
+  //rank_distribution stays mode-AGNOSTIC (per-player badge histogram — product
+  //decision, migration 022); the param exists only for forward-compat symmetry.
+  rankDistribution: (game_mode?: GameMode) => ['stats', 'rank-distribution', game_mode ?? null] as const,
   //patch tracking surface (C9)
   patches: () => ['patches'] as const,
   patchCurrent: () => ['patches', 'current'] as const,
@@ -238,66 +252,90 @@ export const api = {
     offset?: number;
     min_badge?: number;
     max_badge?: number;
+    game_mode?: GameMode;
   }) => apiFetch<LeaderboardEntry[]>('/leaderboard', { query: params }),
-  getHeroes: (params?: { bracket?: HeroBracket; patch_id?: number }) =>
+  getHeroes: (params?: { bracket?: HeroBracket; patch_id?: number; game_mode?: GameMode }) =>
     apiFetch<HeroSummary[]>('/heroes', { query: params }),
-  getHeroStats: (id: number, bracket?: HeroBracket) =>
-    apiFetch<HeroSummary>(`/heroes/${id}/stats`, { query: { bracket } }),
+  getHeroStats: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
+    apiFetch<HeroSummary>(`/heroes/${id}/stats`, { query: { bracket, game_mode } }),
   getHeroBuilds: (id: number) => apiFetch<TrimmedBuild[]>(`/heroes/${id}/builds`),
-  getHeroMatchups: (id: number, bracket?: HeroBracket) =>
-    apiFetch<MatchupEntry[]>(`/heroes/${id}/matchups`, { query: { bracket } }),
+  getHeroMatchups: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
+    apiFetch<MatchupEntry[]>(`/heroes/${id}/matchups`, { query: { bracket, game_mode } }),
   getHeroCounters: (id: number) => apiFetch<HeroCountersResponse>(`/heroes/${id}/counters`),
   getHeroSynergies: (id: number) => apiFetch<HeroSynergiesResponse>(`/heroes/${id}/synergies`),
   //Best items by win rate for a hero, scoped to a rank band (rich-analytics tier; served
   //by the MAIN API under /heroes/*, so `apiFetch`). `band` is the numeric rank tier
   //(badge/10, 0..11); omit to aggregate. 501 while the tier is gated off, 202 until the
   //analytics pipeline serves — callers empty-state both.
-  getHeroItemWinRates: (id: number, params?: { band?: number }) =>
+  //hero_item_win_rates is mode-separated but lane-tier Normal-only (022) — the
+  //param exists for symmetry; the UI only ever sends Normal here.
+  getHeroItemWinRates: (id: number, params?: { band?: number; game_mode?: GameMode }) =>
     apiFetch<HeroItemWinRate[]>(`/heroes/${id}/item-win-rates`, { query: params }),
   //Items use an INTEGER badge-bucket (0..5; 0 = all) — see lib/brackets.ts. The
   //label fix (badge tiers, not MMR ranges) lives in the UI; this just forwards
-  //the bucket the backend's `bracket_badge_range` expects.
-  getItems: (bracket?: number) => apiFetch<ItemStat[]>('/items/stats', { query: { bracket } }),
+  //the bucket the backend's `bracket_badge_range` expects. `game_mode` is forwarded
+  //for forward-compat (the /items/stats Gold table is not yet mode-separated, so
+  //the backend currently ignores it and returns the same rows for both modes).
+  getItems: (bracket?: number, game_mode?: GameMode) =>
+    apiFetch<ItemStat[]>('/items/stats', { query: { bracket, game_mode } }),
   getRecentMatches: () => apiFetch<MatchRow[]>('/matches/recent'),
 
   //per-match / per-user surface (CSR islands)
   getMatch: (id: number) => apiFetch<MatchDetail>(`/matches/${id}`),
   searchPlayers: (q: string, limit?: number) =>
     apiFetch<SearchResult[]>('/players/search', { query: { q, limit } }),
-  getPlayer: (id: number) => apiFetch<PlayerProfileResponse>(`/players/${id}`),
+  //Per-player aggregates are mode-separated (022): the profile headline, hero
+  //ledger, heroes-played, percentiles and compare all accept `game_mode` (default
+  //Normal). The per-MATCH lists (/matches, /mmr, /badge-history) are NOT — they
+  //enumerate matches, not an aggregate, so they carry no mode.
+  getPlayer: (id: number, game_mode?: GameMode) =>
+    apiFetch<PlayerProfileResponse>(`/players/${id}`, { query: { game_mode } }),
   getPlayerMatches: (id: number, params?: { limit?: number; cursor?: string; hero_id?: number }) =>
     apiFetch<PlayerMatchRow[]>(`/players/${id}/matches`, { query: params }),
   getPlayerMmr: (id: number) => apiFetch<MMRHistoryRow[]>(`/players/${id}/mmr`),
-  getPlayerHeroes: (id: number) => apiFetch<HeroLedgerRow[]>(`/players/${id}/heroes`),
-  getPlayerHeroesPlayed: (id: number) => apiFetch<HeroPlayed[]>(`/players/${id}/heroes-played`),
+  getPlayerHeroes: (id: number, game_mode?: GameMode) =>
+    apiFetch<HeroLedgerRow[]>(`/players/${id}/heroes`, { query: { game_mode } }),
+  getPlayerHeroesPlayed: (id: number, game_mode?: GameMode) =>
+    apiFetch<HeroPlayed[]>(`/players/${id}/heroes-played`, { query: { game_mode } }),
   getPlayerBadgeHistory: (id: number) => apiFetch<BadgeHistoryRow[]>(`/players/${id}/badge-history`),
-  getPlayerPerformance: (id: number) => apiFetch<PerformanceResponse>(`/players/${id}/performance`),
+  getPlayerPerformance: (id: number, game_mode?: GameMode) =>
+    apiFetch<PerformanceResponse>(`/players/${id}/performance`, { query: { game_mode } }),
   //Keys MUST be hero_id/league_offset/target_tier to match the backend CompareQuery
   //(main.rs). The old `hero` key was silently dropped server-side (read as hero_id),
-  //so the hero selector never filtered — this is the live-bug fix.
-  getPlayerCompare: (id: number, params?: { hero_id?: number; league_offset?: string; target_tier?: number }) =>
-    apiFetch<CompareResponse>(`/players/${id}/compare`, { query: params }),
+  //so the hero selector never filtered — this is the live-bug fix. compare's cohort
+  //baseline is hero_tier_cohort_mv (mode-separated), so `game_mode` is meaningful.
+  getPlayerCompare: (
+    id: number,
+    params?: { hero_id?: number; league_offset?: string; target_tier?: number; game_mode?: GameMode },
+  ) => apiFetch<CompareResponse>(`/players/${id}/compare`, { query: params }),
   //Compare you to a SPECIFIC other player on a shared hero. `vs` is the other
   //player's account_id; `hero_id` scopes the overlap. 404 when the two never
   //played the chosen hero together — the picker empty-states that.
-  getPlayerComparePlayer: (id: number, params: { vs: number; hero_id?: number }) =>
+  getPlayerComparePlayer: (id: number, params: { vs: number; hero_id?: number; game_mode?: GameMode }) =>
     apiFetch<ComparePlayerResponse>(`/players/${id}/compare-player`, { query: params }),
   //Keys MUST be hero_id/window/bracket to match improve.rs::ImproveQuery; the old
-  //`hero`/`vs_tier` keys were ignored server-side.
-  getPlayerImprove: (id: number, params?: { hero_id?: number; window?: string; bracket?: number }) =>
-    apiFetch<ImproveResponse>(`/players/${id}/improve`, { query: params }),
+  //`hero`/`vs_tier` keys were ignored server-side. improve's cohort
+  //(player_cohort_benchmarks) is Normal-only (022), so the UI pins this to Normal —
+  //the param exists only so a future Brawl cohort would just work.
+  getPlayerImprove: (
+    id: number,
+    params?: { hero_id?: number; window?: string; bracket?: number; game_mode?: GameMode },
+  ) => apiFetch<ImproveResponse>(`/players/${id}/improve`, { query: params }),
   //Public per-player economy aggregate (backend C5; served by the MAIN API). Ranked-only,
   //suppression-honored — backs the Lane Lab player overlay. matches===0 / null rates ⇒ the
   //player has no ranked economy data yet (the UI empty-states it); 404 for a suppressed/unknown
   //account. NOTE: an AGGREGATE across the player's matches, NOT a per-minute curve.
-  getPlayerEconomy: (id: number) => apiFetch<PlayerEconomy>(`/players/${id}/economy`),
+  getPlayerEconomy: (id: number, game_mode?: GameMode) =>
+    apiFetch<PlayerEconomy>(`/players/${id}/economy`, { query: { game_mode } }),
 
-  //patch tracking (C9) — fully built backend, previously zero FE refs (§A.4).
+  //patch tracking (C9) — fully built backend, previously zero FE refs (§A.4). The
+  //patch LIST is mode-agnostic; the per-patch hero stats + movers are mode-separated
+  //(patch_hero_stats carries game_mode — 022).
   getPatches: () => apiFetch<Patch[]>('/patches'),
   getCurrentPatch: () => apiFetch<Patch>('/patches/current'),
-  getPatch: (id: string, bracket?: number) =>
-    apiFetch<PatchDetail>(`/patches/${id}`, { query: { bracket } }),
-  getPatchMovers: (id: string, params?: { bracket?: number; limit?: number }) =>
+  getPatch: (id: string, bracket?: number, game_mode?: GameMode) =>
+    apiFetch<PatchDetail>(`/patches/${id}`, { query: { bracket, game_mode } }),
+  getPatchMovers: (id: string, params?: { bracket?: number; limit?: number; game_mode?: GameMode }) =>
     apiFetch<PatchMovers>(`/patches/${id}/movers`, { query: params }),
 
   //Build Lab (C9) — base stats + item modifiers (§A.4). Note: hero_base_stats is
@@ -317,14 +355,17 @@ export const api = {
   //frontend was modeled on). The standalone service currently exposes /cohort/economy-curve +
   ///me/economy-overlay instead — see the C4 deliverable for the route-reconciliation the owner/next
   //component must land (service grows /lane-lab/* OR this island is reworked to the /cohort/* shape).
-  getLaneEconomyCurve: (params?: { band?: number; metric?: string }) =>
+  //Lane curves are Normal-only (022 — laning/9-min concepts have no Brawl meaning);
+  //`game_mode` is forwarded for forward-compat but the UI never sends anything but
+  //Normal here (the global toggle is hard-gated off on Lane Lab).
+  getLaneEconomyCurve: (params?: { band?: number; metric?: string; game_mode?: GameMode }) =>
     laneLabFetch<LaneCurveResponse>('/lane-lab/economy-curve', { query: params }),
   //Per-minute farm (last-hits) curve; same CurveResponse shape + band/cohort overlay as
   //the economy curve. The endpoint serves last_hits + souls only — callers default to
   //last_hits (the farm headline). Same 501/202 build-ahead states.
-  getLaneFarmCurve: (params?: { band?: number; metric?: string }) =>
+  getLaneFarmCurve: (params?: { band?: number; metric?: string; game_mode?: GameMode }) =>
     laneLabFetch<LaneCurveResponse>('/lane-lab/farm-curve', { query: params }),
-  getLaneEarlyEconVerdict: (params?: { band?: number }) =>
+  getLaneEarlyEconVerdict: (params?: { band?: number; game_mode?: GameMode }) =>
     laneLabFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
   //The signed-in caller's own economy overlay — the cohort curve + the caller's aggregate
   //(`you`). Served by the standalone Lane Lab SERVICE (laneLabFetch); the shared session cookie
@@ -333,8 +374,11 @@ export const api = {
   getMyEconomyOverlay: (params?: { band?: number }) =>
     laneLabFetch<EconomyOverlayResponse>('/me/economy-overlay', { query: params }),
 
-  //stats + session
-  getRankDistribution: () => apiFetch<RankBucket[]>('/stats/rank-distribution'),
+  //stats + session. rank_distribution is mode-AGNOSTIC (per-player badge histogram —
+  //product decision, 022); the param is accepted for symmetry but the backend ignores
+  //it (no game_mode dimension on the table).
+  getRankDistribution: (game_mode?: GameMode) =>
+    apiFetch<RankBucket[]>('/stats/rank-distribution', { query: { game_mode } }),
   getCurrentUser: () => apiFetch<CurrentUser>('/me'),
 };
 

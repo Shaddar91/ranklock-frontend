@@ -9,6 +9,7 @@
 import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
+import { useGameMode } from '../../lib/useGameMode';
 import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, GameIcon, WinBar, TierPill } from './ui/index';
 import BucketFilter from './ui/BucketFilter';
@@ -28,12 +29,15 @@ function HeroCell({ hero }: { hero: HeroSummary }) {
 }
 
 function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
+  const { mode } = useGameMode();
   const [bucket, setBucket] = useState<RankBucket['key']>('all');
 
   const { data, isPending, isError } = useQuery({
-    queryKey: queryKeys.heroes({ bracket: bucket === 'all' ? 'all' : bucket }),
-    queryFn: () => api.getHeroes({ bracket: heroBracketParam(bucket) }),
-    initialData: bucket === 'all' ? initialRows : undefined,
+    queryKey: queryKeys.heroes({ bracket: bucket === 'all' ? 'all' : bucket, game_mode: mode }),
+    queryFn: () => api.getHeroes({ bracket: heroBracketParam(bucket), game_mode: mode }),
+    //The SSG seed is the DEFAULT-mode "all ranks" page — only apply it to that exact
+    //view, so a `?mode=brawl` deep-link never paints Brawl-keyed rows from a Normal seed.
+    initialData: bucket === 'all' && mode === 'Normal' ? initialRows : undefined,
     placeholderData: keepPreviousData,
   });
 

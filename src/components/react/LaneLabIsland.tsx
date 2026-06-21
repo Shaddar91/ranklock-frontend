@@ -662,10 +662,17 @@ function LaneLabInner() {
       {/* Band selector + the cohort-context line. One band drives every panel below. */}
       <div className="between" style={{ flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
         <div>
-          <div className="label-xs" style={{ marginBottom: 6 }}>Rank band</div>
+          <div className="flex" style={{ alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <div className="label-xs">Rank band</div>
+            {/* Lane analytics are Normal-ONLY (022) — laning/9-min/duration concepts
+                have no Brawl meaning, so the global Normal/Brawl toggle is hard-gated
+                off here. Say so explicitly rather than implying Brawl curves exist. */}
+            <Chip tone="neutral">Normal only</Chip>
+          </div>
           <BracketFilter value={band} onChange={setBand} tiers={FULL_TIERS} />
           <p className="muted faint" style={{ fontSize: 11.5, margin: '6px 0 0', maxWidth: 380, lineHeight: 1.4 }}>
-            Low ranks are sampled thinly — their curves may be sparse or empty until more lane data lands.
+            Lane curves are Normal-mode only — Brawl has no laning data. Low ranks are sampled thinly, so their
+            curves may be sparse or empty until more lane data lands.
           </p>
         </div>
         <p className="muted" style={{ fontSize: 12.5, margin: 0, maxWidth: 320, textAlign: 'right' }}>

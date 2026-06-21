@@ -12,6 +12,7 @@
 import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
+import { useGameMode } from '../../lib/useGameMode';
 import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, GameIcon, WinBar } from './ui/index';
 import BucketFilter from './ui/BucketFilter';
@@ -24,12 +25,14 @@ function itemLabel(it: ItemStat): string {
 }
 
 function ItemsTableInner({ initialRows }: { initialRows: ItemStat[] }) {
+  const { mode } = useGameMode();
   const [bucket, setBucket] = useState<RankBucket['key']>(0);
 
   const { data, isPending, isError } = useQuery({
-    queryKey: queryKeys.items(itemBracketParam(bucket)),
-    queryFn: () => api.getItems(itemBracketParam(bucket)),
-    initialData: bucket === 0 ? initialRows : undefined,
+    queryKey: queryKeys.items(itemBracketParam(bucket), mode),
+    queryFn: () => api.getItems(itemBracketParam(bucket), mode),
+    //Seed only the default-mode "all ranks" view (see HeroesTable for the rationale).
+    initialData: bucket === 0 && mode === 'Normal' ? initialRows : undefined,
     placeholderData: keepPreviousData,
   });
 

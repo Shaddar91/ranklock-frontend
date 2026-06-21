@@ -15,12 +15,26 @@
 //============================================================================
 import { useState } from 'react';
 import { isComputing, isDisabled, isNotFound } from '../../../lib/apiClient';
+import { useGameMode } from '../../../lib/useGameMode';
 import { EmptyState, Icon } from '../ui/index';
 import RadarChart from '../charts/RadarChart';
 import { CatPanel } from './StatLine';
 import { useCompare, useImprove } from './usePlayer';
 import { combatRows, deriveRadar, economyRows, efficiencyRows, laningRows } from '../../../lib/playstyle';
 import { count, fixed } from '../../../lib/format';
+
+//Coaching/playstyle are derived from /improve, whose cohort is Normal-only (022). In
+//Brawl mode this content is STILL Normal — surface that so the page never silently
+//implies a Brawl view exists. Renders nothing in Normal mode.
+function NormalOnlyNote({ what }: { what: string }) {
+  const { mode } = useGameMode();
+  if (mode !== 'StreetBrawl') return null;
+  return (
+    <p className="faint" style={{ fontSize: 11, margin: '8px 0 0', lineHeight: 1.4 }}>
+      {what} use <b>Normal</b>-mode data — Brawl has no laning/coaching cohort.
+    </p>
+  );
+}
 
 //Translate a build-ahead query error into the right empty-state copy.
 export function buildAheadMessage(error: unknown, fallback = 'Comes online with the analytics pipeline.'): string {
@@ -71,6 +85,7 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
           </p>
         </>
       )}
+      <NormalOnlyNote what="Playstyle axes" />
     </div>
   );
 }
@@ -199,6 +214,7 @@ export function CoachingPanel({ id }: { id: number }) {
           })}
         </div>
       )}
+      <NormalOnlyNote what="Coaching tips" />
     </div>
   );
 }
@@ -231,6 +247,9 @@ export function CategorizedSection({ id }: { id: number }) {
           </button>
         </div>
       </div>
+      {/* Combat/Economy come from /improve (Normal-only cohort); Laning/Efficiency
+          from /compare (mode-separated). In Brawl, flag the Normal-only half. */}
+      <NormalOnlyNote what="The Combat & Economy columns" />
       {compare && (
         <p className="faint" style={{ fontSize: 11, margin: '-4px 0 12px' }}>
           {cmp.data

@@ -10,7 +10,12 @@ import type { HeroSummary } from '../../types/api';
 //fetched at BUILD time and handed to the island as initialRows, so the island's
 //server render bakes the real table into static HTML (SEO without JS); the rank
 //bucket filter then refetches client-side. Build-ahead: empty on a cold API.
-const heroes = await buildFetch(api.getHeroes(), [] as HeroSummary[]);
+//
+//These are the DEFAULT-mode (Normal) "all ranks" rows — the island seeds React
+//Query with them ONLY for the Normal+all-ranks key (see HeroesTable initialData), so
+//the no-`?mode` first paint has real rows with no hydration flash; a `?mode=brawl`
+//deep-link re-keys to Brawl and fetches fresh instead of reusing this Normal seed.
+const heroes = await buildFetch(api.getHeroes({ game_mode: 'Normal' }), [] as HeroSummary[]);
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const topNames = [...heroes]

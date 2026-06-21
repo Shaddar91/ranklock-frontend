@@ -6,6 +6,7 @@
 //client:* guard enforces the directive).
 import SearchBox from './react/SearchBox';
 import ThemeSwitcher from './react/ThemeSwitcher';
+import GameModeToggle from './react/ui/GameModeToggle';
 
 const links = [
   { href: '/heroes', label: 'Heroes' },
@@ -57,6 +58,9 @@ const isActive = (href: string) => path === href || path === href + '/' || path.
     </nav>
 
     <div class="nav-tools flex">
+      <!-- Global Normal/Brawl selector — drives ?mode for every aggregate surface.
+           Path-aware: locks to "Normal only" on Lane Lab (lane analytics are Normal-only). -->
+      <GameModeToggle currentPath={path} client:load />
       <SearchBox variant="compact" client:load />
       <ThemeSwitcher compact client:load />
     </div>

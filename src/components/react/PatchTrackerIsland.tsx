@@ -12,6 +12,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
+import { useGameMode } from '../../lib/useGameMode';
 import QueryProvider from './QueryProvider';
 import { Chip, DataTable, type DataTableColumn, Delta, EmptyState, GameIcon, WinBar } from './ui/index';
 import BucketFilter from './ui/BucketFilter';
@@ -50,6 +51,9 @@ function MoversColumn({ title, rows, tone }: { title: string; rows: PatchHeroSta
 }
 
 function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
+  const { mode } = useGameMode();
+  //The patch LIST is mode-agnostic (it's the set of tracked patches); only the
+  //per-patch hero stats + movers are mode-separated (patch_hero_stats — 022).
   const patchesQ = useQuery({
     queryKey: queryKeys.patches(),
     queryFn: api.getPatches,
@@ -70,13 +74,13 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
   const bracket = typeof bucket === 'number' ? bucket : 0;
 
   const detailQ = useQuery({
-    queryKey: queryKeys.patch(activeId ?? '', { bracket }),
-    queryFn: () => api.getPatch(activeId as string, bracket),
+    queryKey: queryKeys.patch(activeId ?? '', { bracket, game_mode: mode }),
+    queryFn: () => api.getPatch(activeId as string, bracket, mode),
     enabled: !!activeId,
   });
   const moversQ = useQuery({
-    queryKey: queryKeys.patchMovers(activeId ?? '', { bracket }),
-    queryFn: () => api.getPatchMovers(activeId as string, { bracket }),
+    queryKey: queryKeys.patchMovers(activeId ?? '', { bracket, game_mode: mode }),
+    queryFn: () => api.getPatchMovers(activeId as string, { bracket, game_mode: mode }),
     enabled: !!activeId,
   });
 

@@ -5,9 +5,10 @@
 //holds the real ladder (SEO without JS). The rank-band filter is SERVER-DRIVEN —
 //a band sends min_badge/max_badge (badge tiers, labelled by rank emblem, never
 //MMR) and offset/limit page the ladder; both ride in the React Query key.
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
+import { useGameMode } from '../../lib/useGameMode';
 import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, Icon, RankBadge, WinBar } from './ui/index';
 import BucketFilter from './ui/BucketFilter';
@@ -94,8 +95,20 @@ function Podium({ rows }: { rows: RankedEntry[] }) {
 }
 
 function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) {
+  const { mode } = useGameMode();
   const [bucket, setBucket] = useState<RankBucket['key']>('all');
   const [offset, setOffset] = useState(0);
+
+  //leaderboard_mv IS mode-separated (one of the 4 widened MVs — 022), so Brawl has
+  //its own ladder; switching modes is a fresh page-1 view. Reset to the first page
+  //on a mode change so the offset doesn't carry over into a different ladder.
+  const prevMode = useRef(mode);
+  useEffect(() => {
+    if (prevMode.current !== mode) {
+      prevMode.current = mode;
+      setOffset(0);
+    }
+  }, [mode]);
 
   //Server-driven now. The old path loaded a fixed top-100 and filtered bands
   //CLIENT-SIDE, so picking Oracle/Phantom (tiers 8,9) over a top-100 that is all
@@ -103,17 +116,18 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
   //(badge tiers, not a row filter) and offset/limit page the ladder server-side.
   const band = LEADERBOARD_BUCKETS.find((b) => b.key === bucket);
   const badgeRange = badgeRangeForTiers(band?.tiers ?? []);
-  const params: { limit: number; offset: number; min_badge?: number; max_badge?: number } = {
+  const params = {
     limit: LEADERBOARD_PAGE_SIZE,
     offset,
     ...(badgeRange ?? {}),
+    game_mode: mode,
   };
 
-  //offset + band ride in the queryKey (queryKeys.leaderboard spreads params) so
-  //every page/band caches separately; keepPreviousData keeps the prior page
-  //on-screen for a smooth swap. initialData seeds ONLY the SSG default key (all
-  //ranks, page 1) — seeding another page/band with the all-ranks rows is wrong.
-  const isDefaultPage = bucket === 'all' && offset === 0;
+  //offset + band + mode ride in the queryKey (queryKeys.leaderboard spreads params)
+  //so every page/band/mode caches separately; keepPreviousData keeps the prior page
+  //on-screen for a smooth swap. initialData seeds ONLY the SSG default key (Normal,
+  //all ranks, page 1) — seeding another page/band/mode with the all-ranks rows is wrong.
+  const isDefaultPage = bucket === 'all' && offset === 0 && mode === 'Normal';
 
   const { data, isPending, isError, isPlaceholderData } = useQuery({
     queryKey: queryKeys.leaderboard(params),

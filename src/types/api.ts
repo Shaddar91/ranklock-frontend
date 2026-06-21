@@ -24,6 +24,15 @@ export type Badge = number | null;
 /** Hero bracket filter accepted by `?bracket=` on hero endpoints. */
 export type HeroBracket = 'low' | 'mid' | 'high' | 'top';
 
+/**
+ * The competitive game modes RankLock separates stats by (migration 022 —
+ * game-mode separation). The backend `?game_mode=` param parses exactly these two
+ * canonical names (case-insensitive), defaulting to `Normal`. Non-competitive
+ * modes (CoopBot/PrivateLobby/Tutorial/ExploreNYC) are excluded from ALL stats and
+ * are NEVER offered as a value. `StreetBrawl` is the API name for "Brawl".
+ */
+export type GameMode = 'Normal' | 'StreetBrawl';
+
 //---- leaderboard / search ---------------------------------------------------
 
 //GET /leaderboard?patch_id=&limit=&cursor=   (struct LeaderboardEntry)

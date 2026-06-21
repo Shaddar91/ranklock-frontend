@@ -547,6 +547,43 @@ textarea {
   display: none;
 }
 
+/* ---------- game-mode toggle (global Normal/Brawl, lives in the nav) ---------- */
+.gm-toggle {
+  padding: 3px;
+  gap: 2px;
+  flex-wrap: nowrap;
+  flex: none;
+  align-items: center;
+}
+.gm-toggle .minitog {
+  padding: 5px 10px;
+}
+/* Normal-only routes (Lane Lab): the control is a locked indicator, not a switch. */
+.gm-toggle--locked {
+  opacity: 0.75;
+  cursor: default;
+}
+.gm-toggle--locked .minitog.on {
+  cursor: default;
+}
+.gm-only {
+  font-family: var(--display);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 5px 0 2px;
+  white-space: nowrap;
+}
+/* On tight viewports the long nav already scrolls; keep the toggle from wrapping. */
+@media (max-width: 720px) {
+  .gm-toggle .minitog {
+    padding: 5px 8px;
+    font-size: 11.5px;
+  }
+}
+
 /* ---------- form dots ---------- */
 .formdot {
   width: 9px;
