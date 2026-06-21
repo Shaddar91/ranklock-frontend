@@ -10,7 +10,7 @@ import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
-import { DataTable, type DataTableColumn, GameIcon, WinBar, Delta, TierPill } from './ui/index';
+import { DataTable, type DataTableColumn, GameIcon, WinBar, TierPill } from './ui/index';
 import BucketFilter from './ui/BucketFilter';
 import { HERO_BUCKETS, heroBracketParam, type RankBucket } from '../../lib/brackets';
 import { DASH, fixed, kda, metaTier, pct, pickShare } from '../../lib/format';
@@ -59,14 +59,10 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
         sortValue: (h) => h.win_rate,
         render: (h) => (h.win_rate == null ? <span className="faint">{DASH}</span> : <WinBar wr={h.win_rate} />),
       },
-      {
-        key: 'd7',
-        header: '7d',
-        numeric: true,
-        sortValue: (h) => h.delta_win_rate_7d ?? null,
-        render: (h) =>
-          h.delta_win_rate_7d == null ? <span className="faint">{DASH}</span> : <Delta value={h.delta_win_rate_7d} />,
-      },
+      // NOTE: the "7d" (delta_win_rate_7d, 7-day win-rate momentum) column was removed — the backend
+      // never populates that field yet (the win-rate-history snapshot it needs isn't built), so it was
+      // always a cryptic, empty "—". Re-add with a clear "7-day Δ" header + tooltip once the momentum
+      // producer exists. (Delta import kept for when it returns.)
       {
         key: 'pick',
         header: 'Pick %',
