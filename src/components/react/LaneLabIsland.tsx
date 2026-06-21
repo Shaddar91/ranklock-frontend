@@ -189,7 +189,7 @@ function LaneLabInner() {
         </div>
         <p className="muted" style={{ fontSize: 12.5, margin: 0, maxWidth: 320, textAlign: 'right' }}>
           {cohortLabel
-            ? <>Showing <b className="cyan-c">{bandLabel}</b> souls vs the <b style={{ color: 'var(--muted)' }}>{cohortLabel}</b> cohort one tier up.</>
+            ? <>Showing <b className="cyan-c">{bandLabel}</b> souls vs <b style={{ color: 'var(--muted)' }}>{cohortLabel}</b> one tier up.</>
             : <>Showing <b className="cyan-c">{bandLabel}</b> — pick a specific tier to overlay the rank one tier up.</>}
         </p>
       </div>
@@ -219,8 +219,8 @@ function LaneLabInner() {
           <>
             <EconomyCurve data={points} />
             <p className="muted" style={{ fontSize: 12, margin: '10px 0 0', lineHeight: 1.45 }}>
-              The cyan area is the <b className="cyan-c">{bandLabel}</b> cohort median net worth per minute
-              {cohortLabel ? <> ; the dashed line is the <b>{cohortLabel}</b> cohort one tier up — the gap is where the lane is being lost.</> : <>.</>}
+              The cyan area is the <b className="cyan-c">{bandLabel}</b> tier median net worth per minute
+              {cohortLabel ? <> ; the dashed line is <b>{cohortLabel}</b> one tier up — the gap is where the lane is being lost.</> : <>.</>}
             </p>
           </>
         )}

@@ -62,7 +62,7 @@ export function CatPanel({ title, icon, rows, more = [], compare, emptyMessage }
               You
             </span>
             <span className="label-xs" style={{ fontSize: 9.5, width: 78, textAlign: 'right' }}>
-              Cohort
+              Tier
             </span>
           </span>
         )}

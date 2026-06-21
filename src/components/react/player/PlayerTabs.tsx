@@ -256,7 +256,7 @@ export function ComparePanel({ id }: { id: number }) {
       </div>
       {data.clamped && (
         <p className="faint" style={{ fontSize: 11, marginBottom: 10 }}>
-          Cohort clamped to the nearest available tier.
+          Comparison clamped to the nearest available tier.
         </p>
       )}
       <table className="dt">
@@ -264,7 +264,7 @@ export function ComparePanel({ id }: { id: number }) {
           <tr>
             <th><span className="th-static">Metric</span></th>
             <th className="num"><span className="th-static">You</span></th>
-            <th className="num"><span className="th-static">Cohort</span></th>
+            <th className="num"><span className="th-static">Tier</span></th>
           </tr>
         </thead>
         <tbody>

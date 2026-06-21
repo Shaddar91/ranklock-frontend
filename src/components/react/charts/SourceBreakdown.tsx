@@ -47,7 +47,7 @@ export default function SourceBreakdown({ data, height = 260 }: SourceBreakdownP
         />
         <Legend wrapperStyle={{ fontSize: 12, color: 'var(--muted)' }} />
         <Bar name="You" dataKey="you" fill={seriesColor.you} radius={[0, 3, 3, 0]} maxBarSize={11} />
-        <Bar name="Cohort" dataKey="cohort" fill={seriesColor.cohort} fillOpacity={0.55} radius={[0, 3, 3, 0]} maxBarSize={11} />
+        <Bar name="Tier" dataKey="cohort" fill={seriesColor.cohort} fillOpacity={0.55} radius={[0, 3, 3, 0]} maxBarSize={11} />
       </BarChart>
     </ResponsiveContainer>
   );

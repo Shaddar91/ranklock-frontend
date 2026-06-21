@@ -63,11 +63,11 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
         <EmptyState title="Playstyle radar not served yet" message={buildAheadMessage(error)} icon="target" />
       ) : (
         <>
-          <RadarChart data={axes.map((a) => ({ axis: a.axis, you: a.you, cohort: a.cohort }))} youLabel="You" cohortLabel="Cohort p50" />
+          <RadarChart data={axes.map((a) => ({ axis: a.axis, you: a.you, cohort: a.cohort }))} youLabel="You" cohortLabel="Tier p50" />
           <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
             {servedCount < axes.length
               ? `Partial — ${servedCount} of ${axes.length} axes served; the rest fill in as the pipeline catches up.`
-              : 'The 0.5 ring is the cohort median; your blob bulges where you exceed it.'}
+              : 'The 0.5 ring is the tier median; your blob bulges where you exceed it.'}
           </p>
         </>
       )}
@@ -93,7 +93,7 @@ export function EconomyPanel({ id }: { id: number }) {
             Signature · vs the rank you&rsquo;re chasing
           </div>
           <h2 className="h-sec" style={{ fontSize: 17 }}>
-            Soul curve vs cohort
+            Soul curve vs tier
           </h2>
         </div>
         {gap != null && (
@@ -105,7 +105,7 @@ export function EconomyPanel({ id }: { id: number }) {
       </div>
       {souls != null ? (
         <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '0 0 14px', lineHeight: 1.5 }}>
-          You average <b className="cyan-c mono">{count(souls)}</b> souls/min; the next-tier cohort averages{' '}
+          You average <b className="cyan-c mono">{count(souls)}</b> souls/min; the next tier averages{' '}
           <b className="mono" style={{ color: 'var(--muted)' }}>{count(cohortSouls)}</b>.
         </p>
       ) : (
@@ -115,12 +115,12 @@ export function EconomyPanel({ id }: { id: number }) {
       )}
       {/* The per-minute timeline + per-source split are UNBUILT rich-tier
           endpoints — empty-state them (build-ahead) while keeping the layout. */}
-      <EmptyState title="Per-minute soul curve not served yet" message="The match-timeline (per-minute souls vs cohort) endpoint comes online with the analytics pipeline." icon="chart" />
+      <EmptyState title="Per-minute soul curve not served yet" message="The match-timeline (per-minute souls vs tier) endpoint comes online with the analytics pipeline." icon="chart" />
       <div className="deco-rule" style={{ margin: '18px 0 14px' }}>
         <span className="dia" />
       </div>
       <div className="label-xs" style={{ marginBottom: 12 }}>
-        Gold source — you vs cohort
+        Gold source — you vs tier
       </div>
       <EmptyState title="Gold-source breakdown not served yet" message="Per-source farm splits (lane creeps, neutrals, hero kills…) arrive with the rich-tier economy job." icon="coins" />
     </div>
@@ -181,10 +181,10 @@ export function CoachingPanel({ id }: { id: number }) {
                 <div style={{ flex: 1 }}>
                   <div className="display" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>
                     {humanize(t.metric)} is {t.delta_pct >= 0 ? '+' : ''}
-                    {fixed(t.delta_pct, 1)}% vs your cohort
+                    {fixed(t.delta_pct, 1)}% vs your tier
                   </div>
                   <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: 0, lineHeight: 1.45 }}>
-                    You average <b className="mono">{fixed(t.user_avg, 1)}</b> against a cohort median of{' '}
+                    You average <b className="mono">{fixed(t.user_avg, 1)}</b> against a tier median of{' '}
                     <b className="mono">{fixed(t.cohort_p50, 1)}</b>.
                   </p>
                 </div>
@@ -215,7 +215,7 @@ export function CategorizedSection({ id }: { id: number }) {
   return (
     <div>
       <div className="between" style={{ margin: '4px 0 12px', flexWrap: 'wrap', gap: 10 }}>
-        <span className="label-xs">Categorized performance · {compare ? 'you vs cohort' : 'every stat vs your bracket'}</span>
+        <span className="label-xs">Categorized performance · {compare ? 'you vs tier' : 'every stat vs your bracket'}</span>
         <div className="brkfilter" style={{ padding: 3, flexWrap: 'nowrap', flexShrink: 0 }}>
           <button type="button" className={'minitog' + (!compare ? ' on' : '')} onClick={() => setCompare(false)} aria-pressed={!compare}>
             vs bracket
