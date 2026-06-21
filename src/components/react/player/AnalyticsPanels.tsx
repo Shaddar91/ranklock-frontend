@@ -77,7 +77,11 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
         <EmptyState title="Playstyle radar not served yet" message={buildAheadMessage(error)} icon="target" />
       ) : (
         <>
-          <RadarChart data={axes.map((a) => ({ axis: a.axis, you: a.you, cohort: a.cohort }))} youLabel="You" cohortLabel="Tier p50" />
+          <RadarChart
+            data={axes.map((a) => ({ axis: a.axis, you: a.you, cohort: a.cohort }))}
+            youLabel="You"
+            cohortLabel={data ? `${data.bracket_label} median` : 'Tier median'}
+          />
           <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
             {servedCount < axes.length
               ? `Partial — ${servedCount} of ${axes.length} axes served; the rest fill in as the pipeline catches up.`

@@ -536,6 +536,14 @@ export interface PlayerEconomy {
   avg_net_worth: number | null;
   souls_per_min: number | null;
   last_hits_per_min: number | null;
+  //Per-game AVERAGE totals for every other metric the Lane Lab overlay surfaces
+  //(extended in the backend's PLAYER_ECONOMY_SQL). avg_player_damage reads the
+  //match_players `damage_dealt` column. All null when the player has no matches.
+  avg_kills: number | null;
+  avg_deaths: number | null;
+  avg_assists: number | null;
+  avg_denies: number | null;
+  avg_player_damage: number | null;
 }
 
 //GET /me/economy-overlay?band=  (Lane Lab service) — the cohort curve PLUS the

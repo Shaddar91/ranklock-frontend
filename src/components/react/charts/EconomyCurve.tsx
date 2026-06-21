@@ -1,8 +1,9 @@
-//Per-minute souls, tier vs tier. The filled cyan area is the SELECTED rank
-//tier's median economy; the dashed line is the tier one rank up. Both series
-//are rank-cohort medians — NOT the logged-in player. Callers pass the visible
-//series labels (youLabel/cohortLabel); the `you`/`cohort` dataKeys are fixed.
-//Recharts ComposedChart; theme-aware.
+//Per-minute economy, tier vs tier vs the picked player. The filled cyan area is
+//the SELECTED rank tier's median curve; the dashed muted line is the tier one rank
+//up; the dashed amber line is the picked player / "You" — a FLAT per-game average,
+//never a per-minute trajectory. The two cohort series are rank medians, NOT the
+//player. Callers pass the visible series labels (youLabel/cohortLabel/playerLabel);
+//the `you`/`cohort`/`player` dataKeys are fixed. Recharts ComposedChart; theme-aware.
 import {
   ComposedChart,
   Area,
@@ -10,7 +11,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  ReferenceLine,
   Tooltip,
   Legend,
   ResponsiveContainer,
@@ -30,21 +30,24 @@ export interface EconomyPoint {
   min: number;
   you: number;
   cohort: number;
+  //Optional FLAT player-overlay level — the SAME value on every point (the picked
+  //player's per-game average for the active metric), or absent for no overlay. It
+  //is a level, not a trajectory: deliberately flat so it can never be read as a
+  //fabricated per-minute personal curve. Drives the amber `player` series.
+  player?: number;
 }
 
 interface EconomyCurveProps {
   data: EconomyPoint[];
   height?: number;
-  //Visible legend + tooltip labels for the two series. Both are tier medians,
-  //not the user — callers pass the selected band and the one-tier-up rank names
-  //so the chart reads as tier-vs-tier. The `you`/`cohort` dataKeys stay fixed.
+  //Visible legend + tooltip labels for the series. you/cohort are tier medians, not
+  //the user — callers pass the selected band and the one-tier-up rank names so the
+  //chart reads as tier-vs-tier. playerLabel names the flat amber overlay (the picked
+  //player's name, or "You"); omit it to hide the overlay entirely. The
+  //`you`/`cohort`/`player` dataKeys stay fixed.
   youLabel?: string;
   cohortLabel?: string;
-  //Optional FLAT reference marker — a single horizontal line at a known value
-  //(e.g. a picked player's average net worth), NOT a per-minute series. It is a
-  //level, not a trajectory: deliberately flat so it can never be read as a
-  //fabricated personal curve. Omitted/null → nothing rendered.
-  marker?: { value: number; label: string } | null;
+  playerLabel?: string;
 }
 
 const fmtK = (v: ChartFmtValue) =>
@@ -55,10 +58,8 @@ export default function EconomyCurve({
   height = 300,
   youLabel = 'Selected tier median',
   cohortLabel = 'One tier up',
-  marker = null,
+  playerLabel,
 }: EconomyCurveProps) {
-  //gate once so the JSX both renders only on a finite value AND narrows away null.
-  const m = marker != null && Number.isFinite(marker.value) ? marker : null;
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart data={data} margin={{ top: 12, right: 16, bottom: 4, left: 4 }}>
@@ -102,15 +103,21 @@ export default function EconomyCurve({
           strokeDasharray="6 4"
           dot={false}
         />
-        {m && (
-          <ReferenceLine
-            y={m.value}
+        {playerLabel && (
+          //Flat amber level for the picked player / "You": a per-game AVERAGE, drawn
+          //straight across so it reads as a reference level, never a per-minute curve.
+          //As a real series its value is folded into the y-domain automatically, so a
+          //high average (e.g. final net worth) stays on-chart without manual extension.
+          <Line
+            type="linear"
+            name={playerLabel}
+            dataKey="player"
             stroke={seriesColor.amber}
             strokeWidth={2}
             strokeDasharray="2 3"
-            //extend the y-domain so a high marker (e.g. avg final net worth) stays visible.
-            ifOverflow="extendDomain"
-            label={{ value: m.label, position: 'insideTopRight', fill: seriesColor.amber, fontSize: 11 }}
+            dot={false}
+            connectNulls
+            isAnimationActive={false}
           />
         )}
       </ComposedChart>

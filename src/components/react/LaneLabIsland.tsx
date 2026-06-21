@@ -30,7 +30,7 @@ import { BracketFilter, type BracketValue, Chip, EmptyState, Icon, RankBadge } f
 import EconomyCurve, { type EconomyPoint } from './charts/EconomyCurve';
 import { useViewer } from './player/usePlayer';
 import { getRank, rankFromBadge, RANKS } from '../../lib/ranks';
-import { count, pct } from '../../lib/format';
+import { count, DASH, fixed, pct } from '../../lib/format';
 import type { EconomyOverlayResponse, LaneCurveResponse, PlayerEconomy, SearchResult } from '../../types/api';
 
 //A single curve metric: the API token + its human label.
@@ -57,11 +57,14 @@ const FARM_METRICS: readonly MetricOption[] = [
   { key: 'souls', label: 'Souls' },
 ];
 
-//souls value_bucket encoding (012 migration COMMENT): souls = net_worth/1000, so a
-//p50 value_bucket maps back to real souls by ×1000. Every OTHER histogram metric
-//(last_hits/kills/…) is a raw count, so its bucket is the real value (×1).
-const SOULS_PER_BUCKET = 1000;
-const bucketScale = (metric: string): number => (metric === 'souls' ? SOULS_PER_BUCKET : 1);
+//value_bucket encoding (012 migration COMMENT): souls = net_worth/1000 AND
+//damage = player_damage/1000, so their p50 buckets map back to real units by ×1000.
+//Every OTHER histogram metric (last_hits/kills/deaths/assists) is a raw count, so its
+//bucket is the real value (×1). Missing the ×1000 on damage renders the damage curve
+//1000× too small — and would push the player marker off-chart.
+const PER_THOUSAND_BUCKET = 1000;
+const bucketScale = (metric: string): number =>
+  metric === 'souls' || metric === 'damage' ? PER_THOUSAND_BUCKET : 1;
 
 //The highest rank band (Eternus = badge 110..116 → band 11). Nothing sits above
 //it, so it (and 'All') render without a one-tier-up cohort overlay.
@@ -129,25 +132,89 @@ function peakSamples(curve: LaneCurveResponse | undefined): number {
 type OverlaySource = { kind: 'player'; player: SearchResult } | { kind: 'me' };
 
 interface PlayerOverlay {
+  //The picked player's name, or "You" for the signed-in account.
   label: string;
   matches: number;
   badge: number;
+  //Every per-game average the per-player economy endpoint serves (C1). The picked-player
+  //source (PlayerEconomy) fills all of these; the "You" source (/me/economy-overlay) only
+  //serves souls + last-hits, so its kills/deaths/assists/denies/damage stay null and the
+  //UI shows an em-dash for them rather than fabricating a value.
   avg_net_worth: number | null;
   souls_per_min: number | null;
+  last_hits_per_min: number | null;
+  avg_kills: number | null;
+  avg_deaths: number | null;
+  avg_assists: number | null;
+  avg_denies: number | null;
+  avg_player_damage: number | null;
 }
 
 function overlayFromPlayer(name: string, e: PlayerEconomy): PlayerOverlay {
-  return { label: name, matches: e.matches, badge: e.badge, avg_net_worth: e.avg_net_worth, souls_per_min: e.souls_per_min };
+  return {
+    label: name,
+    matches: e.matches,
+    badge: e.badge,
+    avg_net_worth: e.avg_net_worth,
+    souls_per_min: e.souls_per_min,
+    last_hits_per_min: e.last_hits_per_min,
+    avg_kills: e.avg_kills,
+    avg_deaths: e.avg_deaths,
+    avg_assists: e.avg_assists,
+    avg_denies: e.avg_denies,
+    avg_player_damage: e.avg_player_damage,
+  };
 }
 
 function overlayFromMe(o: EconomyOverlayResponse): PlayerOverlay {
-  return { label: 'My account', matches: o.you.matches, badge: o.you.badge, avg_net_worth: o.you.avg_net_worth, souls_per_min: o.you.souls_per_min };
+  return {
+    label: 'You',
+    matches: o.you.matches,
+    badge: o.you.badge,
+    avg_net_worth: o.you.avg_net_worth,
+    souls_per_min: o.you.souls_per_min,
+    last_hits_per_min: o.you.last_hits_per_min,
+    //the /me overlay endpoint doesn't serve these yet — search your player name for them.
+    avg_kills: null,
+    avg_deaths: null,
+    avg_assists: null,
+    avg_denies: null,
+    avg_player_damage: null,
+  };
 }
 
 //An overlay only has something to draw when it covers real ranked games with a souls
 //rate — otherwise the player has "no economy data yet" and the picker empty-states it.
 const overlayHasData = (o: PlayerOverlay | null): o is PlayerOverlay =>
   o != null && o.matches > 0 && o.souls_per_min != null;
+
+//The player's per-game AVERAGE for a given CURVE metric, on the SAME scale as the
+//cumulative cohort curve (net worth / raw counts / damage). last_hits is the one curve
+//metric we have only as a per-MINUTE rate (last_hits_per_min), never a per-game total, so
+//it gets no flat curve marker (the stat-line still shows the rate). null → no marker.
+function overlayValueForMetric(o: PlayerOverlay, metric: string): number | null {
+  switch (metric) {
+    case 'souls':
+      return o.avg_net_worth;
+    case 'kills':
+      return o.avg_kills;
+    case 'deaths':
+      return o.avg_deaths;
+    case 'assists':
+      return o.avg_assists;
+    case 'damage':
+      return o.avg_player_damage;
+    default:
+      return null; //last_hits (rate only) and anything without a per-game total
+  }
+}
+
+//souls/damage are large (thousands) and read best as grouped integers; kills/deaths/
+//assists/denies are small per-game counts that read best with one decimal.
+function fmtMetricValue(metric: string, v: number | null): string {
+  if (v == null) return DASH;
+  return metric === 'souls' || metric === 'damage' ? count(v) : fixed(v, 1);
+}
 
 //The picked player's ESTIMATED 9-minute net worth, projected from their average souls/min
 //pace (× 9 min). NOT a measured value — early/late minutes farm at different rates and we
@@ -221,8 +288,8 @@ function CurvePanel({
   metrics: readonly MetricOption[];
   defaultMetric: string;
   kicker: string;
-  //Optional picked-player / my-account overlay (only the economy panel passes one). The
-  //flat marker rides the souls metric only — see overlayMarker below.
+  //Optional picked-player / "You" overlay (the economy and farm panels pass one). The
+  //flat amber line follows the SELECTED metric — see overlayValueForMetric below.
   playerOverlay?: PlayerOverlay | null;
 }) {
   const [metric, setMetric] = useState<string>(defaultMetric);
@@ -242,24 +309,22 @@ function CurvePanel({
     enabled: cohort != null,
   });
 
-  const points = useMemo(
-    () => toEconPoints(youCurve.data, cohortCurve.data, bucketScale(metric)),
-    [youCurve.data, cohortCurve.data, metric],
-  );
+  //The picked player's flat overlay LEVEL for the active metric (null = no marker — e.g.
+  //last_hits, which we hold only as a per-minute rate, or a "You" overlay that doesn't
+  //serve this metric). Folded onto every point so the amber `player` series draws a flat
+  //reference line and joins the legend, metric-aware: change the toggle, the line moves.
+  const overlayValue = playerOverlay ? overlayValueForMetric(playerOverlay, metric) : null;
+
+  const points = useMemo(() => {
+    const base = toEconPoints(youCurve.data, cohortCurve.data, bucketScale(metric));
+    return overlayValue == null ? base : base.map((p) => ({ ...p, player: overlayValue }));
+  }, [youCurve.data, cohortCurve.data, metric, overlayValue]);
 
   const bandLabel = band === 'all' ? 'All ranks' : getRank(band).name;
   const cohortLabel = cohort != null ? getRank(cohort).name : null;
   const n = peakSamples(youCurve.data);
   const metricLabel = metrics.find((m) => m.key === metric)?.label ?? metric;
   const metricLower = metricLabel.toLowerCase();
-
-  //Flat player-overlay marker: only the souls metric is a net-worth LEVEL the line can sit
-  //on — the aggregate has no level for last-hits/kills/etc., so other metrics show no marker
-  //(just a hint to switch to Souls). The marker is the player's AVERAGE net worth, not a curve.
-  const overlayMarker =
-    playerOverlay && metric === 'souls' && playerOverlay.avg_net_worth != null
-      ? { value: playerOverlay.avg_net_worth, label: `${playerOverlay.label} avg` }
-      : null;
 
   return (
     <div className="brass-frame" style={{ padding: '18px 20px' }}>
@@ -293,25 +358,32 @@ function CurvePanel({
             data={points}
             youLabel={`${bandLabel} median`}
             cohortLabel={cohortLabel ? `${cohortLabel} (one tier up)` : undefined}
-            marker={overlayMarker}
+            playerLabel={overlayValue != null ? playerOverlay?.label : undefined}
           />
           <p className="muted" style={{ fontSize: 12, margin: '10px 0 0', lineHeight: 1.45 }}>
-            The cyan area is the <b className="cyan-c">{bandLabel}</b> tier median {metricLower} per minute
-            {cohortLabel ? <> ; the dashed line is <b>{cohortLabel}</b> one tier up — the gap is where the lane is being lost.</> : <>.</>}
-            {' '}This is your <b>rank&rsquo;s</b> typical curve across all sampled players — not your own matches.
+            The <b className="cyan-c">cyan</b> area is the <b className="cyan-c">{bandLabel}</b> tier median {metricLower} per minute
+            {cohortLabel ? <> ; the <b style={{ color: 'var(--muted)' }}>grey dashed</b> line is <b>{cohortLabel}</b> one tier up — the gap is where the lane is being lost.</> : <>.</>}
+            {' '}This is the <b>rank&rsquo;s</b> typical curve across all sampled players — not one player&rsquo;s matches.
           </p>
           {playerOverlay && (
             <p className="muted" style={{ fontSize: 12, margin: '6px 0 0', lineHeight: 1.45 }}>
-              {overlayMarker ? (
+              {overlayValue != null ? (
                 <>
-                  The <b style={{ color: 'var(--amber-acc)' }}>amber line</b> marks{' '}
-                  <b>{playerOverlay.label}</b>&rsquo;s average net worth
-                  {playerOverlay.avg_net_worth != null ? <> ({count(playerOverlay.avg_net_worth)} souls)</> : null} — a
-                  per-game <b>average</b>, not a per-minute curve (a personal soul curve needs match timeline
-                  data, which isn&rsquo;t loaded yet).
+                  The <b style={{ color: 'var(--amber-acc)' }}>amber dashed</b> line is{' '}
+                  <b>{playerOverlay.label}</b>&rsquo;s average {metricLower} (
+                  <b className="mono">{fmtMetricValue(metric, overlayValue)}</b>) across {count(playerOverlay.matches)} games — a per-game{' '}
+                  <b>average</b>, not a per-minute curve (a personal per-minute curve needs match-timeline data, which isn&rsquo;t loaded yet).
+                </>
+              ) : metric === 'last_hits' ? (
+                <>
+                  We hold <b>{playerOverlay.label}</b>&rsquo;s last hits as a per-minute <b>rate</b> (
+                  <b className="mono">{count(playerOverlay.last_hits_per_min)}</b>/min), not a per-game total, so there&rsquo;s no flat marker on the
+                  cumulative curve — the full per-metric stat-line is in the picker above.
                 </>
               ) : (
-                <>Switch to <b>Souls</b> to overlay <b>{playerOverlay.label}</b>&rsquo;s average net worth — the overlay is a souls figure.</>
+                <>
+                  <b>{playerOverlay.label}</b>&rsquo;s {metricLower} isn&rsquo;t in the account overlay — search a player by name to overlay every metric.
+                </>
               )}
             </p>
           )}
@@ -449,18 +521,44 @@ function overlayEmptyMessage(source: OverlaySource, error: unknown): string {
   return `No economy data for ${source.player.steam_name} yet.`;
 }
 
-//The active-overlay summary line: the player's rank badge + label + their aggregate
-//economy. Reads `badge` so the figure is anchored to a rank, not floating in a vacuum.
-function OverlaySummary({ data }: { data: PlayerOverlay }) {
+//The active-overlay stat-line: the player's rank badge + label + their FULL per-metric
+//aggregate — every average the economy endpoint serves, not just souls (the dictation's
+//core ask). Anchored to a rank via `badge`. Missing values (e.g. the kills/deaths a "You"
+//overlay doesn't serve) show an em-dash, never a fabricated 0.
+function OverlaySummary({ data, bandLabel }: { data: PlayerOverlay; bandLabel: string }) {
   const rk = rankFromBadge(data.badge);
+  const stats: { label: string; value: string }[] = [
+    { label: 'Souls / min', value: count(data.souls_per_min) },
+    { label: 'Avg net worth', value: count(data.avg_net_worth) },
+    { label: 'Last hits / min', value: count(data.last_hits_per_min) },
+    { label: 'Kills', value: fixed(data.avg_kills, 1) },
+    { label: 'Deaths', value: fixed(data.avg_deaths, 1) },
+    { label: 'Assists', value: fixed(data.avg_assists, 1) },
+    { label: 'Denies', value: fixed(data.avg_denies, 1) },
+    { label: 'Damage', value: count(data.avg_player_damage) },
+  ];
   return (
-    <div className="flex" style={{ alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
-      {rk && <RankBadge tier={rk.tier} size={22} glow={false} />}
-      <Chip tone="neutral">{data.label}</Chip>
-      <span className="mono faint" style={{ fontSize: 12 }}>
-        ~{data.souls_per_min != null ? count(data.souls_per_min) : '—'} souls/min · avg net worth{' '}
-        {data.avg_net_worth != null ? count(data.avg_net_worth) : '—'} · n={count(data.matches)} games
-      </span>
+    <div style={{ marginTop: 12 }}>
+      <div className="flex" style={{ alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+        {rk && <RankBadge tier={rk.tier} size={22} glow={false} />}
+        <Chip tone="neutral">{data.label}</Chip>
+        <span className="mono faint" style={{ fontSize: 12 }}>
+          {rk ? getRank(rk.tier).name : 'Unranked'} · n={count(data.matches)} games
+        </span>
+      </div>
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(94px, 1fr))', gap: 8 }}>
+        {stats.map((s) => (
+          <div key={s.label} className="panel" style={{ padding: '8px 10px' }}>
+            <div className="label-xs" style={{ fontSize: 9.5, marginBottom: 3 }}>{s.label}</div>
+            <div className="mono" style={{ fontSize: 14, color: 'var(--text)' }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+      <p className="muted faint" style={{ fontSize: 11.5, margin: '10px 0 0', lineHeight: 1.45 }}>
+        {data.label}&rsquo;s per-game averages across {count(data.matches)} games — an aggregate, not per-minute. The
+        curves below are the <b>{bandLabel}</b> rank cohort; the <b style={{ color: 'var(--amber-acc)' }}>amber</b> line
+        marks {data.label} on whichever metric is selected.
+      </p>
     </div>
   );
 }
@@ -472,6 +570,7 @@ function PlayerOverlayPicker({
   onClear,
   loggedIn,
   status,
+  bandLabel,
 }: {
   overlay: OverlaySource | null;
   onPick: (p: SearchResult) => void;
@@ -479,6 +578,7 @@ function PlayerOverlayPicker({
   onClear: () => void;
   loggedIn: boolean;
   status: OverlayStatus;
+  bandLabel: string;
 }) {
   const [raw, setRaw] = useState('');
   const [q, setQ] = useState('');
@@ -606,7 +706,7 @@ function PlayerOverlayPicker({
           <EmptyState title="No economy data for this player yet" message={overlayEmptyMessage(overlay, status.error)} icon="coins" />
         </div>
       ) : status.data ? (
-        <OverlaySummary data={status.data} />
+        <OverlaySummary data={status.data} bandLabel={bandLabel} />
       ) : null}
     </div>
   );
@@ -690,6 +790,7 @@ function LaneLabInner() {
         onClear={() => setOverlay(null)}
         loggedIn={loggedIn}
         status={status}
+        bandLabel={bandLabel}
       />
 
       {/* The signature economy curve — souls by default, pivotable to other metrics. */}
@@ -703,7 +804,8 @@ function LaneLabInner() {
         playerOverlay={liveOverlay}
       />
 
-      {/* The farm curve — last-hits by default, also serves souls. */}
+      {/* The farm curve — last-hits by default, also serves souls. Same rank-vs-rank-vs-you
+          labeling; the player overlay marks souls (its avg net worth) when switched to Souls. */}
       <CurvePanel
         band={band}
         fetcher={api.getLaneFarmCurve}
@@ -711,6 +813,7 @@ function LaneLabInner() {
         metrics={FARM_METRICS}
         defaultMetric="last_hits"
         kicker="Farm curve · last-hits tempo vs the rank you’re chasing"
+        playerOverlay={liveOverlay}
       />
 
       <VerdictPanel band={band} playerOverlay={liveOverlay} />
