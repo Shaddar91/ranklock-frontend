@@ -41,6 +41,9 @@ const jsonLd = [
         <div class="blog-grid" style="margin-top:20px;">
           {posts.map((post) => (
             <a class="panel blogcard" href={`/blog/${post.id}`}>
+              {post.data.heroImage && (
+                <img class="bc-hero" src={post.data.heroImage} alt="" loading="lazy" decoding="async" />
+              )}
               <div class="bc-title">{post.data.title}</div>
               <p class="bc-desc">{post.data.description}</p>
               <div class="between" style="margin-top:auto;">

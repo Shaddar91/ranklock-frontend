@@ -4,6 +4,7 @@ description: "When to commit Lash's Death Slam, how to read enemy cooldowns, and
 pubDate: 2026-06-12
 author: RankLock
 heroSlug: lash
+heroImage: /assets/heroes/lash_card.png
 tags: [hero-guide, lash, teamfighting]
 liveHeroes: [Lash, Haze]
 liveItems: [Arcane Medallion, Advanced Weaponry]
