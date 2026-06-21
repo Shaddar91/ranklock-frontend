@@ -5,7 +5,10 @@ import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import TrackingProvider from '../components/react/TrackingProvider';
 import ConsentBanner from '../components/react/ConsentBanner';
+import HeroBackdrop from '../components/react/HeroBackdrop';
+import AdSlot from '../components/react/ui/AdSlot';
 import { resolveLocale } from '../lib/i18n';
+import { ATMOS, AD_SLOTS } from '../config/artDirection';
 
 //Base HTML frame + the gaslamp design system (C3) + the SEO meta layer (per-route
 //C4 + cross-cutting locale infra C7, both via <Seo>). Site chrome (sticky nav +
@@ -52,7 +55,17 @@ const {
 ---
 
 <!doctype html>
-<html lang={lang} data-theme="foundry">
+<html
+  lang={lang}
+  data-theme="foundry"
+  data-atmos={ATMOS}
+  data-promo={AD_SLOTS}
+  data-brass="bold"
+  data-density="regular"
+  data-table="zebra"
+  data-badge="full"
+  data-radar="filled"
+>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -81,52 +94,23 @@ const {
 
     <slot name="head" />
     <script is:inline>
-      //Apply the persisted skin + art-direction tweaks before first paint to avoid
-      //a flash. Mirrors lib/theme (data-theme) + lib/tweaks (the data-* contract +
-      //the --cyan-* HUD accent); kept inline + duplicated because is:inline scripts
-      //cannot import a module — keep these tables in sync with lib/tweaks.ts.
+      //Restore the persisted skin (data-theme) before first paint to avoid a flash.
+      //Only the theme is dynamic; the rest of the art direction is baked as fixed
+      //data-* attributes on <html> above (atmos + ad slots are env-driven via
+      //config/artDirection; brass/density/table/badge/radar are design constants).
+      //Kept inline because is:inline scripts cannot import a module.
       (() => {
         try {
-          const el = document.documentElement;
-          const get = (k) => {
-            try {
-              return localStorage.getItem(k);
-            } catch {
-              return null;
-            }
-          };
-          //theme (data-theme) — default 'foundry' already on <html>.
+          let t = null;
+          try {
+            t = localStorage.getItem('ranklock-theme');
+          } catch {
+            /* private mode / disabled storage */
+          }
+          //default 'foundry' already on <html>; the shipped skins + the styleguide-only
+          //ones are the valid set.
           const themes = ['foundry', 'arcane', 'aether', 'gaslamp', 'obsidian'];
-          const t = get('ranklock-theme');
-          const activeTheme = t && themes.includes(t) ? t : 'foundry';
-          if (t && themes.includes(t)) el.dataset.theme = t;
-          //enum tweaks → data-* attributes (always set, default included).
-          const tweaks = [
-            ['ranklock-atmos', 'data-atmos', ['hero', 'off'], 'hero'],
-            ['ranklock-promo', 'data-promo', ['on', 'off'], 'on'],
-            ['ranklock-brass', 'data-brass', ['bold', 'minimal'], 'bold'],
-            ['ranklock-density', 'data-density', ['compact', 'regular', 'comfy'], 'regular'],
-            ['ranklock-table', 'data-table', ['zebra', 'plain', 'lined'], 'zebra'],
-            ['ranklock-badge', 'data-badge', ['full', 'emblem-only', 'label-only'], 'full'],
-            ['ranklock-radar', 'data-radar', ['filled', 'line'], 'filled'],
-          ];
-          for (const [key, attr, valid, def] of tweaks) {
-            const v = get(key);
-            el.setAttribute(attr, v && valid.includes(v) ? v : def);
-          }
-          //HUD accent → --cyan-* overrides, only while Aether is active.
-          const accents = {
-            '#22d3ee': ['#22d3ee', '#06b6d4', '#0891b2', '#0e7490'],
-            '#a78bfa': ['#a78bfa', '#8b5cf6', '#7c3aed', '#6d28d9'],
-            '#fbbf24': ['#fbbf24', '#f59e0b', '#d97706', '#b45309'],
-          };
-          if (activeTheme === 'aether') {
-            const raw = (get('ranklock-accent') || '').toLowerCase();
-            const steps = accents[raw] || accents['#22d3ee'];
-            ['--cyan-bright', '--cyan', '--cyan-deep', '--cyan-deeper'].forEach((p, i) =>
-              el.style.setProperty(p, steps[i]),
-            );
-          }
+          if (t && themes.includes(t)) document.documentElement.dataset.theme = t;
         } catch {
           /* ignore storage access errors (private mode / disabled cookies) */
         }
@@ -135,8 +119,27 @@ const {
   </head>
   <body>
     <div class="app-bg" aria-hidden="true"></div>
+    {
+      /* Rotating hero-art backdrop — the data-atmos="hero" parameter, gated by the
+         PUBLIC_HERO_BACKDROP env var (config/artDirection). When off, the island is
+         not mounted at all (no roster preloads, no timer) and data-atmos="off" on
+         <html>. SSR renders the first hero (no flash / works without JS); the island
+         cycles the roster on the client. Decorative + behind all content. */
+      ATMOS === 'hero' && <HeroBackdrop client:idle />
+    }
     {chrome && <SiteHeader />}
     <slot />
+    {
+      /* Site-wide sponsor slot above the footer (the Claude design's ad placement),
+         gated by PUBLIC_AD_SLOTS (config/artDirection). Consent-gated AdSlot: shows
+         the gaslamp "Sponsored / go ad-free" placeholder until ads-consent + a
+         publisher id + an ad-unit slot id exist; becomes a real AdSense unit after. */
+      chrome && AD_SLOTS === 'on' && (
+        <div class="container" style="padding:8px 24px 24px;">
+          <AdSlot kind="leaderboard" client:load />
+        </div>
+      )
+    }
     {chrome && <SiteFooter />}
     <!-- Consent + analytics layer (C6) — global on EVERY page (incl. chrome=false).
          TrackingProvider is behavior-only (renders null): consent-gated Matomo +

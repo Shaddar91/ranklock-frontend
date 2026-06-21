@@ -6,7 +6,6 @@
 //client:* guard enforces the directive).
 import SearchBox from './react/SearchBox';
 import ThemeSwitcher from './react/ThemeSwitcher';
-import TweaksPanel from './react/TweaksPanel';
 
 const links = [
   { href: '/heroes', label: 'Heroes' },
@@ -60,7 +59,6 @@ const isActive = (href: string) => path === href || path === href + '/' || path.
     <div class="nav-tools flex">
       <SearchBox variant="compact" client:load />
       <ThemeSwitcher compact client:load />
-      <TweaksPanel client:load />
     </div>
   </div>
 </header>

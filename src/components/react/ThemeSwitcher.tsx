@@ -5,10 +5,11 @@
 //cascade; only this control re-renders to show the active state).
 //
 //Two presentations, one behavior (both call `choose()` → applyTheme + persist):
-//  • compact (nav)      → a single native <select> over all 5 skins; space-saving,
-//                         keyboard + focus + option-list accessible for free.
-//  • full (styleguide)  → the promoted pair (foundry ⇄ arcane) plus the three
-//                         secondary skins, rendered as labelled swatch buttons.
+//  • compact (nav)      → a single native <select> over the two SHIPPED skins
+//                         (foundry ⇄ arcane); space-saving, keyboard + focus +
+//                         option-list accessible for free.
+//  • full (styleguide)  → the promoted pair (foundry ⇄ arcane) plus the secondary
+//                         skins, rendered as labelled swatch buttons (internal only).
 //
 //SSR note: the active selection is read from the DOM in an effect (after the
 //flash-free bootstrap in BaseLayout has applied the stored/default skin), so the
@@ -39,19 +40,22 @@ export default function ThemeSwitcher({ compact = false }: ThemeSwitcherProps) {
     setActive(id);
   }
 
-  //compact: one native <select> reaching all 5 skins, styled to the gaslamp system
-  //in components.css (.themesw-select). Native semantics give keyboard support, a
-  //focus ring, and the option list for free — no dependency, no listbox a11y code.
+  //compact: one native <select> over the two shipped skins (foundry ⇄ arcane),
+  //styled to the gaslamp system in components.css (.themesw-select). Native
+  //semantics give keyboard support, a focus ring, and the option list for free —
+  //no dependency, no listbox a11y code. (The full registry is reachable only from
+  //the internal /styleguide via the non-compact variant below.)
   if (compact) {
+    const sel = active && PROMOTED.some((p) => p.id === active) ? active : DEFAULT_THEME;
     return (
       <div className="themesw themesw--compact">
         <select
           className="themesw-select"
           aria-label="Theme"
-          value={active ?? DEFAULT_THEME}
+          value={sel}
           onChange={(e) => choose(e.target.value as ThemeId)}
         >
-          {THEMES.map((t) => (
+          {PROMOTED.map((t) => (
             <option key={t.id} value={t.id}>
               {t.label}
             </option>

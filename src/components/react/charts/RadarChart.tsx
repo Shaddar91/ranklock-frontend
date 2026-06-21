@@ -1,9 +1,9 @@
 //Playstyle radar — you vs the cohort one tier above, across 6 axes (0..1).
 //Recharts implementation; theme-aware via CSS-var colors.
 //
-//Honors the `data-radar` art-direction tweak (lib/tweaks): "filled" shades each
-//series, "line" drops the fill to outlines only. Read live from <html> so toggling
-//it in the Tweaks panel re-renders the radar with no navigation.
+//Honors the baked `data-radar` art-direction parameter on <html>: "filled" shades
+//each series, "line" drops the fill to outlines only. Read from <html> via a
+//MutationObserver so the radar stays correct even if the attribute changes at runtime.
 import { useEffect, useState } from 'react';
 import {
   Radar,

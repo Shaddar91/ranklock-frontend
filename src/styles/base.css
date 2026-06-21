@@ -47,6 +47,72 @@ body {
   mask-image: radial-gradient(900px 600px at 50% 30%, #000, transparent 75%);
 }
 
+/* Hero-art backdrop — the baked `data-atmos="hero"` parameter from the Claude
+   design (ported from ranklock-app styles.css .atmos/.bg). A fixed layer of
+   rotating Deadlock hero splash art (rendered + cycled by the HeroBackdrop island),
+   blended down into --ink so the themed glow + content stay readable. Sits just
+   above .app-bg (both z-index -1; .atmos paints later in the DOM) and below all
+   content. Hidden when data-atmos="off"; frozen on the first hero under
+   reduced-motion. */
+.atmos {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.atmos .atmos-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 82vh;
+  min-height: 620px;
+  background-size: cover;
+  background-position: center 22%;
+  opacity: 0.5;
+  filter: saturate(1.05) contrast(1.02);
+  animation: bgfade 0.8s ease;
+}
+/* scrim: blend the splash plate into the page so it reads as atmosphere, not a photo. */
+.atmos::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--ink) 30%, transparent) 34%,
+      color-mix(in srgb, var(--ink) 80%, transparent) 58%,
+      var(--ink) 76%
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ink) 88%, transparent) 0%,
+      transparent 40%,
+      transparent 64%,
+      color-mix(in srgb, var(--ink) 55%, transparent) 100%
+    );
+}
+[data-atmos='off'] .atmos {
+  display: none;
+}
+@keyframes bgfade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .atmos .atmos-bg {
+    animation: none;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 11px;
   height: 11px;
