@@ -97,7 +97,7 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
         rowKey={(h) => h.hero_id}
         loading={isPending}
         initialSort={{ key: 'wr', dir: -1 }}
-        caption="Hero meta — win rate, momentum, pick rate and KDA by rank bracket"
+        caption="Hero meta — win rate, pick rate and KDA by rank bracket"
         emptyTitle={isError ? 'Hero meta unavailable' : 'No heroes for this bracket yet'}
         emptyMessage={
           isError
