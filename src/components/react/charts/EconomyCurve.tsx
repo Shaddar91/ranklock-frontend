@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  ReferenceLine,
   Tooltip,
   Legend,
   ResponsiveContainer,
@@ -39,6 +40,11 @@ interface EconomyCurveProps {
   //so the chart reads as tier-vs-tier. The `you`/`cohort` dataKeys stay fixed.
   youLabel?: string;
   cohortLabel?: string;
+  //Optional FLAT reference marker — a single horizontal line at a known value
+  //(e.g. a picked player's average net worth), NOT a per-minute series. It is a
+  //level, not a trajectory: deliberately flat so it can never be read as a
+  //fabricated personal curve. Omitted/null → nothing rendered.
+  marker?: { value: number; label: string } | null;
 }
 
 const fmtK = (v: ChartFmtValue) =>
@@ -49,7 +55,10 @@ export default function EconomyCurve({
   height = 300,
   youLabel = 'Selected tier median',
   cohortLabel = 'One tier up',
+  marker = null,
 }: EconomyCurveProps) {
+  //gate once so the JSX both renders only on a finite value AND narrows away null.
+  const m = marker != null && Number.isFinite(marker.value) ? marker : null;
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart data={data} margin={{ top: 12, right: 16, bottom: 4, left: 4 }}>
@@ -93,6 +102,17 @@ export default function EconomyCurve({
           strokeDasharray="6 4"
           dot={false}
         />
+        {m && (
+          <ReferenceLine
+            y={m.value}
+            stroke={seriesColor.amber}
+            strokeWidth={2}
+            strokeDasharray="2 3"
+            //extend the y-domain so a high marker (e.g. avg final net worth) stays visible.
+            ifOverflow="extendDomain"
+            label={{ value: m.label, position: 'insideTopRight', fill: seriesColor.amber, fontSize: 11 }}
+          />
+        )}
       </ComposedChart>
     </ResponsiveContainer>
   );

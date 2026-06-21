@@ -511,6 +511,44 @@ export interface EarlyEconVerdictResponse {
   buckets: EarlyEconVerdictBucket[];
 }
 
+//GET /players/:account_id/economy  — a public per-player economy AGGREGATE (backend
+//C5), ranked-only and suppression-honored, used to overlay a picked player on the
+//Lane Lab tier curves. This is an aggregate across the player's matches, NOT a
+//per-minute curve: a true personal soul curve needs the match_player_timeline detail
+//tier (~1.9% loaded), which is out of scope. matches === 0 (or null rates) means the
+//player has no ranked economy data yet → the UI empty-states it. A suppressed/unknown
+//account returns 404.
+export interface PlayerEconomy {
+  account_id: number;
+  matches: number;
+  badge: number;
+  //tier = badge / 10 (0..11).
+  tier: number;
+  avg_net_worth: number | null;
+  souls_per_min: number | null;
+  last_hits_per_min: number | null;
+}
+
+//GET /me/economy-overlay?band=  (Lane Lab service) — the cohort curve PLUS the
+//signed-in caller's own economy aggregate. The overlay consumes only the `you`
+//side (the caller's aggregate, same shape family as PlayerEconomy); `cohort_curve`
+//is also returned but unused here. 401 when not logged in / no linked account.
+export interface MyEconomyYou {
+  matches: number;
+  //the caller's own natural band (badge / 10).
+  band: number;
+  badge: number;
+  avg_net_worth: number | null;
+  souls_per_min: number | null;
+  avg_last_hits: number | null;
+  last_hits_per_min: number | null;
+}
+export interface EconomyOverlayResponse {
+  band: number;
+  fresh_as_of: string | null;
+  you: MyEconomyYou;
+}
+
 //GET /heroes/:id/item-win-rates?band=  — best items by win rate for a hero, scoped
 //to a rank band (rich-analytics tier, served by the MAIN API under /heroes/*). `band`
 //is the numeric rank tier (badge/10, 0..11); omit to aggregate. The backend struct is

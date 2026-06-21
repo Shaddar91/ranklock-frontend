@@ -20,6 +20,7 @@ import type {
   ComparePlayerResponse,
   CurrentUser,
   EarlyEconVerdictResponse,
+  EconomyOverlayResponse,
   HealthResponse,
   HeroBracket,
   HeroCountersResponse,
@@ -42,6 +43,7 @@ import type {
   PatchDetail,
   PatchMovers,
   PerformanceResponse,
+  PlayerEconomy,
   PlayerMatchRow,
   PlayerProfileResponse,
   RankBucket,
@@ -197,6 +199,8 @@ export const queryKeys = {
   playerComparePlayer: (id: number, params?: Query) =>
     ['player', id, 'compare-player', params ?? {}] as const,
   playerImprove: (id: number, params?: Query) => ['player', id, 'improve', params ?? {}] as const,
+  //per-player economy aggregate (backs the Lane Lab player overlay).
+  playerEconomy: (id: number) => ['player', id, 'economy'] as const,
   rankDistribution: () => ['stats', 'rank-distribution'] as const,
   //patch tracking surface (C9)
   patches: () => ['patches'] as const,
@@ -212,6 +216,8 @@ export const queryKeys = {
   laneEconomyCurve: (params?: Query) => ['lane-lab', 'economy-curve', params ?? {}] as const,
   laneFarmCurve: (params?: Query) => ['lane-lab', 'farm-curve', params ?? {}] as const,
   laneEarlyEconVerdict: (params?: Query) => ['lane-lab', 'early-econ-verdict', params ?? {}] as const,
+  //the signed-in caller's own economy overlay (Lane Lab service /me/economy-overlay).
+  myEconomyOverlay: (params?: Query) => ['me', 'economy-overlay', params ?? {}] as const,
   me: () => ['me'] as const,
 };
 
@@ -280,6 +286,11 @@ export const api = {
   //`hero`/`vs_tier` keys were ignored server-side.
   getPlayerImprove: (id: number, params?: { hero_id?: number; window?: string; bracket?: number }) =>
     apiFetch<ImproveResponse>(`/players/${id}/improve`, { query: params }),
+  //Public per-player economy aggregate (backend C5; served by the MAIN API). Ranked-only,
+  //suppression-honored — backs the Lane Lab player overlay. matches===0 / null rates ⇒ the
+  //player has no ranked economy data yet (the UI empty-states it); 404 for a suppressed/unknown
+  //account. NOTE: an AGGREGATE across the player's matches, NOT a per-minute curve.
+  getPlayerEconomy: (id: number) => apiFetch<PlayerEconomy>(`/players/${id}/economy`),
 
   //patch tracking (C9) — fully built backend, previously zero FE refs (§A.4).
   getPatches: () => apiFetch<Patch[]>('/patches'),
@@ -315,6 +326,12 @@ export const api = {
     laneLabFetch<LaneCurveResponse>('/lane-lab/farm-curve', { query: params }),
   getLaneEarlyEconVerdict: (params?: { band?: number }) =>
     laneLabFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
+  //The signed-in caller's own economy overlay — the cohort curve + the caller's aggregate
+  //(`you`). Served by the standalone Lane Lab SERVICE (laneLabFetch); the shared session cookie
+  //rides along. 401 when not logged in / no linked deadlock account; 501/202 build-ahead like the
+  //sibling lane endpoints. The Lane Lab island consumes only the `you` aggregate for the overlay.
+  getMyEconomyOverlay: (params?: { band?: number }) =>
+    laneLabFetch<EconomyOverlayResponse>('/me/economy-overlay', { query: params }),
 
   //stats + session
   getRankDistribution: () => apiFetch<RankBucket[]>('/stats/rank-distribution'),
