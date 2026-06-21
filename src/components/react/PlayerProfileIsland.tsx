@@ -50,7 +50,7 @@ function PlayerProfileInner() {
   if (player.isPending) return <p className="muted">Loading player {id}…</p>;
   if (player.isError) {
     return isNotFound(player.error) ? (
-      <EmptyState title={`No data for player ${id} yet`} message="This account hasn't been ingested, or the id is unknown." icon="inbox" />
+      <EmptyState title={`No data for player ${id} yet`} message="We only track players from recent ranked matches — this account isn't in our data yet." icon="inbox" />
     ) : (
       <EmptyState title="Couldn't load this player" message="The stats API is unreachable right now — try again shortly." icon="inbox" />
     );
