@@ -254,9 +254,14 @@ export const api = {
   getPlayerHeroesPlayed: (id: number) => apiFetch<HeroPlayed[]>(`/players/${id}/heroes-played`),
   getPlayerBadgeHistory: (id: number) => apiFetch<BadgeHistoryRow[]>(`/players/${id}/badge-history`),
   getPlayerPerformance: (id: number) => apiFetch<PerformanceResponse>(`/players/${id}/performance`),
-  getPlayerCompare: (id: number, params?: { hero?: number; league_offset?: string }) =>
+  //Keys MUST be hero_id/league_offset/target_tier to match the backend CompareQuery
+  //(main.rs). The old `hero` key was silently dropped server-side (read as hero_id),
+  //so the hero selector never filtered — this is the live-bug fix.
+  getPlayerCompare: (id: number, params?: { hero_id?: number; league_offset?: string; target_tier?: number }) =>
     apiFetch<CompareResponse>(`/players/${id}/compare`, { query: params }),
-  getPlayerImprove: (id: number, params?: { hero?: number; window?: string; vs_tier?: number }) =>
+  //Keys MUST be hero_id/window/bracket to match improve.rs::ImproveQuery; the old
+  //`hero`/`vs_tier` keys were ignored server-side.
+  getPlayerImprove: (id: number, params?: { hero_id?: number; window?: string; bracket?: number }) =>
     apiFetch<ImproveResponse>(`/players/${id}/improve`, { query: params }),
 
   //patch tracking (C9) — fully built backend, previously zero FE refs (§A.4).

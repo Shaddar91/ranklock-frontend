@@ -55,11 +55,13 @@ export const usePlayerPerformance = (id: number) =>
 export const useImprove = (id: number) =>
   useQuery({ queryKey: queryKeys.playerImprove(id), queryFn: () => api.getPlayerImprove(id), retry: false, enabled: id > 0 });
 
-//hero is the selected hero_id from /heroes-played (undefined = server default).
-export const useCompare = (id: number, hero?: number) =>
+//opts carries the selected hero_id from /heroes-played plus the optional league/tier
+//knobs; the keys mirror the backend CompareQuery (hero_id/league_offset/target_tier).
+//An absent opts ⇒ the server-default cohort.
+export const useCompare = (id: number, opts?: { hero_id?: number; league_offset?: string; target_tier?: number }) =>
   useQuery({
-    queryKey: queryKeys.playerCompare(id, { hero: hero ?? null }),
-    queryFn: () => api.getPlayerCompare(id, { hero }),
+    queryKey: queryKeys.playerCompare(id, opts ?? {}),
+    queryFn: () => api.getPlayerCompare(id, opts),
     retry: false,
     enabled: id > 0,
   });

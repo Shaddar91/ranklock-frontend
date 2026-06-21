@@ -185,7 +185,7 @@ export function ComparePanel({ id }: { id: number }) {
   const heroesPlayed = usePlayerHeroesPlayed(id);
   const heroOptions = [...(heroesPlayed.data ?? [])].sort((a, b) => b.matches_played - a.matches_played);
   const [hero, setHero] = useState<number | undefined>(undefined);
-  const { data, isPending, isError, error } = useCompare(id, hero);
+  const { data, isPending, isError, error } = useCompare(id, { hero_id: hero });
 
   const selector = heroOptions.length > 0 && (
     <label className="flex" style={{ alignItems: 'center', gap: 8 }}>

@@ -78,7 +78,7 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
 //---- signature economy view -------------------------------------------------
 
 export function EconomyPanel({ id }: { id: number }) {
-  const cmp = useCompare(id);
+  const cmp = useCompare(id, {});
   const souls = cmp.data?.you.souls_per_min ?? null;
   const cohortSouls = cmp.data?.cohort.souls_per_min ?? null;
   const gap = souls != null && cohortSouls != null ? souls - cohortSouls : null;
@@ -205,7 +205,7 @@ export function CoachingPanel({ id }: { id: number }) {
 export function CategorizedSection({ id }: { id: number }) {
   const [compare, setCompare] = useState(false);
   const improve = useImprove(id);
-  const cmp = useCompare(id);
+  const cmp = useCompare(id, {});
 
   const combat = improve.data ? combatRows(improve.data) : [];
   const economy = improve.data ? economyRows(improve.data) : [];
