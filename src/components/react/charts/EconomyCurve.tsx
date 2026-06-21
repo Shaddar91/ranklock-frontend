@@ -1,5 +1,8 @@
-//Souls-over-time vs the cohort. Your curve (filled cyan area) against the
-//next-tier cohort average (dashed). Recharts ComposedChart; theme-aware.
+//Per-minute souls, tier vs tier. The filled cyan area is the SELECTED rank
+//tier's median economy; the dashed line is the tier one rank up. Both series
+//are rank-cohort medians — NOT the logged-in player. Callers pass the visible
+//series labels (youLabel/cohortLabel); the `you`/`cohort` dataKeys are fixed.
+//Recharts ComposedChart; theme-aware.
 import {
   ComposedChart,
   Area,
@@ -31,12 +34,22 @@ export interface EconomyPoint {
 interface EconomyCurveProps {
   data: EconomyPoint[];
   height?: number;
+  //Visible legend + tooltip labels for the two series. Both are tier medians,
+  //not the user — callers pass the selected band and the one-tier-up rank names
+  //so the chart reads as tier-vs-tier. The `you`/`cohort` dataKeys stay fixed.
+  youLabel?: string;
+  cohortLabel?: string;
 }
 
 const fmtK = (v: ChartFmtValue) =>
   typeof v === 'number' ? (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)) : String(v ?? '');
 
-export default function EconomyCurve({ data, height = 300 }: EconomyCurveProps) {
+export default function EconomyCurve({
+  data,
+  height = 300,
+  youLabel = 'Selected tier median',
+  cohortLabel = 'One tier up',
+}: EconomyCurveProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart data={data} margin={{ top: 12, right: 16, bottom: 4, left: 4 }}>
@@ -65,7 +78,7 @@ export default function EconomyCurve({ data, height = 300 }: EconomyCurveProps) 
         <Legend wrapperStyle={{ fontSize: 12, color: 'var(--muted)' }} />
         <Area
           type="monotone"
-          name="You"
+          name={youLabel}
           dataKey="you"
           stroke={seriesColor.you}
           strokeWidth={2.6}
@@ -73,7 +86,7 @@ export default function EconomyCurve({ data, height = 300 }: EconomyCurveProps) 
         />
         <Line
           type="monotone"
-          name="Next-tier avg"
+          name={cohortLabel}
           dataKey="cohort"
           stroke={seriesColor.cohort}
           strokeWidth={2}

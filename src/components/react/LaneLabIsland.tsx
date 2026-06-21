@@ -217,10 +217,15 @@ function LaneLabInner() {
           />
         ) : (
           <>
-            <EconomyCurve data={points} />
+            <EconomyCurve
+              data={points}
+              youLabel={`${bandLabel} median`}
+              cohortLabel={cohortLabel ? `${cohortLabel} (one tier up)` : undefined}
+            />
             <p className="muted" style={{ fontSize: 12, margin: '10px 0 0', lineHeight: 1.45 }}>
               The cyan area is the <b className="cyan-c">{bandLabel}</b> tier median net worth per minute
               {cohortLabel ? <> ; the dashed line is <b>{cohortLabel}</b> one tier up — the gap is where the lane is being lost.</> : <>.</>}
+              {' '}This is your <b>rank&rsquo;s</b> typical economy across all sampled players — not your own matches.
             </p>
           </>
         )}
