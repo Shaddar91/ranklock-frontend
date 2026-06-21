@@ -74,6 +74,10 @@ const alternates = hreflangAlternates(logicalPath).map((a) => ({
 
 const ogImage = new URL(image, site).toString();
 
+//Blog/guides RSS autodiscovery feed (static /rss.xml, @astrojs/rss). Absolute so
+//feed readers resolve it correctly from any (localized) route.
+const rssHref = new URL('/rss.xml', site).toString();
+
 const ldNodes = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 const ldGraph = ldNodes.length ? { '@context': 'https://schema.org', '@graph': ldNodes } : null;
 //Escape "<" so a stray "</script>" inside data can never break out of the tag.
@@ -89,6 +93,9 @@ const ldJson = ldGraph ? JSON.stringify(ldGraph).replace(/</g, '\\u003c') : null
      (untranslated locales are noindex). x-default and en both point at the
      no-prefix English URL; each newly-translated locale joins this cluster. -->
 {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
+
+<!-- Blog/guides RSS feed autodiscovery (static /rss.xml). -->
+<link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} Guides`} href={rssHref} />
 
 <!-- OpenGraph -->
 <meta property="og:site_name" content={SITE_NAME} />
