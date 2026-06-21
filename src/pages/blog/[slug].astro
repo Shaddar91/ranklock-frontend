@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import GuideLiveStats from '../../components/react/GuideLiveStats';
 import { getCollection, render } from 'astro:content';
 import { breadcrumbJsonLd, SITE_NAME } from '../../lib/seo';
-import { shortDate } from '../../lib/format';
+import { shortDate, readingTime } from '../../lib/format';
 
 //SSG guide article (requirements §B.11). One prerendered page per post; the
 //markdown body renders to static HTML (SEO), and the "live stats in this guide"
@@ -22,6 +22,7 @@ const canonicalPath = `/blog/${post.id}`;
 const published = post.data.pubDate.toISOString();
 const modified = (post.data.updatedDate ?? post.data.pubDate).toISOString();
 const url = new URL(canonicalPath, origin).toString();
+const minutesRead = readingTime(post.body);
 
 const jsonLd = [
   breadcrumbJsonLd(origin, [
@@ -38,6 +39,8 @@ const jsonLd = [
     author: { '@type': 'Person', name: post.data.author },
     mainEntityOfPage: url,
     publisher: { '@type': 'Organization', name: SITE_NAME },
+    //tags → schema.org keywords (omitted when the post carries none).
+    ...(post.data.tags.length > 0 ? { keywords: post.data.tags.join(', ') } : {}),
   },
 ];
 
@@ -48,6 +51,7 @@ const hasLive = post.data.liveHeroes.length > 0 || post.data.liveItems.length > 
   title={`${post.data.title} — RankLock`}
   description={post.data.description}
   canonicalPath={canonicalPath}
+  image={post.data.heroImage}
   ogType="article"
   jsonLd={jsonLd}
   publishedTime={published}
@@ -59,11 +63,23 @@ const hasLive = post.data.liveHeroes.length > 0 || post.data.liveItems.length > 
     </nav>
     <article>
       <h1 class="h-page" style="max-width:26ch;">{post.data.title}</h1>
-      <div class="flex" style="gap:10px; align-items:center; margin:10px 0 20px; color:var(--muted); font-size:13px;">
+      <div class="flex" style="gap:10px; align-items:center; margin:10px 0 14px; color:var(--muted); font-size:13px;">
         <span>{post.data.author}</span>
         <span aria-hidden="true">·</span>
         <span>{shortDate(published)}</span>
+        <span aria-hidden="true">·</span>
+        <span>{minutesRead}</span>
       </div>
+
+      {
+        post.data.tags.length > 0 && (
+          <div class="blog-tags" style="margin-bottom:22px;">
+            {post.data.tags.map((t) => (
+              <span class="blog-tag">{t}</span>
+            ))}
+          </div>
+        )
+      }
 
       {
         hasLive && (

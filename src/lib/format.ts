@@ -69,3 +69,13 @@ export function shortDate(iso: string | null | undefined): string {
   if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
+
+//Raw markdown body → "4 min read". Pure word-count heuristic at 200 wpm (the
+//common blog estimate), floored at 1 so the shortest guide never reads "0 min".
+//Dependency-free on purpose — runs at build time over the post's raw `body`.
+export function readingTime(markdown: string | null | undefined): string {
+  if (!markdown) return '1 min read';
+  const words = markdown.trim().split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.round(words / 200));
+  return `${minutes} min read`;
+}
