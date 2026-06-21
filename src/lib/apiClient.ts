@@ -17,6 +17,7 @@
 import type {
   BadgeHistoryRow,
   CompareResponse,
+  ComparePlayerResponse,
   CurrentUser,
   EarlyEconVerdictResponse,
   HealthResponse,
@@ -191,6 +192,8 @@ export const queryKeys = {
   playerBadgeHistory: (id: number) => ['player', id, 'badge-history'] as const,
   playerPerformance: (id: number) => ['player', id, 'performance'] as const,
   playerCompare: (id: number, params?: Query) => ['player', id, 'compare', params ?? {}] as const,
+  playerComparePlayer: (id: number, params?: Query) =>
+    ['player', id, 'compare-player', params ?? {}] as const,
   playerImprove: (id: number, params?: Query) => ['player', id, 'improve', params ?? {}] as const,
   rankDistribution: () => ['stats', 'rank-distribution'] as const,
   //patch tracking surface (C9)
@@ -259,6 +262,11 @@ export const api = {
   //so the hero selector never filtered — this is the live-bug fix.
   getPlayerCompare: (id: number, params?: { hero_id?: number; league_offset?: string; target_tier?: number }) =>
     apiFetch<CompareResponse>(`/players/${id}/compare`, { query: params }),
+  //Compare you to a SPECIFIC other player on a shared hero. `vs` is the other
+  //player's account_id; `hero_id` scopes the overlap. 404 when the two never
+  //played the chosen hero together — the picker empty-states that.
+  getPlayerComparePlayer: (id: number, params: { vs: number; hero_id?: number }) =>
+    apiFetch<ComparePlayerResponse>(`/players/${id}/compare-player`, { query: params }),
   //Keys MUST be hero_id/window/bracket to match improve.rs::ImproveQuery; the old
   //`hero`/`vs_tier` keys were ignored server-side.
   getPlayerImprove: (id: number, params?: { hero_id?: number; window?: string; bracket?: number }) =>

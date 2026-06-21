@@ -65,3 +65,15 @@ export const useCompare = (id: number, opts?: { hero_id?: number; league_offset?
     retry: false,
     enabled: id > 0,
   });
+
+//Compare-to-a-specific-player: `vs` is the other player's account_id (gates the
+//fetch — undefined/0 means no player picked yet), `hero_id` scopes the shared-hero
+//overlap. retry:false so a build-ahead 202/501 or a 404 (no overlap) empty-states
+//fast instead of retrying.
+export const useComparePlayer = (id: number, vs: number | undefined, hero_id?: number) =>
+  useQuery({
+    queryKey: queryKeys.playerComparePlayer(id, { vs, hero_id }),
+    queryFn: () => api.getPlayerComparePlayer(id, { vs: vs!, hero_id }),
+    retry: false,
+    enabled: id > 0 && (vs ?? 0) > 0,
+  });

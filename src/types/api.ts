@@ -331,6 +331,21 @@ export interface CompareResponse {
   efficiency: CompareEfficiency;
 }
 
+//GET /players/:id/compare-player?vs=&hero_id=  — you vs a SPECIFIC other player on
+//a shared hero. Mirrors CompareResponse, but the comparison term is another PLAYER
+//("them") rather than a rank cohort; `them` reuses the per-player CompareYou shape
+//(identical metric set, plus the other player's tier/name for labeling). A 404 means
+//the two never overlapped on the chosen hero — the picker empty-states that case.
+export interface ComparePlayerResponse {
+  account_id: number;
+  vs_account_id: number;
+  hero_id: number;
+  hero_name: string;
+  you: CompareYou;
+  them: CompareYou;
+  efficiency: CompareEfficiency;
+}
+
 //---- improve ("Improve" coaching) — GET /players/:id/improve ----------------
 
 export interface MetricComparison {

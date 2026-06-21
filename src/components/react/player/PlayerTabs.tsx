@@ -6,12 +6,15 @@
 //surfaces (action item 3) — scaffolded against their contracts, empty until
 //served.
 //============================================================================
-import { useState } from 'react';
-import { Chip, EmptyState, GameIcon } from '../ui/index';
+import { useEffect, useId, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Chip, EmptyState, GameIcon, Icon, RankBadge } from '../ui/index';
 import { buildAheadMessage, PlaystyleRadarPanel } from './AnalyticsPanels';
-import { useCompare, usePlayerHeroes, usePlayerHeroesPlayed, usePlayerMatches, usePlayerPerformance } from './usePlayer';
+import { useCompare, useComparePlayer, usePlayerHeroes, usePlayerHeroesPlayed, usePlayerMatches, usePlayerPerformance } from './usePlayer';
+import { api, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClient';
+import { rankFromBadge } from '../../../lib/ranks';
 import { count, DASH, duration, fixed, kda, pct, shortDate } from '../../../lib/format';
-import type { HeroLedgerRow, PlayerMatchRow } from '../../../types/api';
+import type { HeroLedgerRow, PlayerMatchRow, SearchResult } from '../../../types/api';
 
 //---- recent matches ---------------------------------------------------------
 
@@ -209,6 +212,207 @@ const TARGET_OPTIONS: ReadonlyArray<readonly [string, string]> = [
   ['top', `Best — ${TIER_NAMES[11]}`],
 ];
 
+//---- compare to a specific player (optional, behind the rank selector) ------
+
+//Minimal "compare-to-a-specific-player" picker. A debounced typeahead over the
+//SAME /players/search endpoint the nav SearchBox uses (cache is shared via the
+//`search` query key); on select it fetches /players/:id/compare-player and renders
+//the SAME you-vs-them table + efficiency standing/note as the cohort compare above.
+//Scoped to the hero chosen in the rank selector. A 404 (the two never overlapped on
+//that hero) shows an explicit empty state rather than an error.
+function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number; heroName?: string }) {
+  const [raw, setRaw] = useState('');
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState<SearchResult | null>(null);
+  const listId = useId();
+
+  //debounce the query the API sees (250ms) — mirrors SearchBox.
+  useEffect(() => {
+    const t = setTimeout(() => setQ(raw.trim()), 250);
+    return () => clearTimeout(t);
+  }, [raw]);
+
+  const searchEnabled = q.length >= 2;
+  const search = useQuery({
+    queryKey: queryKeys.search(q),
+    queryFn: () => api.searchPlayers(q, 8),
+    enabled: searchEnabled,
+  });
+  //can't compare a player to themselves — drop the profile owner from the results.
+  const results = (search.data ?? []).filter((r) => r.account_id !== id);
+
+  const cmp = useComparePlayer(id, picked?.account_id, hero);
+
+  function pick(r: SearchResult) {
+    setPicked(r);
+    setRaw('');
+    setQ('');
+    setOpen(false);
+  }
+
+  const rows: [string, number | null, number | null][] = cmp.data
+    ? [
+        ['Net worth', cmp.data.you.avg_net_worth, cmp.data.them.avg_net_worth],
+        ['Souls / min', cmp.data.you.souls_per_min, cmp.data.them.souls_per_min],
+        ['Last hits / min', cmp.data.you.last_hits_per_min, cmp.data.them.last_hits_per_min],
+        ['Avg denies', cmp.data.you.avg_denies, cmp.data.them.avg_denies],
+        ['Avg kills', cmp.data.you.avg_kills, cmp.data.them.avg_kills],
+        ['Avg deaths', cmp.data.you.avg_deaths, cmp.data.them.avg_deaths],
+        ['Avg assists', cmp.data.you.avg_assists, cmp.data.them.avg_assists],
+      ]
+    : [];
+
+  return (
+    <div style={{ marginTop: 18 }}>
+      <div className="deco-rule" style={{ margin: '0 0 14px' }}>
+        <span className="dia" />
+      </div>
+      <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <div className="kicker" style={{ marginBottom: 4 }}>
+            Or compare to a specific player
+          </div>
+          <h3 className="h-sec" style={{ fontSize: 15 }}>
+            {picked ? `You vs ${picked.steam_name}` : 'Pick a player to compare against'}
+          </h3>
+        </div>
+        {picked && (
+          <button type="button" className="minitog" onClick={() => setPicked(null)}>
+            Clear
+          </button>
+        )}
+      </div>
+
+      <div className="searchbig" style={{ minWidth: 0, maxWidth: 360 }}>
+        <Icon name="search" size={16} style={{ left: 12 }} />
+        <input
+          className="field"
+          style={{ height: 38, paddingLeft: 36, fontSize: 13 }}
+          placeholder="Search a player or Steam ID…"
+          value={raw}
+          onChange={(e) => {
+            setRaw(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setOpen(false);
+          }}
+          role="combobox"
+          aria-expanded={open && searchEnabled}
+          aria-controls={listId}
+          aria-label="Search a player to compare against"
+          autoComplete="off"
+        />
+        {open && searchEnabled && (
+          <div className="search-pop panel" id={listId} role="listbox">
+            {search.isFetching && results.length === 0 ? (
+              <div className="search-note muted">Searching…</div>
+            ) : search.isError ? (
+              <div className="search-note muted">
+                {isUnauthorized(search.error) ? 'Sign in to search.' : 'Search is offline right now.'}
+              </div>
+            ) : results.length === 0 ? (
+              <div className="search-note muted">No players found for &ldquo;{q}&rdquo;.</div>
+            ) : (
+              results.map((r) => {
+                const rk = rankFromBadge(r.badge);
+                return (
+                  <button
+                    key={r.account_id}
+                    type="button"
+                    className="search-row"
+                    //keep input focus until the click lands so onBlur doesn't close the popup first.
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => pick(r)}
+                    role="option"
+                    aria-selected="false"
+                    style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    {rk && <RankBadge tier={rk.tier} size={24} glow={false} />}
+                    <span className="display" style={{ flex: 1, fontWeight: 600, color: 'var(--text)' }}>
+                      {r.steam_name}
+                    </span>
+                    <span className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                      {count(r.matches)} games
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
+      </div>
+
+      {picked && (
+        <div style={{ marginTop: 14 }}>
+          {cmp.isPending ? (
+            <p className="muted">Loading comparison with {picked.steam_name}…</p>
+          ) : cmp.isError ? (
+            isNotFound(cmp.error) ? (
+              <EmptyState
+                title="No shared games to compare"
+                message={
+                  hero && heroName
+                    ? `${picked.steam_name} hasn't played ${heroName} in the overlap window — pick another hero or player.`
+                    : `You and ${picked.steam_name} have no overlapping hero games yet.`
+                }
+                icon="users"
+              />
+            ) : (
+              <EmptyState title="Comparison not served yet" message={buildAheadMessage(cmp.error)} icon="users" />
+            )
+          ) : cmp.data ? (
+            <>
+              <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 10 }}>
+                <span className="label-xs">
+                  {cmp.data.hero_name} · you ({cmp.data.you.tier_name}) vs {picked.steam_name} ({cmp.data.them.tier_name})
+                </span>
+                <Chip tone={cmp.data.efficiency.standing === 'ahead' ? 'win' : cmp.data.efficiency.standing === 'behind' ? 'loss' : 'neutral'}>
+                  {cmp.data.efficiency.standing}
+                </Chip>
+              </div>
+              <table className="dt">
+                <thead>
+                  <tr>
+                    <th>
+                      <span className="th-static">Metric</span>
+                    </th>
+                    <th className="num">
+                      <span className="th-static">You</span>
+                    </th>
+                    <th className="num">
+                      <span className="th-static">{picked.steam_name}</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(([label, you, them]) => (
+                    <tr key={label}>
+                      <td>{label}</td>
+                      <td className="num tnum cyan-c" style={{ fontWeight: 600 }}>
+                        {you != null ? count(you) : DASH}
+                      </td>
+                      <td className="num tnum muted">{them != null ? count(them) : DASH}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {cmp.data.efficiency.note && (
+                <p className="muted" style={{ fontSize: 12.5, marginTop: 12, lineHeight: 1.5 }}>
+                  {cmp.data.efficiency.note}
+                </p>
+              )}
+            </>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ComparePanel({ id }: { id: number }) {
   //Hero selector sourced from the real /heroes-played endpoint (§A.4 success
   //criterion: derive the hero list from heroes-played, NOT from /matches).
@@ -351,6 +555,7 @@ export function ComparePanel({ id }: { id: number }) {
           {data.efficiency.note}
         </p>
       )}
+      <ComparePlayerPicker id={id} hero={hero} heroName={data.hero_name} />
     </div>
   );
 }
