@@ -32,6 +32,13 @@ concurrency:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+    #`id-token: write` is required for the keyless OIDC handshake in the artifact
+    #stage (aws-actions/configure-aws-credentials assumes AWS_DEPLOY_ROLE_ARN with
+    #a short-lived GitHub OIDC token — no long-lived AWS keys in the repo).
+    #`contents: read` is the minimum for actions/checkout.
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -62,16 +69,74 @@ jobs:
       #(retry + last-good fallback inside the .astro fetch — architecture §7.2) so
       #a flaky origin during deploy doesn't fail the build.
       - name: Build (astro build → ./dist)
+        #All PUBLIC_* values are non-secret, injected at BUILD time (never a
+        #committed .env.production — requirements §A.2) and variable-ized (no
+        #literals). Astro's default envPrefix exposes them to client islands.
         env:
           PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
+          PUBLIC_LANE_LAB_BASE_URL: ${{ vars.PUBLIC_LANE_LAB_BASE_URL }}
           PUBLIC_MATOMO_URL: ${{ vars.PUBLIC_MATOMO_URL }}
           PUBLIC_MATOMO_SITE_ID: ${{ vars.PUBLIC_MATOMO_SITE_ID }}
           PUBLIC_ADSENSE_CLIENT: ${{ vars.PUBLIC_ADSENSE_CLIENT }}
+          PUBLIC_AD_SLOTS: ${{ vars.PUBLIC_AD_SLOTS }}
+          PUBLIC_HERO_BACKDROP: ${{ vars.PUBLIC_HERO_BACKDROP }}
+          PUBLIC_DONATION_ADDRESS: ${{ vars.PUBLIC_DONATION_ADDRESS }}
+          PUBLIC_KOFI_URL: ${{ vars.PUBLIC_KOFI_URL }}
         run: npm run build
 
-      - name: Upload dist/ to Cloudflare static assets (wrangler)
+      #Artifact stage — immutable build record in S3, keyed by commit SHA. Keyless
+      #OIDC: configure-aws-credentials exchanges the GitHub id-token for short-lived
+      #STS creds by assuming AWS_DEPLOY_ROLE_ARN — no long-lived AWS keys in the
+      #repo. Role / region / bucket are all repo variables (no literals); the role
+      #and bucket are produced by the system OIDC + artifact-bucket Terraform stacks
+      #and wired as repo vars by the frontend-repo stack (Component 4).
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Archive dist/ to S3 (immutable, by commit SHA)
+        run: aws s3 sync ./dist "s3://${{ vars.ARTIFACT_BUCKET }}/ranklock-frontend/${{ github.sha }}/" --no-progress
+
+      #Deploy stage — upload to Cloudflare via wrangler using the ADAPTER-EMITTED
+      #dist/server/wrangler.json. This is deliberately NOT a bare root
+      #`wrangler deploy`: the root wrangler.toml is pure static assets and would
+      #DROP the players/:id & matches/:id dynamic Worker routes. The build's strip
+      #step already guaranteed this config carries zero metered bindings. Token is a
+      #secret, account id a repo var (Component 4 wiring).
+      - name: Deploy to Cloudflare (Workers Static Assets + dynamic routes)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config dist/server/wrangler.json
+
+      #Purge stage — drop the Cloudflare edge cache so the new build is served
+      #immediately. purge_everything on the zone (ZONE_ID repo var); Bearer is the
+      #same scoped CI token. `--fail` turns a non-2xx response into a failed step.
+      - name: Purge Cloudflare cache
+        run: |
+          curl --fail --silent --show-error -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${{ vars.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'
+
+      #Validate stage — fail the deploy if the live site is not actually serving.
+      #Hits the apex (a prerendered SSG page) AND a deep dynamic route
+      #(/players/<id> — a prerender=false Worker shell that must 200 for an
+      #ARBITRARY id, proving the dynamic routes survived the deploy). Retries absorb
+      #edge / DNS propagation lag. SITE_URL is a repo var (no literal domain).
+      - name: Validate deploy (apex + deep dynamic route return 200)
+        run: |
+          set -euo pipefail
+          base="${{ vars.SITE_URL }}"
+          base="${base%/}"
+          for path in "/" "/players/1"; do
+            url="${base}${path}"
+            code=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+              --retry 6 --retry-delay 10 --retry-all-errors "$url")
+            echo "${url} -> ${code}"
+            test "$code" = "200"
+          done

@@ -32,7 +32,27 @@ export default defineConfig({
   //the adapter is here solely so the `prerender = false` dynamic shells
   //(players/:id, matches/:id) can run on a Cloudflare Worker. No KV/R2/D1 — just
   //the two on-demand routes.
-  adapter: cloudflare(),
+  //
+  //ZERO METERED BINDINGS (requirements §A.1, no-bill-spike rule). Left at its
+  //defaults, @astrojs/cloudflare auto-emits an `images` (Cloudflare Images)
+  //binding into dist/server/wrangler.json — a metered surface. `imageService:
+  //'compile'` switches image handling to build-time optimization (Sharp over the
+  //prerendered SEO surface) with a passthrough runtime, so the adapter emits NO
+  //Images binding (adapter index.js: runtimeService 'passthrough' ⇒
+  //needsImagesBinding=false). Verify post-build: dist/server/wrangler.json has no
+  //`images` key.
+  adapter: cloudflare({ imageService: 'compile' }),
+  //ZERO METERED BINDINGS (cont.) — Astro sessions. When `session` has no `driver`
+  //the adapter force-defaults it to the Cloudflare KV session driver and emits a
+  //`SESSION` kv_namespaces binding (another metered surface). This frontend never
+  //uses Astro's server-side session API — it is a static SPA shell + CSR React
+  //islands that call the API directly — so we pin the in-memory unstorage driver.
+  //A non-KV driver makes the adapter's usesCloudflareKVSessionDriver() return
+  //false ⇒ NO kv_namespaces binding emitted. The ephemeral per-isolate memory is
+  //irrelevant because no session is ever read or written at runtime.
+  session: {
+    driver: 'memory',
+  },
   //i18n routing (C7) — path-prefix locales, English at the ROOT (no prefix), per
   //the authoritative i18n design (frontend-i18n-design.md): /heroes = en,
   ///ru/heroes = Russian, etc. The 7 launched locales mirror lib/i18n.ts (the
