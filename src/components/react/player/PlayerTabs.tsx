@@ -179,15 +179,48 @@ export function PerformancePanel({ id }: { id: number }) {
 
 //---- compare (you vs cohort league) -----------------------------------------
 
+//Deadlock rank-tier names (tier = badge/10, 1..11). Mirrored from the backend's
+//tier_name() (deadlock-backend/src/main.rs:1268-1283) so the UI can name a tier by
+//number; keep in lockstep with the backend.
+const TIER_NAMES: Record<number, string> = {
+  1: 'Initiate',
+  2: 'Seeker',
+  3: 'Alchemist',
+  4: 'Arcanist',
+  5: 'Ritualist',
+  6: 'Emissary',
+  7: 'Archon',
+  8: 'Oracle',
+  9: 'Phantom',
+  10: 'Ascendant',
+  11: 'Eternus',
+};
+
+//Comparison-target options. These are the RELATIVE offsets the backend CompareQuery
+//actually reads (hero_id + league_offset only — main.rs:1166-1169). An absolute
+//"jump to tier N" group would need a `target_tier` query param the backend does not
+//consume yet (unknown query keys are silently dropped by serde, so it would fall back
+//to the player's own tier). It is therefore intentionally deferred rather than shipped
+//as a control that silently shows the wrong cohort.
+const TARGET_OPTIONS: ReadonlyArray<readonly [string, string]> = [
+  ['same', 'Your rank'],
+  ['one_up', 'One rank up'],
+  ['two_up', 'Two ranks up'],
+  ['top', `Best — ${TIER_NAMES[11]}`],
+];
+
 export function ComparePanel({ id }: { id: number }) {
   //Hero selector sourced from the real /heroes-played endpoint (§A.4 success
   //criterion: derive the hero list from heroes-played, NOT from /matches).
   const heroesPlayed = usePlayerHeroesPlayed(id);
   const heroOptions = [...(heroesPlayed.data ?? [])].sort((a, b) => b.matches_played - a.matches_played);
   const [hero, setHero] = useState<number | undefined>(undefined);
-  const { data, isPending, isError, error } = useCompare(id, { hero_id: hero });
+  //Relative comparison target (league_offset). 'same' reproduces the prior
+  //no-offset behaviour (cohort = the player's own tier).
+  const [target, setTarget] = useState<string>('same');
+  const { data, isPending, isError, error } = useCompare(id, { hero_id: hero, league_offset: target });
 
-  const selector = heroOptions.length > 0 && (
+  const heroSelector = heroOptions.length > 0 && (
     <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
       <span className="label-xs">Hero</span>
       <select
@@ -205,6 +238,32 @@ export function ComparePanel({ id }: { id: number }) {
         ))}
       </select>
     </label>
+  );
+
+  const targetSelector = (
+    <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
+      <span className="label-xs">Compare to</span>
+      <select
+        className="field"
+        style={{ width: 'auto', padding: '7px 10px' }}
+        value={target}
+        onChange={(e) => setTarget(e.target.value)}
+        aria-label="Choose the rank to compare against"
+      >
+        {TARGET_OPTIONS.map(([value, label]) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
+  const selector = (
+    <>
+      {heroSelector}
+      {targetSelector}
+    </>
   );
 
   if (isPending) {
@@ -244,7 +303,10 @@ export function ComparePanel({ id }: { id: number }) {
             League compare · {data.hero_name}
           </div>
           <h2 className="h-sec" style={{ fontSize: 17 }}>
-            You ({data.you.tier_name}) vs {data.cohort.tier_name}
+            You ({data.you.tier_name}) vs {data.cohort.tier_name}{' '}
+            <span className="faint" style={{ fontWeight: 400, fontSize: 13 }}>
+              (badges {data.cohort.badge_lo}–{data.cohort.badge_hi}, n={count(data.cohort.sample_size)})
+            </span>
           </h2>
         </div>
         <div className="flex" style={{ alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -257,6 +319,11 @@ export function ComparePanel({ id }: { id: number }) {
       {data.clamped && (
         <p className="faint" style={{ fontSize: 11, marginBottom: 10 }}>
           Comparison clamped to the nearest available tier.
+        </p>
+      )}
+      {data.cohort.sample_size === 0 && (
+        <p className="faint" style={{ fontSize: 11, marginBottom: 10 }}>
+          No {data.cohort.tier_name} players on {data.hero_name} in the dataset yet — the tier column is empty.
         </p>
       )}
       <table className="dt">

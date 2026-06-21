@@ -78,9 +78,12 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
 //---- signature economy view -------------------------------------------------
 
 export function EconomyPanel({ id }: { id: number }) {
-  const cmp = useCompare(id, {});
+  //'one_up' makes the "vs the rank you're chasing" kicker literally true — the
+  //cohort is the tier directly above the player, not the player's own tier.
+  const cmp = useCompare(id, { league_offset: 'one_up' });
   const souls = cmp.data?.you.souls_per_min ?? null;
   const cohortSouls = cmp.data?.cohort.souls_per_min ?? null;
+  const cohortTier = cmp.data?.cohort.tier_name ?? null;
   const gap = souls != null && cohortSouls != null ? souls - cohortSouls : null;
 
   return (
@@ -93,7 +96,7 @@ export function EconomyPanel({ id }: { id: number }) {
             Signature · vs the rank you&rsquo;re chasing
           </div>
           <h2 className="h-sec" style={{ fontSize: 17 }}>
-            Soul curve vs tier
+            Soul curve vs {cohortTier ?? 'tier'}
           </h2>
         </div>
         {gap != null && (
@@ -105,7 +108,7 @@ export function EconomyPanel({ id }: { id: number }) {
       </div>
       {souls != null ? (
         <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '0 0 14px', lineHeight: 1.5 }}>
-          You average <b className="cyan-c mono">{count(souls)}</b> souls/min; the next tier averages{' '}
+          You average <b className="cyan-c mono">{count(souls)}</b> souls/min; {cohortTier ?? 'the next tier'} averages{' '}
           <b className="mono" style={{ color: 'var(--muted)' }}>{count(cohortSouls)}</b>.
         </p>
       ) : (
@@ -202,6 +205,9 @@ export function CoachingPanel({ id }: { id: number }) {
 
 //---- categorized performance ------------------------------------------------
 
+//Below this cohort size the compare columns are flagged as a small sample.
+const LOW_SAMPLE = 30;
+
 export function CategorizedSection({ id }: { id: number }) {
   const [compare, setCompare] = useState(false);
   const improve = useImprove(id);
@@ -225,6 +231,17 @@ export function CategorizedSection({ id }: { id: number }) {
           </button>
         </div>
       </div>
+      {compare && (
+        <p className="faint" style={{ fontSize: 11, margin: '-4px 0 12px' }}>
+          {cmp.data
+            ? cmp.data.cohort.sample_size === 0
+              ? `No ${cmp.data.cohort.tier_name} sample for this hero yet — the compare columns are empty.`
+              : `Compared to ${cmp.data.cohort.tier_name} (n=${count(cmp.data.cohort.sample_size)})${
+                  cmp.data.cohort.sample_size < LOW_SAMPLE ? ' · small sample' : ''
+                }`
+            : 'Compared to your tier — loading…'}
+        </p>
+      )}
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' }}>
         <CatPanel title="Combat" icon="swords" rows={combat} compare={compare} emptyMessage={buildAheadMessage(improve.error)} />
         <CatPanel title="Economy" icon="coins" rows={economy} compare={compare} emptyMessage={buildAheadMessage(improve.error)} />
