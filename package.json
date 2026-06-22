@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "deploy": "wrangler deploy --config dist/server/wrangler.json",
-    "preview:cf": "wrangler dev --config dist/server/wrangler.json"
+    "preview:cf": "wrangler dev"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",

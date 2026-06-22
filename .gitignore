@@ -185,3 +185,10 @@ Thumbs.db
 !/src/content/
 !/src/content/blog/
 !/src/content/blog/**
+
+#Local-only Wrangler config. The REAL deploy uses the build-generated
+#dist/server/wrangler.json (@astrojs/cloudflare, has main:entry.mjs for the
+#prerender=false dynamic routes). A root wrangler.toml is kept ONLY as a local
+#`wrangler dev` convenience and must never be committed/deployed (it describes a
+#static-only config with no main → would ship a build missing the dynamic routes).
+wrangler.toml
