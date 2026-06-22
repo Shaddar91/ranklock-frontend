@@ -24,6 +24,12 @@ jobs:
       - run: npm run lint
       - run: npm run type-check
       - run: npm run build
+        env:
+          PUBLIC_ADSENSE_CLIENT: ${{ secrets.PUBLIC_ADSENSE_CLIENT }}
+          PUBLIC_API_BASE_URL: ${{ secrets.PUBLIC_API_BASE_URL }}
+          PUBLIC_DONATION_ADDRESS: ${{ secrets.PUBLIC_DONATION_ADDRESS }}
+          PUBLIC_MATOMO_SITE_ID: ${{ secrets.PUBLIC_MATOMO_SITE_ID }}
+          PUBLIC_MATOMO_URL: ${{ secrets.PUBLIC_MATOMO_URL }}
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
