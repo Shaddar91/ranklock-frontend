@@ -14,9 +14,8 @@
     "type-check": "astro check",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "deploy": "wrangler deploy",
-    "deploy:pages": "wrangler pages deploy ./dist --project-name=ranklock-frontend",
-    "preview:cf": "wrangler dev"
+    "deploy": "wrangler deploy --config dist/server/wrangler.json",
+    "preview:cf": "wrangler dev --config dist/server/wrangler.json"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",
