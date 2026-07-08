@@ -51,6 +51,8 @@ import type {
   SearchResult,
   TrimmedBuild,
 } from '../types/api';
+//Fills item_name/icon_url the stats endpoints leave null (see itemCatalog.ts).
+import { enrichItems } from './itemCatalog';
 
 //Public production API base. Overridden at build time by CI via
 //PUBLIC_API_BASE_URL (requirements §A.2 — never a committed .env.production).
@@ -270,14 +272,14 @@ export const api = {
   //hero_item_win_rates is mode-separated but lane-tier Normal-only (022) — the
   //param exists for symmetry; the UI only ever sends Normal here.
   getHeroItemWinRates: (id: number, params?: { band?: number; game_mode?: GameMode }) =>
-    apiFetch<HeroItemWinRate[]>(`/heroes/${id}/item-win-rates`, { query: params }),
+    apiFetch<HeroItemWinRate[]>(`/heroes/${id}/item-win-rates`, { query: params }).then(enrichItems),
   //Items use an INTEGER badge-bucket (0..5; 0 = all) — see lib/brackets.ts. The
   //label fix (badge tiers, not MMR ranges) lives in the UI; this just forwards
   //the bucket the backend's `bracket_badge_range` expects. `game_mode` is forwarded
   //for forward-compat (the /items/stats Gold table is not yet mode-separated, so
   //the backend currently ignores it and returns the same rows for both modes).
   getItems: (bracket?: number, game_mode?: GameMode) =>
-    apiFetch<ItemStat[]>('/items/stats', { query: { bracket, game_mode } }),
+    apiFetch<ItemStat[]>('/items/stats', { query: { bracket, game_mode } }).then(enrichItems),
   getRecentMatches: () => apiFetch<MatchRow[]>('/matches/recent'),
 
   //per-match / per-user surface (CSR islands)
