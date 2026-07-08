@@ -10,18 +10,65 @@
 //initialData so the server render already holds the real item rows (SEO without
 //JS); changing the bracket refetches that bucket client-side.
 import { useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
 import { useGameMode } from '../../lib/useGameMode';
 import QueryProvider from './QueryProvider';
-import { DataTable, type DataTableColumn, GameIcon, WinBar } from './ui/index';
+import { DataTable, type DataTableColumn, GameIcon, Tooltip, WinBar } from './ui/index';
 import BucketFilter from './ui/BucketFilter';
 import { ITEM_BUCKETS, itemBracketParam, type RankBucket } from '../../lib/brackets';
-import { count, DASH } from '../../lib/format';
+import { count, DASH, pct } from '../../lib/format';
 import type { ItemStat } from '../../types/api';
 
 function itemLabel(it: ItemStat): string {
   return it.item_name ?? `Item ${it.item_id}`;
+}
+
+//One label/value line inside the hover popover.
+function TipRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="between" style={{ gap: 20 }}>
+      <span className="label-xs" style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 500 }}>
+        {label}
+      </span>
+      <span className="tnum" style={{ fontWeight: 600, color: 'var(--text)' }}>
+        {children}
+      </span>
+    </div>
+  );
+}
+
+//Hover/focus popover body for one item — reads straight off the already-enriched
+//row (no fetch). Win-rate is empty-stated with a note while the compute job that
+//restores it (ranklock-app-fix-all-and-reprocess C3) is still degraded.
+function ItemTooltipContent({ it }: { it: ItemStat }) {
+  return (
+    <div style={{ display: 'grid', gap: 9, minWidth: 190 }}>
+      <div className="flex" style={{ alignItems: 'center', gap: 9 }}>
+        <GameIcon kind="item" name={itemLabel(it)} src={it.icon_url} size={26} />
+        <span className="display" style={{ fontWeight: 700, color: 'var(--text)', fontSize: 14 }}>
+          {itemLabel(it)}
+        </span>
+      </div>
+      <div style={{ height: 1, background: 'var(--border)' }} />
+      <div style={{ display: 'grid', gap: 7 }}>
+        <TipRow label="Win rate">
+          {it.win_rate == null ? (
+            <span className="faint">{DASH}</span>
+          ) : (
+            <span style={{ color: it.win_rate >= 50 ? 'var(--win)' : 'var(--loss)' }}>{pct(it.win_rate)}</span>
+          )}
+        </TipRow>
+        <TipRow label="Matches">{count(it.matches ?? it.picks)}</TipRow>
+      </div>
+      {it.win_rate == null && (
+        <div className="faint" style={{ fontSize: 11, lineHeight: 1.3 }}>
+          Win rate fills in after the next data refresh.
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ItemsTableInner({ initialRows }: { initialRows: ItemStat[] }) {
@@ -44,13 +91,22 @@ function ItemsTableInner({ initialRows }: { initialRows: ItemStat[] }) {
         key: 'item',
         header: 'Item',
         sortValue: (it) => itemLabel(it),
+        //The item name is BOTH a stats-tooltip trigger AND a link to /items/{id}
+        //(mirrors HeroCell). `asChild` makes the <a> the tooltip trigger itself, so
+        //there's one tab stop and aria-describedby lands on the link (see Tooltip).
         render: (it) => (
-          <div className="flex" style={{ alignItems: 'center', gap: 10 }}>
-            <GameIcon kind="item" name={itemLabel(it)} src={it.icon_url} size={28} />
-            <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
-              {itemLabel(it)}
-            </span>
-          </div>
+          <Tooltip asChild content={<ItemTooltipContent it={it} />}>
+            <a
+              className="flex"
+              href={`/items/${it.item_id}`}
+              style={{ alignItems: 'center', gap: 10, textDecoration: 'none', cursor: 'pointer' }}
+            >
+              <GameIcon kind="item" name={itemLabel(it)} src={it.icon_url} size={28} />
+              <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
+                {itemLabel(it)}
+              </span>
+            </a>
+          </Tooltip>
         ),
       },
       {

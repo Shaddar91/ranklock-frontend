@@ -1591,3 +1591,40 @@ textarea {
   color: var(--text);
   margin-bottom: 6px;
 }
+
+/* ---------- tooltip / popover (ui/Tooltip.tsx) ---------- */
+/* focusable trigger: keyboard users Tab to it and get the same popover as hover.
+   `cursor: help` signals "hover me for stats"; the global :focus-visible ring
+   applies since it's tabbable. */
+.tt-anchor {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 5px;
+  cursor: help;
+  outline-offset: 2px;
+}
+/* portaled to <body>, fixed-positioned from JS (top/left/transform inline) so it
+   never gets clipped by the table's overflow. pointer-events:none so moving the
+   mouse toward it still fires the trigger's mouseleave (no flicker). */
+.tt-pop {
+  position: fixed;
+  z-index: 60;
+  max-width: 260px;
+  padding: 11px 13px;
+  background: linear-gradient(180deg, var(--overlay), #171e2a);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 0, 0, 0.25);
+  color: var(--text-2);
+  font-size: 12.5px;
+  line-height: 1.35;
+  pointer-events: none;
+  animation: tt-fade var(--t-fast);
+}
+@keyframes tt-fade {
+  from {
+    opacity: 0;
+  }
+}

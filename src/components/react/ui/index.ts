@@ -19,3 +19,4 @@ export { default as Wordmark, Mark } from './Wordmark';
 export { default as SecHead } from './SecHead';
 export { default as AdSlot } from './AdSlot';
 export { default as DataTable, type DataTableColumn } from './DataTable';
+export { default as Tooltip } from './Tooltip';
