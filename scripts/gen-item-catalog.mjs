@@ -90,8 +90,24 @@ const descriptions = {};
 let withIcon = 0;
 let withDesc = 0;
 let skipped = 0;
+let codenameSkipped = 0;
 for (const e of all) {
   if (e.type !== 'upgrade' || e.id == null) continue;
+
+  //Skip raw-codename entries. The feed exposes NO human display name for these: BOTH `name`
+  //and `class_name` are the internal `upgrade_*` codename (e.g. upgrade_cloaking_device), so a
+  //generated detail page could only ever title itself "upgrade_cloaking_device". (Good items keep
+  //a real display `name` like "Silencer" even though their `class_name` is also `upgrade_*`, so we
+  //key on NAME, never class_name.) Verified 2026-07-09: every codename entry is disabled:true +
+  //shopable:false + start_trained:true with no shop art — deprecated/internal upgrade defs the live
+  ///items shop API never serves (i.e. absent from the live /items meta, so win-rate/matches are
+  //always null too). This is the same "no real name AND not in live /items => exclude" rule that
+  //already prunes art-less items below; it drops 39 of 251 upgrade entries, none shop-served.
+  if (typeof e.name === 'string' && e.name.startsWith('upgrade_')) {
+    codenameSkipped += 1;
+    continue;
+  }
+
   const icon = e.shop_image_webp || e.shop_image || e.image_webp || e.image || null;
   if (!icon || icon.includes('upgrades/mods_weapon') || !/\.(webp|png|jpg)$/i.test(icon)) {
     skipped += 1;
@@ -132,3 +148,4 @@ console.log(`gen-item-catalog: wrote ${ids.length} items (${withIcon} with icon)
 console.log(`gen-item-catalog: wrote ${ids.length} items (${withDesc} with description) -> ${OUT_DETAIL}`);
 console.log(`gen-item-catalog: wrote ${withDesc} descriptions -> ${OUT_DESC}`);
 console.log(`gen-item-catalog: skipped ${skipped} art-less/deprecated upgrade entries (no colored shop tile)`);
+console.log(`gen-item-catalog: skipped ${codenameSkipped} raw-codename upgrade entries (no display name, not in live /items)`);
