@@ -15,6 +15,7 @@ import {
   ComposedChart,
   Area,
   Line,
+  LabelList,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -72,9 +73,38 @@ export default function SignatureCurve({
   metricLabel = 'souls',
   animate = true,
 }: SignatureCurveProps) {
+  //Index of the LAST non-null datum for a series — that is where its on-chart name label
+  //is drawn (like a line title trailing off the right edge).
+  const lastIdxOf = (key: 'you' | 'cmp') => {
+    let last = -1;
+    data.forEach((d, i) => {
+      if (d[key] != null) last = i;
+    });
+    return last;
+  };
+  //A <LabelList content=> renderer that draws the series' name in the line's colour at that
+  //series' final point only (offset right so it reads as a trailing title).
+  const EndLabel =
+    (key: 'you' | 'cmp', text: string | undefined, color: string) =>
+    (props: { x?: number; y?: number; index?: number }) => {
+      if (!text || props.index !== lastIdxOf(key)) return null;
+      return (
+        <text
+          x={(props.x ?? 0) + 8}
+          y={props.y ?? 0}
+          dy={4}
+          fill={color}
+          fontSize={12}
+          fontWeight={700}
+          textAnchor="start"
+        >
+          {text}
+        </text>
+      );
+    };
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <ComposedChart data={data} margin={{ top: 12, right: 16, bottom: 4, left: 4 }}>
+      <ComposedChart data={data} margin={{ top: 12, right: 72, bottom: 4, left: 4 }}>
         <CartesianGrid stroke={gridStroke} strokeOpacity={0.5} vertical={false} />
         <XAxis
           dataKey="min"
@@ -85,7 +115,14 @@ export default function SignatureCurve({
           axisLine={{ stroke: gridStroke }}
           tickFormatter={(m: number) => `${m}:00`}
         />
-        <YAxis tick={axisTick} tickLine={false} axisLine={false} tickFormatter={fmtK} width={40} />
+        <YAxis
+          domain={[0, 'dataMax']}
+          tick={axisTick}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={fmtK}
+          width={40}
+        />
         <Tooltip
           contentStyle={tooltipContentStyle}
           labelStyle={tooltipLabelStyle}
@@ -127,7 +164,12 @@ export default function SignatureCurve({
             dot={false}
             connectNulls
             isAnimationActive={animate}
-          />
+          >
+            <LabelList
+              dataKey="cmp"
+              content={EndLabel('cmp', comparisonLabel, sigSeriesColor.comparison)}
+            />
+          </Line>
         )}
         {/* YOU — drawn LAST so the personal curve sits on top of the cohort. Solid, thick,
             amber, with small dots: this is the star of the chart and it is FIXED (identical
@@ -142,7 +184,9 @@ export default function SignatureCurve({
           activeDot={{ r: 4 }}
           connectNulls
           isAnimationActive={animate}
-        />
+        >
+          <LabelList dataKey="you" content={EndLabel('you', youLabel, sigSeriesColor.you)} />
+        </Line>
       </ComposedChart>
     </ResponsiveContainer>
   );

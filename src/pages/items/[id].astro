@@ -44,9 +44,16 @@ export async function getStaticPaths() {
   }
   return entries.map(([id, meta]) => {
     const st = statById.get(id);
+    //Prefer the LIVE shop-art icon_url (the same /items/stats source the correct list
+    //page uses) over the baked catalog glyph. items-detail.json bakes the mono UPGRADE
+    //glyph for many items (e.g. Silencer -> emp_bullets.png) whereas the live feed serves
+    //the colored shop tile (silencer.webp); this also fills the null-icon handful. The
+    //baked meta.icon stays only as the fallback for genuinely-art-less / cold-stats items.
+    const icon = st?.icon_url ?? meta.icon ?? null;
     const item: ItemDetail = {
       item_id: Number(id),
       ...meta,
+      icon,
       win_rate: st?.win_rate ?? null,
       matches: st?.matches ?? st?.picks ?? null,
     };

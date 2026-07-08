@@ -70,18 +70,34 @@ if (!Array.isArray(all)) {
 }
 
 //Only type==="upgrade" entries are the buildable shop items /items/stats reports;
-//abilities/weapons/misc are excluded. Prefer the PNG (image) like the hero icons,
-//fall back to WebP; a handful of items have no art at all (icon:null → GameIcon
-//keeps its monogram fallback, which is correct — the CDN has nothing to show).
+//abilities/weapons/misc are excluded. Prefer the dedicated SHOP art (shop_image_webp /
+//shop_image) over plain image/image_webp: for items the latter is the mono UPGRADE glyph
+//(e.g. Silencer -> upgrades/mods_weapon/emp_bullets.png) while the shop fields carry the
+//colored shop tile (items/weapon/silencer.webp) — the SAME art the live /items API serves.
+//
+//Then SKIP any entry that STILL has no real colored shop art: a null icon, the monochrome
+//weapon-mod glyph (upgrades/mods_weapon/*), or a malformed non-image URL (the feed emits
+//`.../images/panorama:""` for a couple of stubs, e.g. Toughness / Endless Magazine). Those
+//are deprecated / pre-release / internal upgrade definitions — the live /items shop API
+//serves NONE of them and the CDN has no shop tile, so a detail page for them could only ever
+//render the reported mono-glyph or blank monogram fallback. Dropping them keeps every
+//generated item page on real shop art (detail == list). Verified 2026-07-08: this drops 22
+//of 251 upgrade entries, none of which appear in the live /items feed, so no shop-served
+//item loses its page.
 const catalog = {};
 const detail = {};
 const descriptions = {};
 let withIcon = 0;
 let withDesc = 0;
+let skipped = 0;
 for (const e of all) {
   if (e.type !== 'upgrade' || e.id == null) continue;
-  const icon = e.image || e.image_webp || null;
-  if (icon) withIcon += 1;
+  const icon = e.shop_image_webp || e.shop_image || e.image_webp || e.image || null;
+  if (!icon || icon.includes('upgrades/mods_weapon') || !/\.(webp|png|jpg)$/i.test(icon)) {
+    skipped += 1;
+    continue;
+  }
+  withIcon += 1;
   catalog[e.id] = { name: e.name, icon };
 
   //Rich detail (build-only file). description is `{ desc: "<html>" }` or `{}`.
@@ -115,3 +131,4 @@ writeFileSync(OUT_DESC, JSON.stringify(descriptions) + '\n');
 console.log(`gen-item-catalog: wrote ${ids.length} items (${withIcon} with icon) -> ${OUT}`);
 console.log(`gen-item-catalog: wrote ${ids.length} items (${withDesc} with description) -> ${OUT_DETAIL}`);
 console.log(`gen-item-catalog: wrote ${withDesc} descriptions -> ${OUT_DESC}`);
+console.log(`gen-item-catalog: skipped ${skipped} art-less/deprecated upgrade entries (no colored shop tile)`);
