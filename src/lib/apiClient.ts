@@ -117,22 +117,31 @@ function buildUrl(base: string, path: string, query?: Query): string {
 }
 
 /**
- * Core fetch against an explicit base URL. Sends cookies (`credentials: 'include'`)
- * so cross-origin "My Stats" calls carry the session (requirements §A.7), asks for
- * JSON, and throws a typed `ApiError` on any non-2xx. 204/205 → undefined. The base
- * is a parameter so the same contract serves both the main API (`apiFetch`) and the
- * standalone Lane Lab service (`laneLabFetch`).
+ * Core fetch against an explicit base URL. Asks for JSON and throws a typed
+ * `ApiError` on any non-2xx. 204/205 → undefined. The base is a parameter so the
+ * same contract serves both the main API (`apiFetch`) and the standalone Lane Lab
+ * service (`laneLabFetch`).
+ *
+ * Credentials mode (requirements §A.6/§A.7): PUBLIC reads default to `'same-origin'`.
+ * A cross-origin public GET must NOT send credentials — with `credentials: 'include'`
+ * the browser REJECTS the API's wildcard `Access-Control-Allow-Origin: *` ("the value
+ * of the 'Access-Control-Allow-Origin' header must not be the wildcard '*' when the
+ * request's credentials mode is 'include'"), so the fetch fails and the island shows
+ * an error state (this was the Heroes rank-filter bug: every bracket refetch was
+ * cross-origin `:4321 → :18000`, blocked by CORS, surfaced as "Hero meta unavailable").
+ * Only the authed `/me*` surface passes `credentials: 'include'` explicitly to carry
+ * the session cookie cross-origin.
  */
 async function fetchFrom<T>(
   base: string,
   path: string,
-  opts: { query?: Query; init?: RequestInit } = {},
+  opts: { query?: Query; init?: RequestInit; credentials?: RequestCredentials } = {},
 ): Promise<T> {
   const url = buildUrl(base, path, opts.query);
   let res: Response;
   try {
     res = await fetch(url, {
-      credentials: 'include',
+      credentials: opts.credentials ?? 'same-origin',
       headers: { Accept: 'application/json', ...(opts.init?.headers ?? {}) },
       ...opts.init,
     });
@@ -157,19 +166,20 @@ async function fetchFrom<T>(
 /** Fetch against the main API base (api.ranklock.app / PUBLIC_API_BASE_URL). */
 export function apiFetch<T>(
   path: string,
-  opts: { query?: Query; init?: RequestInit } = {},
+  opts: { query?: Query; init?: RequestInit; credentials?: RequestCredentials } = {},
 ): Promise<T> {
   return fetchFrom<T>(API_BASE, path, opts);
 }
 
 /**
  * Fetch against the standalone Lane Lab service base (ranklock-lane-lab / PUBLIC_LANE_LAB_BASE_URL).
- * Identical credentialed + typed-ApiError contract as `apiFetch`; only the base URL differs, so a
- * logged-in user's `session_id` cookie (shared via the same Redis store) rides along to Lane Lab.
+ * Identical typed-ApiError contract as `apiFetch`; only the base URL differs. Public Lane Lab reads
+ * use the default `'same-origin'`; the authed `/me/economy-overlay` passes `credentials: 'include'`
+ * so a logged-in user's `session_id` cookie (shared via the same Redis store) rides along to Lane Lab.
  */
 export function laneLabFetch<T>(
   path: string,
-  opts: { query?: Query; init?: RequestInit } = {},
+  opts: { query?: Query; init?: RequestInit; credentials?: RequestCredentials } = {},
 ): Promise<T> {
   return fetchFrom<T>(LANE_LAB_BASE, path, opts);
 }
@@ -374,14 +384,17 @@ export const api = {
   //rides along. 401 when not logged in / no linked deadlock account; 501/202 build-ahead like the
   //sibling lane endpoints. The Lane Lab island consumes only the `you` aggregate for the overlay.
   getMyEconomyOverlay: (params?: { band?: number }) =>
-    laneLabFetch<EconomyOverlayResponse>('/me/economy-overlay', { query: params }),
+    //Authed: carry the session cookie cross-origin (needs a non-wildcard CORS origin server-side).
+    laneLabFetch<EconomyOverlayResponse>('/me/economy-overlay', { query: params, credentials: 'include' }),
 
   //stats + session. rank_distribution is mode-AGNOSTIC (per-player badge histogram —
   //product decision, 022); the param is accepted for symmetry but the backend ignores
   //it (no game_mode dimension on the table).
   getRankDistribution: (game_mode?: GameMode) =>
     apiFetch<RankBucket[]>('/stats/rank-distribution', { query: { game_mode } }),
-  getCurrentUser: () => apiFetch<CurrentUser>('/me'),
+  //Authed: the session cookie must ride cross-origin, so this is the one main-API call
+  //that opts into `credentials: 'include'` (all other reads are public → 'same-origin').
+  getCurrentUser: () => apiFetch<CurrentUser>('/me', { credentials: 'include' }),
 };
 
 export type ApiClient = typeof api;
