@@ -16,6 +16,13 @@
 //     Sources cost / item_tier / item_slot_type / description straight from the same
 //     upstream so the detail page needs no backend endpoint.
 //
+//  3. src/data/item-descriptions.json — a lean { [item_id]: desc } map (only the items
+//     that actually HAVE a description). This one IS client-bundled, but imported ONLY
+//     by the items-table island (src/lib/itemDescriptions.ts) so the item hover tooltip
+//     can show "what it does". It carries just the desc text — not the full
+//     items-detail.json (cost/tier/slot) — and stays out of the everywhere-loaded
+//     items-catalog.json, so hero pages never pay for it.
+//
 //Source: the community deadlock-api assets service — the SAME upstream the asset
 //mirror uses (design/assets/mirror_assets.py). The image URLs it returns are public
 //CDN links (assets-bucket.deadlock-api.com); we pin them straight into the catalog so
@@ -31,6 +38,7 @@ import { fileURLToPath } from 'node:url';
 const SRC = 'https://assets.deadlock-api.com/v2/items';
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/items-catalog.json');
 const OUT_DETAIL = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/items-detail.json');
+const OUT_DESC = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/item-descriptions.json');
 
 //The upstream `description.desc` carries light HTML (<span class="highlight">…</span>,
 //<br>, entities). Flatten it to plain text for a clean, injection-safe detail page.
@@ -67,6 +75,7 @@ if (!Array.isArray(all)) {
 //keeps its monogram fallback, which is correct — the CDN has nothing to show).
 const catalog = {};
 const detail = {};
+const descriptions = {};
 let withIcon = 0;
 let withDesc = 0;
 for (const e of all) {
@@ -77,7 +86,11 @@ for (const e of all) {
 
   //Rich detail (build-only file). description is `{ desc: "<html>" }` or `{}`.
   const desc = plainText(e.description && e.description.desc);
-  if (desc) withDesc += 1;
+  if (desc) {
+    withDesc += 1;
+    //Lean client map for the hover tooltip — desc text only, and only when present.
+    descriptions[e.id] = desc;
+  }
   detail[e.id] = {
     name: e.name,
     icon,
@@ -98,5 +111,7 @@ if (ids.length === 0) {
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, JSON.stringify(catalog) + '\n');
 writeFileSync(OUT_DETAIL, JSON.stringify(detail) + '\n');
+writeFileSync(OUT_DESC, JSON.stringify(descriptions) + '\n');
 console.log(`gen-item-catalog: wrote ${ids.length} items (${withIcon} with icon) -> ${OUT}`);
 console.log(`gen-item-catalog: wrote ${ids.length} items (${withDesc} with description) -> ${OUT_DETAIL}`);
+console.log(`gen-item-catalog: wrote ${withDesc} descriptions -> ${OUT_DESC}`);

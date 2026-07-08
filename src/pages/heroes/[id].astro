@@ -31,7 +31,7 @@ const title = hero
   ? `${name} — win rate, builds & matchups | RankLock`
   : 'Hero — RankLock';
 const description = hero
-  ? `${name} Deadlock stats: win-rate, pick rate, KDA, matchups and community builds by rank bracket.`
+  ? `${name} Deadlock stats: win-rate, pick rate, KDA, matchups and community builds.`
   : 'Deadlock hero detail.';
 const canonicalPath = hero ? `/heroes/${hero.hero_id}` : '/heroes';
 const jsonLd = breadcrumbJsonLd(origin, [
@@ -92,7 +92,7 @@ const heroKda = kda(hero?.avg_kills, hero?.avg_deaths, hero?.avg_assists);
           <section class="panel panel-pad">
             <h2 class="h-sec" style="margin-bottom:6px;">Matchups, synergies, best items & builds</h2>
             <p class="muted" style="font-size:13px; margin:0 0 10px;">
-              Per-bracket counters, best-duo synergies, best items by win rate and top community builds — fills in as the analytics pipeline serves.
+              Matchups, best-duo synergies, best items by win rate and top community builds — fills in as the analytics pipeline serves.
             </p>
             <HeroDetailExtra heroId={hero.hero_id} client:visible />
           </section>

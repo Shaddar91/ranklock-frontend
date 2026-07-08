@@ -103,6 +103,24 @@ export const useCompare = (id: number, opts?: { hero_id?: number; league_offset?
   });
 };
 
+//THE signature economy curve (C3): your FIXED per-minute soul curve + a league(+hero)
+//comparison you PICK. `vs_band`/`hero` touch ONLY the comparison; the `you` line is
+//invariant across selections (the whole point of the feature). The player line is
+//UNGATED; the comparison rides RICH_ANALYTICS (null when off/computing/hero-scan-timeout).
+//retry:false so a suppressed 404 / build-ahead empty-states fast. NOT mode-separated — the
+//curve SQL pins Unranked/Normal (the timeline detail tier) regardless of the global toggle,
+//so binding it to the mode would just blank the chart for Brawl viewers.
+export const usePlayerEconomyCurve = (
+  id: number,
+  opts?: { metric?: string; vs_band?: number; hero?: number },
+) =>
+  useQuery({
+    queryKey: queryKeys.playerEconomyCurve(id, opts ?? {}),
+    queryFn: () => api.getPlayerEconomyCurve(id, opts),
+    retry: false,
+    enabled: id > 0,
+  });
+
 //Compare-to-a-specific-player: `vs` is the other player's account_id (gates the
 //fetch — undefined/0 means no player picked yet), `hero_id` scopes the shared-hero
 //overlap. retry:false so a build-ahead 202/501 or a 404 (no overlap) empty-states

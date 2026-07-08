@@ -20,9 +20,13 @@ import { isComputing, isDisabled, isNotFound } from '../../../lib/apiClient';
 import { useGameMode } from '../../../lib/useGameMode';
 import { EmptyState, Icon } from '../ui/index';
 import RadarChart from '../charts/RadarChart';
+import SignatureCurve from '../charts/SignatureCurve';
+import { sigSeriesColor, sigSeriesWord } from '../charts/chartTheme';
 import { CatPanel } from './StatLine';
-import { useCompare, useImprove } from './usePlayer';
+import { useCompare, useImprove, usePlayer, usePlayerEconomyCurve, usePlayerHeroesPlayed } from './usePlayer';
 import { combatRows, compareRadar, economyRows, efficiencyRows, laningRows } from '../../../lib/playstyle';
+import { mergeSignatureCurve, curveMarker } from '../../../lib/signatureCurve';
+import { RANKS, getRank, rankFromBadge } from '../../../lib/ranks';
 import { count, fixed } from '../../../lib/format';
 
 //Coaching/playstyle are derived from /improve, whose cohort is Normal-only (022). In
@@ -107,6 +111,167 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
 
 //---- signature economy view -------------------------------------------------
 
+//The two metrics the player curve serves (backend PLAYER_CURVE_METRICS). `noun` is the
+//lower-case word for captions/axis; the curve endpoint keys on `key`.
+const CURVE_METRICS = [
+  { key: 'souls', label: 'Souls', noun: 'souls' },
+  { key: 'last_hits', label: 'Last hits', noun: 'last hits' },
+] as const;
+type CurveMetric = (typeof CURVE_METRICS)[number]['key'];
+
+//THE signature coaching chart (C3): the player's OWN per-minute curve, FIXED, overlaid on a
+//comparison cohort they pick. The LEAGUE selector (rank tier) and the HERO selector move
+//ONLY the comparison line — `you` is invariant. Colours/caption words come from
+//sigSeriesColor/sigSeriesWord so the legend, the caption, and the lines can never disagree.
+function SignatureCurvePanel({ id }: { id: number }) {
+  const [metric, setMetric] = useState<CurveMetric>('souls');
+  //league: undefined = "auto" (default to the rank you're chasing once the profile loads);
+  //null = All ranks (vs_band omitted); number = a specific rank tier 0..11.
+  const [band, setBand] = useState<number | null | undefined>(undefined);
+  //hero: undefined = all heroes (no hero filter).
+  const [hero, setHero] = useState<number | undefined>(undefined);
+
+  const profile = usePlayer(id);
+  const heroesPlayed = usePlayerHeroesPlayed(id);
+  const playerTier = rankFromBadge(profile.data?.badge)?.tier ?? null;
+  //Default the comparison to the rank ONE tier up — the rank you're chasing (matches the
+  //panel's "vs the rank you're chasing" framing). Falls back to All ranks if tier unknown.
+  const autoBand = playerTier != null ? Math.min(RANKS.length - 1, playerTier + 1) : null;
+  const effBand = band === undefined ? autoBand : band; //null => All ranks
+
+  const curve = usePlayerEconomyCurve(id, { metric, vs_band: effBand ?? undefined, hero });
+
+  const noun = CURVE_METRICS.find((m) => m.key === metric)!.noun;
+  const heroOptions = [...(heroesPlayed.data ?? [])].sort((a, b) => b.matches_played - a.matches_played);
+  const points = mergeSignatureCurve(curve.data);
+  const hasYou = points.some((p) => p.you != null);
+  const comparison = curve.data?.comparison ?? null;
+  const hasCmp = (comparison?.points.length ?? 0) > 0;
+  const heroName = hero != null ? heroOptions.find((h) => h.hero_id === hero)?.hero_name : null;
+  const tierName = effBand != null ? getRank(effBand).name : 'All ranks';
+  const cmpLabel = hasCmp ? `${tierName}${heroName ? ` · ${heroName}` : ''} average` : undefined;
+  const marker = curveMarker(points);
+
+  const leagueSelector = (
+    <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
+      <span className="label-xs">League</span>
+      <select
+        className="field"
+        style={{ width: 'auto', padding: '7px 10px' }}
+        value={effBand == null ? '' : String(effBand)}
+        onChange={(e) => setBand(e.target.value === '' ? null : Number(e.target.value))}
+        aria-label="Choose the league to compare against"
+      >
+        <option value="">All ranks</option>
+        {RANKS.map((r) => (
+          <option key={r.tier} value={r.tier}>
+            {r.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
+  const heroSelector = heroOptions.length > 0 && (
+    <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
+      <span className="label-xs">Hero</span>
+      <select
+        className="field"
+        style={{ width: 'auto', padding: '7px 10px' }}
+        value={hero ?? ''}
+        onChange={(e) => setHero(e.target.value === '' ? undefined : Number(e.target.value))}
+        aria-label="Narrow the comparison to one hero"
+      >
+        <option value="">All heroes</option>
+        {heroOptions.map((h) => (
+          <option key={h.hero_id} value={h.hero_id}>
+            {h.hero_name} ({count(h.matches_played)})
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
+  const metricToggle = (
+    <div className="brkfilter" style={{ padding: 3, flexWrap: 'nowrap', flexShrink: 0 }}>
+      {CURVE_METRICS.map((m) => (
+        <button
+          key={m.key}
+          type="button"
+          className={'minitog' + (metric === m.key ? ' on' : '')}
+          onClick={() => setMetric(m.key)}
+          aria-pressed={metric === m.key}
+        >
+          {m.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="between" style={{ marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
+        <div className="flex" style={{ gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          {leagueSelector}
+          {heroSelector}
+        </div>
+        {metricToggle}
+      </div>
+      {curve.isPending ? (
+        <Loading label={`Loading your ${noun} curve`} />
+      ) : curve.isError ? (
+        <EmptyState
+          title="Per-minute curve unavailable"
+          message={buildAheadMessage(curve.error, 'The per-minute timeline for this player is not loaded yet.')}
+          icon="chart"
+        />
+      ) : !hasYou ? (
+        <EmptyState
+          title="No per-minute timeline yet"
+          message="This player's matches don't have the per-minute detail loaded yet — your curve appears once the match timeline is ingested."
+          icon="chart"
+        />
+      ) : (
+        <>
+          <SignatureCurve data={points} youLabel="You" comparisonLabel={cmpLabel} metricLabel={noun} />
+          {/* Caption colour words are driven by sigSeriesWord/sigSeriesColor — the SAME
+              source the chart lines read — so a word can never name a colour the line
+              doesn't render (the C3 no-phantom-cyan guarantee). */}
+          <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
+            The <b style={{ color: sigSeriesColor.you }}>{sigSeriesWord.you}</b> line is{' '}
+            <b style={{ color: sigSeriesColor.you }}>you</b> — your real per-minute {noun}, and it stays put when you
+            switch league or hero.{' '}
+            {cmpLabel ? (
+              <>
+                The <b style={{ color: sigSeriesColor.comparison }}>{sigSeriesWord.comparison} dashed</b> line is{' '}
+                <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b>
+                {comparison?.source === 'on-demand-hero' ? ' (computed live)' : ''} — the cohort you picked; the shaded
+                band is their 25th–75th percentile. Only this line moves when you change the selectors.
+              </>
+            ) : (
+              <>
+                Pick a league to overlay the cohort you&rsquo;re chasing
+                {effBand != null ? ` — ${tierName}'s cohort has no per-minute sample yet` : ''}.
+              </>
+            )}
+          </p>
+          {marker && cmpLabel && (
+            <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '8px 0 0', lineHeight: 1.5 }}>
+              At <b className="mono">{marker.min}:00</b> you had{' '}
+              <b className="mono" style={{ color: sigSeriesColor.you }}>{count(marker.you)}</b> {noun}; {cmpLabel} was{' '}
+              <b className="mono" style={{ color: sigSeriesColor.comparison }}>{count(marker.cmp)}</b> —{' '}
+              <b style={{ color: marker.gap >= 0 ? 'var(--win)' : 'var(--loss)' }}>
+                you&rsquo;re {count(Math.abs(marker.gap))} {noun} {marker.gap >= 0 ? 'ahead' : 'behind'}
+              </b>
+              .
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export function EconomyPanel({ id }: { id: number }) {
   //'one_up' makes the "vs the rank you're chasing" kicker literally true — the
   //cohort is the tier directly above the player, not the player's own tier.
@@ -146,9 +311,10 @@ export function EconomyPanel({ id }: { id: number }) {
           Economy comparison fills in once /compare serves this player.
         </p>
       )}
-      {/* The per-minute timeline + per-source split are UNBUILT rich-tier
-          endpoints — empty-state them (build-ahead) while keeping the layout. */}
-      <EmptyState title="Per-minute soul curve not served yet" message="The match-timeline (per-minute souls vs tier) endpoint comes online with the analytics pipeline." icon="chart" />
+      {/* THE signature per-minute curve (C3): your FIXED soul curve overlaid on a league
+          (+hero) cohort you pick — now served by /players/:id/economy-curve. Replaces the
+          old build-ahead empty-state. The per-SOURCE gold split below is still unbuilt. */}
+      <SignatureCurvePanel id={id} />
       <div className="deco-rule" style={{ margin: '18px 0 14px' }}>
         <span className="dia" />
       </div>

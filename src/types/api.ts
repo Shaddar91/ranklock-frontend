@@ -546,6 +546,50 @@ export interface PlayerEconomy {
   avg_player_damage: number | null;
 }
 
+//GET /players/:account_id/economy-curve?metric=&vs_band=&hero=&match=  — THE signature
+//coaching curve (lane_lab::player_economy_curve). Two overlayable per-minute series, both
+//in REAL units (souls = net_worth, NOT /1000):
+//  • `you` / `points` — the player's OWN per-minute curve, averaged across their loaded
+//    Normal/Unranked matches. FIXED: independent of vs_band/hero — picking a league/hero
+//    moves only the comparison. `points` is a byte-identical alias of `you` (the plan's
+//    CURVE_OK gate reads `points`); the UI reads `you`.
+//  • `comparison` — the league (+optional hero) cohort you are measured against, or null
+//    when RICH_ANALYTICS is off / the Gold has never produced / an on-demand hero scan
+//    timed out. The player line is always present regardless.
+export interface PlayerCurvePoint {
+  minute_bucket: number;
+  //wall-clock seconds at this point (= minute_bucket * 180).
+  t_seconds: number;
+  //real units for the active metric (souls = net_worth, last_hits = raw count).
+  value: number;
+  //how many of the player's matches contributed to this bucket's average.
+  matches: number;
+}
+export interface PlayerCurveComparisonPoint {
+  minute_bucket: number;
+  t_seconds: number;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+  sample_players: number;
+}
+export interface PlayerCurveComparison {
+  //the selected league (rank tier 0..11, badge/10); null = all-bands cohort.
+  band: number | null;
+  //the selected hero, or null for the all-hero cohort.
+  hero_id: number | null;
+  //"cohort-gold" (fast Gold point-lookup) | "on-demand-hero" (live raw-timeline scan).
+  source: string;
+  points: PlayerCurveComparisonPoint[];
+}
+export interface PlayerEconomyCurveResponse {
+  account_id: number;
+  metric: string;
+  points: PlayerCurvePoint[];
+  you: PlayerCurvePoint[];
+  comparison: PlayerCurveComparison | null;
+}
+
 //GET /me/economy-overlay?band=  (Lane Lab service) — the cohort curve PLUS the
 //signed-in caller's own economy aggregate. The overlay consumes only the `you`
 //side (the caller's aggregate, same shape family as PlayerEconomy); `cohort_curve`

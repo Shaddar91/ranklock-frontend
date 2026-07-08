@@ -28,6 +28,20 @@ function fmtStat(v: number): string {
   return Number.isInteger(v) ? count(v) : fixed(v);
 }
 
+//A base-stats entry is a nested object carrying a numeric `value` plus an
+//upstream display label — NOT a bare number. See GET /heroes/base-stats
+//(builds.rs HeroBaseStats); the shared `stats: Record<string, unknown>` masks
+//this, so we narrow it here at the point of consumption.
+type BaseStatValue = { value: number; display_stat_name?: string };
+
+//Prefer the upstream display label carried on each stat value (e.g.
+//"EMaxHealth"), stripping the single leading "E" enum-tag prefix. Fall back to
+//humanizing the snake_case key when the API omits display_stat_name.
+function statLabel(key: string, v: BaseStatValue): string {
+  const dsn = v.display_stat_name;
+  return dsn ? dsn.replace(/^E/, '') : humanize(key);
+}
+
 //---- hero base stats --------------------------------------------------------
 
 function HeroBaseStatsTab() {
@@ -53,9 +67,9 @@ function HeroBaseStatsTab() {
     );
   }
 
-  //Only numeric starting_stats entries are display-worthy stat tiles.
+  //Only entries whose nested value is numeric are display-worthy stat tiles.
   const statEntries = Object.entries(active.stats)
-    .filter((e): e is [string, number] => typeof e[1] === 'number')
+    .filter((e): e is [string, BaseStatValue] => typeof (e[1] as any)?.value === 'number')
     .sort((a, b) => a[0].localeCompare(b[0]));
 
   return (
@@ -85,8 +99,8 @@ function HeroBaseStatsTab() {
         <div className="stat-grid">
           {statEntries.map(([k, v]) => (
             <div key={k} className="tile statile">
-              <div className="label-xs">{humanize(k)}</div>
-              <div className="display tnum" style={{ fontSize: 22, fontWeight: 700 }}>{fmtStat(v)}</div>
+              <div className="label-xs">{statLabel(k, v)}</div>
+              <div className="display tnum" style={{ fontSize: 22, fontWeight: 700 }}>{fmtStat(v.value)}</div>
             </div>
           ))}
         </div>

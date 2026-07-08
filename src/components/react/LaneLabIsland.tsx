@@ -28,6 +28,7 @@ import { api, isComputing, isDisabled, isNotFound, isUnauthorized, queryKeys } f
 import QueryProvider from './QueryProvider';
 import { BracketFilter, type BracketValue, Chip, EmptyState, Icon, RankBadge } from './ui/index';
 import EconomyCurve, { type EconomyPoint } from './charts/EconomyCurve';
+import { econSeriesColor, econSeriesWord } from './charts/chartTheme';
 import { useViewer } from './player/usePlayer';
 import { getRank, rankFromBadge, RANKS } from '../../lib/ranks';
 import { count, DASH, fixed, pct } from '../../lib/format';
@@ -356,20 +357,31 @@ function CurvePanel({
         <>
           <EconomyCurve
             data={points}
-            youLabel={`${bandLabel} median`}
-            cohortLabel={cohortLabel ? `${cohortLabel} (one tier up)` : undefined}
+            youLabel={`${bandLabel} (your rank) median`}
+            cohortLabel={cohortLabel ? `${cohortLabel} (one tier up — chasing)` : undefined}
             playerLabel={overlayValue != null ? playerOverlay?.label : undefined}
           />
+          {/* Caption color words are driven by econSeriesWord/econSeriesColor — the
+              SAME source of truth the chart lines use — so the words can never
+              describe a color the line doesn't actually render. */}
           <p className="muted" style={{ fontSize: 12, margin: '10px 0 0', lineHeight: 1.45 }}>
-            The <b className="cyan-c">cyan</b> area is the <b className="cyan-c">{bandLabel}</b> tier median {metricLower} per minute
-            {cohortLabel ? <> ; the <b style={{ color: 'var(--muted)' }}>grey dashed</b> line is <b>{cohortLabel}</b> one tier up — the gap is where the lane is being lost.</> : <>.</>}
+            The <b style={{ color: econSeriesColor.you }}>{econSeriesWord.you}</b> area is the{' '}
+            <b style={{ color: econSeriesColor.you }}>{bandLabel}</b> tier median {metricLower} per minute
+            {cohortLabel ? (
+              <>
+                {' '}; the <b style={{ color: econSeriesColor.cohort }}>{econSeriesWord.cohort} dashed</b> line is{' '}
+                <b style={{ color: econSeriesColor.cohort }}>{cohortLabel}</b> one tier up — the rank you&rsquo;re chasing, and the gap is where the lane is being lost.
+              </>
+            ) : (
+              <>.</>
+            )}
             {' '}This is the <b>rank&rsquo;s</b> typical curve across all sampled players — not one player&rsquo;s matches.
           </p>
           {playerOverlay && (
             <p className="muted" style={{ fontSize: 12, margin: '6px 0 0', lineHeight: 1.45 }}>
               {overlayValue != null ? (
                 <>
-                  The <b style={{ color: 'var(--amber-acc)' }}>amber dashed</b> line is{' '}
+                  The <b style={{ color: econSeriesColor.player }}>{econSeriesWord.player} dashed</b> line is{' '}
                   <b>{playerOverlay.label}</b>&rsquo;s average {metricLower} (
                   <b className="mono">{fmtMetricValue(metric, overlayValue)}</b>) across {count(playerOverlay.matches)} games — a per-game{' '}
                   <b>average</b>, not a per-minute curve (a personal per-minute curve needs match-timeline data, which isn&rsquo;t loaded yet).
@@ -556,7 +568,7 @@ function OverlaySummary({ data, bandLabel }: { data: PlayerOverlay; bandLabel: s
       </div>
       <p className="muted faint" style={{ fontSize: 11.5, margin: '10px 0 0', lineHeight: 1.45 }}>
         {data.label}&rsquo;s per-game averages across {count(data.matches)} games — an aggregate, not per-minute. The
-        curves below are the <b>{bandLabel}</b> rank cohort; the <b style={{ color: 'var(--amber-acc)' }}>amber</b> line
+        curves below are the <b>{bandLabel}</b> rank cohort; the <b style={{ color: econSeriesColor.player }}>{econSeriesWord.player}</b> line
         marks {data.label} on whichever metric is selected.
       </p>
     </div>
@@ -777,8 +789,8 @@ function LaneLabInner() {
         </div>
         <p className="muted" style={{ fontSize: 12.5, margin: 0, maxWidth: 320, textAlign: 'right' }}>
           {cohortLabel
-            ? <>Showing <b className="cyan-c">{bandLabel}</b> vs <b style={{ color: 'var(--muted)' }}>{cohortLabel}</b> one tier up.</>
-            : <>Showing <b className="cyan-c">{bandLabel}</b> — pick a specific tier to overlay the rank one tier up.</>}
+            ? <>Showing <b style={{ color: econSeriesColor.you }}>{bandLabel}</b> vs <b style={{ color: econSeriesColor.cohort }}>{cohortLabel}</b> one tier up.</>
+            : <>Showing <b style={{ color: econSeriesColor.you }}>{bandLabel}</b> — pick a specific tier to overlay the rank one tier up.</>}
         </p>
       </div>
 

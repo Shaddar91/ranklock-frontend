@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Glyph from '../components/Glyph.astro';
 import WinRate from '../components/WinRate.astro';
 import SearchBox from '../components/react/SearchBox';
+import LiveStatusIsland from '../components/react/LiveStatusIsland';
 import { getCollection } from 'astro:content';
 import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
@@ -98,6 +99,9 @@ const entries = [
             </div>
           )
         }
+        <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border-soft); font-size:12px;">
+          <LiveStatusIsland client:load />
+        </div>
       </div>
     </section>
 

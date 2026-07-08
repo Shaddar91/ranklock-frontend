@@ -45,6 +45,15 @@
   --sapphire: #8b5cf6;
   --sapphire-acc: #a78bfa;
 
+  /* economy-curve series palette — theme-STABLE (deliberately NOT re-skinned in
+     themes.css) so the chart legend + caption color words stay literally true in
+     every skin. Three distinct hues; each series also carries a distinct line
+     style in EconomyCurve so they never collapse together (the foundry skin used
+     to render "your rank" and "You" as near-identical oranges). */
+  --econ-you: #22d3ee; /* cyan   — your-rank tier median (solid + filled) */
+  --econ-cohort: #a78bfa; /* violet — one tier up / chasing (long dash) */
+  --econ-player: #fbbf24; /* amber  — the picked player / "You" (short dash) */
+
   /* "you" focus glow (re-skinned per theme) */
   --glow-you: rgba(34, 211, 238, 0.4);
 

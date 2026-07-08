@@ -45,6 +45,7 @@ import type {
   PatchMovers,
   PerformanceResponse,
   PlayerEconomy,
+  PlayerEconomyCurveResponse,
   PlayerMatchRow,
   PlayerProfileResponse,
   RankBucket,
@@ -225,6 +226,9 @@ export const queryKeys = {
   playerImprove: (id: number, params?: Query) => ['player', id, 'improve', params ?? {}] as const,
   //per-player economy aggregate (backs the Lane Lab player overlay).
   playerEconomy: (id: number, game_mode?: GameMode) => ['player', id, 'economy', game_mode ?? null] as const,
+  //THE signature per-minute soul curve (your fixed line + the selected league/hero
+  //comparison). vs_band/hero fold into params so each league/hero pick caches separately.
+  playerEconomyCurve: (id: number, params?: Query) => ['player', id, 'economy-curve', params ?? {}] as const,
   //rank_distribution stays mode-AGNOSTIC (per-player badge histogram — product
   //decision, migration 022); the param exists only for forward-compat symmetry.
   rankDistribution: (game_mode?: GameMode) => ['stats', 'rank-distribution', game_mode ?? null] as const,
@@ -341,6 +345,15 @@ export const api = {
   //account. NOTE: an AGGREGATE across the player's matches, NOT a per-minute curve.
   getPlayerEconomy: (id: number, game_mode?: GameMode) =>
     apiFetch<PlayerEconomy>(`/players/${id}/economy`, { query: { game_mode } }),
+  //THE signature economy curve (ranklock-feature-economy-curve-signature C3). `you`/`points`
+  //is the player's FIXED per-minute curve; `vs_band` (rank tier 0..11) and `hero` move ONLY
+  //the `comparison` cohort. `metric` = souls (default) | last_hits; `match` narrows `you` to
+  //one game. Served by the MAIN API. Suppressed/unknown account ⇒ 404 (empty-state); the
+  //comparison degrades to null (never a hard fail) when rich-analytics is off/computing.
+  getPlayerEconomyCurve: (
+    id: number,
+    params?: { metric?: string; vs_band?: number; hero?: number; match?: number },
+  ) => apiFetch<PlayerEconomyCurveResponse>(`/players/${id}/economy-curve`, { query: params }),
 
   //patch tracking (C9) — fully built backend, previously zero FE refs (§A.4). The
   //patch LIST is mode-agnostic; the per-patch hero stats + movers are mode-separated

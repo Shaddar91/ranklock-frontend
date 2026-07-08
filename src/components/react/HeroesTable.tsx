@@ -21,7 +21,7 @@ import type { HeroSummary } from '../../types/api';
 //Lane Lab uses (lib/ranks RANKS index === tier === badge/10). Heroes previously exposed only the
 //coarse 4-way low/mid/high/top buckets; migration 025's hero_band_mv serves one row per band, so
 //the two selectors now share an identical rank set (ranklock-bug-heroes-page C3).
-const FULL_TIERS: number[] = RANKS.map((r) => r.tier);
+const FULL_TIERS: number[] = RANKS.filter((r) => r.tier > 0).map((r) => r.tier);
 
 //A BracketValue → the API's `band` param (undefined for 'all' so the call omits the param and the
 //backend serves the all-ranks hero_summary_mv). Mirrors LaneLabIsland's bandParam.

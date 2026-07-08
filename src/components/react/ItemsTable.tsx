@@ -19,6 +19,7 @@ import { DataTable, type DataTableColumn, GameIcon, Tooltip, WinBar } from './ui
 import BucketFilter from './ui/BucketFilter';
 import { ITEM_BUCKETS, itemBracketParam, type RankBucket } from '../../lib/brackets';
 import { count, DASH, pct } from '../../lib/format';
+import { itemDescription } from '../../lib/itemDescriptions';
 import type { ItemStat } from '../../types/api';
 
 function itemLabel(it: ItemStat): string {
@@ -43,6 +44,9 @@ function TipRow({ label, children }: { label: string; children: ReactNode }) {
 //row (no fetch). Win-rate is empty-stated with a note while the compute job that
 //restores it (ranklock-app-fix-all-and-reprocess C3) is still degraded.
 function ItemTooltipContent({ it }: { it: ItemStat }) {
+  //"What it does" text from the lean item-descriptions catalog (null for the ~99
+  //items with no upstream description — those keep the original stats-only popover).
+  const desc = itemDescription(it.item_id);
   return (
     <div style={{ display: 'grid', gap: 9, minWidth: 190 }}>
       <div className="flex" style={{ alignItems: 'center', gap: 9 }}>
@@ -51,6 +55,11 @@ function ItemTooltipContent({ it }: { it: ItemStat }) {
           {itemLabel(it)}
         </span>
       </div>
+      {desc && (
+        <p className="muted" style={{ margin: 0, fontSize: 12, lineHeight: 1.4 }}>
+          {desc}
+        </p>
+      )}
       <div style={{ height: 1, background: 'var(--border)' }} />
       <div style={{ display: 'grid', gap: 7 }}>
         <TipRow label="Win rate">

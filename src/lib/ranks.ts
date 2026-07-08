@@ -56,7 +56,7 @@ export function subLabel(tier: number, sub?: number | null): string {
 
 //Decompose an API badge (tier*10 + subrank) into { tier, sub }. null → null.
 export function rankFromBadge(badge: number | null | undefined): { tier: number; sub: number } | null {
-  if (badge == null) return null;
+  if (badge == null || badge <= 0) return null;
   return { tier: Math.floor(badge / 10), sub: badge % 10 };
 }
 
