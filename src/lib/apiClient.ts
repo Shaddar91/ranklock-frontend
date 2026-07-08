@@ -266,7 +266,9 @@ export const api = {
     max_badge?: number;
     game_mode?: GameMode;
   }) => apiFetch<LeaderboardEntry[]>('/leaderboard', { query: params }),
-  getHeroes: (params?: { bracket?: HeroBracket; patch_id?: number; game_mode?: GameMode }) =>
+  //`band` is a single rank tier 0..11 (badge/10, migration 025 hero_band_mv) — the SAME 12-band
+  //ladder Lane Lab filters on. Prefer it over the coarse 4-way `bracket`; omit both for all-ranks.
+  getHeroes: (params?: { bracket?: HeroBracket; band?: number; patch_id?: number; game_mode?: GameMode }) =>
     apiFetch<HeroSummary[]>('/heroes', { query: params }),
   getHeroStats: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
     apiFetch<HeroSummary>(`/heroes/${id}/stats`, { query: { bracket, game_mode } }),

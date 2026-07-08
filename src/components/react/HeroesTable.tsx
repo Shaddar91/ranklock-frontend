@@ -4,18 +4,28 @@
 //passes them as `initialRows`; React Query is seeded with them as `initialData`,
 //so this island's FIRST (server) render already contains the real table markup —
 //the SEO HTML has hero names + win-rates present without JS (the success
-//criterion). Switching the rank bucket then refetches that bracket client-side
-//(api.getHeroes(low|mid|high|top)); `keepPreviousData` avoids a flash.
+//criterion). Switching the rank tier then refetches that band client-side
+//(api.getHeroes({ band }), band = badge/10 0..11); `keepPreviousData` avoids a flash.
 import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
 import { useGameMode } from '../../lib/useGameMode';
 import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, GameIcon, WinBar, TierPill } from './ui/index';
-import BucketFilter from './ui/BucketFilter';
-import { HERO_BUCKETS, heroBracketParam, type RankBucket } from '../../lib/brackets';
+import BracketFilter, { type BracketValue } from './ui/BracketFilter';
+import { RANKS } from '../../lib/ranks';
 import { DASH, fixed, kda, metaTier, pct, pickShare } from '../../lib/format';
 import type { HeroSummary } from '../../types/api';
+
+//The full 12-tier rank ladder (Obscurus…Eternus) drives the rank selector — the SAME ladder
+//Lane Lab uses (lib/ranks RANKS index === tier === badge/10). Heroes previously exposed only the
+//coarse 4-way low/mid/high/top buckets; migration 025's hero_band_mv serves one row per band, so
+//the two selectors now share an identical rank set (ranklock-bug-heroes-page C3).
+const FULL_TIERS: number[] = RANKS.map((r) => r.tier);
+
+//A BracketValue → the API's `band` param (undefined for 'all' so the call omits the param and the
+//backend serves the all-ranks hero_summary_mv). Mirrors LaneLabIsland's bandParam.
+const bandParam = (v: BracketValue): number | undefined => (v === 'all' ? undefined : v);
 
 function HeroCell({ hero }: { hero: HeroSummary }) {
   return (
@@ -30,14 +40,14 @@ function HeroCell({ hero }: { hero: HeroSummary }) {
 
 function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
   const { mode } = useGameMode();
-  const [bucket, setBucket] = useState<RankBucket['key']>('all');
+  const [band, setBand] = useState<BracketValue>('all');
 
   const { data, isPending, isError } = useQuery({
-    queryKey: queryKeys.heroes({ bracket: bucket === 'all' ? 'all' : bucket, game_mode: mode }),
-    queryFn: () => api.getHeroes({ bracket: heroBracketParam(bucket), game_mode: mode }),
+    queryKey: queryKeys.heroes({ band: band === 'all' ? 'all' : band, game_mode: mode }),
+    queryFn: () => api.getHeroes({ band: bandParam(band), game_mode: mode }),
     //The SSG seed is the DEFAULT-mode "all ranks" page — only apply it to that exact
     //view, so a `?mode=brawl` deep-link never paints Brawl-keyed rows from a Normal seed.
-    initialData: bucket === 'all' && mode === 'Normal' ? initialRows : undefined,
+    initialData: band === 'all' && mode === 'Normal' ? initialRows : undefined,
     placeholderData: keepPreviousData,
   });
 
@@ -89,7 +99,7 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
     <div>
       <div className="between" style={{ marginBottom: 14, gap: 16, flexWrap: 'wrap' }}>
         <span className="label-xs">Meta at your rank</span>
-        <BucketFilter buckets={HERO_BUCKETS} value={bucket} onChange={setBucket} ariaLabel="Hero win-rate by rank" />
+        <BracketFilter value={band} onChange={setBand} tiers={FULL_TIERS} />
       </div>
       <DataTable
         columns={columns}
@@ -97,12 +107,12 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
         rowKey={(h) => h.hero_id}
         loading={isPending}
         initialSort={{ key: 'wr', dir: -1 }}
-        caption="Hero meta — win rate, pick rate and KDA by rank bracket"
-        emptyTitle={isError ? 'Hero meta unavailable' : 'No heroes for this bracket yet'}
+        caption="Hero meta — win rate, pick rate and KDA by rank tier"
+        emptyTitle={isError ? 'Hero meta unavailable' : 'No heroes for this rank yet'}
         emptyMessage={
           isError
             ? 'The stats API is offline — the meta table fills in when it comes back online.'
-            : 'Nothing served for this rank band yet. Try another bracket or check back after the next data refresh.'
+            : 'Nothing served for this rank tier yet. Try another rank or check back after the next data refresh. Low ranks are sampled thinly.'
         }
       />
     </div>
