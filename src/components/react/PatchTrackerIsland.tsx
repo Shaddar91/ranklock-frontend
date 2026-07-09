@@ -113,7 +113,11 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
       },
       {
         key: 'pick',
-        header: 'Pick rate',
+        header: (
+          <span title="Presence: share of matches the hero appears in; sums to ~1200% across all heroes">
+            Presence
+          </span>
+        ),
         numeric: true,
         sortValue: (h) => h.pick_rate,
         render: (h) => <span className="tnum">{pct(h.pick_rate * 100)}</span>,
