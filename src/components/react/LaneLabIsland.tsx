@@ -291,6 +291,9 @@ function CurvePanel({
   playerOverlay = null,
   playerId = null,
   playerName = null,
+  playerOverlay2 = null,
+  playerId2 = null,
+  playerName2 = null,
 }: {
   band: BracketValue;
   fetcher: (params: { band?: number; metric?: string }) => Promise<LaneCurveResponse>;
@@ -310,6 +313,12 @@ function CurvePanel({
   //The picked player's display name — labels the amber line + its caption independently of the
   //per-game aggregate overlay, so the line is named even when that aggregate is thin/absent.
   playerName?: string | null;
+  //The SECOND compared player — same three-way contract as player 1 (aggregate / curve id /
+  //display name), drawn as the distinct coral `player2` line so two players + the two rank
+  //lines coexist on one chart. All null (the default) → no second line, nothing changes.
+  playerOverlay2?: PlayerOverlay | null;
+  playerId2?: number | null;
+  playerName2?: string | null;
 }) {
   const [metric, setMetric] = useState<string>(defaultMetric);
   //Default to the per-minute RATE view — the cumulative 'total' is what made adjacent ranks
@@ -370,13 +379,35 @@ function CurvePanel({
   //`you[]` (0 points) shows that note now.
   const hasPlayerCurve = (playerCurve.data?.you?.length ?? 0) > 0;
 
+  //The SECOND compared player's own per-minute curve — byte-identical fetch to player 1's,
+  //just keyed on playerId2. Same gate (a picked second player), same metric threading, so
+  //both player lines are drawn from their own /players/:id/economy-curve `you[]`.
+  const curveEligible2 = playerId2 != null;
+  const playerCurve2 = useQuery({
+    queryKey: queryKeys.playerEconomyCurve(playerId2 ?? 0, { metric }),
+    queryFn: () => api.getPlayerEconomyCurve(playerId2 as number, { metric }),
+    enabled: curveEligible2,
+    retry: false,
+  });
+  //Reuse playerSeriesByMinute for the second player too — same minute grid as player 1 + the
+  //cohort curves, so the coral line overlays cleanly alongside the amber one.
+  const playerByMinute2 = useMemo(
+    () => playerSeriesByMinute(playerCurve2.data?.you ?? [], viewMode),
+    [playerCurve2.data, viewMode],
+  );
+  const hasPlayerCurve2 = (playerCurve2.data?.you?.length ?? 0) > 0;
+
   const points = useMemo(() => {
     const base = toEconPoints(youCurve.data, cohortCurve.data, bucketScale(metric), viewMode);
-    //Merge the player's per-minute value onto each cohort point by minute; a minute with no
-    //player sample → NaN (the amber series connectNulls-bridges the gap). No curve → the
-    //`player` field is absent, so the line isn't drawn (never a fabricated flat reference).
-    return hasPlayerCurve ? base.map((p) => ({ ...p, player: playerByMinute.get(p.min) ?? NaN })) : base;
-  }, [youCurve.data, cohortCurve.data, metric, viewMode, hasPlayerCurve, playerByMinute]);
+    //Merge each picked player's per-minute value onto every cohort point by minute; a minute
+    //with no sample for that player → NaN (each series connectNulls-bridges its own gap). A
+    //player with no curve contributes no field, so their line isn't drawn (never fabricated).
+    return base.map((p) => ({
+      ...p,
+      ...(hasPlayerCurve ? { player: playerByMinute.get(p.min) ?? NaN } : {}),
+      ...(hasPlayerCurve2 ? { player2: playerByMinute2.get(p.min) ?? NaN } : {}),
+    }));
+  }, [youCurve.data, cohortCurve.data, metric, viewMode, hasPlayerCurve, playerByMinute, hasPlayerCurve2, playerByMinute2]);
 
   const bandLabel = band === 'all' ? 'All ranks' : getRank(band).name;
   const cohortLabel = cohort != null ? getRank(cohort).name : null;
@@ -389,6 +420,8 @@ function CurvePanel({
   //the aggregate overlay), falling back to the aggregate's label ("You"/name). Non-null
   //whenever a player is picked, so the line is named even when the aggregate is absent.
   const overlayName = playerName ?? playerOverlay?.label ?? null;
+  //Same, for the coral second player — names its line + caption independently of its aggregate.
+  const overlayName2 = playerName2 ?? playerOverlay2?.label ?? null;
 
   return (
     <div className="brass-frame" style={{ padding: '18px 20px' }}>
@@ -443,6 +476,7 @@ function CurvePanel({
             youLabel={`${bandLabel} average`}
             cohortLabel={cohortLabel ? `${cohortLabel} average (next rank up)` : undefined}
             playerLabel={hasPlayerCurve ? (overlayName ?? undefined) : undefined}
+            player2Label={hasPlayerCurve2 ? (overlayName2 ?? undefined) : undefined}
           />
           {/* Caption color words are driven by econSeriesWord/econSeriesColor — the
               SAME source of truth the chart lines use — so the words can never
@@ -498,6 +532,28 @@ function CurvePanel({
                   No per-minute {metricLower} data for <b>{overlayName}</b> on this account yet — no match timeline is
                   loaded for this metric, so there&rsquo;s no line to draw.
                   {playerOverlay ? <> Their per-game averages are in the stat-line above.</> : null}
+                </>
+              )}
+            </p>
+          )}
+          {/* The SECOND compared player's coral line — its own caption, shown only when a
+              second player is picked, so the two players read as two clearly-labeled lines. */}
+          {playerId2 != null && (
+            <p className="muted" style={{ fontSize: 12, margin: '6px 0 0', lineHeight: 1.45 }}>
+              {hasPlayerCurve2 ? (
+                <>
+                  The <b style={{ color: econSeriesColor.player2 }}>{econSeriesWord.player2} dashed</b> line is{' '}
+                  <b>{overlayName2}</b>&rsquo;s own {metricLower} {isRate ? <><b>per minute</b></> : <><b>over the game</b></>}
+                  {playerOverlay2 ? <>, averaged across {count(playerOverlay2.matches)} games</> : null} — the{' '}
+                  <b>second</b> player you&rsquo;re comparing, so you can read both players against your rank at once.
+                </>
+              ) : curveEligible2 && playerCurve2.isFetching ? (
+                <>Loading <b>{overlayName2}</b>&rsquo;s {metricLower} curve…</>
+              ) : (
+                <>
+                  No per-minute {metricLower} data for <b>{overlayName2}</b> yet — no match timeline is loaded for
+                  this metric, so there&rsquo;s no second line to draw.
+                  {playerOverlay2 ? <> Their per-game averages are in the stat-line above.</> : null}
                 </>
               )}
             </p>
@@ -640,7 +696,17 @@ function overlayEmptyMessage(source: OverlaySource, error: unknown): string {
 //aggregate — every average the economy endpoint serves, not just souls (the dictation's
 //core ask). Anchored to a rank via `badge`. Missing values (e.g. the kills/deaths a "You"
 //overlay doesn't serve) show an em-dash, never a fabricated 0.
-function OverlaySummary({ data, bandLabel }: { data: PlayerOverlay; bandLabel: string }) {
+function OverlaySummary({
+  data,
+  bandLabel,
+  accent = 'player',
+}: {
+  data: PlayerOverlay;
+  bandLabel: string;
+  //Which econ series this overlay maps to — 'player' (amber, first) or 'player2' (coral,
+  //second), so the summary names the SAME color word its line renders in.
+  accent?: 'player' | 'player2';
+}) {
   const rk = rankFromBadge(data.badge);
   const stats: { label: string; value: string }[] = [
     { label: 'Souls / min', value: count(data.souls_per_min) },
@@ -671,7 +737,7 @@ function OverlaySummary({ data, bandLabel }: { data: PlayerOverlay; bandLabel: s
       </div>
       <p className="muted faint" style={{ fontSize: 11.5, margin: '10px 0 0', lineHeight: 1.45 }}>
         {data.label}&rsquo;s per-game averages across {count(data.matches)} games — an aggregate, not per-minute. The
-        curves below show <b>{bandLabel}</b> players (your rank); the <b style={{ color: econSeriesColor.player }}>{econSeriesWord.player}</b> line
+        curves below show <b>{bandLabel}</b> players (your rank); the <b style={{ color: econSeriesColor[accent] }}>{econSeriesWord[accent]}</b> line
         marks {data.label} on whichever metric is selected.
       </p>
     </div>
@@ -686,6 +752,9 @@ function PlayerOverlayPicker({
   loggedIn,
   status,
   bandLabel,
+  kicker = 'Overlay a player',
+  heading = 'Mark a player’s average on the curve below',
+  accent = 'player',
 }: {
   overlay: OverlaySource | null;
   onPick: (p: SearchResult) => void;
@@ -694,6 +763,13 @@ function PlayerOverlayPicker({
   loggedIn: boolean;
   status: OverlayStatus;
   bandLabel: string;
+  //Header copy — defaults to the primary picker's; the SECOND (compare) picker overrides
+  //both so it reads as "Compare a second player".
+  kicker?: string;
+  heading?: string;
+  //Which econ series this picker maps to (amber 'player' / coral 'player2'), threaded into
+  //the summary + intro so their color words match the line this picker's player draws in.
+  accent?: 'player' | 'player2';
 }) {
   const [raw, setRaw] = useState('');
   const [q, setQ] = useState('');
@@ -727,8 +803,8 @@ function PlayerOverlayPicker({
       <span className="corner br" />
       <div className="between" style={{ marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div className="kicker" style={{ marginBottom: 4 }}>Overlay a player</div>
-          <h2 className="h-sec" style={{ fontSize: 16 }}>Mark a player&rsquo;s average on the curve below</h2>
+          <div className="kicker" style={{ marginBottom: 4 }}>{kicker}</div>
+          <h2 className="h-sec" style={{ fontSize: 16 }}>{heading}</h2>
         </div>
         {overlay && (
           <button type="button" className="minitog" onClick={onClear}>
@@ -808,9 +884,18 @@ function PlayerOverlayPicker({
 
       {!overlay ? (
         <p className="muted faint" style={{ fontSize: 12, margin: '12px 0 0', lineHeight: 1.45, maxWidth: 480 }}>
-          Overlay any player on the soul curve and 9-minute verdict below — their per-game <b>averages</b> in the
-          stat-line, plus their own <b>economy curve over the game</b> drawn in amber whenever their match timeline
-          is loaded.
+          {accent === 'player' ? (
+            <>
+              Overlay any player on the soul curve and 9-minute verdict below — their per-game <b>averages</b> in the
+              stat-line, plus their own <b>economy curve over the game</b> drawn in{' '}
+              <b style={{ color: econSeriesColor[accent] }}>{econSeriesWord[accent]}</b> whenever their match timeline is loaded.
+            </>
+          ) : (
+            <>
+              Pick a <b>second</b> player to compare — their own <b>economy curve over the game</b> draws in{' '}
+              <b style={{ color: econSeriesColor[accent] }}>{econSeriesWord[accent]}</b> alongside the first player, both against your rank.
+            </>
+          )}
         </p>
       ) : status.pending ? (
         <p className="muted" style={{ fontSize: 12.5, margin: '12px 0 0' }}>
@@ -821,7 +906,7 @@ function PlayerOverlayPicker({
           <EmptyState title="No economy data for this player yet" message={overlayEmptyMessage(overlay, status.error)} icon="coins" />
         </div>
       ) : status.data ? (
-        <OverlaySummary data={status.data} bandLabel={bandLabel} />
+        <OverlaySummary data={status.data} bandLabel={bandLabel} accent={accent} />
       ) : null}
     </div>
   );
@@ -832,6 +917,10 @@ function PlayerOverlayPicker({
 function LaneLabInner() {
   const [band, setBand] = useState<BracketValue>(7); //Archon — its one-tier-up cohort is Oracle.
   const [overlay, setOverlay] = useState<OverlaySource | null>(null);
+  //The SECOND compared player (the "compare two players" ask). Search-only — no "use my
+  //account" here (that's the first picker's job; you compare yourself once), so this only
+  //ever holds a { kind: 'player' } source.
+  const [overlayB, setOverlayB] = useState<OverlaySource | null>(null);
   const { loggedIn } = useViewer();
 
   const cohort = cohortBand(band);
@@ -872,6 +961,27 @@ function LaneLabInner() {
   //Only feed the panels an overlay that actually has data to draw.
   const liveOverlay = status.hasData ? playerOverlay : null;
 
+  //---- second player (compare) — same public per-player aggregate, keyed on its own id ----
+  const pickedIdB = overlayB?.kind === 'player' ? overlayB.player.account_id : null;
+  const playerEconB = useQuery({
+    queryKey: queryKeys.playerEconomy(pickedIdB ?? 0),
+    queryFn: () => api.getPlayerEconomy(pickedIdB as number),
+    enabled: pickedIdB != null,
+    retry: false,
+  });
+  const playerOverlayB = useMemo<PlayerOverlay | null>(
+    () => (overlayB?.kind === 'player' && playerEconB.data ? overlayFromPlayer(overlayB.player.steam_name, playerEconB.data) : null),
+    [overlayB, playerEconB.data],
+  );
+  const statusB: OverlayStatus = {
+    pending: overlayB != null && playerEconB.isPending,
+    isError: overlayB != null && playerEconB.isError,
+    error: playerEconB.error,
+    data: playerOverlayB,
+    hasData: overlayHasData(playerOverlayB),
+  };
+  const liveOverlayB = statusB.hasData ? playerOverlayB : null;
+
   return (
     <div className="grid" style={{ gap: 18 }}>
       {/* Band selector + the cohort-context line. One band drives every panel below. */}
@@ -897,7 +1007,7 @@ function LaneLabInner() {
         </p>
       </div>
 
-      {/* Player overlay picker — drives the flat marker on the economy curve + the verdict highlight. */}
+      {/* Player overlay picker — drives the amber line on the economy curves + the verdict highlight. */}
       <PlayerOverlayPicker
         overlay={overlay}
         onPick={(player) => setOverlay({ kind: 'player', player })}
@@ -908,6 +1018,21 @@ function LaneLabInner() {
         bandLabel={bandLabel}
       />
 
+      {/* Second player picker — the "compare two players" overlay. Search-only (no "use my
+          account"), coral accent, so its line + summary read as the distinct second player. */}
+      <PlayerOverlayPicker
+        overlay={overlayB}
+        onPick={(player) => setOverlayB({ kind: 'player', player })}
+        onUseMe={() => {}}
+        onClear={() => setOverlayB(null)}
+        loggedIn={false}
+        status={statusB}
+        bandLabel={bandLabel}
+        kicker="Compare a second player"
+        heading="Add a second player to the curves below"
+        accent="player2"
+      />
+
       {/* The signature economy curve — souls by default, pivotable to other metrics. */}
       <CurvePanel
         band={band}
@@ -915,10 +1040,13 @@ function LaneLabInner() {
         queryKeyFor={queryKeys.laneEconomyCurve}
         metrics={ECON_METRICS}
         defaultMetric="souls"
-        kicker="Souls per minute — your rank vs the next rank up (your line in amber)"
+        kicker="Souls per minute — your rank vs the next rank up (players in amber + coral)"
         playerOverlay={liveOverlay}
         playerId={pickedId}
         playerName={overlay?.kind === 'player' ? overlay.player.steam_name : null}
+        playerOverlay2={liveOverlayB}
+        playerId2={pickedIdB}
+        playerName2={overlayB?.kind === 'player' ? overlayB.player.steam_name : null}
       />
 
       {/* The farm curve — last-hits by default, also serves souls. Same rank-vs-rank-vs-you
@@ -929,10 +1057,13 @@ function LaneLabInner() {
         queryKeyFor={queryKeys.laneFarmCurve}
         metrics={FARM_METRICS}
         defaultMetric="last_hits"
-        kicker="Last-hits per minute — your rank vs the next rank up (your line in amber)"
+        kicker="Last-hits per minute — your rank vs the next rank up (players in amber + coral)"
         playerOverlay={liveOverlay}
         playerId={pickedId}
         playerName={overlay?.kind === 'player' ? overlay.player.steam_name : null}
+        playerOverlay2={liveOverlayB}
+        playerId2={pickedIdB}
+        playerName2={overlayB?.kind === 'player' ? overlayB.player.steam_name : null}
       />
 
       <VerdictPanel band={band} playerOverlay={liveOverlay} />

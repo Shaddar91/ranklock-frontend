@@ -53,6 +53,7 @@ export const econSeriesColor = {
   you: 'var(--econ-you)', //cyan — your-rank tier median
   cohort: 'var(--econ-cohort)', //violet — one tier up (chasing)
   player: 'var(--econ-player)', //amber — the picked player / "You"
+  player2: 'var(--econ-player2)', //coral — the SECOND compared player
 } as const;
 
 //The literal color WORD for each economy series, so the caption text ("the <cyan>
@@ -62,6 +63,7 @@ export const econSeriesWord = {
   you: 'cyan',
   cohort: 'violet',
   player: 'amber',
+  player2: 'coral',
 } as const;
 
 //Signature player-curve palette — the /players/:id economy curve (SignatureCurve).

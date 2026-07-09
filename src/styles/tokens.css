@@ -53,6 +53,8 @@
   --econ-you: #22d3ee; /* cyan   — your-rank tier median (solid + filled) */
   --econ-cohort: #a78bfa; /* violet — one tier up / chasing (long dash) */
   --econ-player: #fbbf24; /* amber  — the picked player / "You" (short dash) */
+  --econ-player2: #fb7185; /* coral  — the SECOND compared player (medium dash) — a second
+     warm hue, hue-shifted off amber toward red so the two player lines never read as one */
 
   /* "you" focus glow (re-skinned per theme) */
   --glow-you: rgba(34, 211, 238, 0.4);

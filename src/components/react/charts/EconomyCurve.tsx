@@ -1,11 +1,14 @@
-//Per-minute economy, tier vs tier vs the picked player. Three deliberately-distinct
+//Per-minute economy, tier vs tier vs up to TWO picked players. Deliberately-distinct
 //series — SINGLE source of truth for their colors is econSeriesColor (chartTheme),
 //and the caller's caption names those same colors via econSeriesWord, so legend +
 //caption + line colors can never drift:
 //  • solid, filled CYAN area  — the SELECTED rank tier's median curve (your rank)
 //  • long-dash VIOLET line    — the tier one rank up (the cohort you're chasing)
-//  • short-dash AMBER line    — the picked player's own per-minute curve (one caller-
-//                               supplied `player` value per point); omitted for no overlay
+//  • short-dash AMBER line    — the FIRST picked player's own per-minute curve (one
+//                               caller-supplied `player` value per point); omitted for no overlay
+//  • med-dash CORAL line      — the SECOND compared player's per-minute curve (`player2`);
+//                               a second warm hue so the two players never read as one line;
+//                               omitted unless a second player is picked
 //The palette is theme-STABLE on purpose (tokens.css --econ-*): the caption says the
 //literal word "cyan"/"violet"/"amber", so the lines must not re-skin with the theme
 //(the foundry skin used to turn "your rank" orange, colliding with amber "You").
@@ -41,6 +44,10 @@ export interface EconomyPoint {
   //curve point (getPlayerEconomyCurve `you`), NaN where they have no sample, or absent
   //for no overlay. Drives the amber `player` series: a rising personal curve, not a level.
   player?: number;
+  //Optional SECOND compared player's per-minute value at THIS minute (their own
+  //getPlayerEconomyCurve `you`), NaN where they have no sample, or absent when no second
+  //player is picked. Drives the coral `player2` series — the compare-two-players line.
+  player2?: number;
 }
 
 interface EconomyCurveProps {
@@ -54,6 +61,9 @@ interface EconomyCurveProps {
   youLabel?: string;
   cohortLabel?: string;
   playerLabel?: string;
+  //Names the coral SECOND-player line (the 2nd player's display name); omit to hide it.
+  //Same contract as playerLabel — the `player2` dataKey stays fixed.
+  player2Label?: string;
   //Draw-on mount animation for the two cohort curves (default true). Set false for
   //deterministic renders where the animation can't complete — SSR/headless
   //screenshots, snapshot tests — so the lines are present immediately.
@@ -74,6 +84,7 @@ export default function EconomyCurve({
   youLabel = 'Your rank average',
   cohortLabel = 'Next rank up',
   playerLabel,
+  player2Label,
   animate = true,
   xDomain,
 }: EconomyCurveProps) {
@@ -149,6 +160,24 @@ export default function EconomyCurve({
             stroke={econSeriesColor.player}
             strokeWidth={2.2}
             strokeDasharray="2 3"
+            dot={false}
+            connectNulls
+            isAnimationActive={false}
+            legendType="plainline"
+          />
+        )}
+        {player2Label && (
+          //Coral per-minute line for the SECOND compared player: their OWN curve
+          //(getPlayerEconomyCurve `you`), one value per minute. A distinct warm hue + a
+          //medium dash ("5 3") keeps it apart from the amber short-dash first player and the
+          //violet long-dash cohort, so two players + two rank lines stay tellable on one chart.
+          <Line
+            type="linear"
+            name={player2Label}
+            dataKey="player2"
+            stroke={econSeriesColor.player2}
+            strokeWidth={2.2}
+            strokeDasharray="5 3"
             dot={false}
             connectNulls
             isAnimationActive={false}
