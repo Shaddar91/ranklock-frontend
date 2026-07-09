@@ -58,6 +58,11 @@ interface EconomyCurveProps {
   //deterministic renders where the animation can't complete — SSR/headless
   //screenshots, snapshot tests — so the lines are present immediately.
   animate?: boolean;
+  //Visible x-window in game minutes. Omitted → the full curve (['dataMin','dataMax']). The
+  //Lane Lab island passes [0, 12] to DEFAULT the view to early game (C5/S2 — the rank gap
+  //lives in the laning phase; the curves converge late). allowDataOverflow CLIPS to the
+  //window rather than dropping data, so a zoom-out control can restore the whole match.
+  xDomain?: [number, number];
 }
 
 const fmtK = (v: ChartFmtValue) =>
@@ -70,6 +75,7 @@ export default function EconomyCurve({
   cohortLabel = 'Next rank up',
   playerLabel,
   animate = true,
+  xDomain,
 }: EconomyCurveProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -81,8 +87,16 @@ export default function EconomyCurve({
           </linearGradient>
         </defs>
         <CartesianGrid stroke={gridStroke} strokeOpacity={0.5} vertical={false} />
+        {/* Numeric time axis so the window can CLIP to a domain (SignatureCurve uses the
+            same pattern). Default ['dataMin','dataMax'] = whole match; the island passes
+            [0,12] to default the visible window to early game (C5/S2). allowDataOverflow
+            clips instead of dropping points; allowDecimals keeps the ticks whole minutes. */}
         <XAxis
           dataKey="min"
+          type="number"
+          domain={xDomain ?? ['dataMin', 'dataMax']}
+          allowDataOverflow
+          allowDecimals={false}
           tick={axisTick}
           tickLine={false}
           axisLine={{ stroke: gridStroke }}

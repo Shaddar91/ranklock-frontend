@@ -75,6 +75,19 @@ const VIEW_MODES: readonly MetricOption[] = [
   { key: 'total', label: 'Total' },
 ];
 
+//---- curve x-window ---------------------------------------------------------
+//The economy curve DEFAULTS to the early game (0–12 min), the laning phase where the rank
+//gap is real; late game the cumulative curves converge and read as one line (findings.md
+//C5/S2). 'Full game' zooms the axis back out — no data is dropped, only the visible window
+//changes (EconomyCurve clips via XAxis domain + allowDataOverflow).
+type XWindow = 'early' | 'full';
+const X_WINDOWS: readonly MetricOption[] = [
+  { key: 'early', label: 'Early game' },
+  { key: 'full', label: 'Full game' },
+];
+//Upper bound of the early-game window, in game minutes (the laning phase where ranks diverge).
+const EARLY_GAME_MAX_MIN = 12;
+
 //value_bucket encoding (012 migration COMMENT): souls = net_worth/1000 AND
 //damage = player_damage/1000, so their p50 buckets map back to real units by ×1000.
 //Every OTHER histogram metric (last_hits/kills/deaths/assists) is a raw count, so its
@@ -302,6 +315,11 @@ function CurvePanel({
   //Default to the per-minute RATE view — the cumulative 'total' is what made adjacent ranks
   //converge into one line late-game (plan C2). Per-panel, like the metric toggle above.
   const [viewMode, setViewMode] = useState<ViewMode>('rate');
+  //Default the visible window to early game (0–12 min) where the rank gap lives (C5/S2);
+  //'full' zooms the axis out to the whole match. Data is never dropped — only the window.
+  const [xWindow, setXWindow] = useState<XWindow>('early');
+  const xDomain: [number, number] | undefined =
+    xWindow === 'early' ? [0, EARLY_GAME_MAX_MIN] : undefined;
 
   const param = bandParam(band);
   const cohort = cohortBand(band);
@@ -397,6 +415,14 @@ function CurvePanel({
           onChange={(m) => setViewMode(m as ViewMode)}
           ariaLabel="Curve view — per-minute rate or cumulative total"
         />
+        {/* Window toggle — defaults to early game (0–12 min) where the rank gap is real (C5/S2);
+            'Full game' zooms the axis out to the whole match without dropping any data. */}
+        <MetricToggle
+          metrics={X_WINDOWS}
+          value={xWindow}
+          onChange={(w) => setXWindow(w as XWindow)}
+          ariaLabel="Curve window — early game or full match"
+        />
         {metrics.length > 1 && <MetricToggle metrics={metrics} value={metric} onChange={setMetric} />}
       </div>
       {youCurve.isPending ? (
@@ -411,6 +437,7 @@ function CurvePanel({
         <>
           <EconomyCurve
             data={points}
+            xDomain={xDomain}
             youLabel={`${bandLabel} average`}
             cohortLabel={cohortLabel ? `${cohortLabel} average (next rank up)` : undefined}
             playerLabel={hasPlayerCurve ? (overlayName ?? undefined) : undefined}
