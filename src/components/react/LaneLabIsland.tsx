@@ -32,7 +32,7 @@ import { econSeriesColor, econSeriesWord } from './charts/chartTheme';
 import { useViewer } from './player/usePlayer';
 import { getRank, rankFromBadge, RANKS } from '../../lib/ranks';
 import { count, fixed, pct } from '../../lib/format';
-import type { EconomyOverlayResponse, LaneCurveResponse, PlayerEconomy, SearchResult } from '../../types/api';
+import type { EconomyOverlayResponse, LaneCurveResponse, PlayerCurvePoint, PlayerEconomy, SearchResult } from '../../types/api';
 
 //A single curve metric: the API token + its human label.
 interface MetricOption {
@@ -56,6 +56,22 @@ const ECON_METRICS: readonly MetricOption[] = [
 const FARM_METRICS: readonly MetricOption[] = [
   { key: 'last_hits', label: 'Last hits' },
   { key: 'souls', label: 'Souls' },
+];
+
+//---- curve view mode --------------------------------------------------------
+//The lane p50 / player `value` series are CUMULATIVE (souls = net worth to date). Two ways
+//to read them, toggled per panel:
+//  • 'rate'  — souls GAINED each minute: (value[i] − value[i−1]) / minutesElapsed. This is
+//              the honest "per minute" view and it KEEPS ADJACENT RANKS APART — a higher rank
+//              out-earns per minute the whole game, whereas the cumulative curves converge to
+//              ~2% late-game and read as one line (plan C2, the whole point of this change).
+//  • 'total' — the raw cumulative curve (net worth climbing over the match).
+//Default is 'rate'; the cumulative total is exactly what hid the rank gap.
+type ViewMode = 'rate' | 'total';
+
+const VIEW_MODES: readonly MetricOption[] = [
+  { key: 'rate', label: 'Per minute' },
+  { key: 'total', label: 'Total' },
 ];
 
 //value_bucket encoding (012 migration COMMENT): souls = net_worth/1000 AND
@@ -93,25 +109,75 @@ function laneAheadMessage(error: unknown): string {
   return 'The per-minute lane curve comes online with the lane-analytics pipeline.';
 }
 
-//Merge the selected-band curve ("you") and the one-tier-up curve ("cohort") into
-//the EconomyCurve point shape, keyed by minute. p50 is the cohort MEDIAN value at
-//that minute (×scale from the bucket). A minute with no cohort sample → NaN, which
-//Recharts renders as a gap rather than a fabricated point.
+//Convert a lane curve's p50 series into {game-minute → value}, honoring the view mode.
+//'total' passes the cumulative p50 through (×scale). 'rate' returns the per-minute amount
+//GAINED across each 180s bucket — (value[i] − value[i−1]) / minutesElapsed — a true
+//souls/last-hits-per-minute rate (buckets are 3 min apart, so the delta is divided by 3).
+//The first bucket has no predecessor, so it yields no rate point. Keyed by rounded game
+//minute — the SAME grid playerSeriesByMinute uses, so the series overlay cleanly.
+function laneSeriesByMinute(
+  curve: LaneCurveResponse | undefined,
+  scale: number,
+  mode: ViewMode,
+): Map<number, number> {
+  const pts = (curve?.points ?? [])
+    .filter((p) => p.p50 != null)
+    .slice()
+    .sort((a, b) => a.t_seconds - b.t_seconds);
+  const out = new Map<number, number>();
+  pts.forEach((p, i) => {
+    const min = Math.round(p.t_seconds / 60);
+    const val = (p.p50 as number) * scale;
+    if (mode === 'total') {
+      out.set(min, val);
+      return;
+    }
+    const prev = pts[i - 1];
+    if (!prev) return; //no prior bucket → no per-minute delta for the first point
+    const minutes = (p.t_seconds - prev.t_seconds) / 60;
+    if (minutes > 0) out.set(min, (val - (prev.p50 as number) * scale) / minutes);
+  });
+  return out;
+}
+
+//The picked player's own per-minute curve (getPlayerEconomyCurve `you`, already REAL units —
+//no ×scale), transformed the same way: 'total' = the cumulative value, 'rate' = the souls /
+//last-hits gained each minute. Same minute grid as laneSeriesByMinute.
+function playerSeriesByMinute(pts: PlayerCurvePoint[], mode: ViewMode): Map<number, number> {
+  const sorted = pts.slice().sort((a, b) => a.t_seconds - b.t_seconds);
+  const out = new Map<number, number>();
+  sorted.forEach((p, i) => {
+    const min = Math.round(p.t_seconds / 60);
+    if (mode === 'total') {
+      out.set(min, p.value);
+      return;
+    }
+    const prev = sorted[i - 1];
+    if (!prev) return;
+    const minutes = (p.t_seconds - prev.t_seconds) / 60;
+    if (minutes > 0) out.set(min, (p.value - prev.value) / minutes);
+  });
+  return out;
+}
+
+//Merge the selected-band curve ("you") and the one-tier-up curve ("cohort") into the
+//EconomyCurve point shape, keyed by game minute, honoring the view mode (rate vs total). A
+//minute with no cohort sample → NaN, which Recharts renders as a gap rather than a fabricated
+//point. The player line is merged on separately (its own endpoint + gate).
 function toEconPoints(
   you: LaneCurveResponse | undefined,
   cohort: LaneCurveResponse | undefined,
   scale: number,
+  mode: ViewMode,
 ): EconomyPoint[] {
-  const cohortByMinute = new Map<number, number>();
-  for (const p of cohort?.points ?? []) {
-    if (p.p50 != null) cohortByMinute.set(p.minute_bucket, p.p50 * scale);
-  }
-  return (you?.points ?? [])
-    .filter((p) => p.p50 != null)
-    .map((p) => ({
-      min: Math.round(p.t_seconds / 60),
-      you: (p.p50 as number) * scale,
-      cohort: cohortByMinute.get(p.minute_bucket) ?? NaN,
+  const youByMin = laneSeriesByMinute(you, scale, mode);
+  const cohortByMin = laneSeriesByMinute(cohort, scale, mode);
+  return [...youByMin.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([min, youVal]) => ({
+      min,
+      you: youVal,
+      cohort: cohortByMin.get(min) ?? NaN,
     }));
 }
 
@@ -218,13 +284,15 @@ function MetricToggle({
   metrics,
   value,
   onChange,
+  ariaLabel = 'Curve metric',
 }: {
   metrics: readonly MetricOption[];
   value: string;
   onChange: (m: string) => void;
+  ariaLabel?: string;
 }) {
   return (
-    <div className="tabs" role="tablist" aria-label="Curve metric">
+    <div className="tabs" role="tablist" aria-label={ariaLabel}>
       {metrics.map((m) => (
         <button
           key={m.key}
@@ -278,6 +346,9 @@ function CurvePanel({
   playerName?: string | null;
 }) {
   const [metric, setMetric] = useState<string>(defaultMetric);
+  //Default to the per-minute RATE view — the cumulative 'total' is what made adjacent ranks
+  //converge into one line late-game (plan C2). Per-panel, like the metric toggle above.
+  const [viewMode, setViewMode] = useState<ViewMode>('rate');
 
   const param = bandParam(band);
   const cohort = cohortBand(band);
@@ -314,11 +385,10 @@ function CurvePanel({
 
   //The player's per-minute value keyed by game minute (min = round(t_seconds/60)) — the
   //SAME minute mapping toEconPoints uses for the cohort curves, so the series share a grid.
-  const playerByMinute = useMemo(() => {
-    const m = new Map<number, number>();
-    for (const p of playerCurve.data?.you ?? []) m.set(Math.round(p.t_seconds / 60), p.value);
-    return m;
-  }, [playerCurve.data]);
+  const playerByMinute = useMemo(
+    () => playerSeriesByMinute(playerCurve.data?.you ?? [], viewMode),
+    [playerCurve.data, viewMode],
+  );
   //The amber player line renders whenever the economy-curve `you[]` has points — gate DIRECTLY
   //on that array's length, decoupled from the per-game AGGREGATE overlay. A player can have a
   //loaded per-minute timeline (`you[]` non-empty) while their `/players/:id/economy` aggregate
@@ -328,18 +398,20 @@ function CurvePanel({
   const hasPlayerCurve = (playerCurve.data?.you?.length ?? 0) > 0;
 
   const points = useMemo(() => {
-    const base = toEconPoints(youCurve.data, cohortCurve.data, bucketScale(metric));
+    const base = toEconPoints(youCurve.data, cohortCurve.data, bucketScale(metric), viewMode);
     //Merge the player's per-minute value onto each cohort point by minute; a minute with no
     //player sample → NaN (the amber series connectNulls-bridges the gap). No curve → the
     //`player` field is absent, so the line isn't drawn (never a fabricated flat reference).
     return hasPlayerCurve ? base.map((p) => ({ ...p, player: playerByMinute.get(p.min) ?? NaN })) : base;
-  }, [youCurve.data, cohortCurve.data, metric, hasPlayerCurve, playerByMinute]);
+  }, [youCurve.data, cohortCurve.data, metric, viewMode, hasPlayerCurve, playerByMinute]);
 
   const bandLabel = band === 'all' ? 'All ranks' : getRank(band).name;
   const cohortLabel = cohort != null ? getRank(cohort).name : null;
   const n = peakSamples(youCurve.data);
   const metricLabel = metrics.find((m) => m.key === metric)?.label ?? metric;
   const metricLower = metricLabel.toLowerCase();
+  //'rate' → the honest "per minute" view (souls earned each minute); 'total' → cumulative.
+  const isRate = viewMode === 'rate';
   //The amber line's label + caption name: the picked player's name (threaded independently of
   //the aggregate overlay), falling back to the aggregate's label ("You"/name). Non-null
   //whenever a player is picked, so the line is named even when the aggregate is absent.
@@ -352,20 +424,28 @@ function CurvePanel({
       <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <div className="kicker" style={{ marginBottom: 4 }}>{kicker}</div>
-          {/* Honest label: this is the value AT each minute (cumulative net worth for souls,
-              climbing to ~120k) — NOT a per-minute rate. C2 switches the data to a true
-              per-minute rate and restores "per minute". */}
-          <h2 className="h-sec" style={{ fontSize: 17 }}>{metricLabel} over the game</h2>
+          {/* Honest label tracks the data: the rate view IS souls earned per minute, so it
+              says "per minute"; the total view is cumulative net worth over the match. The
+              default is the rate view (plan C2 — the cumulative total hid the rank gap). */}
+          <h2 className="h-sec" style={{ fontSize: 17 }}>
+            {metricLabel} {isRate ? 'per minute' : 'over the game'}
+          </h2>
         </div>
         {n > 0 && (
           <span className="mono faint" style={{ fontSize: 12 }}>n = {count(n)} players sampled</span>
         )}
       </div>
-      {metrics.length > 1 && (
-        <div style={{ marginBottom: 12 }}>
-          <MetricToggle metrics={metrics} value={metric} onChange={setMetric} />
-        </div>
-      )}
+      {/* View toggle (per-minute RATE vs cumulative TOTAL) always shows; the metric toggle
+          shows only when the panel serves more than one metric. */}
+      <div className="flex" style={{ marginBottom: 12, gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+        <MetricToggle
+          metrics={VIEW_MODES}
+          value={viewMode}
+          onChange={(m) => setViewMode(m as ViewMode)}
+          ariaLabel="Curve view — per-minute rate or cumulative total"
+        />
+        {metrics.length > 1 && <MetricToggle metrics={metrics} value={metric} onChange={setMetric} />}
+      </div>
       {youCurve.isPending ? (
         <p className="muted" style={{ padding: '24px 2px' }}>Loading the {metricLower} curve…</p>
       ) : youCurve.isError || points.length === 0 ? (
@@ -386,12 +466,25 @@ function CurvePanel({
               SAME source of truth the chart lines use — so the words can never
               describe a color the line doesn't actually render. */}
           <p className="muted" style={{ fontSize: 12, margin: '10px 0 0', lineHeight: 1.45 }}>
-            The <b style={{ color: econSeriesColor.you }}>{econSeriesWord.you}</b> area is the average{' '}
-            {metricLower} a <b style={{ color: econSeriesColor.you }}>{bandLabel}</b> player has by each minute of the game
+            The <b style={{ color: econSeriesColor.you }}>{econSeriesWord.you}</b> area is the{' '}
+            {isRate ? (
+              <>
+                {metricLower} a <b style={{ color: econSeriesColor.you }}>{bandLabel}</b> player earns <b>each minute</b>
+              </>
+            ) : (
+              <>
+                average {metricLower} a <b style={{ color: econSeriesColor.you }}>{bandLabel}</b> player has by each minute of the game
+              </>
+            )}
             {cohortLabel ? (
               <>
                 {' '}; the <b style={{ color: econSeriesColor.cohort }}>{econSeriesWord.cohort} dashed</b> line is{' '}
-                <b style={{ color: econSeriesColor.cohort }}>{cohortLabel}</b> one tier up — the rank you&rsquo;re chasing, and the gap is where the lane is being lost.
+                <b style={{ color: econSeriesColor.cohort }}>{cohortLabel}</b> one tier up — the rank you&rsquo;re chasing
+                {isRate ? (
+                  <>. A higher rank out-earns <b>per minute</b> all game, so the gap stays visible here where the running total flattens out.</>
+                ) : (
+                  <>, and the gap is where the lane is being lost.</>
+                )}
               </>
             ) : (
               <>.</>
@@ -403,9 +496,13 @@ function CurvePanel({
               {hasPlayerCurve ? (
                 <>
                   The <b style={{ color: econSeriesColor.player }}>{econSeriesWord.player} dashed</b> line is{' '}
-                  <b>{overlayName}</b>&rsquo;s own {metricLower} <b>over the game</b>
-                  {playerOverlay ? <>, averaged across {count(playerOverlay.matches)} games</> : null} — a real personal
-                  curve that rises with the match, not a flat average.
+                  <b>{overlayName}</b>&rsquo;s own {metricLower} {isRate ? <><b>per minute</b></> : <><b>over the game</b></>}
+                  {playerOverlay ? <>, averaged across {count(playerOverlay.matches)} games</> : null} —{' '}
+                  {isRate ? (
+                    <>earned <b>each minute</b>, so you can see the minutes you out- or under-farm your rank.</>
+                  ) : (
+                    <>a real personal curve that rises with the match, not a flat average.</>
+                  )}
                 </>
               ) : curveEligible && playerCurve.isFetching ? (
                 <>Loading <b>{overlayName}</b>&rsquo;s {metricLower} curve…</>
