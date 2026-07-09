@@ -246,6 +246,14 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
   const selfOnly = (search.data?.length ?? 0) > 0 && results.length === 0 && (search.data ?? []).every((r) => r.account_id === id);
 
   const cmp = useComparePlayer(id, picked?.account_id, hero);
+  //D5 shared-hero fallback
+  const cmpAny = useComparePlayer(id, picked?.account_id, undefined);
+  //Prefer the hero-locked comparison; when the locked hero has no shared games fall back to
+  //any shared hero so the picker never dead-ends at "No shared games". With hero undefined the
+  //two hooks share a query key (react-query dedupes → a single fetch, no behaviour change).
+  const cmpData = cmp.data ?? cmpAny.data;
+  //locked hero produced nothing but a shared-hero comparison exists → we fell back.
+  const fellBack = !cmp.data && !!cmpAny.data;
 
   function pick(r: SearchResult) {
     setPicked(r);
@@ -254,16 +262,17 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
     setOpen(false);
   }
 
-  //D2 precision
-  const rows: [string, number | null, number | null, (n: number) => string][] = cmp.data
+  //D2 precision — driven off cmpData so the table shows the locked-hero comparison when it
+  //exists and the shared-hero fallback otherwise (D5).
+  const rows: [string, number | null, number | null, (n: number) => string][] = cmpData
     ? [
-        ['Net worth', cmp.data.you.avg_net_worth, cmp.data.them.avg_net_worth, count],
-        ['Souls / min', cmp.data.you.souls_per_min, cmp.data.them.souls_per_min, count],
-        ['Last hits / min', cmp.data.you.last_hits_per_min, cmp.data.them.last_hits_per_min, (n) => fixed(n, 1)],
-        ['Avg denies', cmp.data.you.avg_denies, cmp.data.them.avg_denies, (n) => fixed(n, 1)],
-        ['Avg kills', cmp.data.you.avg_kills, cmp.data.them.avg_kills, (n) => fixed(n, 1)],
-        ['Avg deaths', cmp.data.you.avg_deaths, cmp.data.them.avg_deaths, (n) => fixed(n, 1)],
-        ['Avg assists', cmp.data.you.avg_assists, cmp.data.them.avg_assists, (n) => fixed(n, 1)],
+        ['Net worth', cmpData.you.avg_net_worth, cmpData.them.avg_net_worth, count],
+        ['Souls / min', cmpData.you.souls_per_min, cmpData.them.souls_per_min, count],
+        ['Last hits / min', cmpData.you.last_hits_per_min, cmpData.them.last_hits_per_min, (n) => fixed(n, 1)],
+        ['Avg denies', cmpData.you.avg_denies, cmpData.them.avg_denies, (n) => fixed(n, 1)],
+        ['Avg kills', cmpData.you.avg_kills, cmpData.them.avg_kills, (n) => fixed(n, 1)],
+        ['Avg deaths', cmpData.you.avg_deaths, cmpData.them.avg_deaths, (n) => fixed(n, 1)],
+        ['Avg assists', cmpData.you.avg_assists, cmpData.them.avg_assists, (n) => fixed(n, 1)],
       ]
     : [];
 
@@ -356,30 +365,21 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
 
       {picked && (
         <div style={{ marginTop: 14 }}>
-          {cmp.isPending ? (
-            <p className="muted">Loading comparison with {picked.steam_name}…</p>
-          ) : cmp.isError ? (
-            isNotFound(cmp.error) ? (
-              <EmptyState
-                title="No shared games to compare"
-                message={
-                  hero && heroName
-                    ? `${picked.steam_name} hasn't played ${heroName} in the overlap window — pick another hero or player.`
-                    : `You and ${picked.steam_name} have no overlapping hero games yet.`
-                }
-                icon="users"
-              />
-            ) : (
-              <EmptyState title="Comparison not served yet" message={buildAheadMessage(cmp.error)} icon="users" />
-            )
-          ) : cmp.data ? (
+          {cmpData ? (
             <>
+              {fellBack && (
+                <p className="faint" style={{ fontSize: 11, marginBottom: 10 }}>
+                  {hero && heroName
+                    ? `No shared ${heroName} games with ${picked.steam_name} — comparing on ${cmpData.hero_name}, a hero you both play, instead.`
+                    : `Comparing on ${cmpData.hero_name}, a hero you both play.`}
+                </p>
+              )}
               <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 10 }}>
                 <span className="label-xs">
-                  {cmp.data.hero_name} · you ({cmp.data.you.tier_name}) vs {picked.steam_name} ({cmp.data.them.tier_name})
+                  {cmpData.hero_name} · you ({cmpData.you.tier_name}) vs {picked.steam_name} ({cmpData.them.tier_name})
                 </span>
-                <Chip tone={cmp.data.efficiency.standing === 'ahead' ? 'win' : cmp.data.efficiency.standing === 'behind' ? 'loss' : 'neutral'}>
-                  {cmp.data.efficiency.standing}
+                <Chip tone={cmpData.efficiency.standing === 'ahead' ? 'win' : cmpData.efficiency.standing === 'behind' ? 'loss' : 'neutral'}>
+                  {cmpData.efficiency.standing}
                 </Chip>
               </div>
               <table className="dt">
@@ -408,13 +408,31 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
                   ))}
                 </tbody>
               </table>
-              {cmp.data.efficiency.note && (
+              {cmpData.efficiency.note && (
                 <p className="muted" style={{ fontSize: 12.5, marginTop: 12, lineHeight: 1.5 }}>
-                  {cmp.data.efficiency.note}
+                  {cmpData.efficiency.note}
                 </p>
               )}
             </>
-          ) : null}
+          ) : cmp.isPending || cmpAny.isPending ? (
+            <p className="muted">Loading comparison with {picked.steam_name}…</p>
+          ) : isNotFound(cmp.error) && isNotFound(cmpAny.error) ? (
+            <EmptyState
+              title="No shared games to compare"
+              message={
+                hero && heroName
+                  ? `${picked.steam_name} hasn't played ${heroName} in the overlap window, and you two share no other hero games yet — pick another player.`
+                  : `You and ${picked.steam_name} have no overlapping hero games yet.`
+              }
+              icon="users"
+            />
+          ) : (
+            <EmptyState
+              title="Comparison not served yet"
+              message={buildAheadMessage(isNotFound(cmp.error) ? cmpAny.error : cmp.error)}
+              icon="users"
+            />
+          )}
         </div>
       )}
     </div>
