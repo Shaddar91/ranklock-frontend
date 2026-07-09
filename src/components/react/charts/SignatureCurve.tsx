@@ -86,11 +86,13 @@ export default function SignatureCurve({
   //series' final point only (offset right so it reads as a trailing title).
   const EndLabel =
     (key: 'you' | 'cmp', text: string | undefined, color: string) =>
-    (props: { x?: number; y?: number; index?: number }) => {
+    //x/y are typed number|string to match recharts' LabelContentType props (SVGProps x/y),
+    //so this render fn is assignable to <LabelList content=>; recharts passes numbers at runtime.
+    (props: { x?: number | string; y?: number | string; index?: number }) => {
       if (!text || props.index !== lastIdxOf(key)) return null;
       return (
         <text
-          x={(props.x ?? 0) + 8}
+          x={Number(props.x ?? 0) + 8}
           y={props.y ?? 0}
           dy={4}
           fill={color}
