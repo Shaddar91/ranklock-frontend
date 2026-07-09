@@ -356,16 +356,16 @@ function CurvePanel({
         <>
           <EconomyCurve
             data={points}
-            youLabel={`${bandLabel} (your rank) median`}
-            cohortLabel={cohortLabel ? `${cohortLabel} (one tier up — chasing)` : undefined}
+            youLabel={`${bandLabel} average`}
+            cohortLabel={cohortLabel ? `${cohortLabel} average (next rank up)` : undefined}
             playerLabel={hasPlayerCurve ? playerOverlay?.label : undefined}
           />
           {/* Caption color words are driven by econSeriesWord/econSeriesColor — the
               SAME source of truth the chart lines use — so the words can never
               describe a color the line doesn't actually render. */}
           <p className="muted" style={{ fontSize: 12, margin: '10px 0 0', lineHeight: 1.45 }}>
-            The <b style={{ color: econSeriesColor.you }}>{econSeriesWord.you}</b> area is the{' '}
-            <b style={{ color: econSeriesColor.you }}>{bandLabel}</b> tier median {metricLower} per minute
+            The <b style={{ color: econSeriesColor.you }}>{econSeriesWord.you}</b> area is the average{' '}
+            {metricLower} per minute for a <b style={{ color: econSeriesColor.you }}>{bandLabel}</b> player
             {cohortLabel ? (
               <>
                 {' '}; the <b style={{ color: econSeriesColor.cohort }}>{econSeriesWord.cohort} dashed</b> line is{' '}

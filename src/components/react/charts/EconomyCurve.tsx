@@ -66,8 +66,8 @@ const fmtK = (v: ChartFmtValue) =>
 export default function EconomyCurve({
   data,
   height = 300,
-  youLabel = 'Selected tier median',
-  cohortLabel = 'One tier up',
+  youLabel = 'Your rank average',
+  cohortLabel = 'Next rank up',
   playerLabel,
   animate = true,
 }: EconomyCurveProps) {
