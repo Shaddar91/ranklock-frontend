@@ -2,7 +2,7 @@
 //island component so the chart AND the unit tests transform a curve the SAME way.
 //The backend serves cumulative p50 buckets 180s apart; the 'rate' view derives the
 //per-minute amount gained across each bucket. No I/O — safe at build time and in tests.
-import type { LaneCurveResponse, PlayerCurvePoint } from '../types/api';
+import type { LaneCurveResponse, PlayerCurvePoint, PlayerEconomyCurveResponse } from '../types/api';
 
 //The chart's x-axis view: 'rate' = per-minute amount gained; 'total' = cumulative curve.
 export type ViewMode = 'rate' | 'total';
@@ -64,6 +64,20 @@ export function laneSeriesByMinute(
     if (minutes > 0) out.set(min, (val - (prev.p50 as number) * scale) / minutes);
   });
   return out;
+}
+
+//M1/B1(b): the metric-echo mismatch guard. The player-curve payload echoes which metric it
+//actually carries (`metric`); a payload whose echo ≠ the metric the UI requested is a
+//WRONG-UNIT line (e.g. souls plotted on the kills tab) and must be unrenderable regardless
+//of backend version. Mismatch — or a missing/absent echo, which is unverifiable — yields the
+//empty array, the same shape as "no timeline loaded", so callers fall into the existing
+//honest empty-state instead of plotting a mislabeled line. Pure; safe in tests.
+export function guardedPlayerCurvePoints(
+  resp: Pick<PlayerEconomyCurveResponse, 'metric' | 'you'> | undefined,
+  requestedMetric: string,
+): PlayerCurvePoint[] {
+  if (!resp || resp.metric !== requestedMetric) return [];
+  return resp.you ?? [];
 }
 
 //The picked player's own per-minute curve (getPlayerEconomyCurve `you`, already REAL units —

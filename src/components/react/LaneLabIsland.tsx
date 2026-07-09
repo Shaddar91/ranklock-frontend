@@ -32,7 +32,7 @@ import { econSeriesColor, econSeriesWord } from './charts/chartTheme';
 import { useViewer } from './player/usePlayer';
 import { getRank, rankFromBadge, RANKS } from '../../lib/ranks';
 import { count, fixed, pct } from '../../lib/format';
-import { type ViewMode, laneSeriesByMinute, playerSeriesByMinute } from '../../lib/laneCurve';
+import { type ViewMode, guardedPlayerCurvePoints, laneSeriesByMinute, playerSeriesByMinute } from '../../lib/laneCurve';
 import type { EconomyOverlayResponse, LaneCurveResponse, PlayerEconomy, SearchResult } from '../../types/api';
 
 //A single curve metric: the API token + its human label.
@@ -348,9 +348,11 @@ function CurvePanel({
   //The picked player's OWN per-minute curve for the active metric (getPlayerEconomyCurve
   //`you`). This REPLACES the old flat per-game scalar: `you` is the real per-minute
   //trajectory (souls = net_worth, last_hits = raw count, etc.), so the overlay RISES instead
-  //of drawing a straight line. The backend now serves this curve for EVERY served metric
-  //(plan C2), so the ONLY gate is a picked player: a searched player (playerId != null) is
-  //eligible on every tab, and `metric` is threaded through so each tab pulls its own curve.
+  //of drawing a straight line. The FETCH is gated only on a picked player (playerId != null,
+  //any tab, `metric` threaded through) — but whether the payload may RENDER is decided by
+  //guardedPlayerCurvePoints below: the payload's `metric` echo must match the metric we
+  //requested, so a mislabeled/wrong-unit line is unrenderable no matter which metrics the
+  //backend actually serves this curve for.
   //The "You"/me source has no per-player curve endpoint (playerId is null there), so it still
   //falls back to no player line — never a flat one.
   //We deliberately DON'T send vs_band: Lane Lab draws its own rank cohort from the lane
@@ -365,19 +367,28 @@ function CurvePanel({
     retry: false,
   });
 
+  //M1/B1(b): the payload passes through the metric-echo guard FIRST — a response whose
+  //`metric` echo ≠ the metric this panel requested carries wrong-unit values and yields the
+  //empty array here, exactly like a missing timeline, so it hits the honest empty-state
+  //("No per-minute {metric} data … yet") instead of plotting a mislabeled line.
+  const playerPoints = useMemo(
+    () => guardedPlayerCurvePoints(playerCurve.data, metric),
+    [playerCurve.data, metric],
+  );
   //The player's per-minute value keyed by game minute (min = round(t_seconds/60)) — the
   //SAME minute mapping toEconPoints uses for the cohort curves, so the series share a grid.
   const playerByMinute = useMemo(
-    () => playerSeriesByMinute(playerCurve.data?.you ?? [], viewMode),
-    [playerCurve.data, viewMode],
+    () => playerSeriesByMinute(playerPoints, viewMode),
+    [playerPoints, viewMode],
   );
-  //The amber player line renders whenever the economy-curve `you[]` has points — gate DIRECTLY
-  //on that array's length, decoupled from the per-game AGGREGATE overlay. A player can have a
-  //loaded per-minute timeline (`you[]` non-empty) while their `/players/:id/economy` aggregate
-  //is thin/absent; the old aggregate-coupled gate hid the line then ("their match timeline
-  //isn't loaded") even though the curve endpoint returned points. Only a genuinely empty
-  //`you[]` (0 points) shows that note now.
-  const hasPlayerCurve = (playerCurve.data?.you?.length ?? 0) > 0;
+  //The amber player line renders whenever the GUARDED points survive (echo-verified `you[]`
+  //non-empty) — gated directly on that array's length, decoupled from the per-game AGGREGATE
+  //overlay. A player can have a loaded per-minute timeline (`you[]` non-empty) while their
+  //`/players/:id/economy` aggregate is thin/absent; the old aggregate-coupled gate hid the
+  //line then ("their match timeline isn't loaded") even though the curve endpoint returned
+  //points. Only an empty guarded series (no points, or a metric-echo mismatch) shows that
+  //note now.
+  const hasPlayerCurve = playerPoints.length > 0;
 
   //The SECOND compared player's own per-minute curve — byte-identical fetch to player 1's,
   //just keyed on playerId2. Same gate (a picked second player), same metric threading, so
@@ -389,13 +400,17 @@ function CurvePanel({
     enabled: curveEligible2,
     retry: false,
   });
-  //Reuse playerSeriesByMinute for the second player too — same minute grid as player 1 + the
-  //cohort curves, so the coral line overlays cleanly alongside the amber one.
-  const playerByMinute2 = useMemo(
-    () => playerSeriesByMinute(playerCurve2.data?.you ?? [], viewMode),
-    [playerCurve2.data, viewMode],
+  //Same metric-echo guard for the second player (M1/B1(b)) — a mismatched payload draws no
+  //coral line either; then reuse playerSeriesByMinute so both players share the minute grid.
+  const playerPoints2 = useMemo(
+    () => guardedPlayerCurvePoints(playerCurve2.data, metric),
+    [playerCurve2.data, metric],
   );
-  const hasPlayerCurve2 = (playerCurve2.data?.you?.length ?? 0) > 0;
+  const playerByMinute2 = useMemo(
+    () => playerSeriesByMinute(playerPoints2, viewMode),
+    [playerPoints2, viewMode],
+  );
+  const hasPlayerCurve2 = playerPoints2.length > 0;
 
   const points = useMemo(() => {
     const base = toEconPoints(youCurve.data, cohortCurve.data, bucketScale(metric), viewMode);

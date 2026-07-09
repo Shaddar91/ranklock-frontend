@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   MIN_SAMPLE_FRACTION,
   dropLowSamplePoints,
+  guardedPlayerCurvePoints,
   laneSeriesByMinute,
   playerSeriesByMinute,
 } from './laneCurve';
@@ -94,6 +95,36 @@ describe('playerSeriesByMinute', () => {
 
   it('returns an empty map for no points', () => {
     expect(playerSeriesByMinute([], 'total').size).toBe(0);
+  });
+});
+
+describe('metric-echo mismatch guard (M1/B1 fix b)', () => {
+  //A payload whose `metric` echo ≠ the requested metric carries wrong-unit values (souls on
+  //the kills tab); the guard makes such a line UNRENDERABLE by yielding zero points, the same
+  //shape the island's honest empty-state already handles.
+  const you = [playerPt(180, 1000), playerPt(360, 2500)];
+
+  it('mismatched echo yields no plottable series', () => {
+    const pts = guardedPlayerCurvePoints({ metric: 'souls', you }, 'kills');
+    expect(pts).toEqual([]);
+    expect(playerSeriesByMinute(pts, 'total').size).toBe(0);
+    expect(playerSeriesByMinute(pts, 'rate').size).toBe(0);
+  });
+
+  it('matching echo returns the series untouched', () => {
+    const pts = guardedPlayerCurvePoints({ metric: 'kills', you }, 'kills');
+    expect(pts).toEqual(you);
+    const out = playerSeriesByMinute(pts, 'total');
+    expect(out.get(3)).toBe(1000);
+    expect(out.get(6)).toBe(2500);
+  });
+
+  it('missing payload or unverifiable echo yields no series', () => {
+    expect(guardedPlayerCurvePoints(undefined, 'kills')).toEqual([]);
+    //an old backend that omits the echo is unverifiable → unrenderable, not trusted
+    expect(guardedPlayerCurvePoints({ metric: undefined as unknown as string, you }, 'kills')).toEqual([]);
+    //a guarded-through payload with a missing you[] stays a safe empty array
+    expect(guardedPlayerCurvePoints({ metric: 'kills', you: undefined as unknown as [] }, 'kills')).toEqual([]);
   });
 });
 
