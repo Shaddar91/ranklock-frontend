@@ -4,8 +4,8 @@
 //caption + line colors can never drift:
 //  • solid, filled CYAN area  — the SELECTED rank tier's median curve (your rank)
 //  • long-dash VIOLET line    — the tier one rank up (the cohort you're chasing)
-//  • short-dash AMBER line    — the picked player / "You": a FLAT per-game average,
-//                               never a per-minute trajectory
+//  • short-dash AMBER line    — the picked player's own per-minute curve (one caller-
+//                               supplied `player` value per point); omitted for no overlay
 //The palette is theme-STABLE on purpose (tokens.css --econ-*): the caption says the
 //literal word "cyan"/"violet"/"amber", so the lines must not re-skin with the theme
 //(the foundry skin used to turn "your rank" orange, colliding with amber "You").
@@ -37,10 +37,9 @@ export interface EconomyPoint {
   min: number;
   you: number;
   cohort: number;
-  //Optional FLAT player-overlay level — the SAME value on every point (the picked
-  //player's per-game average for the active metric), or absent for no overlay. It
-  //is a level, not a trajectory: deliberately flat so it can never be read as a
-  //fabricated per-minute personal curve. Drives the amber `player` series.
+  //Optional player-overlay value at THIS minute — the picked player's own per-minute
+  //curve point (getPlayerEconomyCurve `you`), NaN where they have no sample, or absent
+  //for no overlay. Drives the amber `player` series: a rising personal curve, not a level.
   player?: number;
 }
 
@@ -124,11 +123,11 @@ export default function EconomyCurve({
           isAnimationActive={animate}
         />
         {playerLabel && (
-          //Flat amber level for the picked player / "You": a per-game AVERAGE, drawn
-          //straight across so it reads as a reference level, never a per-minute curve.
-          //As a real series its value is folded into the y-domain automatically, so a
-          //high average (e.g. final net worth) stays on-chart without manual extension.
-          //Short-dash + amber keeps it distinct from the long-dash violet cohort line.
+          //Amber per-minute line for the picked player: their OWN curve (getPlayerEconomyCurve
+          //`you`), one value per minute, so it rises with the match. connectNulls bridges the
+          //minutes with no sample. Its values fold into the y-domain automatically, so a high
+          //late-game net worth stays on-chart. Short-dash + amber keeps it distinct from the
+          //long-dash violet cohort line.
           <Line
             type="linear"
             name={playerLabel}
