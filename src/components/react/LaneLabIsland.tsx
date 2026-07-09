@@ -32,7 +32,8 @@ import { econSeriesColor, econSeriesWord } from './charts/chartTheme';
 import { useViewer } from './player/usePlayer';
 import { getRank, rankFromBadge, RANKS } from '../../lib/ranks';
 import { count, fixed, pct } from '../../lib/format';
-import type { EconomyOverlayResponse, LaneCurveResponse, PlayerCurvePoint, PlayerEconomy, SearchResult } from '../../types/api';
+import { type ViewMode, laneSeriesByMinute, playerSeriesByMinute } from '../../lib/laneCurve';
+import type { EconomyOverlayResponse, LaneCurveResponse, PlayerEconomy, SearchResult } from '../../types/api';
 
 //A single curve metric: the API token + its human label.
 interface MetricOption {
@@ -67,7 +68,7 @@ const FARM_METRICS: readonly MetricOption[] = [
 //              ~2% late-game and read as one line (plan C2, the whole point of this change).
 //  • 'total' — the raw cumulative curve (net worth climbing over the match).
 //Default is 'rate'; the cumulative total is exactly what hid the rank gap.
-type ViewMode = 'rate' | 'total';
+//(ViewMode itself now lives in ../../lib/laneCurve alongside the transforms.)
 
 const VIEW_MODES: readonly MetricOption[] = [
   { key: 'rate', label: 'Per minute' },
@@ -109,56 +110,8 @@ function laneAheadMessage(error: unknown): string {
   return 'The per-minute lane curve comes online with the lane-analytics pipeline.';
 }
 
-//Convert a lane curve's p50 series into {game-minute → value}, honoring the view mode.
-//'total' passes the cumulative p50 through (×scale). 'rate' returns the per-minute amount
-//GAINED across each 180s bucket — (value[i] − value[i−1]) / minutesElapsed — a true
-//souls/last-hits-per-minute rate (buckets are 3 min apart, so the delta is divided by 3).
-//The first bucket has no predecessor, so it yields no rate point. Keyed by rounded game
-//minute — the SAME grid playerSeriesByMinute uses, so the series overlay cleanly.
-function laneSeriesByMinute(
-  curve: LaneCurveResponse | undefined,
-  scale: number,
-  mode: ViewMode,
-): Map<number, number> {
-  const pts = (curve?.points ?? [])
-    .filter((p) => p.p50 != null)
-    .slice()
-    .sort((a, b) => a.t_seconds - b.t_seconds);
-  const out = new Map<number, number>();
-  pts.forEach((p, i) => {
-    const min = Math.round(p.t_seconds / 60);
-    const val = (p.p50 as number) * scale;
-    if (mode === 'total') {
-      out.set(min, val);
-      return;
-    }
-    const prev = pts[i - 1];
-    if (!prev) return; //no prior bucket → no per-minute delta for the first point
-    const minutes = (p.t_seconds - prev.t_seconds) / 60;
-    if (minutes > 0) out.set(min, (val - (prev.p50 as number) * scale) / minutes);
-  });
-  return out;
-}
-
-//The picked player's own per-minute curve (getPlayerEconomyCurve `you`, already REAL units —
-//no ×scale), transformed the same way: 'total' = the cumulative value, 'rate' = the souls /
-//last-hits gained each minute. Same minute grid as laneSeriesByMinute.
-function playerSeriesByMinute(pts: PlayerCurvePoint[], mode: ViewMode): Map<number, number> {
-  const sorted = pts.slice().sort((a, b) => a.t_seconds - b.t_seconds);
-  const out = new Map<number, number>();
-  sorted.forEach((p, i) => {
-    const min = Math.round(p.t_seconds / 60);
-    if (mode === 'total') {
-      out.set(min, p.value);
-      return;
-    }
-    const prev = sorted[i - 1];
-    if (!prev) return;
-    const minutes = (p.t_seconds - prev.t_seconds) / 60;
-    if (minutes > 0) out.set(min, (p.value - prev.value) / minutes);
-  });
-  return out;
-}
+//laneSeriesByMinute + playerSeriesByMinute (the per-minute rate transforms) now live in
+//../../lib/laneCurve so they can be unit-tested without the React/recharts runtime.
 
 //Merge the selected-band curve ("you") and the one-tier-up curve ("cohort") into the
 //EconomyCurve point shape, keyed by game minute, honoring the view mode (rate vs total). A
