@@ -205,7 +205,7 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
         ) : moversQ.isError || !movers || (movers.gainers.length === 0 && movers.losers.length === 0) ? (
           <EmptyState
             title="No movers for this patch yet"
-            message="Pick-rate gainers and losers need a previous patch to diff against — the first tracked patch has none."
+            message="Pick-rate gainers and losers need an earlier patch with hero stats to diff against — none is available yet."
             icon="chart"
           />
         ) : (
