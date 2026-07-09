@@ -338,15 +338,17 @@ function CurvePanel({
 
   //The picked player's OWN per-minute curve for the active metric (getPlayerEconomyCurve
   //`you`). This REPLACES the old flat per-game scalar: `you` is the real per-minute
-  //trajectory (souls = net_worth, last_hits = raw count), so the overlay RISES instead of
-  //drawing a straight line. Only souls + last_hits have a per-minute curve; the other
-  //metrics (and the "You"/me source, which has no per-player curve endpoint) disable the
-  //query and fall back to no player line — never a flat one.
+  //trajectory (souls = net_worth, last_hits = raw count, etc.), so the overlay RISES instead
+  //of drawing a straight line. The backend now serves this curve for EVERY served metric
+  //(plan C2), so the ONLY gate is a picked player: a searched player (playerId != null) is
+  //eligible on every tab, and `metric` is threaded through so each tab pulls its own curve.
+  //The "You"/me source has no per-player curve endpoint (playerId is null there), so it still
+  //falls back to no player line — never a flat one.
   //We deliberately DON'T send vs_band: Lane Lab draws its own rank cohort from the lane
   //endpoints, so the player-curve's `comparison` side is unused here. Omitting it keeps this
   //call byte-identical to the player page's verified-working GET /players/:id/economy-curve
   //(which renders `you` fine), and `you` is band-independent, so it never changes the line.
-  const curveEligible = playerId != null && (metric === 'souls' || metric === 'last_hits');
+  const curveEligible = playerId != null;
   const playerCurve = useQuery({
     queryKey: queryKeys.playerEconomyCurve(playerId ?? 0, { metric }),
     queryFn: () => api.getPlayerEconomyCurve(playerId as number, { metric }),
@@ -491,15 +493,11 @@ function CurvePanel({
                   Your account overlay carries per-game <b>averages</b> only — search your player by name to plot your own{' '}
                   {metricLower} curve over the game. The averages are in the stat-line above.
                 </>
-              ) : metric === 'souls' || metric === 'last_hits' ? (
-                <>
-                  No {metricLower} curve for <b>{overlayName}</b> yet — their match timeline isn&rsquo;t loaded.
-                  {playerOverlay ? <> Their per-game averages are in the stat-line above.</> : null}
-                </>
               ) : (
                 <>
-                  A curve over the game is served for <b>souls</b> and <b>last hits</b> only — <b>{overlayName}</b>&rsquo;s{' '}
-                  {metricLower} average{playerOverlay ? <> is in the stat-line above</> : <> isn&rsquo;t available</>}.
+                  No per-minute {metricLower} data for <b>{overlayName}</b> on this account yet — no match timeline is
+                  loaded for this metric, so there&rsquo;s no line to draw.
+                  {playerOverlay ? <> Their per-game averages are in the stat-line above.</> : null}
                 </>
               )}
             </p>
