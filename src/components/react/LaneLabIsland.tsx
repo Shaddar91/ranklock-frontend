@@ -256,6 +256,7 @@ function CurvePanel({
   kicker,
   playerOverlay = null,
   playerId = null,
+  playerName = null,
 }: {
   band: BracketValue;
   fetcher: (params: { band?: number; metric?: string }) => Promise<LaneCurveResponse>;
@@ -268,8 +269,13 @@ function CurvePanel({
   playerOverlay?: PlayerOverlay | null;
   //The picked player's account_id — drives the per-minute `player` overlay CURVE
   //(getPlayerEconomyCurve). null for the "You"/me source (no per-player curve endpoint) or
-  //when no player is picked → the chart draws no player line (never a flat one).
+  //when no player is picked → the chart draws no player line (never a flat one). NOTE: this is
+  //the picked player's id REGARDLESS of whether their per-game aggregate has data — the curve
+  //is a separate endpoint, so the line renders off its own `you[]`, not the aggregate overlay.
   playerId?: number | null;
+  //The picked player's display name — labels the amber line + its caption independently of the
+  //per-game aggregate overlay, so the line is named even when that aggregate is thin/absent.
+  playerName?: string | null;
 }) {
   const [metric, setMetric] = useState<string>(defaultMetric);
 
@@ -293,12 +299,15 @@ function CurvePanel({
   //trajectory (souls = net_worth, last_hits = raw count), so the overlay RISES instead of
   //drawing a straight line. Only souls + last_hits have a per-minute curve; the other
   //metrics (and the "You"/me source, which has no per-player curve endpoint) disable the
-  //query and fall back to no player line — never a flat one. `vs_band` moves only the
-  //(unused) comparison side; `you` is FIXED, so the player line is band-independent.
+  //query and fall back to no player line — never a flat one.
+  //We deliberately DON'T send vs_band: Lane Lab draws its own rank cohort from the lane
+  //endpoints, so the player-curve's `comparison` side is unused here. Omitting it keeps this
+  //call byte-identical to the player page's verified-working GET /players/:id/economy-curve
+  //(which renders `you` fine), and `you` is band-independent, so it never changes the line.
   const curveEligible = playerId != null && (metric === 'souls' || metric === 'last_hits');
   const playerCurve = useQuery({
-    queryKey: queryKeys.playerEconomyCurve(playerId ?? 0, { metric, vs_band: param }),
-    queryFn: () => api.getPlayerEconomyCurve(playerId as number, { metric, vs_band: param }),
+    queryKey: queryKeys.playerEconomyCurve(playerId ?? 0, { metric }),
+    queryFn: () => api.getPlayerEconomyCurve(playerId as number, { metric }),
     enabled: curveEligible,
     retry: false,
   });
@@ -310,7 +319,13 @@ function CurvePanel({
     for (const p of playerCurve.data?.you ?? []) m.set(Math.round(p.t_seconds / 60), p.value);
     return m;
   }, [playerCurve.data]);
-  const hasPlayerCurve = playerByMinute.size > 0;
+  //The amber player line renders whenever the economy-curve `you[]` has points — gate DIRECTLY
+  //on that array's length, decoupled from the per-game AGGREGATE overlay. A player can have a
+  //loaded per-minute timeline (`you[]` non-empty) while their `/players/:id/economy` aggregate
+  //is thin/absent; the old aggregate-coupled gate hid the line then ("their match timeline
+  //isn't loaded") even though the curve endpoint returned points. Only a genuinely empty
+  //`you[]` (0 points) shows that note now.
+  const hasPlayerCurve = (playerCurve.data?.you?.length ?? 0) > 0;
 
   const points = useMemo(() => {
     const base = toEconPoints(youCurve.data, cohortCurve.data, bucketScale(metric));
@@ -325,6 +340,10 @@ function CurvePanel({
   const n = peakSamples(youCurve.data);
   const metricLabel = metrics.find((m) => m.key === metric)?.label ?? metric;
   const metricLower = metricLabel.toLowerCase();
+  //The amber line's label + caption name: the picked player's name (threaded independently of
+  //the aggregate overlay), falling back to the aggregate's label ("You"/name). Non-null
+  //whenever a player is picked, so the line is named even when the aggregate is absent.
+  const overlayName = playerName ?? playerOverlay?.label ?? null;
 
   return (
     <div className="brass-frame" style={{ padding: '18px 20px' }}>
@@ -333,7 +352,10 @@ function CurvePanel({
       <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <div className="kicker" style={{ marginBottom: 4 }}>{kicker}</div>
-          <h2 className="h-sec" style={{ fontSize: 17 }}>{metricLabel} per minute</h2>
+          {/* Honest label: this is the value AT each minute (cumulative net worth for souls,
+              climbing to ~120k) — NOT a per-minute rate. C2 switches the data to a true
+              per-minute rate and restores "per minute". */}
+          <h2 className="h-sec" style={{ fontSize: 17 }}>{metricLabel} over the game</h2>
         </div>
         {n > 0 && (
           <span className="mono faint" style={{ fontSize: 12 }}>n = {count(n)} players sampled</span>
@@ -348,7 +370,7 @@ function CurvePanel({
         <p className="muted" style={{ padding: '24px 2px' }}>Loading the {metricLower} curve…</p>
       ) : youCurve.isError || points.length === 0 ? (
         <EmptyState
-          title={`Per-minute ${metricLower} curve not served yet`}
+          title={`${metricLabel} curve not served yet`}
           message={youCurve.isError ? laneAheadMessage(youCurve.error) : `No lane data for ${bandLabel} yet — try another tier or "All".`}
           icon="chart"
         />
@@ -358,14 +380,14 @@ function CurvePanel({
             data={points}
             youLabel={`${bandLabel} average`}
             cohortLabel={cohortLabel ? `${cohortLabel} average (next rank up)` : undefined}
-            playerLabel={hasPlayerCurve ? playerOverlay?.label : undefined}
+            playerLabel={hasPlayerCurve ? (overlayName ?? undefined) : undefined}
           />
           {/* Caption color words are driven by econSeriesWord/econSeriesColor — the
               SAME source of truth the chart lines use — so the words can never
               describe a color the line doesn't actually render. */}
           <p className="muted" style={{ fontSize: 12, margin: '10px 0 0', lineHeight: 1.45 }}>
             The <b style={{ color: econSeriesColor.you }}>{econSeriesWord.you}</b> area is the average{' '}
-            {metricLower} per minute for a <b style={{ color: econSeriesColor.you }}>{bandLabel}</b> player
+            {metricLower} a <b style={{ color: econSeriesColor.you }}>{bandLabel}</b> player has by each minute of the game
             {cohortLabel ? (
               <>
                 {' '}; the <b style={{ color: econSeriesColor.cohort }}>{econSeriesWord.cohort} dashed</b> line is{' '}
@@ -376,30 +398,31 @@ function CurvePanel({
             )}
             {' '}This is the <b>rank&rsquo;s</b> typical curve across all sampled players — not one player&rsquo;s matches.
           </p>
-          {playerOverlay && (
+          {(playerOverlay || playerId != null) && (
             <p className="muted" style={{ fontSize: 12, margin: '6px 0 0', lineHeight: 1.45 }}>
               {hasPlayerCurve ? (
                 <>
                   The <b style={{ color: econSeriesColor.player }}>{econSeriesWord.player} dashed</b> line is{' '}
-                  <b>{playerOverlay.label}</b>&rsquo;s own <b>per-minute</b> {metricLower}, averaged across{' '}
-                  {count(playerOverlay.matches)} games — a real personal curve that rises with the match, not a flat average.
+                  <b>{overlayName}</b>&rsquo;s own {metricLower} <b>over the game</b>
+                  {playerOverlay ? <>, averaged across {count(playerOverlay.matches)} games</> : null} — a real personal
+                  curve that rises with the match, not a flat average.
                 </>
               ) : curveEligible && playerCurve.isFetching ? (
-                <>Loading <b>{playerOverlay.label}</b>&rsquo;s per-minute {metricLower} curve…</>
+                <>Loading <b>{overlayName}</b>&rsquo;s {metricLower} curve…</>
               ) : playerId == null ? (
                 <>
                   Your account overlay carries per-game <b>averages</b> only — search your player by name to plot your own{' '}
-                  <b>per-minute</b> {metricLower} curve. The averages are in the stat-line above.
+                  {metricLower} curve over the game. The averages are in the stat-line above.
                 </>
               ) : metric === 'souls' || metric === 'last_hits' ? (
                 <>
-                  No per-minute {metricLower} curve for <b>{playerOverlay.label}</b> yet (their match timeline isn&rsquo;t loaded) — their
-                  per-game averages are in the stat-line above.
+                  No {metricLower} curve for <b>{overlayName}</b> yet — their match timeline isn&rsquo;t loaded.
+                  {playerOverlay ? <> Their per-game averages are in the stat-line above.</> : null}
                 </>
               ) : (
                 <>
-                  A per-minute curve is served for <b>souls</b> and <b>last hits</b> only — <b>{playerOverlay.label}</b>&rsquo;s {metricLower}{' '}
-                  average is in the stat-line above.
+                  A curve over the game is served for <b>souls</b> and <b>last hits</b> only — <b>{overlayName}</b>&rsquo;s{' '}
+                  {metricLower} average{playerOverlay ? <> is in the stat-line above</> : <> isn&rsquo;t available</>}.
                 </>
               )}
             </p>
@@ -710,9 +733,9 @@ function PlayerOverlayPicker({
 
       {!overlay ? (
         <p className="muted faint" style={{ fontSize: 12, margin: '12px 0 0', lineHeight: 1.45, maxWidth: 480 }}>
-          Overlay any player&rsquo;s <b>average</b> economy on the soul curve and 9-minute verdict below. It&rsquo;s a
-          per-game aggregate — not a personal per-minute curve (that needs match timeline data, which isn&rsquo;t
-          loaded yet).
+          Overlay any player on the soul curve and 9-minute verdict below — their per-game <b>averages</b> in the
+          stat-line, plus their own <b>economy curve over the game</b> drawn in amber whenever their match timeline
+          is loaded.
         </p>
       ) : status.pending ? (
         <p className="muted" style={{ fontSize: 12.5, margin: '12px 0 0' }}>
@@ -819,7 +842,8 @@ function LaneLabInner() {
         defaultMetric="souls"
         kicker="Signature · cohort economy curve vs the rank you’re chasing"
         playerOverlay={liveOverlay}
-        playerId={liveOverlay ? pickedId : null}
+        playerId={pickedId}
+        playerName={overlay?.kind === 'player' ? overlay.player.steam_name : null}
       />
 
       {/* The farm curve — last-hits by default, also serves souls. Same rank-vs-rank-vs-you
@@ -832,7 +856,8 @@ function LaneLabInner() {
         defaultMetric="last_hits"
         kicker="Farm curve · last-hits tempo vs the rank you’re chasing"
         playerOverlay={liveOverlay}
-        playerId={liveOverlay ? pickedId : null}
+        playerId={pickedId}
+        playerName={overlay?.kind === 'player' ? overlay.player.steam_name : null}
       />
 
       <VerdictPanel band={band} playerOverlay={liveOverlay} />
