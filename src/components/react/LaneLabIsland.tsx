@@ -459,7 +459,7 @@ function CurvePanel({
             {cohortLabel ? (
               <>
                 {' '}; the <b style={{ color: econSeriesColor.cohort }}>{econSeriesWord.cohort} dashed</b> line is{' '}
-                <b style={{ color: econSeriesColor.cohort }}>{cohortLabel}</b> one tier up — the rank you&rsquo;re chasing
+                <b style={{ color: econSeriesColor.cohort }}>{cohortLabel}</b>
                 {isRate ? (
                   <>. A higher rank out-earns <b>per minute</b> all game, so the gap stays visible here where the running total flattens out.</>
                 ) : (
@@ -673,7 +673,7 @@ function OverlaySummary({ data, bandLabel }: { data: PlayerOverlay; bandLabel: s
       </div>
       <p className="muted faint" style={{ fontSize: 11.5, margin: '10px 0 0', lineHeight: 1.45 }}>
         {data.label}&rsquo;s per-game averages across {count(data.matches)} games — an aggregate, not per-minute. The
-        curves below are the <b>{bandLabel}</b> rank cohort; the <b style={{ color: econSeriesColor.player }}>{econSeriesWord.player}</b> line
+        curves below show <b>{bandLabel}</b> players (your rank); the <b style={{ color: econSeriesColor.player }}>{econSeriesWord.player}</b> line
         marks {data.label} on whichever metric is selected.
       </p>
     </div>
@@ -917,7 +917,7 @@ function LaneLabInner() {
         queryKeyFor={queryKeys.laneEconomyCurve}
         metrics={ECON_METRICS}
         defaultMetric="souls"
-        kicker="Signature · cohort economy curve vs the rank you’re chasing"
+        kicker="Souls per minute — your rank vs the next rank up (your line in amber)"
         playerOverlay={liveOverlay}
         playerId={pickedId}
         playerName={overlay?.kind === 'player' ? overlay.player.steam_name : null}
@@ -931,7 +931,7 @@ function LaneLabInner() {
         queryKeyFor={queryKeys.laneFarmCurve}
         metrics={FARM_METRICS}
         defaultMetric="last_hits"
-        kicker="Farm curve · last-hits tempo vs the rank you’re chasing"
+        kicker="Last-hits per minute — your rank vs the next rank up (your line in amber)"
         playerOverlay={liveOverlay}
         playerId={pickedId}
         playerName={overlay?.kind === 'player' ? overlay.player.steam_name : null}
