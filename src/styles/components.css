@@ -731,6 +731,10 @@ textarea {
   gap: 2px;
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
+  /* overflow-x:auto makes overflow-y compute to auto → a spurious vertical scrollbar
+     pill appears next to each tab group. Clip the y-axis and thin the x scrollbar. */
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 .tab {
   font-family: var(--display);
