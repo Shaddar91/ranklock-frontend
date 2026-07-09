@@ -241,6 +241,9 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
   });
   //can't compare a player to themselves — drop the profile owner from the results.
   const results = (search.data ?? []).filter((r) => r.account_id !== id);
+  //the search hit only the profile owner (self is filtered out above): tell the user
+  //that is them rather than the misleading "no players found" no-hits note.
+  const selfOnly = (search.data?.length ?? 0) > 0 && results.length === 0 && (search.data ?? []).every((r) => r.account_id === id);
 
   const cmp = useComparePlayer(id, picked?.account_id, hero);
 
@@ -315,7 +318,11 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
                 {isUnauthorized(search.error) ? 'Sign in to search.' : 'Search is offline right now.'}
               </div>
             ) : results.length === 0 ? (
-              <div className="search-note muted">No players found for &ldquo;{q}&rdquo;.</div>
+              selfOnly ? (
+                <div className="search-note muted">That is you — search for a different player to compare.</div>
+              ) : (
+                <div className="search-note muted">No players found for &ldquo;{q}&rdquo;.</div>
+              )
             ) : (
               results.map((r) => {
                 const rk = rankFromBadge(r.badge);
