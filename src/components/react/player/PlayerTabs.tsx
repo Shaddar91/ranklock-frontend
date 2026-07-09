@@ -254,15 +254,16 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
     setOpen(false);
   }
 
-  const rows: [string, number | null, number | null][] = cmp.data
+  //D2 precision
+  const rows: [string, number | null, number | null, (n: number) => string][] = cmp.data
     ? [
-        ['Net worth', cmp.data.you.avg_net_worth, cmp.data.them.avg_net_worth],
-        ['Souls / min', cmp.data.you.souls_per_min, cmp.data.them.souls_per_min],
-        ['Last hits / min', cmp.data.you.last_hits_per_min, cmp.data.them.last_hits_per_min],
-        ['Avg denies', cmp.data.you.avg_denies, cmp.data.them.avg_denies],
-        ['Avg kills', cmp.data.you.avg_kills, cmp.data.them.avg_kills],
-        ['Avg deaths', cmp.data.you.avg_deaths, cmp.data.them.avg_deaths],
-        ['Avg assists', cmp.data.you.avg_assists, cmp.data.them.avg_assists],
+        ['Net worth', cmp.data.you.avg_net_worth, cmp.data.them.avg_net_worth, count],
+        ['Souls / min', cmp.data.you.souls_per_min, cmp.data.them.souls_per_min, count],
+        ['Last hits / min', cmp.data.you.last_hits_per_min, cmp.data.them.last_hits_per_min, (n) => fixed(n, 1)],
+        ['Avg denies', cmp.data.you.avg_denies, cmp.data.them.avg_denies, (n) => fixed(n, 1)],
+        ['Avg kills', cmp.data.you.avg_kills, cmp.data.them.avg_kills, (n) => fixed(n, 1)],
+        ['Avg deaths', cmp.data.you.avg_deaths, cmp.data.them.avg_deaths, (n) => fixed(n, 1)],
+        ['Avg assists', cmp.data.you.avg_assists, cmp.data.them.avg_assists, (n) => fixed(n, 1)],
       ]
     : [];
 
@@ -396,13 +397,13 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map(([label, you, them]) => (
+                  {rows.map(([label, you, them, fmt]) => (
                     <tr key={label}>
                       <td>{label}</td>
                       <td className="num tnum cyan-c" style={{ fontWeight: 600 }}>
-                        {you != null ? count(you) : DASH}
+                        {you != null ? fmt(you) : DASH}
                       </td>
-                      <td className="num tnum muted">{them != null ? count(them) : DASH}</td>
+                      <td className="num tnum muted">{them != null ? fmt(them) : DASH}</td>
                     </tr>
                   ))}
                 </tbody>
