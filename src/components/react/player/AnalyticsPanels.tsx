@@ -21,7 +21,7 @@ import { useGameMode } from '../../../lib/useGameMode';
 import { EmptyState, Icon } from '../ui/index';
 import RadarChart from '../charts/RadarChart';
 import SignatureCurve from '../charts/SignatureCurve';
-import { sigSeriesColor, sigSeriesWord } from '../charts/chartTheme';
+import { sigSeriesColor, useSigSeriesWords } from '../charts/chartTheme';
 import { CatPanel } from './StatLine';
 import { useCompare, useImprove, usePlayer, usePlayerEconomyCurve, usePlayerHeroesPlayed } from './usePlayer';
 import { combatRows, compareRadar, economyRows, efficiencyRows, laningRows } from '../../../lib/playstyle';
@@ -122,8 +122,10 @@ type CurveMetric = (typeof CURVE_METRICS)[number]['key'];
 //THE signature coaching chart (C3): the player's OWN per-minute curve, FIXED, overlaid on a
 //comparison cohort they pick. The LEAGUE selector (rank tier) and the HERO selector move
 //ONLY the comparison line — `you` is invariant. Colours/caption words come from
-//sigSeriesColor/sigSeriesWord so the legend, the caption, and the lines can never disagree.
+//sigSeriesColor/useSigSeriesWords (both keyed to the active skin) so the legend, the
+//caption, and the lines can never disagree — in any skin.
 function SignatureCurvePanel({ id }: { id: number }) {
+  const sigWords = useSigSeriesWords(); //active skin's series color words
   const [metric, setMetric] = useState<CurveMetric>('souls');
   //league: undefined = "auto" (default to the rank you're chasing once the profile loads);
   //null = All ranks (vs_band omitted); number = a specific rank tier 0..11.
@@ -234,16 +236,17 @@ function SignatureCurvePanel({ id }: { id: number }) {
       ) : (
         <>
           <SignatureCurve data={points} youLabel="You" comparisonLabel={cmpLabel} metricLabel={noun} />
-          {/* Caption colour words are driven by sigSeriesWord/sigSeriesColor — the SAME
-              source the chart lines read — so a word can never name a colour the line
-              doesn't render (the C3 no-phantom-cyan guarantee). */}
+          {/* Caption colour words are driven by useSigSeriesWords/sigSeriesColor — the
+              SAME skin-keyed source the chart lines read — so a word can never name a
+              colour the line doesn't render (the C3 no-phantom-cyan guarantee), in any
+              skin. */}
           <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
-            The <b style={{ color: sigSeriesColor.you }}>{sigSeriesWord.you}</b> line is{' '}
+            The <b style={{ color: sigSeriesColor.you }}>{sigWords.you}</b> line is{' '}
             <b style={{ color: sigSeriesColor.you }}>you</b> — your real per-minute {noun}, and it stays put when you
             switch league or hero.{' '}
             {cmpLabel ? (
               <>
-                The <b style={{ color: sigSeriesColor.comparison }}>{sigSeriesWord.comparison} dashed</b> line is{' '}
+                The <b style={{ color: sigSeriesColor.comparison }}>{sigWords.comparison} dashed</b> line is{' '}
                 <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b>
                 {comparison?.source === 'on-demand-hero' ? ' (computed live)' : ''} — the cohort you picked; the shaded
                 band is their 25th–75th percentile. Only this line moves when you change the selectors.

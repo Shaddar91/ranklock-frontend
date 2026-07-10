@@ -79,6 +79,12 @@
   --r-pill: 3px;
   --r-card: 6px;
   --r-panel: 9px;
+
+  /* econ series re-skin — word in chartTheme ECON_WORDS_BY_THEME moves with this:
+     League A takes gaslamp's oxidized-copper accent (= --cyan-bright, 'teal');
+     cohort/player/player2 keep the default violet/amber/coral, all readable on the
+     dark-leather ground (amber doubly at home among the brass chrome). */
+  --econ-you: #63d8c6;
 }
 
 /* engraved titles, mechanical readouts */
@@ -253,6 +259,13 @@
   --brass-4: #483064;
   --brass-edge: #b088c0;
   --brass-shadow: #241830;
+  /* econ series re-skin — words in chartTheme ECON_WORDS_BY_THEME move with these:
+     League A takes arcane's own lavender accent (= --cyan-bright, 'lavender');
+     League B moves OFF the default violet to cyan ('cyan') so the two league lines
+     don't blur into one violet family on a violet skin. player/player2 keep the
+     default amber/coral (distinct + readable on the near-black violet ground). */
+  --econ-you: #bb9bf7;
+  --econ-cohort: #22d3ee;
 }
 [data-theme='arcane'] .app-bg {
   background:
@@ -337,6 +350,11 @@
   --brass-4: #464d56;
   --brass-edge: #bcc5ce;
   --brass-shadow: #2a2f36;
+  /* econ series re-skin — word in chartTheme ECON_WORDS_BY_THEME moves with this:
+     League A takes obsidian's steel-blue accent (= --cyan-bright, 'blue');
+     cohort/player/player2 keep the default violet/amber/coral on the near-black
+     steel ground. */
+  --econ-you: #38bdf8;
 }
 [data-theme='obsidian'] .app-bg {
   background:

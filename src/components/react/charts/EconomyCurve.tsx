@@ -2,17 +2,19 @@
 //ONLY when the caller passes its label (the comparison set is caller-composed; every
 //series can be toggled out without touching the others). Deliberately-distinct series —
 //SINGLE source of truth for their colors is econSeriesColor (chartTheme), and the
-//caller's caption names those same colors via econSeriesWord, so legend + caption +
+//caller's caption names those same colors via useEconSeriesWords, so legend + caption +
 //line colors can never drift:
-//  • solid, filled CYAN area  — League A's median curve (`you` slot)
-//  • long-dash VIOLET line    — League B's median curve (`cohort` slot)
-//  • short-dash AMBER line    — the FIRST picked player's own per-minute curve (one
-//                               caller-supplied `player` value per point)
-//  • med-dash CORAL line      — the SECOND compared player's per-minute curve (`player2`);
-//                               a second warm hue so the two players never read as one line
-//The palette is theme-STABLE on purpose (tokens.css --econ-*): the caption says the
-//literal word "cyan"/"violet"/"amber", so the lines must not re-skin with the theme
-//(the foundry skin used to turn "your rank" orange, colliding with amber "You").
+//  • solid, filled area  — League A's median curve (`you` slot; the skin's lead accent)
+//  • long-dash line      — League B's median curve (`cohort` slot)
+//  • short-dash line     — the FIRST picked player's own per-minute curve (one
+//                          caller-supplied `player` value per point; amber in every skin)
+//  • med-dash line       — the SECOND compared player's per-minute curve (`player2`);
+//                          a second warm hue (coral) so the two players never read as one
+//The palette is THEME-AWARE: skins re-skin the --econ-* vars (themes.css), and the
+//caption color words follow through chartTheme's skin-keyed word map, so the words stay
+//literally true in every skin. The dash styles keep the series apart even where a skin
+//puts hues close together (foundry keeps the default palette outright — its own oranges
+//would collide "your rank" with amber "You").
 //Callers pass the visible labels (youLabel/cohortLabel/playerLabel/player2Label) from
 //their selection state — league display name, player name (+ hero). The
 //`you`/`cohort`/`player`/`player2` dataKeys are fixed INTERNAL slot names only; no
@@ -141,8 +143,8 @@ export default function EconomyCurve({
             swatch. That is what makes it obvious which line is which. */}
         <Legend wrapperStyle={{ fontSize: 12, color: 'var(--muted)' }} iconType="plainline" />
         {youLabel && (
-          //Cyan filled area for League A — drawn only while the caller keeps it in the
-          //comparison set (label passed), like every other series slot.
+          //League A's filled area (the skin's lead series accent) — drawn only while the
+          //caller keeps it in the comparison set (label passed), like every other slot.
           <Area
             type="monotone"
             name={youLabel}
@@ -155,7 +157,7 @@ export default function EconomyCurve({
           />
         )}
         {cohortLabel && (
-          //Violet long-dash line for League B — the second, independently selected league.
+          //Long-dash line for League B — the second, independently selected league.
           <Line
             type="monotone"
             name={cohortLabel}
@@ -169,11 +171,11 @@ export default function EconomyCurve({
           />
         )}
         {playerLabel && (
-          //Amber per-minute line for the picked player: their OWN curve (getPlayerEconomyCurve
-          //`you`), one value per minute, so it rises with the match. connectNulls bridges the
-          //minutes with no sample. Its values fold into the y-domain automatically, so a high
-          //late-game net worth stays on-chart. Short-dash + amber keeps it distinct from the
-          //long-dash violet cohort line.
+          //Amber (every skin) per-minute line for the picked player: their OWN curve
+          //(getPlayerEconomyCurve `you`), one value per minute, so it rises with the match.
+          //connectNulls bridges the minutes with no sample. Its values fold into the y-domain
+          //automatically, so a high late-game net worth stays on-chart. Short-dash + amber
+          //keeps it distinct from the long-dash cohort line.
           <Line
             type="linear"
             name={playerLabel}
@@ -189,10 +191,10 @@ export default function EconomyCurve({
           />
         )}
         {player2Label && (
-          //Coral per-minute line for the SECOND compared player: their OWN curve
+          //Coral (every skin) per-minute line for the SECOND compared player: their OWN curve
           //(getPlayerEconomyCurve `you`), one value per minute. A distinct warm hue + a
           //medium dash ("5 3") keeps it apart from the amber short-dash first player and the
-          //violet long-dash cohort, so two players + two rank lines stay tellable on one chart.
+          //long-dash cohort, so two players + two rank lines stay tellable on one chart.
           <Line
             type="linear"
             name={player2Label}

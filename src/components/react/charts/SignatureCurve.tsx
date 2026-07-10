@@ -2,15 +2,18 @@
 //curve, FIXED, overlaid against a comparison cohort you pick (a league, optionally
 //narrowed to a hero). Two deliberately-distinct series whose SINGLE source of colour is
 //sigSeriesColor (chartTheme); the caller's caption names those same colours via
-//sigSeriesWord, so legend + caption + line colours can never drift:
-//  • solid, thick AMBER line  — YOU: your real per-minute curve, FIXED (never changes when
-//                               you pick a league/hero — that is the whole feature).
-//  • dashed CYAN line         — the selected league (+hero) cohort MEDIAN (p50). Changing
-//                               the league/hero moves ONLY this line.
-//  • faint CYAN band          — the cohort's p25–p75 spread (optional; hidden from legend).
+//useSigSeriesWords, so legend + caption + line colours can never drift:
+//  • solid, thick warm line — YOU: your real per-minute curve, FIXED (never changes when
+//                             you pick a league/hero — that is the whole feature). Amber
+//                             in every skin (--econ-player).
+//  • dashed cool line       — the selected league (+hero) cohort MEDIAN (p50), in the
+//                             skin's lead series accent (--econ-you). Changing the
+//                             league/hero moves ONLY this line.
+//  • faint matching band    — the cohort's p25–p75 spread (optional; hidden from legend).
 //The `you`/`cmp`/`band` dataKeys are fixed; callers pass the visible labels (youLabel is
 //always "You"; comparisonLabel names the picked tier, e.g. "Ascendant average"). Recharts
-//ComposedChart. The palette is theme-STABLE on purpose (tokens.css --econ-*).
+//ComposedChart. The palette is THEME-AWARE: skins re-skin the --econ-* vars (themes.css)
+//and the caption words follow through chartTheme's skin-keyed word map.
 import {
   ComposedChart,
   Area,
@@ -139,8 +142,8 @@ export default function SignatureCurve({
         <Legend wrapperStyle={{ fontSize: 12, color: 'var(--muted)' }} iconType="plainline" />
         {comparisonLabel && (
           //Cohort spread first ⇒ it sits BEHIND the two lines. A range Area (value is the
-          //[p25, p75] tuple) shaded faint cyan; no draw-on animation (a band can't
-          //meaningfully sweep, and this keeps headless screenshots honest).
+          //[p25, p75] tuple) shaded faintly in the cohort hue; no draw-on animation (a band
+          //can't meaningfully sweep, and this keeps headless screenshots honest).
           <Area
             type="monotone"
             name="cohort range"
@@ -154,8 +157,8 @@ export default function SignatureCurve({
           />
         )}
         {comparisonLabel && (
-          //The comparison cohort median — cyan, dashed, no dots. The ONLY series that moves
-          //when you change the league/hero selector.
+          //The comparison cohort median — the skin's cohort hue, dashed, no dots. The ONLY
+          //series that moves when you change the league/hero selector.
           <Line
             type="monotone"
             name={comparisonLabel}
@@ -174,8 +177,8 @@ export default function SignatureCurve({
           </Line>
         )}
         {/* YOU — drawn LAST so the personal curve sits on top of the cohort. Solid, thick,
-            amber, with small dots: this is the star of the chart and it is FIXED (identical
-            for every league/hero the user picks). */}
+            amber (every skin), with small dots: this is the star of the chart and it is
+            FIXED (identical for every league/hero the user picks). */}
         <Line
           type="monotone"
           name={youLabel}

@@ -38,7 +38,7 @@ import { api, isComputing, isDisabled, isNotFound, isUnauthorized, queryKeys } f
 import QueryProvider from './QueryProvider';
 import { BracketFilter, type BracketValue, Chip, EmptyState, Icon, RankBadge } from './ui/index';
 import EconomyCurve from './charts/EconomyCurve';
-import { econSeriesColor, econSeriesWord } from './charts/chartTheme';
+import { econSeriesColor, useEconSeriesWords } from './charts/chartTheme';
 import { useViewer } from './player/usePlayer';
 import { getRank, rankFromBadge, RANKS } from '../../lib/ranks';
 import { count, fixed, pct } from '../../lib/format';
@@ -443,6 +443,9 @@ function CurvePanel({
   sampleWindow?: string | null;
 }) {
   const [metric, setMetric] = useState<string>(defaultMetric);
+  //The active skin's series color words — re-renders the caption when the skin flips,
+  //keeping the words in lockstep with the CSS-var line colors that re-skin live.
+  const econWords = useEconSeriesWords();
   //Default to the per-minute RATE view — the cumulative 'total' is what made adjacent
   //leagues converge into one line late-game (plan C2). Per-panel, like the metric toggle.
   const [viewMode, setViewMode] = useState<ViewMode>('rate');
@@ -654,15 +657,16 @@ function CurvePanel({
             playerFaint={p1Thin}
             player2Faint={p2Thin}
           />
-          {/* Caption color words are driven by econSeriesWord/econSeriesColor — the
-              SAME source of truth the chart lines use — so the words can never
-              describe a color the line doesn't actually render. Only VISIBLE series
-              are described ("where's who": the caption is the legend, spelled out). */}
+          {/* Caption color words are driven by useEconSeriesWords/econSeriesColor —
+              the SAME skin-keyed source of truth the chart lines use — so the words
+              can never describe a color the line doesn't actually render, in any
+              skin. Only VISIBLE series are described ("where's who": the caption is
+              the legend, spelled out). */}
           {(leagueA.show || (leagueB?.show ?? false)) && (
             <p className="muted" style={{ fontSize: 12, margin: '10px 0 0', lineHeight: 1.45 }}>
               {leagueA.show && (
                 <>
-                  The <b style={{ color: econSeriesColor.you }}>{econSeriesWord.you}</b> area is the{' '}
+                  The <b style={{ color: econSeriesColor.you }}>{econWords.you}</b> area is the{' '}
                   {isRate ? (
                     <>{metricLower} a <b style={{ color: econSeriesColor.you }}>{leagueA.name}</b> player earns <b>each minute</b></>
                   ) : (
@@ -672,7 +676,7 @@ function CurvePanel({
               )}
               {leagueA.show && leagueB?.show && labelB && (
                 <>
-                  ; the <b style={{ color: econSeriesColor.cohort }}>{econSeriesWord.cohort} dashed</b> line is{' '}
+                  ; the <b style={{ color: econSeriesColor.cohort }}>{econWords.cohort} dashed</b> line is{' '}
                   <b style={{ color: econSeriesColor.cohort }}>{leagueB.name}</b>
                   {isRate ? (
                     <>. A stronger league out-earns <b>per minute</b> all game, so the gap stays visible here where the running total flattens out.</>
@@ -683,7 +687,7 @@ function CurvePanel({
               )}
               {!leagueA.show && leagueB?.show && (
                 <>
-                  The <b style={{ color: econSeriesColor.cohort }}>{econSeriesWord.cohort} dashed</b> line is the{' '}
+                  The <b style={{ color: econSeriesColor.cohort }}>{econWords.cohort} dashed</b> line is the{' '}
                   {metricLower} a <b style={{ color: econSeriesColor.cohort }}>{leagueB.name}</b> player{' '}
                   {isRate ? <>earns <b>each minute</b></> : <>has by each minute of the game</>}.
                 </>
@@ -717,7 +721,7 @@ function CurvePanel({
                 </>
               ) : hasP1Curve ? (
                 <>
-                  The <b style={{ color: econSeriesColor.player }}>{econSeriesWord.player} dashed</b> line is{' '}
+                  The <b style={{ color: econSeriesColor.player }}>{econWords.player} dashed</b> line is{' '}
                   <b>{p1.name}</b>&rsquo;s own {metricLower}
                   {p1.hero ? <> on <b>{p1.hero.name}</b></> : null}{' '}
                   {isRate ? <><b>per minute</b></> : <><b>over the game</b></>}
@@ -757,7 +761,7 @@ function CurvePanel({
                 </>
               ) : hasP2Curve ? (
                 <>
-                  The <b style={{ color: econSeriesColor.player2 }}>{econSeriesWord.player2} dashed</b> line is{' '}
+                  The <b style={{ color: econSeriesColor.player2 }}>{econWords.player2} dashed</b> line is{' '}
                   <b>{p2.name}</b>&rsquo;s own {metricLower}
                   {p2.hero ? <> on <b>{p2.hero.name}</b></> : null}{' '}
                   {isRate ? <><b>per minute</b></> : <><b>over the game</b></>}
@@ -937,6 +941,7 @@ function OverlaySummary({
   //so its footer says how to get a real personal line instead of implying one exists.
   isMe?: boolean;
 }) {
+  const econWords = useEconSeriesWords(); //active skin's series words (player/player2)
   const rk = rankFromBadge(data.badge);
   const stats: { label: string; value: string }[] = [
     { label: 'Souls / min', value: count(data.souls_per_min) },
@@ -975,7 +980,7 @@ function OverlaySummary({
         ) : (
           <>
             The curves below draw the leagues and players in your comparison set; the{' '}
-            <b style={{ color: econSeriesColor[accent] }}>{econSeriesWord[accent]}</b> line marks {data.label} on
+            <b style={{ color: econSeriesColor[accent] }}>{econWords[accent]}</b> line marks {data.label} on
             whichever metric is selected.
           </>
         )}
@@ -1026,6 +1031,7 @@ function PlayerOverlayPicker({
   globalHero: HeroPick | null;
   noGamesHero: string | null;
 }) {
+  const econWords = useEconSeriesWords(); //active skin's series words (player/player2)
   const [raw, setRaw] = useState('');
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
@@ -1181,13 +1187,13 @@ function PlayerOverlayPicker({
             <>
               Add any player to the comparison set — their per-game <b>averages</b> in the stat-line, plus their own{' '}
               <b>economy curve over the game</b> drawn in{' '}
-              <b style={{ color: econSeriesColor[accent] }}>{econSeriesWord[accent]}</b> whenever their match timeline
+              <b style={{ color: econSeriesColor[accent] }}>{econWords[accent]}</b> whenever their match timeline
               is loaded. Scope them to one hero to compare hero-vs-hero.
             </>
           ) : (
             <>
               Pick a <b>second</b> player — their own <b>economy curve over the game</b> draws in{' '}
-              <b style={{ color: econSeriesColor[accent] }}>{econSeriesWord[accent]}</b> alongside the first player
+              <b style={{ color: econSeriesColor[accent] }}>{econWords[accent]}</b> alongside the first player
               and the selected leagues.
             </>
           )}

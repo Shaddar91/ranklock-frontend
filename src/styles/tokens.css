@@ -45,11 +45,16 @@
   --sapphire: #8b5cf6;
   --sapphire-acc: #a78bfa;
 
-  /* economy-curve series palette — theme-STABLE (deliberately NOT re-skinned in
-     themes.css) so the chart legend + caption color words stay literally true in
-     every skin. Three distinct hues; each series also carries a distinct line
-     style in EconomyCurve so they never collapse together (the foundry skin used
-     to render "your rank" and "You" as near-identical oranges). */
+  /* economy-curve series palette — the DEFAULT skin palette (what foundry + aether
+     render). Skins MAY re-skin these four vars in themes.css (arcane / gaslamp /
+     obsidian do, each reusing its own accent hues); the caption color words follow
+     the active skin through the theme-keyed word map in
+     components/react/charts/chartTheme.ts (useEconSeriesWords) — a skin's hue
+     override and its word entry are ONE change, edited together. Each series also
+     carries a distinct line style in EconomyCurve so no skin's series collapse
+     together (foundry once rendered "your rank" and "You" as near-identical
+     oranges — which is why foundry keeps this default palette instead of
+     re-skinning to its own warm accents). */
   --econ-you: #22d3ee; /* cyan   — your-rank tier median (solid + filled) */
   --econ-cohort: #a78bfa; /* violet — one tier up / chasing (long dash) */
   --econ-player: #fbbf24; /* amber  — the picked player / "You" (short dash) */
