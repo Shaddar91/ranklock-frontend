@@ -7,7 +7,8 @@
 //MMR) and offset/limit page the ladder; both ride in the React Query key.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { api, queryKeys } from '../../lib/apiClient';
+import { api, isComputing, queryKeys } from '../../lib/apiClient';
+import { computingMessage } from '../../lib/apiStates';
 import { useGameMode } from '../../lib/useGameMode';
 import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, Icon, RankBadge, WinBar } from './ui/index';
@@ -129,7 +130,7 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
   //all ranks, page 1) — seeding another page/band/mode with the all-ranks rows is wrong.
   const isDefaultPage = bucket === 'all' && offset === 0 && mode === 'Normal';
 
-  const { data, isPending, isError, isPlaceholderData } = useQuery({
+  const { data, isPending, isError, error, isPlaceholderData } = useQuery({
     queryKey: queryKeys.leaderboard(params),
     queryFn: () => api.getLeaderboard(params),
     initialData: isDefaultPage ? initialRows : undefined,
@@ -212,11 +213,17 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
         loading={isPending}
         initialSort={{ key: 'rank', dir: 1 }}
         caption="Top Deadlock players by rank"
-        emptyTitle={isError ? 'Leaderboard unavailable' : 'No players in this band yet'}
+        emptyTitle={
+          //202 = healthy, deliberately gating — "offline" is reserved for real
+          //network/5xx failure (B3).
+          isComputing(error) ? 'Ladder is computing' : isError ? 'Leaderboard unavailable' : 'No players in this band yet'
+        }
         emptyMessage={
-          isError
-            ? 'The stats API is offline — the ladder fills in when it comes back online.'
-            : 'No ranked players for this band yet. Try another bracket or check back after the next data refresh.'
+          isComputing(error)
+            ? computingMessage('the ladder is being generated', error)
+            : isError
+              ? 'The stats API is offline — the ladder fills in when it comes back online.'
+              : 'No ranked players for this band yet. Try another bracket or check back after the next data refresh.'
         }
       />
       {showPager && (

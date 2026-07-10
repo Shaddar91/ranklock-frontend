@@ -11,7 +11,9 @@
 //============================================================================
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api, queryKeys } from '../../lib/apiClient';
+import { api, isComputing, queryKeys } from '../../lib/apiClient';
+import { computingMessage } from '../../lib/apiStates';
+import { isOldestPatch } from '../../lib/patches';
 import { useGameMode } from '../../lib/useGameMode';
 import QueryProvider from './QueryProvider';
 import { Chip, DataTable, type DataTableColumn, Delta, EmptyState, GameIcon, WinBar } from './ui/index';
@@ -34,7 +36,22 @@ function MoverRow({ s }: { s: PatchHeroStat }) {
   );
 }
 
-function MoversColumn({ title, rows, tone }: { title: string; rows: PatchHeroStat[]; tone: 'win' | 'loss' }) {
+function MoversColumn({
+  title,
+  rows,
+  tone,
+  oldestPatch,
+}: {
+  title: string;
+  rows: PatchHeroStat[];
+  tone: 'win' | 'loss';
+  oldestPatch: boolean;
+}) {
+  //"No gainers for this bracket" implies other brackets differ; on the OLDEST
+  //tracked patch the truth is structural — nothing earlier exists to diff (B8).
+  const emptyLine = oldestPatch
+    ? 'First tracked patch — no earlier patch to compare against.'
+    : `No ${tone === 'win' ? 'gainers' : 'losers'} for this bracket.`;
   return (
     <div className="panel" style={{ padding: '14px 16px' }}>
       <div className="between" style={{ marginBottom: 4 }}>
@@ -42,7 +59,7 @@ function MoversColumn({ title, rows, tone }: { title: string; rows: PatchHeroSta
         <Chip tone={tone}>{rows.length}</Chip>
       </div>
       {rows.length === 0 ? (
-        <p className="faint" style={{ fontSize: 12, padding: '8px 0' }}>No {tone === 'win' ? 'gainers' : 'losers'} for this bracket.</p>
+        <p className="faint" style={{ fontSize: 12, padding: '8px 0' }}>{emptyLine}</p>
       ) : (
         rows.map((s) => <MoverRow key={s.hero_id} s={s} />)
       )}
@@ -154,6 +171,9 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
   const active = patches.find((p) => p.patch_id === activeId) ?? null;
   const movers = moversQ.data;
   const heroStats = detailQ.data?.hero_stats ?? [];
+  //The first tracked patch structurally has no movers — no earlier patch to
+  //diff against (B8). Drives honest empty-state copy in both movers surfaces.
+  const oldestSelected = isOldestPatch(patches, activeId);
 
   return (
     <div className="grid" style={{ gap: 20 }}>
@@ -206,16 +226,32 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
         <h2 className="h-sec" style={{ fontSize: 16, margin: '0 0 10px' }}>Biggest movers</h2>
         {moversQ.isPending ? (
           <p className="muted">Loading movers…</p>
-        ) : moversQ.isError || !movers || (movers.gainers.length === 0 && movers.losers.length === 0) ? (
+        ) : isComputing(moversQ.error) ? (
+          //202 = the API is up and deliberately gating (freshness gate / first
+          //compute) — never call that "offline" (B3).
           <EmptyState
-            title="No movers for this patch yet"
-            message="Pick-rate gainers and losers need an earlier patch with hero stats to diff against — none is available yet."
+            title="Movers are computing"
+            message={computingMessage('patch movers are being generated', moversQ.error)}
             icon="chart"
           />
+        ) : moversQ.isError || !movers || (movers.gainers.length === 0 && movers.losers.length === 0) ? (
+          oldestSelected ? (
+            <EmptyState
+              title="First tracked patch"
+              message="No earlier patch to compare against — pick-rate movers start with the second tracked patch."
+              icon="chart"
+            />
+          ) : (
+            <EmptyState
+              title="No movers for this patch yet"
+              message="Pick-rate gainers and losers need an earlier patch with hero stats to diff against — none is available yet."
+              icon="chart"
+            />
+          )
         ) : (
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 16 }}>
-            <MoversColumn title="Rising" rows={movers.gainers} tone="win" />
-            <MoversColumn title="Falling" rows={movers.losers} tone="loss" />
+            <MoversColumn title="Rising" rows={movers.gainers} tone="win" oldestPatch={oldestSelected} />
+            <MoversColumn title="Falling" rows={movers.losers} tone="loss" oldestPatch={oldestSelected} />
           </div>
         )}
       </div>
@@ -230,11 +266,21 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
           loading={detailQ.isPending}
           initialSort={{ key: 'pick', dir: -1 }}
           caption="Per-hero win-rate, pick-rate and patch-over-patch deltas"
-          emptyTitle={detailQ.isError ? 'Patch stats unavailable' : 'No hero stats for this bracket yet'}
+          emptyTitle={
+            //202 = healthy, deliberately gating — "offline" is reserved for real
+            //network/5xx failure (B3).
+            isComputing(detailQ.error)
+              ? 'Patch stats are computing'
+              : detailQ.isError
+                ? 'Patch stats unavailable'
+                : 'No hero stats for this bracket yet'
+          }
           emptyMessage={
-            detailQ.isError
-              ? 'The stats API is offline — patch hero stats fill in when it comes back.'
-              : 'Nothing served for this patch/bracket yet. Try another bracket or check back after the next data refresh.'
+            isComputing(detailQ.error)
+              ? computingMessage('patch hero stats are being generated', detailQ.error)
+              : detailQ.isError
+                ? 'The stats API is offline — patch hero stats fill in when it comes back.'
+                : 'Nothing served for this patch/bracket yet. Try another bracket or check back after the next data refresh.'
           }
         />
       </div>

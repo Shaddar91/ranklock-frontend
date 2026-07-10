@@ -8,7 +8,8 @@
 //(api.getHeroes({ band }), band = badge/10 0..11); `keepPreviousData` avoids a flash.
 import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { api, queryKeys } from '../../lib/apiClient';
+import { api, isComputing, queryKeys } from '../../lib/apiClient';
+import { computingMessage } from '../../lib/apiStates';
 import { useGameMode } from '../../lib/useGameMode';
 import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, GameIcon, WinBar, TierPill } from './ui/index';
@@ -42,7 +43,7 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
   const { mode } = useGameMode();
   const [band, setBand] = useState<BracketValue>('all');
 
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isError, error } = useQuery({
     queryKey: queryKeys.heroes({ band: band === 'all' ? 'all' : band, game_mode: mode }),
     queryFn: () => api.getHeroes({ band: bandParam(band), game_mode: mode }),
     //The SSG seed is the DEFAULT-mode "all ranks" page — only apply it to that exact
@@ -108,11 +109,17 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
         loading={isPending}
         initialSort={{ key: 'wr', dir: -1 }}
         caption="Hero meta — win rate, pick rate and KDA by rank tier"
-        emptyTitle={isError ? 'Hero meta unavailable' : 'No heroes for this rank yet'}
+        emptyTitle={
+          //202 = healthy, deliberately gating — "offline" is reserved for real
+          //network/5xx failure (B3).
+          isComputing(error) ? 'Hero meta is computing' : isError ? 'Hero meta unavailable' : 'No heroes for this rank yet'
+        }
         emptyMessage={
-          isError
-            ? 'The stats API is offline — the meta table fills in when it comes back online.'
-            : 'Nothing served for this rank tier yet. Try another rank or check back after the next data refresh. Low ranks are sampled thinly.'
+          isComputing(error)
+            ? computingMessage('the hero meta table is being generated', error)
+            : isError
+              ? 'The stats API is offline — the meta table fills in when it comes back online.'
+              : 'Nothing served for this rank tier yet. Try another rank or check back after the next data refresh. Low ranks are sampled thinly.'
         }
       />
     </div>

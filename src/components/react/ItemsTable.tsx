@@ -12,7 +12,8 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { api, queryKeys } from '../../lib/apiClient';
+import { api, isComputing, queryKeys } from '../../lib/apiClient';
+import { computingMessage } from '../../lib/apiStates';
 import { useGameMode } from '../../lib/useGameMode';
 import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, GameIcon, Tooltip, WinBar } from './ui/index';
@@ -84,7 +85,7 @@ function ItemsTableInner({ initialRows }: { initialRows: ItemStat[] }) {
   const { mode } = useGameMode();
   const [bucket, setBucket] = useState<RankBucket['key']>(0);
 
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isError, error } = useQuery({
     queryKey: queryKeys.items(itemBracketParam(bucket), mode),
     queryFn: () => api.getItems(itemBracketParam(bucket), mode),
     //Seed only the default-mode "all ranks" view (see HeroesTable for the rationale).
@@ -150,11 +151,17 @@ function ItemsTableInner({ initialRows }: { initialRows: ItemStat[] }) {
         loading={isPending}
         initialSort={{ key: 'wr', dir: -1 }}
         caption="Item win-rates by rank bracket (badge tiers)"
-        emptyTitle={isError ? 'Item stats unavailable' : 'No items for this bracket yet'}
+        emptyTitle={
+          //202 = healthy, deliberately gating — "offline" is reserved for real
+          //network/5xx failure (B3).
+          isComputing(error) ? 'Item stats are computing' : isError ? 'Item stats unavailable' : 'No items for this bracket yet'
+        }
         emptyMessage={
-          isError
-            ? 'The stats API is offline — item win-rates fill in when it comes back online.'
-            : 'Nothing served for this rank band yet. Try another bracket or check back after the next data refresh.'
+          isComputing(error)
+            ? computingMessage('item win-rates are being generated', error)
+            : isError
+              ? 'The stats API is offline — item win-rates fill in when it comes back online.'
+              : 'Nothing served for this rank band yet. Try another bracket or check back after the next data refresh.'
         }
       />
     </div>

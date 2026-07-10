@@ -9,6 +9,8 @@ import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
 import { EmptyState, GameIcon, WinBar } from './ui/index';
+import BracketFilter, { type BracketValue } from './ui/BracketFilter';
+import { RANKS } from '../../lib/ranks';
 import { count } from '../../lib/format';
 import type { HeroItemWinRate, HeroSummary, HeroSynergyRow, MatchupEntry, TrimmedBuild } from '../../types/api';
 
@@ -134,64 +136,106 @@ function SynergiesTab({ heroId }: { heroId: number }) {
   );
 }
 
-//Best items by win rate (rich-analytics tier) — GET /heroes/:id/item-win-rates.
-//Hero-scoped item win-rates the API serves; sorted best-first, normalized 0..1 or
-//0..100 like the matchups win rate. Empty-states (202/501 build-ahead) until served.
+//The item-win-rates band selector offers tiers 1..11 only: for item rows band=0
+//is the backend's ALL-RANKS SENTINEL (not Obscurus), so 'all' — which omits the
+//param — is the only correct way to ask for the aggregate.
+const ITEM_BAND_TIERS: number[] = RANKS.filter((r) => r.tier > 0).map((r) => r.tier);
+
+//Top-20 rows by win rate, null-win-rate rows dropped (shared by the band-scoped
+//and all-ranks views). Win rate is normalized 0..1 or 0..100 at render time.
+const topByWinRate = (data?: HeroItemWinRate[]): HeroItemWinRate[] =>
+  [...(data ?? [])]
+    .filter((r) => r.win_rate != null)
+    .sort((a, b) => (b.win_rate ?? 0) - (a.win_rate ?? 0))
+    .slice(0, 20);
+
+//Best items by win rate (rich-analytics tier) — GET /heroes/:id/item-win-rates,
+//scoped to a rank band (badge/10 tier) or aggregated over all ranks. Empty-states
+//(202/501 build-ahead) until served. Band-empty honesty (audit B5): serving data
+//holds only the all-ranks aggregate today, so a specific band with no rows falls
+//back VISIBLY to the all-ranks table with "showing all ranks" copy instead of the
+//misleading "not served yet".
 function ItemsTab({ heroId }: { heroId: number }) {
-  const { data, isPending, isError } = useQuery<HeroItemWinRate[]>({
+  const [band, setBand] = useState<BracketValue>('all');
+  const apiBand = band === 'all' ? undefined : band;
+
+  //All-ranks rows — the 'all' view AND the visible fallback for an empty band.
+  const allQ = useQuery<HeroItemWinRate[]>({
     queryKey: queryKeys.heroItemWinRates(heroId),
     queryFn: () => api.getHeroItemWinRates(heroId),
     retry: false,
   });
+  //Band-scoped rows — fetched only when a specific band is picked.
+  const bandQ = useQuery<HeroItemWinRate[]>({
+    queryKey: queryKeys.heroItemWinRates(heroId, { band: apiBand }),
+    queryFn: () => api.getHeroItemWinRates(heroId, { band: apiBand }),
+    enabled: apiBand !== undefined,
+    retry: false,
+  });
 
-  const rows = useMemo(
-    () =>
-      [...(data ?? [])]
-        .filter((r) => r.win_rate != null)
-        .sort((a, b) => (b.win_rate ?? 0) - (a.win_rate ?? 0))
-        .slice(0, 20),
-    [data],
-  );
+  const allRows = useMemo(() => topByWinRate(allQ.data), [allQ.data]);
+  const bandRows = useMemo(() => topByWinRate(bandQ.data), [bandQ.data]);
 
-  if (isPending) return <p className="muted" style={{ padding: '14px 2px' }}>Loading item win-rates…</p>;
-  if (isError || rows.length === 0) {
-    return (
-      <EmptyState
-        title="Item win-rates not served yet"
-        message="Best items by win rate come online with the analytics pipeline."
-        icon="book"
-      />
-    );
-  }
+  //B5: a picked band with no data (empty result OR a band-scoped 202/501) while
+  //the all-ranks aggregate HAS data → show all ranks and say so.
+  const bandSelected = apiBand !== undefined;
+  const bandEmpty = bandSelected && !bandQ.isPending && bandRows.length === 0;
+  const fallbackToAll = bandEmpty && allRows.length > 0;
+  const rows = bandSelected && !fallbackToAll ? bandRows : allRows;
+  const isPending = bandSelected ? bandQ.isPending || (bandEmpty && allQ.isPending) : allQ.isPending;
+
   return (
-    <table className="dt" style={{ marginTop: 6 }}>
-      <thead>
-        <tr>
-          <th><span className="th-static">Item</span></th>
-          <th className="num"><span className="th-static">Win rate</span></th>
-          <th className="num"><span className="th-static">Matches</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => {
-          const wr = r.win_rate as number;
-          return (
-            <tr key={r.item_id}>
-              <td>
-                <div className="flex" style={{ alignItems: 'center', gap: 10 }}>
-                  <GameIcon kind="item" name={r.item_name ?? `Item ${r.item_id}`} src={r.icon_url} size={28} />
-                  <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
-                    {r.item_name ?? `Item ${r.item_id}`}
-                  </span>
-                </div>
-              </td>
-              <td className="num"><WinBar wr={wr <= 1 ? wr * 100 : wr} /></td>
-              <td className="num"><span className="tnum">{count(r.matches)}</span></td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+    <div>
+      <div className="between" style={{ margin: '10px 0 4px', gap: 16, flexWrap: 'wrap' }}>
+        <span className="label-xs">Best items at your rank</span>
+        <BracketFilter value={band} onChange={setBand} tiers={ITEM_BAND_TIERS} />
+      </div>
+      {isPending ? (
+        <p className="muted" style={{ padding: '14px 2px' }}>Loading item win-rates…</p>
+      ) : rows.length === 0 ? (
+        <EmptyState
+          title="Item win-rates not served yet"
+          message="Best items by win rate come online with the analytics pipeline."
+          icon="book"
+        />
+      ) : (
+        <>
+          {fallbackToAll && (
+            <p className="muted" style={{ fontSize: 12.5, margin: '8px 0 0' }}>
+              {"Per-rank item win-rates aren't tracked yet — showing all ranks."}
+            </p>
+          )}
+          <table className="dt" style={{ marginTop: 6 }}>
+            <thead>
+              <tr>
+                <th><span className="th-static">Item</span></th>
+                <th className="num"><span className="th-static">Win rate</span></th>
+                <th className="num"><span className="th-static">Matches</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const wr = r.win_rate as number;
+                return (
+                  <tr key={r.item_id}>
+                    <td>
+                      <div className="flex" style={{ alignItems: 'center', gap: 10 }}>
+                        <GameIcon kind="item" name={r.item_name ?? `Item ${r.item_id}`} src={r.icon_url} size={28} />
+                        <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
+                          {r.item_name ?? `Item ${r.item_id}`}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="num"><WinBar wr={wr <= 1 ? wr * 100 : wr} /></td>
+                    <td className="num"><span className="tnum">{count(r.matches)}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </>
+      )}
+    </div>
   );
 }
 
