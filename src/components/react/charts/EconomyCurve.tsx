@@ -1,19 +1,22 @@
-//Per-minute economy, tier vs tier vs up to TWO picked players. Deliberately-distinct
-//series — SINGLE source of truth for their colors is econSeriesColor (chartTheme),
-//and the caller's caption names those same colors via econSeriesWord, so legend +
-//caption + line colors can never drift:
-//  • solid, filled CYAN area  — the SELECTED rank tier's median curve (your rank)
-//  • long-dash VIOLET line    — the tier one rank up (the cohort you're chasing)
+//Per-minute economy — up to TWO league curves and TWO picked players, each slot drawn
+//ONLY when the caller passes its label (the comparison set is caller-composed; every
+//series can be toggled out without touching the others). Deliberately-distinct series —
+//SINGLE source of truth for their colors is econSeriesColor (chartTheme), and the
+//caller's caption names those same colors via econSeriesWord, so legend + caption +
+//line colors can never drift:
+//  • solid, filled CYAN area  — League A's median curve (`you` slot)
+//  • long-dash VIOLET line    — League B's median curve (`cohort` slot)
 //  • short-dash AMBER line    — the FIRST picked player's own per-minute curve (one
-//                               caller-supplied `player` value per point); omitted for no overlay
+//                               caller-supplied `player` value per point)
 //  • med-dash CORAL line      — the SECOND compared player's per-minute curve (`player2`);
-//                               a second warm hue so the two players never read as one line;
-//                               omitted unless a second player is picked
+//                               a second warm hue so the two players never read as one line
 //The palette is theme-STABLE on purpose (tokens.css --econ-*): the caption says the
 //literal word "cyan"/"violet"/"amber", so the lines must not re-skin with the theme
 //(the foundry skin used to turn "your rank" orange, colliding with amber "You").
-//Callers pass the visible labels (youLabel/cohortLabel/playerLabel); the
-//`you`/`cohort`/`player` dataKeys are fixed. Recharts ComposedChart.
+//Callers pass the visible labels (youLabel/cohortLabel/playerLabel/player2Label) from
+//their selection state — league display name, player name (+ hero). The
+//`you`/`cohort`/`player`/`player2` dataKeys are fixed INTERNAL slot names only; no
+//user-visible wording comes from them. Recharts ComposedChart.
 import {
   ComposedChart,
   Area,
@@ -38,8 +41,12 @@ import {
 export interface EconomyPoint {
   //match minute
   min: number;
-  you: number;
-  cohort: number;
+  //League A's value at THIS minute (`you` slot), NaN where that league has no sample,
+  //or absent when no League A series is drawn. Every series key is optional: the point
+  //grid is the UNION of whichever series the caller composed, none of them the "base".
+  you?: number;
+  //League B's value at THIS minute (`cohort` slot) — same contract as `you`.
+  cohort?: number;
   //Optional player-overlay value at THIS minute — the picked player's own per-minute
   //curve point (getPlayerEconomyCurve `you`), NaN where they have no sample, or absent
   //for no overlay. Drives the amber `player` series: a rising personal curve, not a level.
@@ -53,16 +60,16 @@ export interface EconomyPoint {
 interface EconomyCurveProps {
   data: EconomyPoint[];
   height?: number;
-  //Visible legend + tooltip labels for the series. you/cohort are tier medians, not
-  //the user — callers pass the selected band and the one-tier-up rank names so the
-  //chart reads as tier-vs-tier. playerLabel names the flat amber overlay (the picked
-  //player's name, or "You"); omit it to hide the overlay entirely. The
-  //`you`/`cohort`/`player` dataKeys stay fixed.
+  //Visible legend + tooltip labels for the series — EVERY series renders only while its
+  //label is passed (that is the in/out-of-chart switch; omit a label and its series,
+  //legend entry, and tooltip row all disappear without touching the others). Callers
+  //derive the labels from their selection state: youLabel/cohortLabel are the two league
+  //display names (League A / League B medians, not the user), playerLabel/player2Label
+  //the picked players' names (+ hero scope). The `you`/`cohort`/`player`/`player2`
+  //dataKeys stay fixed internal slot names.
   youLabel?: string;
   cohortLabel?: string;
   playerLabel?: string;
-  //Names the coral SECOND-player line (the 2nd player's display name); omit to hide it.
-  //Same contract as playerLabel — the `player2` dataKey stays fixed.
   player2Label?: string;
   //Thin-sample rendering (Component 11 / B6): true fades the corresponding player line so a
   //curve resting on fewer than THIN_SAMPLE_MIN_MATCHES games reads as tentative next to the
@@ -86,8 +93,8 @@ const fmtK = (v: ChartFmtValue) =>
 export default function EconomyCurve({
   data,
   height = 300,
-  youLabel = 'Your rank average',
-  cohortLabel = 'Next rank up',
+  youLabel,
+  cohortLabel,
   playerLabel,
   player2Label,
   playerFaint = false,
@@ -133,27 +140,34 @@ export default function EconomyCurve({
             style, and the filled area no longer shows an almost-invisible faint-fill
             swatch. That is what makes it obvious which line is which. */}
         <Legend wrapperStyle={{ fontSize: 12, color: 'var(--muted)' }} iconType="plainline" />
-        <Area
-          type="monotone"
-          name={youLabel}
-          dataKey="you"
-          stroke={econSeriesColor.you}
-          strokeWidth={2.6}
-          fill="url(#rl-econ-you)"
-          legendType="plainline"
-          isAnimationActive={animate}
-        />
-        <Line
-          type="monotone"
-          name={cohortLabel}
-          dataKey="cohort"
-          stroke={econSeriesColor.cohort}
-          strokeWidth={2.4}
-          strokeDasharray="7 5"
-          dot={false}
-          legendType="plainline"
-          isAnimationActive={animate}
-        />
+        {youLabel && (
+          //Cyan filled area for League A — drawn only while the caller keeps it in the
+          //comparison set (label passed), like every other series slot.
+          <Area
+            type="monotone"
+            name={youLabel}
+            dataKey="you"
+            stroke={econSeriesColor.you}
+            strokeWidth={2.6}
+            fill="url(#rl-econ-you)"
+            legendType="plainline"
+            isAnimationActive={animate}
+          />
+        )}
+        {cohortLabel && (
+          //Violet long-dash line for League B — the second, independently selected league.
+          <Line
+            type="monotone"
+            name={cohortLabel}
+            dataKey="cohort"
+            stroke={econSeriesColor.cohort}
+            strokeWidth={2.4}
+            strokeDasharray="7 5"
+            dot={false}
+            legendType="plainline"
+            isAnimationActive={animate}
+          />
+        )}
         {playerLabel && (
           //Amber per-minute line for the picked player: their OWN curve (getPlayerEconomyCurve
           //`you`), one value per minute, so it rises with the match. connectNulls bridges the

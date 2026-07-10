@@ -318,7 +318,9 @@ export default function Styleguide() {
             <div className="label-xs" style={{ marginBottom: 8 }}>
               Economy curve
             </div>
-            <EconomyCurve data={ECON_CURVE} />
+            {/* Labels are now caller-composed (no jargon defaults) — a series renders only
+                while its label is passed, so the demo names its two league slots. */}
+            <EconomyCurve data={ECON_CURVE} youLabel="League A average" cohortLabel="League B average" />
           </div>
           <div className="tile" style={{ padding: 14 }}>
             <div className="label-xs" style={{ marginBottom: 8 }}>

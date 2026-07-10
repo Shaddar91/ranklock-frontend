@@ -6,6 +6,7 @@ import {
   guardedPlayerCurvePoints,
   isThinPlayerSample,
   laneSeriesByMinute,
+  mergeEconSeriesByMinute,
   peakPlayerMatches,
   playerSeriesByMinute,
 } from './laneCurve';
@@ -211,5 +212,62 @@ describe('player-line sample-size disclosure (Component 11 / B6)', () => {
     const peak = peakPlayerMatches(oneGame);
     expect(peak).toBe(1);
     expect(isThinPlayerSample(peak)).toBe(true);
+  });
+});
+
+describe('mergeEconSeriesByMinute (composable comparison set)', () => {
+  const mapOf = (entries: [number, number][]) => new Map(entries);
+
+  it('builds the UNION minute grid — no series is the base', () => {
+    const merged = mergeEconSeriesByMinute({
+      you: mapOf([[3, 100], [6, 200]]),
+      player: mapOf([[6, 150], [9, 300]]),
+    });
+    expect(merged.map((p) => p.min)).toEqual([3, 6, 9]);
+  });
+
+  it('a series with no sample at a minute gets NaN there (a gap, never a fabricated value)', () => {
+    const merged = mergeEconSeriesByMinute({
+      you: mapOf([[3, 100]]),
+      cohort: mapOf([[6, 250]]),
+    });
+    expect(merged[0]!.you).toBe(100);
+    expect(merged[0]!.cohort).toBeNaN();
+    expect(merged[1]!.you).toBeNaN();
+    expect(merged[1]!.cohort).toBe(250);
+  });
+
+  it('a null / omitted / empty series contributes no key at all (its line is not drawn)', () => {
+    const merged = mergeEconSeriesByMinute({
+      you: mapOf([[3, 100]]),
+      cohort: null,
+      player: mapOf([]),
+    });
+    expect(merged).toHaveLength(1);
+    expect('cohort' in merged[0]!).toBe(false);
+    expect('player' in merged[0]!).toBe(false);
+  });
+
+  it('unchecking every entity yields an empty grid', () => {
+    expect(mergeEconSeriesByMinute({ you: null, cohort: null })).toEqual([]);
+  });
+
+  it('minutes come out sorted regardless of series insertion order', () => {
+    const merged = mergeEconSeriesByMinute({
+      player2: mapOf([[9, 1], [3, 2]]),
+      you: mapOf([[6, 3]]),
+    });
+    expect(merged.map((p) => p.min)).toEqual([3, 6, 9]);
+  });
+
+  it('accepts the on-demand hero comparison shape through laneSeriesByMinute (real units, scale 1)', () => {
+    //PlayerCurveComparison.points is structurally a percentile curve — the hero-scoped
+    //league series feed the SAME transform as the lane Gold, just unscaled.
+    const cmp = { points: [lanePt(180, 700), lanePt(360, 1500)] };
+    const merged = mergeEconSeriesByMinute({ cohort: laneSeriesByMinute(cmp, 1, 'total') });
+    expect(merged).toEqual([
+      { min: 3, cohort: 700 },
+      { min: 6, cohort: 1500 },
+    ]);
   });
 });

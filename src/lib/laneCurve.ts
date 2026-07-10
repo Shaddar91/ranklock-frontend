@@ -2,7 +2,7 @@
 //island component so the chart AND the unit tests transform a curve the SAME way.
 //The backend serves cumulative p50 buckets 180s apart; the 'rate' view derives the
 //per-minute amount gained across each bucket. No I/O — safe at build time and in tests.
-import type { LaneCurveResponse, PlayerCurvePoint, PlayerEconomyCurveResponse } from '../types/api';
+import type { PlayerCurvePoint, PlayerEconomyCurveResponse } from '../types/api';
 
 //The chart's x-axis view: 'rate' = per-minute amount gained; 'total' = cumulative curve.
 export type ViewMode = 'rate' | 'total';
@@ -34,6 +34,15 @@ export function dropLowSamplePoints<T>(pts: readonly T[], sampleOf: (p: T) => nu
   return pts.filter((p) => (sampleOf(p) ?? 0) >= floor);
 }
 
+//The structural shape of a percentile league curve — BOTH the lane endpoints'
+//LaneCurveResponse AND the player-curve endpoint's on-demand `comparison` side
+//(PlayerCurveComparison) satisfy it, so one transform serves the fast Gold league
+//curves (bucket units — pass the metric's bucket scale) and the hero-scoped
+//on-demand league curves (already real units — pass scale 1).
+export interface PercentileCurveLike {
+  points: ReadonlyArray<{ t_seconds: number; p50: number | null; sample_players: number }>;
+}
+
 //Convert a lane curve's p50 series into {game-minute → value}, honoring the view mode.
 //'total' passes the cumulative p50 through (×scale). 'rate' returns the per-minute amount
 //GAINED across each 180s bucket — (value[i] − value[i−1]) / minutesElapsed — a true
@@ -41,7 +50,7 @@ export function dropLowSamplePoints<T>(pts: readonly T[], sampleOf: (p: T) => nu
 //The first bucket has no predecessor, so it yields no rate point. Keyed by rounded game
 //minute — the SAME grid playerSeriesByMinute uses, so the series overlay cleanly.
 export function laneSeriesByMinute(
-  curve: LaneCurveResponse | undefined,
+  curve: PercentileCurveLike | null | undefined,
   scale: number,
   mode: ViewMode,
 ): Map<number, number> {
@@ -98,6 +107,43 @@ export function peakPlayerMatches(pts: readonly PlayerCurvePoint[] | undefined):
 //The thin-sample predicate: fewer than THIN_SAMPLE_MIN_MATCHES games at peak.
 export function isThinPlayerSample(peak: number): boolean {
   return peak < THIN_SAMPLE_MIN_MATCHES;
+}
+
+//---- the composable comparison-set merge -------------------------------------
+//The chart's four fixed series slots (EconomyCurve dataKeys). Which ENTITY each slot
+//carries is the caller's selection state — the slot names are internal only; every
+//user-visible label comes from the selection (league name / player name + hero).
+export type EconSeriesKey = 'you' | 'cohort' | 'player' | 'player2';
+
+export interface MergedEconPoint {
+  //match minute
+  min: number;
+  you?: number;
+  cohort?: number;
+  player?: number;
+  player2?: number;
+}
+
+//Merge any subset of per-minute series onto ONE union minute grid — one point per game
+//minute present in ANY provided series. A series with no sample at a minute gets NaN there
+//(Recharts renders a gap, never a fabricated point). Pass null/undefined (or an empty map)
+//to omit a series entirely — its key never appears, so the chart draws no line for it.
+//Unlike the old fixed you-grid merge, no series is the "base": unchecking the League A chip
+//must not collapse the grid the other series render on.
+export function mergeEconSeriesByMinute(
+  series: Partial<Record<EconSeriesKey, Map<number, number> | null>>,
+): MergedEconPoint[] {
+  const live = (Object.entries(series) as [EconSeriesKey, Map<number, number> | null | undefined][])
+    .filter((e): e is [EconSeriesKey, Map<number, number>] => e[1] != null && e[1].size > 0);
+  const minutes = new Set<number>();
+  for (const [, m] of live) for (const min of m.keys()) minutes.add(min);
+  return [...minutes]
+    .sort((a, b) => a - b)
+    .map((min) => {
+      const p: MergedEconPoint = { min };
+      for (const [key, m] of live) p[key] = m.get(min) ?? NaN;
+      return p;
+    });
 }
 
 //The picked player's own per-minute curve (getPlayerEconomyCurve `you`, already REAL units —

@@ -588,6 +588,10 @@ export interface PlayerEconomyCurveResponse {
   points: PlayerCurvePoint[];
   you: PlayerCurvePoint[];
   comparison: PlayerCurveComparison | null;
+  //Serialized ONLY when `hero=` was sent: how many Unranked/Normal matches the player has on
+  //that hero (the no-games guard input). 0 ⇒ the player never played the hero here — `you` is
+  //served EMPTY (never a silent all-heroes fallback) and the UI must not draw their series.
+  player_hero_games?: number;
 }
 
 //GET /me/economy-overlay?band=  (Lane Lab service) — the cohort curve PLUS the
