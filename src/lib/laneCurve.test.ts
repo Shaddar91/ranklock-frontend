@@ -46,12 +46,12 @@ describe('laneSeriesByMinute', () => {
     expect(out.size).toBe(3);
   });
 
-  it('rate mode yields the per-minute delta and omits the first bucket', () => {
+  it('rate mode yields the per-minute delta, anchoring the first bucket at the 0:00 origin', () => {
     const out = laneSeriesByMinute(curve, 1000, 'rate');
-    expect(out.has(3)).toBe(false); //no predecessor → no rate point
+    expect(out.get(3)).toBeCloseTo(1000 / 3, 6); //(1000-0)/3 — metrics are cumulative-from-zero
     expect(out.get(6)).toBeCloseTo(2000 / 3, 6); //(3000-1000)/3 min ≈ 666.67 souls/min
     expect(out.get(9)).toBe(1000); //(6000-3000)/3
-    expect(out.size).toBe(2);
+    expect(out.size).toBe(3);
   });
 
   it('filters out null-p50 buckets before computing the delta', () => {
@@ -84,12 +84,12 @@ describe('playerSeriesByMinute', () => {
     expect(out.get(9)).toBe(4000);
   });
 
-  it('rate mode yields per-minute gain and omits the first bucket', () => {
+  it('rate mode yields per-minute gain, anchoring the first bucket at the 0:00 origin', () => {
     const out = playerSeriesByMinute(pts, 'rate');
-    expect(out.has(3)).toBe(false);
+    expect(out.get(3)).toBeCloseTo(1000 / 3, 6); //(1000-0)/3 — cumulative-from-zero origin
     expect(out.get(6)).toBeCloseTo(500, 6); //(2500-1000)/3
     expect(out.get(9)).toBeCloseTo(500, 6); //(4000-2500)/3
-    expect(out.size).toBe(2);
+    expect(out.size).toBe(3);
   });
 
   it('sorts unsorted input by t_seconds', () => {

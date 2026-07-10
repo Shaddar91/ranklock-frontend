@@ -67,10 +67,14 @@ export function laneSeriesByMinute(
       out.set(min, val);
       return;
     }
+    //First bucket: every lane metric is cumulative-from-zero (0 at 0:00), so the origin is
+    //the first point's true predecessor — without it the rate view starts at 6:00 and the
+    //whole early game (source samples begin at 3:00) silently disappears.
     const prev = pts[i - 1];
-    if (!prev) return; //no prior bucket → no per-minute delta for the first point
-    const minutes = (p.t_seconds - prev.t_seconds) / 60;
-    if (minutes > 0) out.set(min, (val - (prev.p50 as number) * scale) / minutes);
+    const prevT = prev ? prev.t_seconds : 0;
+    const prevVal = prev ? (prev.p50 as number) * scale : 0;
+    const minutes = (p.t_seconds - prevT) / 60;
+    if (minutes > 0) out.set(min, (val - prevVal) / minutes);
   });
   return out;
 }
@@ -160,10 +164,12 @@ export function playerSeriesByMinute(pts: PlayerCurvePoint[], mode: ViewMode): M
       out.set(min, p.value);
       return;
     }
+    //Origin-anchored first bucket — same reasoning as laneSeriesByMinute (cumulative-from-zero).
     const prev = sorted[i - 1];
-    if (!prev) return;
-    const minutes = (p.t_seconds - prev.t_seconds) / 60;
-    if (minutes > 0) out.set(min, (p.value - prev.value) / minutes);
+    const prevT = prev ? prev.t_seconds : 0;
+    const prevVal = prev ? prev.value : 0;
+    const minutes = (p.t_seconds - prevT) / 60;
+    if (minutes > 0) out.set(min, (p.value - prevVal) / minutes);
   });
   return out;
 }
