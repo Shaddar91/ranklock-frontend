@@ -640,3 +640,23 @@ export interface CurrentUser {
 export interface HealthResponse {
   status: string;
 }
+
+//---- freshness metadata ------------------------------------------------------
+
+//GET /meta/data-horizon (deadlock-backend handlers/meta.rs, pinned wire shape —
+//the backend test `horizon_serializes_pinned_shape` locks these exact keys).
+//`max_match_start_time` = max(matches.start_time), the global ingestion horizon;
+//`datasets` = per-dataset lineage window stamps (dataset "economy-curve" today).
+//Every field nullable: pre-data everything is null / []. Always 200 — but the
+//UI must ALSO tolerate the route being absent entirely (404 on a pre-C8 API)
+//and render nothing rather than a fake date.
+export interface DataHorizonDatasetWindow {
+  dataset: string;
+  window_lo: string | null;
+  window_hi: string | null;
+  computed_at: string | null;
+}
+export interface DataHorizonResponse {
+  max_match_start_time: string | null;
+  datasets: DataHorizonDatasetWindow[];
+}

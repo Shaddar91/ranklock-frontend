@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   MIN_SAMPLE_FRACTION,
+  THIN_SAMPLE_MIN_MATCHES,
   dropLowSamplePoints,
   guardedPlayerCurvePoints,
+  isThinPlayerSample,
   laneSeriesByMinute,
+  peakPlayerMatches,
   playerSeriesByMinute,
 } from './laneCurve';
 import type { LaneCurvePoint, LaneCurveResponse, PlayerCurvePoint } from '../types/api';
@@ -178,5 +181,35 @@ describe('C5 low-sample-point filter', () => {
     const out = playerSeriesByMinute(pts, 'total');
     expect(out.has(7)).toBe(false);
     expect([...out.keys()]).toEqual([6, 8]);
+  });
+});
+
+describe('player-line sample-size disclosure (Component 11 / B6)', () => {
+  //The caption's "n = X games" must be the PEAK per-bucket match count — how many of the
+  //player's games the line actually rests on — because `matches` decays along the x-axis as
+  //shorter games drop out (min 3 has all their games; min 40 only the longest).
+  it('peakPlayerMatches returns the highest per-bucket match count', () => {
+    const pts = [playerPt(180, 1000, 95), playerPt(360, 2500, 80), playerPt(540, 4000, 12)];
+    expect(peakPlayerMatches(pts)).toBe(95);
+  });
+
+  it('peakPlayerMatches is 0 for an empty or absent curve', () => {
+    expect(peakPlayerMatches([])).toBe(0);
+    expect(peakPlayerMatches(undefined)).toBe(0);
+  });
+
+  it('isThinPlayerSample flags fewer than THIN_SAMPLE_MIN_MATCHES games at peak', () => {
+    expect(THIN_SAMPLE_MIN_MATCHES).toBe(5);
+    expect(isThinPlayerSample(1)).toBe(true);
+    expect(isThinPlayerSample(4)).toBe(true);
+    expect(isThinPlayerSample(5)).toBe(false); //at the floor = not thin
+    expect(isThinPlayerSample(95)).toBe(false);
+  });
+
+  it('a single-game line reads as thin end to end (the 1–95-match disclosure case)', () => {
+    const oneGame = [playerPt(180, 900, 1), playerPt(360, 2100, 1)];
+    const peak = peakPlayerMatches(oneGame);
+    expect(peak).toBe(1);
+    expect(isThinPlayerSample(peak)).toBe(true);
   });
 });

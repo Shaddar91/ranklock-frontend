@@ -64,6 +64,11 @@ interface EconomyCurveProps {
   //Names the coral SECOND-player line (the 2nd player's display name); omit to hide it.
   //Same contract as playerLabel — the `player2` dataKey stays fixed.
   player2Label?: string;
+  //Thin-sample rendering (Component 11 / B6): true fades the corresponding player line so a
+  //curve resting on fewer than THIN_SAMPLE_MIN_MATCHES games reads as tentative next to the
+  //million-sample rank bands. The lines are already dashed; faint is the thinness signal.
+  playerFaint?: boolean;
+  player2Faint?: boolean;
   //Draw-on mount animation for the two cohort curves (default true). Set false for
   //deterministic renders where the animation can't complete — SSR/headless
   //screenshots, snapshot tests — so the lines are present immediately.
@@ -85,6 +90,8 @@ export default function EconomyCurve({
   cohortLabel = 'Next rank up',
   playerLabel,
   player2Label,
+  playerFaint = false,
+  player2Faint = false,
   animate = true,
   xDomain,
 }: EconomyCurveProps) {
@@ -160,6 +167,7 @@ export default function EconomyCurve({
             stroke={econSeriesColor.player}
             strokeWidth={2.2}
             strokeDasharray="2 3"
+            strokeOpacity={playerFaint ? 0.45 : 1}
             dot={false}
             connectNulls
             isAnimationActive={false}
@@ -178,6 +186,7 @@ export default function EconomyCurve({
             stroke={econSeriesColor.player2}
             strokeWidth={2.2}
             strokeDasharray="5 3"
+            strokeOpacity={player2Faint ? 0.45 : 1}
             dot={false}
             connectNulls
             isAnimationActive={false}

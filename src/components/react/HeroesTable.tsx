@@ -28,13 +28,29 @@ const FULL_TIERS: number[] = RANKS.filter((r) => r.tier > 0).map((r) => r.tier);
 //backend serves the all-ranks hero_summary_mv). Mirrors LaneLabIsland's bandParam.
 const bandParam = (v: BracketValue): number | undefined => (v === 'all' ? undefined : v);
 
+//A roster hero the stats pipeline has never tracked (Component 11, pairs with the backend's
+//roster-complete /heroes C9): the LEFT-JOIN miss serves picks=0 + all-null stats. Rendered as
+//a dashed "no tracked matches yet" row instead of fabricated zeros. The CURRENT (pre-deploy)
+//API serves only stat-ful MV rows — no row matches this, so both API shapes render correctly.
+const isRosterOnly = (h: HeroSummary): boolean => h.win_rate == null && (h.picks ?? 0) === 0;
+
 function HeroCell({ hero }: { hero: HeroSummary }) {
+  const rosterOnly = isRosterOnly(hero);
   return (
-    <a className="flex" href={`/heroes/${hero.hero_id}`} style={{ alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+    <a
+      className="flex"
+      href={`/heroes/${hero.hero_id}`}
+      style={{ alignItems: 'center', gap: 10, textDecoration: 'none', opacity: rosterOnly ? 0.55 : 1 }}
+    >
       <GameIcon kind="hero" name={hero.hero_name} src={hero.icon_url} size={30} />
       <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
         {hero.hero_name}
       </span>
+      {rosterOnly && (
+        <span className="mono faint" style={{ fontSize: 10.5, whiteSpace: 'nowrap' }}>
+          no tracked matches yet
+        </span>
+      )}
     </a>
   );
 }
@@ -83,7 +99,14 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
         header: 'Pick %',
         numeric: true,
         sortValue: (h) => h.picks,
-        render: (h) => <span className="tnum">{pct(pickShare(h.picks, totalPicks))}</span>,
+        //An untracked roster row's picks=0 is "never measured", not a measured 0.0% — dash it
+        //like its other stat cells (tier/WR/KDA dash via their own null handling).
+        render: (h) =>
+          isRosterOnly(h) ? (
+            <span className="faint">{DASH}</span>
+          ) : (
+            <span className="tnum">{pct(pickShare(h.picks, totalPicks))}</span>
+          ),
       },
       {
         key: 'kda',

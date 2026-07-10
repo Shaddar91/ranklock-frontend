@@ -32,7 +32,8 @@ import { econSeriesColor, econSeriesWord } from './charts/chartTheme';
 import { useViewer } from './player/usePlayer';
 import { getRank, rankFromBadge, RANKS } from '../../lib/ranks';
 import { count, fixed, pct } from '../../lib/format';
-import { type ViewMode, guardedPlayerCurvePoints, laneSeriesByMinute, playerSeriesByMinute } from '../../lib/laneCurve';
+import { datasetWindowLabel, ECONOMY_CURVE_DATASET } from '../../lib/dataHorizon';
+import { type ViewMode, guardedPlayerCurvePoints, isThinPlayerSample, laneSeriesByMinute, peakPlayerMatches, playerSeriesByMinute, THIN_SAMPLE_MIN_MATCHES } from '../../lib/laneCurve';
 import type { EconomyOverlayResponse, LaneCurveResponse, PlayerEconomy, SearchResult } from '../../types/api';
 
 //A single curve metric: the API token + its human label.
@@ -294,6 +295,7 @@ function CurvePanel({
   playerOverlay2 = null,
   playerId2 = null,
   playerName2 = null,
+  sampleWindow = null,
 }: {
   band: BracketValue;
   fetcher: (params: { band?: number; metric?: string }) => Promise<LaneCurveResponse>;
@@ -319,6 +321,10 @@ function CurvePanel({
   playerOverlay2?: PlayerOverlay | null;
   playerId2?: number | null;
   playerName2?: string | null;
+  //The economy-curve Gold's match-start sample window ("Apr 1, 2026 – Jun 1, 2026") from
+  ///meta/data-horizon, or null when unknown — the band caption then shows no window rather
+  //than a hardcoded date (Component 11 data-age honesty).
+  sampleWindow?: string | null;
 }) {
   const [metric, setMetric] = useState<string>(defaultMetric);
   //Default to the per-minute RATE view — the cumulative 'total' is what made adjacent ranks
@@ -389,6 +395,11 @@ function CurvePanel({
   //points. Only an empty guarded series (no points, or a metric-echo mismatch) shows that
   //note now.
   const hasPlayerCurve = playerPoints.length > 0;
+  //Sample-size disclosure (Component 11 / B6): the n this line actually rests on — the peak
+  //per-bucket `matches` from the curve payload — and whether that n is thin (< 5 games), in
+  //which case the chart line renders faint and the caption says so.
+  const playerPeakN = peakPlayerMatches(playerPoints);
+  const playerThin = hasPlayerCurve && isThinPlayerSample(playerPeakN);
 
   //The SECOND compared player's own per-minute curve — byte-identical fetch to player 1's,
   //just keyed on playerId2. Same gate (a picked second player), same metric threading, so
@@ -411,6 +422,9 @@ function CurvePanel({
     [playerPoints2, viewMode],
   );
   const hasPlayerCurve2 = playerPoints2.length > 0;
+  //Same sample-size disclosure for the second compared player's coral line.
+  const playerPeakN2 = peakPlayerMatches(playerPoints2);
+  const playerThin2 = hasPlayerCurve2 && isThinPlayerSample(playerPeakN2);
 
   const points = useMemo(() => {
     const base = toEconPoints(youCurve.data, cohortCurve.data, bucketScale(metric), viewMode);
@@ -453,7 +467,11 @@ function CurvePanel({
           </h2>
         </div>
         {n > 0 && (
-          <span className="mono faint" style={{ fontSize: 12 }}>n = {count(n)} players sampled</span>
+          //The band n plus, when /meta/data-horizon serves the economy-curve lineage stamp,
+          //the match window that n was computed from — never a hardcoded date range.
+          <span className="mono faint" style={{ fontSize: 12 }}>
+            n = {count(n)} players sampled{sampleWindow ? <> · {sampleWindow} sample</> : null}
+          </span>
         )}
       </div>
       {/* View toggle (per-minute RATE vs cumulative TOTAL) always shows; the metric toggle
@@ -492,6 +510,8 @@ function CurvePanel({
             cohortLabel={cohortLabel ? `${cohortLabel} average (next rank up)` : undefined}
             playerLabel={hasPlayerCurve ? (overlayName ?? undefined) : undefined}
             player2Label={hasPlayerCurve2 ? (overlayName2 ?? undefined) : undefined}
+            playerFaint={playerThin}
+            player2Faint={playerThin2}
           />
           {/* Caption color words are driven by econSeriesWord/econSeriesColor — the
               SAME source of truth the chart lines use — so the words can never
@@ -528,12 +548,21 @@ function CurvePanel({
                 <>
                   The <b style={{ color: econSeriesColor.player }}>{econSeriesWord.player} dashed</b> line is{' '}
                   <b>{overlayName}</b>&rsquo;s own {metricLower} {isRate ? <><b>per minute</b></> : <><b>over the game</b></>}
-                  {playerOverlay ? <>, averaged across {count(playerOverlay.matches)} games</> : null} —{' '}
+                  {playerOverlay ? <>, averaged across {count(playerOverlay.matches)} games</> : null}
+                  {/* the n THIS LINE rests on — the curve payload's per-bucket `matches` peak,
+                      not the per-game aggregate count (B6 sample-size disclosure). */}
+                  {' '}(your line: n = {count(playerPeakN)} games) —{' '}
                   {isRate ? (
                     <>earned <b>each minute</b>, so you can see the minutes you out- or under-farm your rank.</>
                   ) : (
                     <>a real personal curve that rises with the match, not a flat average.</>
                   )}
+                  {playerThin ? (
+                    <>
+                      {' '}<b>Thin sample:</b> fewer than {THIN_SAMPLE_MIN_MATCHES} of their games reach these
+                      minutes, so the line is drawn faint — read it as an anecdote, not a trend.
+                    </>
+                  ) : null}
                 </>
               ) : curveEligible && playerCurve.isFetching ? (
                 <>Loading <b>{overlayName}</b>&rsquo;s {metricLower} curve…</>
@@ -559,8 +588,16 @@ function CurvePanel({
                 <>
                   The <b style={{ color: econSeriesColor.player2 }}>{econSeriesWord.player2} dashed</b> line is{' '}
                   <b>{overlayName2}</b>&rsquo;s own {metricLower} {isRate ? <><b>per minute</b></> : <><b>over the game</b></>}
-                  {playerOverlay2 ? <>, averaged across {count(playerOverlay2.matches)} games</> : null} — the{' '}
+                  {playerOverlay2 ? <>, averaged across {count(playerOverlay2.matches)} games</> : null}
+                  {/* same B6 disclosure for the second line — its own per-bucket `matches` peak. */}
+                  {' '}(their line: n = {count(playerPeakN2)} games) — the{' '}
                   <b>second</b> player you&rsquo;re comparing, so you can read both players against your rank at once.
+                  {playerThin2 ? (
+                    <>
+                      {' '}<b>Thin sample:</b> fewer than {THIN_SAMPLE_MIN_MATCHES} of their games reach these
+                      minutes, so the line is drawn faint — read it as an anecdote, not a trend.
+                    </>
+                  ) : null}
                 </>
               ) : curveEligible2 && playerCurve2.isFetching ? (
                 <>Loading <b>{overlayName2}</b>&rsquo;s {metricLower} curve…</>
@@ -942,6 +979,16 @@ function LaneLabInner() {
   const bandLabel = band === 'all' ? 'All ranks' : getRank(band).name;
   const cohortLabel = cohort != null ? getRank(cohort).name : null;
 
+  //The economy-curve Gold's sample window from /meta/data-horizon (Component 11) — shares
+  //the page-wide singleton query cache with the header DataAgeChip, so this adds no second
+  //request. Absent/erroring endpoint → null → the band captions simply omit the window.
+  const horizon = useQuery({
+    queryKey: queryKeys.dataHorizon(),
+    queryFn: api.getDataHorizon,
+    retry: false,
+  });
+  const sampleWindow = datasetWindowLabel(horizon.data, ECONOMY_CURVE_DATASET);
+
   //Picked player → public per-player aggregate (MAIN API, C5). My account → the Lane Lab
   //service `/me/economy-overlay` `you` side. Only the active source's query is enabled.
   const pickedId = overlay?.kind === 'player' ? overlay.player.account_id : null;
@@ -1056,6 +1103,7 @@ function LaneLabInner() {
         metrics={ECON_METRICS}
         defaultMetric="souls"
         kicker="Souls per minute — your rank vs the next rank up (players in amber + coral)"
+        sampleWindow={sampleWindow}
         playerOverlay={liveOverlay}
         playerId={pickedId}
         playerName={overlay?.kind === 'player' ? overlay.player.steam_name : null}
@@ -1073,6 +1121,7 @@ function LaneLabInner() {
         metrics={FARM_METRICS}
         defaultMetric="last_hits"
         kicker="Last-hits per minute — your rank vs the next rank up (players in amber + coral)"
+        sampleWindow={sampleWindow}
         playerOverlay={liveOverlay}
         playerId={pickedId}
         playerName={overlay?.kind === 'player' ? overlay.player.steam_name : null}

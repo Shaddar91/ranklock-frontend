@@ -19,6 +19,7 @@ import type {
   CompareResponse,
   ComparePlayerResponse,
   CurrentUser,
+  DataHorizonResponse,
   EarlyEconVerdictResponse,
   EconomyOverlayResponse,
   GameMode,
@@ -248,6 +249,8 @@ export const queryKeys = {
   laneEarlyEconVerdict: (params?: Query) => ['lane-lab', 'early-econ-verdict', params ?? {}] as const,
   //the signed-in caller's own economy overlay (Lane Lab service /me/economy-overlay).
   myEconomyOverlay: (params?: Query) => ['me', 'economy-overlay', params ?? {}] as const,
+  //data-age freshness metadata (the "Stats through {date}" chip + sample windows).
+  dataHorizon: () => ['meta', 'data-horizon'] as const,
   me: () => ['me'] as const,
 };
 
@@ -407,6 +410,11 @@ export const api = {
   //it (no game_mode dimension on the table).
   getRankDistribution: (game_mode?: GameMode) =>
     apiFetch<RankBucket[]>('/stats/rank-distribution', { query: { game_mode } }),
+  //Freshness metadata (backend meta.rs, ungated + fail-open server-side). Consumers must
+  //treat ANY failure — including a 404 from an API that predates the route — as "unknown"
+  //and render nothing: no fake date, no error state (Component 11 data-age honesty).
+  getDataHorizon: () => apiFetch<DataHorizonResponse>('/meta/data-horizon'),
+
   //Authed: the session cookie must ride cross-origin, so this is the one main-API call
   //that opts into `credentials: 'include'` (all other reads are public → 'same-origin').
   getCurrentUser: () => apiFetch<CurrentUser>('/me', { credentials: 'include' }),

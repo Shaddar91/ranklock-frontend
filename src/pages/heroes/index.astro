@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import DataAgeChip from '../../components/react/DataAgeChip';
 import HeroesTable from '../../components/react/HeroesTable';
 import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
@@ -41,6 +42,8 @@ const jsonLd = [
   <main class="container">
     <div class="kicker">The meta</div>
     <h1 class="h-page">Hero win-rates</h1>
+    {/* data-age honesty (Component 11): renders nothing until /meta/data-horizon serves a date */}
+    <DataAgeChip client:load />
     <p class="page-intro">
       Every Deadlock hero ranked by win-rate, with a meta tier, pick share. Filter by rank
       band to see the meta at your level — labelled by rank emblem, not MMR.

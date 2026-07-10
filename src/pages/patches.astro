@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import DataAgeChip from '../components/react/DataAgeChip';
 import PatchTrackerIsland from '../components/react/PatchTrackerIsland';
 import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
@@ -29,6 +30,8 @@ const jsonLd = breadcrumbJsonLd(origin, [
   <main class="container">
     <div class="kicker">Patch tracking</div>
     <h1 class="h-page">Patch meta shifts</h1>
+    {/* data-age honesty (Component 11): renders nothing until /meta/data-horizon serves a date */}
+    <DataAgeChip client:load />
     <p class="page-intro">
       How each Deadlock patch moves the meta — the biggest pick-rate gainers and losers, win-rate deltas, and
       the full hero stat line by rank bracket. Pick a patch and a rank band to see what changed.

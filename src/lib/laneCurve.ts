@@ -80,6 +80,26 @@ export function guardedPlayerCurvePoints(
   return resp.you ?? [];
 }
 
+//Sample-size disclosure for the player lines (Component 11 / B6): a player line is drawn
+//from as few as 1 of their games while the rank band behind it aggregates millions, so the
+//caption must carry the line's own n and a thin line must LOOK thin.
+
+//Below this many games at the line's best-sampled minute, the line is rendered faint with a
+//"thin sample" note — a 1–4-game curve is an anecdote, not a trend.
+export const THIN_SAMPLE_MIN_MATCHES = 5;
+
+//Peak per-bucket `matches` across the player's curve — the n the caption discloses ("n = X
+//games"). Peak (not min) because `matches` decays along the x-axis as shorter games drop
+//out; the peak is how many games the line actually rests on. 0 for an empty/absent curve.
+export function peakPlayerMatches(pts: readonly PlayerCurvePoint[] | undefined): number {
+  return (pts ?? []).reduce((m, p) => Math.max(m, p.matches ?? 0), 0);
+}
+
+//The thin-sample predicate: fewer than THIN_SAMPLE_MIN_MATCHES games at peak.
+export function isThinPlayerSample(peak: number): boolean {
+  return peak < THIN_SAMPLE_MIN_MATCHES;
+}
+
 //The picked player's own per-minute curve (getPlayerEconomyCurve `you`, already REAL units —
 //no ×scale), transformed the same way: 'total' = the cumulative value, 'rate' = the souls /
 //last-hits gained each minute. Same minute grid as laneSeriesByMinute.

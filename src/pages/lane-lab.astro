@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import DataAgeChip from '../components/react/DataAgeChip';
 import LaneLabIsland from '../components/react/LaneLabIsland';
 import { breadcrumbJsonLd } from '../lib/seo';
 
@@ -27,6 +28,8 @@ const jsonLd = breadcrumbJsonLd(origin, [
   <main class="container">
     <div class="kicker">Coaching</div>
     <h1 class="h-page">Lane Lab</h1>
+    {/* data-age honesty (Component 11): renders nothing until /meta/data-horizon serves a date */}
+    <DataAgeChip client:load />
     <p class="page-intro">
       Per-minute economy and soul-curve coaching — your rank's median souls over match minutes against the
       rank you're chasing, a 9-minute early-economy win-rate verdict, and where the lane is being lost. The
