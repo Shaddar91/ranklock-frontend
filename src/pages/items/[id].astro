@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { api } from '../../lib/apiClient';
-import { buildFetch } from '../../lib/buildData';
+import { buildFetchNonEmpty } from '../../lib/buildData';
 import { breadcrumbJsonLd } from '../../lib/seo';
 import { count, pct } from '../../lib/format';
 import type { ItemStat } from '../../types/api';
@@ -29,14 +29,15 @@ type ItemDetail = ItemMetaFull & {
 //SSG item detail — one prerendered page per catalog item id (mirrors heroes/[id].astro).
 //The path set comes from the STATIC item catalog (items-detail.json, 251 stable upgrade
 //items) so every item always has a page even when /items/stats is cold at build.
-//name/icon/cost/tier/slot/description are baked from that catalog; win-rate + matches are
-//joined from a build-time /items/stats fetch (empty-stated when the stats API is cold or
-//the win-rate field is still degraded). No backend endpoint — the catalog is self-contained.
+//name/icon/cost/tier/slot/description are baked from that catalog; win-rate + matches
+//are joined from a build-time /items/stats fetch. The bake-empty guard fails the build
+//when that fetch bakes 0 rows (cold origin) instead of silently shipping every item
+//page with empty stats — ALLOW_EMPTY_STATS_BUILD=1 overrides for intentional builds.
 //If the catalog is somehow empty, a single noindex placeholder keeps the route building.
 export async function getStaticPaths() {
   const catalog = itemDetail as unknown as Record<string, ItemMetaFull>;
   const entries = Object.entries(catalog);
-  const stats = await buildFetch(api.getItems(), [] as ItemStat[]);
+  const stats = await buildFetchNonEmpty<ItemStat>(api.getItems(), '/items/stats (item detail pages)');
   const statById = new Map(stats.map((s) => [String(s.item_id), s]));
 
   if (entries.length === 0) {

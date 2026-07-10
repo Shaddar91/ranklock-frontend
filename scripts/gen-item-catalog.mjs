@@ -30,9 +30,21 @@
 //
 //Re-run when the item set changes (new patch / new items):
 //    node scripts/gen-item-catalog.mjs
-import { writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+//
+//CI drift gate (R19):
+//    node scripts/gen-item-catalog.mjs --check
+//Runs the SAME regen path (live fetch + full transform — the generator is inert
+//unless items-detail.json is actually regenerated, so --check must exercise the
+//real thing), but writes to a temp dir and diffs against the committed files
+//instead of overwriting them. Exit 1 = drift (fix: run the plain regen above and
+//commit). Upstream unreachable/malformed = exit 0 with a loud ::warning:: — a
+//third-party CDN outage must not block a code deploy; only real drift may.
+import { writeFileSync, mkdirSync, mkdtempSync, readFileSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const CHECK = process.argv.includes('--check');
 
 //301-redirects to https://api.deadlock-api.com/v1/assets/items (fetch follows it).
 const SRC = 'https://assets.deadlock-api.com/v2/items';
@@ -58,15 +70,28 @@ function plainText(html) {
   return txt || null;
 }
 
-const res = await fetch(SRC, { headers: { 'User-Agent': 'ranklock-asset-mirror' } });
-if (!res.ok) {
-  console.error(`gen-item-catalog: fetch failed — HTTP ${res.status} ${res.statusText}`);
+//Upstream failure: in write mode this is fatal (exit 1 — never overwrite good files
+//with nothing). In --check mode it is a SKIP (exit 0 + loud warning): an unreachable
+//or malformed upstream is not evidence of drift, and the deploy gate must not be
+//hostage to the community CDN's uptime.
+function upstreamFail(msg) {
+  if (CHECK) {
+    console.warn(`::warning::gen-item-catalog --check SKIPPED (cannot verify drift): ${msg}`);
+    process.exit(0);
+  }
+  console.error(`gen-item-catalog: ${msg}`);
   process.exit(1);
 }
-const all = await res.json();
+
+const res = await fetch(SRC, { headers: { 'User-Agent': 'ranklock-asset-mirror' } }).catch((err) =>
+  upstreamFail(`fetch failed — ${err?.cause?.code ?? err?.message ?? err}`),
+);
+if (!res.ok) {
+  upstreamFail(`fetch failed — HTTP ${res.status} ${res.statusText}`);
+}
+const all = await res.json().catch(() => null);
 if (!Array.isArray(all)) {
-  console.error('gen-item-catalog: unexpected response (not an array)');
-  process.exit(1);
+  upstreamFail('unexpected response (not an array)');
 }
 
 //Only type==="upgrade" entries are the buildable shop items /items/stats reports;
@@ -136,14 +161,53 @@ for (const e of all) {
 
 const ids = Object.keys(catalog);
 if (ids.length === 0) {
-  console.error('gen-item-catalog: no upgrade items found — refusing to write an empty catalog');
-  process.exit(1);
+  //An all-filtered feed would mean wiping the catalog — never automatic, in either mode.
+  upstreamFail('no upgrade items found — refusing an empty catalog');
+}
+
+const outputs = [
+  [OUT, JSON.stringify(catalog) + '\n'],
+  [OUT_DETAIL, JSON.stringify(detail) + '\n'],
+  [OUT_DESC, JSON.stringify(descriptions) + '\n'],
+];
+
+if (CHECK) {
+  //Drift gate: regenerate into a temp dir, byte-diff against the committed files.
+  const tmp = mkdtempSync(join(tmpdir(), 'gen-item-catalog-check-'));
+  const drifted = [];
+  for (const [committedPath, fresh] of outputs) {
+    const name = basename(committedPath);
+    writeFileSync(join(tmp, name), fresh);
+    const committed = existsSync(committedPath) ? readFileSync(committedPath, 'utf8') : null;
+    if (committed === fresh) continue;
+    let summary = 'committed file missing';
+    if (committed !== null) {
+      try {
+        const oldIds = new Set(Object.keys(JSON.parse(committed)));
+        const freshObj = JSON.parse(fresh);
+        const newIds = Object.keys(freshObj);
+        const added = newIds.filter((id) => !oldIds.has(id)).length;
+        const removed = [...oldIds].filter((id) => !(id in freshObj)).length;
+        summary = `${oldIds.size} committed vs ${newIds.length} regenerated ids (+${added}/-${removed}, rest changed in place)`;
+      } catch {
+        summary = 'committed file is not valid JSON';
+      }
+    }
+    drifted.push(`${name}: ${summary}`);
+  }
+  if (drifted.length > 0) {
+    console.error(`gen-item-catalog --check: DRIFT — committed src/data files no longer match the upstream feed:`);
+    for (const line of drifted) console.error(`  - ${line}`);
+    console.error(`Fresh copies left in ${tmp} for inspection.`);
+    console.error('Fix: run `node scripts/gen-item-catalog.mjs` and commit the regenerated files.');
+    process.exit(1);
+  }
+  console.log(`gen-item-catalog --check: no drift (${ids.length} items match the committed files)`);
+  process.exit(0);
 }
 
 mkdirSync(dirname(OUT), { recursive: true });
-writeFileSync(OUT, JSON.stringify(catalog) + '\n');
-writeFileSync(OUT_DETAIL, JSON.stringify(detail) + '\n');
-writeFileSync(OUT_DESC, JSON.stringify(descriptions) + '\n');
+for (const [path, fresh] of outputs) writeFileSync(path, fresh);
 console.log(`gen-item-catalog: wrote ${ids.length} items (${withIcon} with icon) -> ${OUT}`);
 console.log(`gen-item-catalog: wrote ${ids.length} items (${withDesc} with description) -> ${OUT_DETAIL}`);
 console.log(`gen-item-catalog: wrote ${withDesc} descriptions -> ${OUT_DESC}`);

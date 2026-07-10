@@ -6,6 +6,12 @@ on:
   workflow_dispatch: {}
   repository_dispatch:
     types: [data_version]
+  #Weekly rebake (M6): stats are baked into the static pages at BUILD time, and
+  #deploys otherwise happen only on code push / data_version dispatch — without
+  #this, a quiet repo means unboundedly stale baked stats. Monday 04:47 UTC,
+  #offset from the Rust repos' Monday 05:17 oracle lane.
+  schedule:
+    - cron: '47 4 * * 1'
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -23,6 +29,17 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run type-check
+      - run: npm test
+      #R19: fail if the committed item catalog (src/data/items-*.json) has drifted
+      #from the upstream assets feed — runs the real regen path into a temp dir and
+      #diffs. Drift = red (regen + commit to fix); upstream outage = loud warning +
+      #skip (see scripts/gen-item-catalog.mjs).
+      - name: Item catalog drift check
+        run: node scripts/gen-item-catalog.mjs --check
+      #M17/R25: the build FAILS if the /items/stats bake returns 0 rows (bake-empty
+      #guard in src/lib/buildData.ts) — a cold backend must not silently ship ~229
+      #empty prerendered item pages. Escape hatch for an intentional empty-stats
+      #build: add ALLOW_EMPTY_STATS_BUILD: '1' below.
       - run: npm run build
         env:
           PUBLIC_ADSENSE_CLIENT: ${{ secrets.PUBLIC_ADSENSE_CLIENT }}
@@ -36,6 +53,22 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config dist/server/wrangler.json
+      - name: Probe deployed site (gate for the purge)
+        run: |
+          #A broken deploy must not evict the last-good edge copies, so the purge
+          #below only runs after the NEW deploy provably serves. The unique query
+          #param busts the edge cache so each probe is answered by the freshly
+          #deployed worker rather than a still-cached pre-deploy copy.
+          bust="probe=${{ github.run_id }}-${{ github.run_attempt }}"
+          for path in / /items; do
+            url="https://ranklock.app${path}?${bust}"
+            code=$(curl -sS -o /tmp/probe-body -w '%{http_code}' --max-time 30 \
+              --retry 5 --retry-delay 4 --retry-all-errors "$url") \
+              || { echo "PROBE FAIL $url — curl error"; exit 1; }
+            [ "$code" = "200" ] || { echo "PROBE FAIL $url — HTTP $code (expected 200)"; exit 1; }
+            [ -s /tmp/probe-body ] || { echo "PROBE FAIL $url — empty body"; exit 1; }
+            echo "probe OK $url — HTTP 200, $(wc -c < /tmp/probe-body) bytes"
+          done
       - name: Purge Cloudflare cache
         run: |
           curl --fail --silent --show-error -X POST \

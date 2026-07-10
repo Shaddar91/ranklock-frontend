@@ -3,15 +3,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import DataAgeChip from '../components/react/DataAgeChip';
 import ItemsTable from '../components/react/ItemsTable';
 import { api } from '../lib/apiClient';
-import { buildFetch } from '../lib/buildData';
+import { buildFetchNonEmpty } from '../lib/buildData';
 import { breadcrumbJsonLd } from '../lib/seo';
 import type { ItemStat } from '../types/api';
 
 //SSG items win-rate table (requirements §B.5). THE BUG FIX lives in ItemsTable:
 //the rank bracket is labelled by BADGE TIER / rank emblem, never an MMR-score
 //range. Build-time rows (bucket 0 = all ranks) seed the island for SEO; the
-//bracket selector refetches each 0–5 bucket client-side.
-const items = await buildFetch(api.getItems(), [] as ItemStat[]);
+//bracket selector refetches each 0–5 bucket client-side. The bake-empty guard
+//fails the build if this bake comes back empty (ALLOW_EMPTY_STATS_BUILD=1 to
+//override) — a cold origin must not silently ship an empty items table.
+const items = await buildFetchNonEmpty<ItemStat>(api.getItems(), '/items/stats (items table)');
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const jsonLd = breadcrumbJsonLd(origin, [

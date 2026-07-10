@@ -69,7 +69,7 @@ function HeroBaseStatsTab() {
 
   //Only entries whose nested value is numeric are display-worthy stat tiles.
   const statEntries = Object.entries(active.stats)
-    .filter((e): e is [string, BaseStatValue] => typeof (e[1] as any)?.value === 'number')
+    .filter((e): e is [string, BaseStatValue] => typeof (e[1] as { value?: unknown } | null)?.value === 'number')
     .sort((a, b) => a[0].localeCompare(b[0]));
 
   return (
