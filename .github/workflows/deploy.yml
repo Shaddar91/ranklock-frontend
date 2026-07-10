@@ -56,12 +56,17 @@ jobs:
       - name: Probe deployed site (gate for the purge)
         run: |
           #A broken deploy must not evict the last-good edge copies, so the purge
-          #below only runs after the NEW deploy provably serves. The unique query
-          #param busts the edge cache so each probe is answered by the freshly
-          #deployed worker rather than a still-cached pre-deploy copy.
+          #below only runs after the NEW deploy provably serves. Probes hit the
+          #worker's own workers.dev hostname: the zone apex (ranklock.app) sits
+          #behind a Cloudflare managed challenge that 403s every non-browser
+          #client (cf-mitigated: challenge, any UA — verified 2026-07-10), so an
+          #unauthenticated probe there can never pass, while workers.dev serves
+          #the exact version this run just deployed, outside the zone WAF. The
+          #unique query param is cache-busting insurance; /items/ keeps its
+          #trailing slash (the assets router 307s /items -> /items/).
           bust="probe=${{ github.run_id }}-${{ github.run_attempt }}"
-          for path in / /items; do
-            url="https://ranklock.app${path}?${bust}"
+          for path in / /items/; do
+            url="https://ranklock-frontend.shaddar45.workers.dev${path}?${bust}"
             code=$(curl -sS -o /tmp/probe-body -w '%{http_code}' --max-time 30 \
               --retry 5 --retry-delay 4 --retry-all-errors "$url") \
               || { echo "PROBE FAIL $url — curl error"; exit 1; }
