@@ -6,6 +6,8 @@
 //public/assets/heroes are intentionally NOT used here: those are cards, not the
 //full-bleed background plates this layer needs.
 
+import { resolveAsset } from './assets';
+
 //Rotation cadence in seconds. The Claude-design slider sat around 16–18s; 18s per
 //the latest direction. Single knob — retune here.
 export const ROTATE_SECS = 18;
@@ -23,7 +25,8 @@ export const BACKDROP_HEROES = [
   'bebop',
 ] as const;
 
-//Full-bleed hero background plate for a given hero id.
+//Full-bleed hero background plate for a given hero id. Routed through resolveAsset
+//so it follows the swappable asset base (default = theirs; one flip = ours).
 export function heroBackdropUrl(id: string): string {
-  return `https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/${id}_bg.png`;
+  return resolveAsset(`https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/${id}_bg.png`);
 }

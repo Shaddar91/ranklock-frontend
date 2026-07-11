@@ -5,6 +5,7 @@
 //The "Top N%" chip only renders when /performance served a percentile, and the
 //"My Stats" chip only when the signed-in viewer owns this account (auth branch).
 import { Chip, GameIcon, FormDots, Icon, RankBadge } from '../ui/index';
+import { resolveAsset } from '../../../lib/assets';
 import { cssVars } from '../../../lib/cssVars';
 import { count, pct } from '../../../lib/format';
 import { getRank, rankFromBadge, subLabel } from '../../../lib/ranks';
@@ -37,7 +38,7 @@ export default function PlayerHeader({ player, heroes, formWins, topPercentile, 
 
   return (
     <div className="brass-frame" style={{ padding: 0, overflow: 'hidden', marginBottom: 18 }}>
-      {main?.icon_url && <div className="ph-art" style={{ backgroundImage: `url(${main.icon_url})` }} />}
+      {main?.icon_url && <div className="ph-art" style={{ backgroundImage: `url(${resolveAsset(main.icon_url)})` }} />}
       <span className="corner tl" />
       <span className="corner tr" />
       <span className="corner bl" />

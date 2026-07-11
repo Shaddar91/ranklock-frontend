@@ -4,6 +4,7 @@ import { api } from '../../lib/apiClient';
 import { buildFetchNonEmpty } from '../../lib/buildData';
 import { breadcrumbJsonLd } from '../../lib/seo';
 import { count, pct } from '../../lib/format';
+import { resolveAsset } from '../../lib/assets';
 import type { ItemStat } from '../../types/api';
 import itemDetail from '../../data/items-detail.json';
 
@@ -50,7 +51,7 @@ export async function getStaticPaths() {
     //glyph for many items (e.g. Silencer -> emp_bullets.png) whereas the live feed serves
     //the colored shop tile (silencer.webp); this also fills the null-icon handful. The
     //baked meta.icon stays only as the fallback for genuinely-art-less / cold-stats items.
-    const icon = st?.icon_url ?? meta.icon ?? null;
+    const icon = resolveAsset(st?.icon_url ?? meta.icon ?? null);
     const item: ItemDetail = {
       item_id: Number(id),
       ...meta,

@@ -12,6 +12,7 @@
 //null, so if the backend later starts serving item_name/icon_url this layer
 //silently becomes a no-op. Items with no CDN art keep GameIcon's monogram fallback.
 import catalog from '../data/items-catalog.json';
+import { resolveAsset } from './assets';
 
 export interface ItemMeta {
   name: string;
@@ -36,7 +37,9 @@ export function enrichItemMeta<T extends ItemMetaRow>(row: T): T {
   return {
     ...row,
     item_name: row.item_name ?? meta.name,
-    icon_url: row.icon_url ?? meta.icon,
+    //Route the winning icon (live API value or catalog fallback) through the
+    //swappable asset base so item icons cut over with everything else.
+    icon_url: resolveAsset(row.icon_url ?? meta.icon),
   };
 }
 

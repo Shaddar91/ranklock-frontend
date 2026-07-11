@@ -5,6 +5,7 @@ import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
 import { breadcrumbJsonLd } from '../../lib/seo';
 import { count, fixed, kda, metaTier, pct } from '../../lib/format';
+import { resolveAsset } from '../../lib/assets';
 import type { HeroSummary } from '../../types/api';
 
 //SSG hero detail (requirements §B.3) — one prerendered page per hero id. The
@@ -56,7 +57,7 @@ const heroKda = kda(hero?.avg_kills, hero?.avg_deaths, hero?.avg_assists);
           <div class="entity-head">
             <span class="entity-art">
               {hero.icon_url ? (
-                <img src={hero.icon_url} alt={name} />
+                <img src={resolveAsset(hero.icon_url)} alt={name} />
               ) : (
                 <span class="icon-mono" style="font-size:32px; display:flex; width:100%; height:100%; align-items:center; justify-content:center;">
                   {name.slice(0, 1)}

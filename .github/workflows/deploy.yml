@@ -44,6 +44,11 @@ jobs:
         env:
           PUBLIC_ADSENSE_CLIENT: ${{ secrets.PUBLIC_ADSENSE_CLIENT }}
           PUBLIC_API_BASE_URL: ${{ secrets.PUBLIC_API_BASE_URL }}
+          #Asset-CDN cutover knob. Unset secret => empty => code falls back to the
+          #deadlock-api CDN (v1 default). The one-flip cutover is: set the
+          #PUBLIC_ASSETS_BASE repo secret to https://assets.ranklock.app — no code
+          #change, no workflow edit. Safe to keep wired while the secret is unset.
+          PUBLIC_ASSETS_BASE: ${{ secrets.PUBLIC_ASSETS_BASE }}
           PUBLIC_DONATION_ADDRESS: ${{ secrets.PUBLIC_DONATION_ADDRESS }}
           PUBLIC_MATOMO_SITE_ID: ${{ secrets.PUBLIC_MATOMO_SITE_ID }}
           PUBLIC_MATOMO_URL: ${{ secrets.PUBLIC_MATOMO_URL }}

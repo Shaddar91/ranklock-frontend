@@ -8,6 +8,7 @@ import { getCollection } from 'astro:content';
 import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { count, shortDate } from '../lib/format';
+import { resolveAsset } from '../lib/assets';
 import { websiteJsonLd, orgJsonLd, SITE_TAGLINE } from '../lib/seo';
 import type { HeroSummary, LeaderboardEntry } from '../types/api';
 
@@ -83,7 +84,7 @@ const entries = [
                 <div class="flex" style="align-items:center; gap:10px;">
                   {h.icon_url && (
                     <span class="hav" style="width:28px; height:28px;">
-                      <img src={h.icon_url} alt={h.hero_name} loading="lazy" />
+                      <img src={resolveAsset(h.icon_url)} alt={h.hero_name} loading="lazy" />
                     </span>
                   )}
                   <a
@@ -150,7 +151,7 @@ const entries = [
                       <a href={`/heroes/${h.hero_id}`} class="flex" style="align-items:center; gap:10px; text-decoration:none;">
                         {h.icon_url && (
                           <span class="hav" style="width:30px; height:30px;">
-                            <img src={h.icon_url} alt={h.hero_name} loading="lazy" />
+                            <img src={resolveAsset(h.icon_url)} alt={h.hero_name} loading="lazy" />
                           </span>
                         )}
                         <span class="display" style="font-weight:600; color:var(--text);">{h.hero_name}</span>
