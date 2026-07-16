@@ -11,10 +11,14 @@
 .nav-links {
   gap: 2px;
   margin-left: 18px;
-  flex: 1;
+  flex: 1 1 auto;      /* was: flex: 1 — spelled explicitly */
   min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;  /* ADD — with overflow-x:auto a UA can otherwise compute
+                          overflow-y to auto/visible; hidden keeps a hard clip */
   scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, #000 92%, transparent);
+          mask-image: linear-gradient(to right, #000 92%, transparent);
 }
 .nav-links::-webkit-scrollbar {
   display: none;
@@ -22,7 +26,7 @@
 .nav-tools {
   align-items: center;
   gap: 10px;
-  flex: none;
+  flex: 0 0 auto;      /* 0 0 auto == the current `none`, unambiguous */
 }
 /* Tools group stays flex:none, but its children must be allowed to shrink and the
    compact search must scale with the viewport — otherwise the fixed-width search +
@@ -50,6 +54,13 @@
   .nav-tools .searchbig {
     display: none;
   }
+}
+/* Below the search-hide breakpoint, reclaim width for the tab strip:
+   compact the toggle and tighten nav gaps/padding (Component 1, Q3). */
+@media (max-width: 640px) {
+  .nav-inner { gap: 6px; padding: 0 12px; }
+  .nav-tools { gap: 6px; }
+  .gm-toggle .minitog { padding: 5px 8px; }
 }
 
 /* ---------- player search dropdown ---------- */
