@@ -13,6 +13,7 @@ import { useGameMode } from '../../lib/useGameMode';
 import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, Icon, RankBadge, WinBar } from './ui/index';
 import BucketFilter from './ui/BucketFilter';
+import SearchBox from './SearchBox';
 import { badgeRangeForTiers, type RankBucket } from '../../lib/brackets';
 import { rankFromBadge, subLabel } from '../../lib/ranks';
 import { count, DASH } from '../../lib/format';
@@ -28,9 +29,12 @@ export const LEADERBOARD_PAGE_SIZE = 50;
 //Leaderboard-specific bands: top players cluster in the upper tiers, so the
 //filter offers All + the meaningful high/top bands (rank-emblem labelled).
 const LEADERBOARD_BUCKETS: readonly RankBucket[] = [
-  { key: 'all', label: 'All ranks', short: 'All', tiers: [] },
-  { key: 'high', label: 'Oracle – Phantom', short: 'High', tiers: [8, 9] },
-  { key: 'top', label: 'Ascendant – Eternus', short: 'Top', tiers: [10, 11] },
+  { key: 'all',      label: 'All ranks',           short: 'All',      tiers: []         },
+  { key: 'initiate', label: 'Initiate – Alchemist', short: 'Initiate', tiers: [1, 2, 3] },
+  { key: 'arcanist', label: 'Arcanist – Ritualist', short: 'Arcanist', tiers: [4, 5]    },
+  { key: 'emissary', label: 'Emissary – Archon',    short: 'Emissary', tiers: [6, 7]    },
+  { key: 'high',     label: 'Oracle – Phantom',     short: 'High',     tiers: [8, 9]    },
+  { key: 'top',      label: 'Ascendant – Eternus',  short: 'Top',      tiers: [10, 11]  },
 ];
 
 const MEDAL = ['var(--gold)', '#cfd6df', '#c08457'];
@@ -202,7 +206,7 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
   return (
     <div>
       <div className="between" style={{ marginBottom: 16, gap: 16, flexWrap: 'wrap' }}>
-        <span className="label-xs">Global ranked ladder</span>
+        <SearchBox variant="compact" placeholder="Find a player…" />
         <BucketFilter buckets={LEADERBOARD_BUCKETS} value={bucket} onChange={changeBucket} ariaLabel="Leaderboard by rank" />
       </div>
       <Podium rows={podium} />

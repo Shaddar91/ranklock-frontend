@@ -22,7 +22,8 @@ import type { HeroBracket } from '../types/api';
 export interface RankBucket {
   //stable selector key. ITEM buckets use the integer the API wants (0..5);
   //HERO buckets use 'all' | the HeroBracket string the API wants.
-  key: number | HeroBracket | 'all';
+  //Leaderboard buckets use arbitrary string keys (not sent to the API).
+  key: string | number;
   //tier-range label (emblem-backed) — never an MMR range.
   label: string;
   //compact label for tight chrome.
