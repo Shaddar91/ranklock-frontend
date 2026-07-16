@@ -24,7 +24,7 @@ import SignatureCurve from '../charts/SignatureCurve';
 import { sigSeriesColor, useSigSeriesWords } from '../charts/chartTheme';
 import { CatPanel } from './StatLine';
 import { useCompare, useImprove, usePlayer, usePlayerEconomyCurve, usePlayerHeroesPlayed } from './usePlayer';
-import { combatRows, compareRadar, economyRows, efficiencyRows, laningRows } from '../../../lib/playstyle';
+import { combatRows, economyRows, efficiencyRows, laningRows, selfShapeAxes } from '../../../lib/playstyle';
 import { mergeSignatureCurve, curveMarker } from '../../../lib/signatureCurve';
 import { RANKS, getRank, rankFromBadge } from '../../../lib/ranks';
 import { count, fixed } from '../../../lib/format';
@@ -60,20 +60,23 @@ function Loading({ label }: { label: string }) {
 
 //---- playstyle radar --------------------------------------------------------
 
-//Built from the SERVED /compare aggregates (you vs the rank one tier up). The old
-///improve-backed percentile radar was never served, so this panel empty-stated
-//forever; /compare is live. Two consequences vs the old version:
-//  • /compare is mode-separated, so this is NOT Normal-only — in Brawl it shows the
-//    Brawl cohort (or empty-states when there's no Brawl sample). Hence no NormalOnlyNote.
-//  • the cohort is an AVERAGE (not a p50 median), and its label is the SERVED tier
-//    name (dynamic) — never a hardcoded tier. The you/cohort dataKeys stay fixed.
+//The player's OWN shape across 6 per-game measures (Souls/min, Last-hits, Kills,
+//Assists, Denies, KDA), each normalized against a FIXED display ceiling (SELF_AXIS_MAX
+//in lib/playstyle) — NOT against a league cohort. The old "vs the rank above" league
+//framing was removed per the dictation: playstyle is the player's own shape, standalone,
+//so it renders regardless of the (separately-tracked, possibly-empty) cohort MV. Only
+//the always-populated `you` side of /compare is read; league_offset is gone, so this no
+//longer depends on cohort data at all. NOT Normal-only, so no NormalOnlyNote.
 export function PlaystyleRadarPanel({ id }: { id: number }) {
-  //'one_up' = the rank you're chasing — matches the sibling EconomyPanel, and the
-  //identical params let react-query dedupe both panels into one /compare fetch.
-  const { data, isPending, isError, error } = useCompare(id, { league_offset: 'one_up' });
-  const axes = data ? compareRadar(data) : [];
+  //No league_offset — the radar needs only the always-populated `you` aggregate; the
+  //cohort/tier baseline is intentionally not read (own-shape view).
+  const { data, isPending, isError, error } = useCompare(id);
+  const you = data?.you ?? null;
+  const axes = you ? selfShapeAxes(you) : [];
   const servedCount = axes.filter((a) => a.served).length;
-  const cohortName = data?.cohort.tier_name ?? null;
+  //Real empty-state ONLY when the player has no usable own data (no matches / every
+  //metric null) — the designed fallback, not the old systemic cohort-empty.
+  const noData = !you || you.matches === 0 || servedCount === 0;
 
   return (
     <div className="brass-frame" style={{ padding: '18px 20px' }}>
@@ -84,24 +87,31 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
           Playstyle
         </div>
         <h2 className="h-sec" style={{ fontSize: 17 }}>
-          Your shape vs {cohortName ?? 'the rank above'}
+          Your shape
         </h2>
       </div>
       {isPending ? (
         <Loading label="Loading playstyle" />
-      ) : isError || servedCount === 0 ? (
+      ) : isError ? (
         <EmptyState title="Playstyle radar not served yet" message={buildAheadMessage(error)} icon="target" />
+      ) : noData ? (
+        <EmptyState title="No playstyle data yet" message="No matches recorded for this player yet." icon="target" />
       ) : (
         <>
           <RadarChart
-            data={axes.map((a) => ({ axis: a.axis, you: a.you, cohort: a.cohort }))}
+            //Single series = the player's own shape. RadarChart always draws a 2nd
+            //(cohort) polygon and RadarDatum requires a cohort number, so we mirror
+            //`you` into cohort: the dashed line hides under the wider solid you-line →
+            //exactly one visible polygon, NO league baseline. The compare-vs-player
+            //overlay (next component) replaces this mirror with the picked player.
+            data={axes.map((a) => ({ axis: a.axis, you: a.you, cohort: a.you }))}
             youLabel="You"
-            cohortLabel={cohortName ? `${cohortName} avg` : 'Tier avg'}
+            cohortLabel="You"
           />
           <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
             {servedCount < axes.length
-              ? `Partial — ${servedCount} of ${axes.length} axes served; the rest fill in once the cohort has data on them.`
-              : `The 0.5 ring is the ${cohortName ?? 'tier'} average; your blob bulges where you exceed it.`}
+              ? `Partial — ${servedCount} of ${axes.length} axes shown; the rest fill in as this player logs more matches.`
+              : 'Your shape across six per-game measures — the blob reaches out on the axes you do most.'}
           </p>
         </>
       )}

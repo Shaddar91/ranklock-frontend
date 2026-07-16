@@ -37,7 +37,9 @@ export interface StatRow {
   served: boolean;
 }
 
-//One radar axis: `you` and `cohort` are 0..1 where 0.5 == the cohort p50 baseline.
+//One radar axis: `you` and `cohort` are 0..1 positions. For compareRadar, 0.5 == the
+//cohort baseline; for selfShapeAxes (own-shape default), `you` is value÷ceiling and
+//`cohort` is unused (0) — the panel supplies any second series itself.
 export interface RadarAxis {
   axis: string;
   you: number;
@@ -89,6 +91,37 @@ export function compareRadar(cmp: CompareResponse): RadarAxis[] {
   return COMPARE_AXES.map(({ axis, pick }) => {
     const { pos, served } = compareAxisPos(pick(cmp.you), pick(cmp.cohort));
     return { axis, you: pos, cohort: 0.5, served };
+  });
+}
+
+//---- self shape (own metrics, NO league baseline) ---------------------------
+
+//Fixed per-axis display ceiling — the `you` value that fills the ring (1.0). Seeded
+//from the live high-tier `you` distributions in the Component 1 evidence table so a
+//strong player lands ~0.6–0.8 of the ring and none of the tested players clip to 1.0.
+//These are DISPLAY anchors ONLY — no league/cohort data is read to build them.
+const SELF_AXIS_MAX: Record<string, number> = {
+  'Souls/min': 1600, //tested you souls/min peaks ~1172 → 0.73; headroom for elite farm
+  'Last-hits': 200, //tested avg last-hits peaks ~149 → 0.75; 200/game is an elite lane
+  Kills: 12, //tested avg kills peaks ~8.8 → 0.74; 12 kills/game is an aggressive ceiling
+  Assists: 25, //tested avg assists peaks ~17.6 → 0.70; 25/game is a support-tier ceiling
+  Denies: 7, //tested avg denies peaks ~4.7 → 0.67; denies seldom exceed 7/game
+  KDA: 6, //KDA 6 is elite; strong players ~3.5–4.5 land ~0.6–0.75
+};
+
+//The DEFAULT radar: the player's OWN shape, standalone. Maps each present `you`
+//per-game metric onto 0..1 via SELF_AXIS_MAX (value÷ceiling, clamped) with NO
+//dependency on any cohort/league value — that framing was removed per the dictation,
+//so this renders regardless of the (separately-tracked, possibly-empty) cohort MV. An
+//axis is `served` whenever the player's own value is present. `cohort` is 0 (there is
+//no baseline); the panel supplies the optional second series (own-mirror today, a
+//picked player once the compare overlay ships).
+export function selfShapeAxes(you: CompareSide): RadarAxis[] {
+  return COMPARE_AXES.map(({ axis, pick }) => {
+    const v = pick(you);
+    if (v == null) return { axis, you: 0, cohort: 0, served: false };
+    const max = SELF_AXIS_MAX[axis] ?? 1;
+    return { axis, you: clamp(v / max, 0, 1), cohort: 0, served: true };
   });
 }
 
