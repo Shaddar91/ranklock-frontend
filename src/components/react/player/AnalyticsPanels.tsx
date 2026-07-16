@@ -15,19 +15,21 @@
 //  • CategorizedSection   — Combat/Economy (from /improve) + Laning/Efficiency
 //                           (from /compare), with a vs-bracket ⇄ compare toggle.
 //============================================================================
-import { useState } from 'react';
-import { isComputing, isDisabled, isNotFound } from '../../../lib/apiClient';
+import { useEffect, useId, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api, isComputing, isDisabled, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClient';
 import { useGameMode } from '../../../lib/useGameMode';
-import { EmptyState, Icon } from '../ui/index';
+import { EmptyState, Icon, RankBadge } from '../ui/index';
 import RadarChart from '../charts/RadarChart';
 import SignatureCurve from '../charts/SignatureCurve';
 import { sigSeriesColor, useSigSeriesWords } from '../charts/chartTheme';
 import { CatPanel } from './StatLine';
-import { useCompare, useImprove, usePlayer, usePlayerEconomyCurve, usePlayerHeroesPlayed } from './usePlayer';
-import { combatRows, economyRows, efficiencyRows, laningRows, selfShapeAxes } from '../../../lib/playstyle';
+import { useCompare, useComparePlayer, useImprove, usePlayer, usePlayerEconomyCurve, usePlayerHeroesPlayed } from './usePlayer';
+import { combatRows, compareRadarVsPlayer, economyRows, efficiencyRows, laningRows, selfShapeAxes } from '../../../lib/playstyle';
 import { mergeSignatureCurve, curveMarker } from '../../../lib/signatureCurve';
 import { RANKS, getRank, rankFromBadge } from '../../../lib/ranks';
 import { count, fixed } from '../../../lib/format';
+import type { SearchResult } from '../../../types/api';
 
 //Coaching/playstyle are derived from /improve, whose cohort is Normal-only (022). In
 //Brawl mode this content is STILL Normal — surface that so the page never silently
@@ -62,11 +64,9 @@ function Loading({ label }: { label: string }) {
 
 //The player's OWN shape across 6 per-game measures (Souls/min, Last-hits, Kills,
 //Assists, Denies, KDA), each normalized against a FIXED display ceiling (SELF_AXIS_MAX
-//in lib/playstyle) — NOT against a league cohort. The old "vs the rank above" league
-//framing was removed per the dictation: playstyle is the player's own shape, standalone,
-//so it renders regardless of the (separately-tracked, possibly-empty) cohort MV. Only
-//the always-populated `you` side of /compare is read; league_offset is gone, so this no
-//longer depends on cohort data at all. NOT Normal-only, so no NormalOnlyNote.
+//in lib/playstyle) — NOT against a league cohort. An OPTIONAL player picker lets the
+//viewer overlay a second player's shape on the same scale for direct comparison; when
+//a player is picked the second series replaces the own-shape mirror. No league option.
 export function PlaystyleRadarPanel({ id }: { id: number }) {
   //No league_offset — the radar needs only the always-populated `you` aggregate; the
   //cohort/tier baseline is intentionally not read (own-shape view).
@@ -78,6 +78,40 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
   //metric null) — the designed fallback, not the old systemic cohort-empty.
   const noData = !you || you.matches === 0 || servedCount === 0;
 
+  //---- optional player-compare overlay ----------------------------------------
+  const [raw, setRaw] = useState('');
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState<SearchResult | null>(null);
+  const listId = useId();
+
+  useEffect(() => {
+    const t = setTimeout(() => setQ(raw.trim()), 250);
+    return () => clearTimeout(t);
+  }, [raw]);
+
+  const searchEnabled = q.length >= 2;
+  const search = useQuery({
+    queryKey: queryKeys.search(q),
+    queryFn: () => api.searchPlayers(q, 8),
+    enabled: searchEnabled,
+  });
+  const results = (search.data ?? []).filter((r) => r.account_id !== id);
+  const selfOnly =
+    (search.data?.length ?? 0) > 0 &&
+    results.length === 0 &&
+    (search.data ?? []).every((r) => r.account_id === id);
+
+  //No hero filter — pick the best shared hero across all heroes.
+  const cmp = useComparePlayer(id, picked?.account_id);
+  const cmpData = cmp.data ?? null;
+  //HTTP 404 from compare-player = no shared-hero overlap (per Component 1, an
+  //intentional empty-state, NOT a broken route).
+  const noSharedHero = isNotFound(cmp.error);
+
+  //Two-series axes (you + picked player, both via SELF_AXIS_MAX) when cmpData loads.
+  const overlayAxes = you && cmpData ? compareRadarVsPlayer(you, cmpData.them) : null;
+
   return (
     <div className="brass-frame" style={{ padding: '18px 20px' }}>
       <span className="corner tl" />
@@ -87,7 +121,7 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
           Playstyle
         </div>
         <h2 className="h-sec" style={{ fontSize: 17 }}>
-          Your shape
+          {picked ? `You vs ${picked.steam_name}` : 'Your shape'}
         </h2>
       </div>
       {isPending ? (
@@ -99,20 +133,127 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
       ) : (
         <>
           <RadarChart
-            //Single series = the player's own shape. RadarChart always draws a 2nd
-            //(cohort) polygon and RadarDatum requires a cohort number, so we mirror
-            //`you` into cohort: the dashed line hides under the wider solid you-line →
-            //exactly one visible polygon, NO league baseline. The compare-vs-player
-            //overlay (next component) replaces this mirror with the picked player.
-            data={axes.map((a) => ({ axis: a.axis, you: a.you, cohort: a.you }))}
+            data={
+              overlayAxes
+                ? overlayAxes.map((a) => ({ axis: a.axis, you: a.you, cohort: a.cohort }))
+                : axes.map((a) => ({ axis: a.axis, you: a.you, cohort: a.you }))
+            }
             youLabel="You"
-            cohortLabel="You"
+            cohortLabel={overlayAxes && picked ? picked.steam_name : 'You'}
           />
-          <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
-            {servedCount < axes.length
-              ? `Partial — ${servedCount} of ${axes.length} axes shown; the rest fill in as this player logs more matches.`
-              : 'Your shape across six per-game measures — the blob reaches out on the axes you do most.'}
-          </p>
+          {picked && cmp.isPending ? (
+            <p className="muted" style={{ fontSize: 12.5, margin: '6px 0 0', textAlign: 'center' }}>
+              Loading comparison with {picked.steam_name}…
+            </p>
+          ) : picked && noSharedHero ? (
+            <p className="muted" style={{ fontSize: 12.5, margin: '6px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
+              No shared hero to compare — you and {picked.steam_name} haven&apos;t overlapped on any hero yet.
+            </p>
+          ) : (
+            <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
+              {servedCount < axes.length
+                ? `Partial — ${servedCount} of ${axes.length} axes shown; the rest fill in as this player logs more matches.`
+                : picked
+                ? `Your shape vs ${picked.steam_name} — the blob reaches further on axes where you lead.`
+                : 'Your shape across six per-game measures — the blob reaches out on the axes you do most.'}
+            </p>
+          )}
+
+          {/* optional player picker — always visible below the radar */}
+          <div style={{ marginTop: 14, position: 'relative' }}>
+            <div className="between" style={{ gap: 8 }}>
+              <div className="searchbig" style={{ minWidth: 0, flex: 1 }}>
+                <Icon name="search" size={16} style={{ left: 12 }} />
+                <input
+                  className="field"
+                  style={{ height: 34, paddingLeft: 36, fontSize: 13 }}
+                  placeholder={picked ? `Comparing vs ${picked.steam_name}` : 'Overlay another player…'}
+                  value={raw}
+                  onChange={(e) => {
+                    setRaw(e.target.value);
+                    setOpen(true);
+                  }}
+                  onFocus={() => setOpen(true)}
+                  onBlur={() => setTimeout(() => setOpen(false), 150)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setOpen(false);
+                  }}
+                  role="combobox"
+                  aria-expanded={open && searchEnabled}
+                  aria-controls={listId}
+                  aria-label="Search a player to overlay on the radar"
+                  autoComplete="off"
+                />
+                {open && searchEnabled && (
+                  <div className="search-pop panel" id={listId} role="listbox">
+                    {search.isFetching && results.length === 0 ? (
+                      <div className="search-note muted">Searching…</div>
+                    ) : search.isError ? (
+                      <div className="search-note muted">
+                        {isUnauthorized(search.error) ? 'Sign in to search.' : 'Search is offline right now.'}
+                      </div>
+                    ) : results.length === 0 ? (
+                      selfOnly ? (
+                        <div className="search-note muted">
+                          That is you — search for another player to overlay.
+                        </div>
+                      ) : (
+                        <div className="search-note muted">No players found for &ldquo;{q}&rdquo;.</div>
+                      )
+                    ) : (
+                      results.map((r) => {
+                        const rk = rankFromBadge(r.badge);
+                        return (
+                          <button
+                            key={r.account_id}
+                            type="button"
+                            className="search-row"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setPicked(r);
+                              setRaw('');
+                              setQ('');
+                              setOpen(false);
+                            }}
+                            role="option"
+                            aria-selected="false"
+                            style={{
+                              width: '100%',
+                              textAlign: 'left',
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {rk && <RankBadge tier={rk.tier} size={24} glow={false} />}
+                            <span className="display" style={{ flex: 1, fontWeight: 600, color: 'var(--text)' }}>
+                              {r.steam_name}
+                            </span>
+                            <span className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>
+                              {count(r.matches)} games
+                            </span>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+              {picked && (
+                <button
+                  type="button"
+                  className="minitog"
+                  onClick={() => {
+                    setPicked(null);
+                    setRaw('');
+                    setQ('');
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
         </>
       )}
     </div>

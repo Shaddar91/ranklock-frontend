@@ -125,6 +125,28 @@ export function selfShapeAxes(you: CompareSide): RadarAxis[] {
   });
 }
 
+//---- compare vs another player (both polygons via SELF_AXIS_MAX) ---------------
+
+//Optional overlay: renders BOTH the viewer's own shape AND the picked player's
+//shape on the same 6 axes, both normalized via SELF_AXIS_MAX so the two polygons
+//are directly comparable (same scale, no league anchor). `you` fills the `you`
+//series; `them` fills the `cohort` series (RadarChart's second polygon). An axis
+//is `served` when the viewer's own value is present; the picked player's value may
+//be absent (null → their polygon collapses to zero on that axis).
+export function compareRadarVsPlayer(you: CompareSide, them: CompareSide): RadarAxis[] {
+  return COMPARE_AXES.map(({ axis, pick }) => {
+    const yv = pick(you);
+    const tv = pick(them);
+    const max = SELF_AXIS_MAX[axis] ?? 1;
+    return {
+      axis,
+      you: yv != null ? clamp(yv / max, 0, 1) : 0,
+      cohort: tv != null ? clamp(tv / max, 0, 1) : 0,
+      served: yv != null,
+    };
+  });
+}
+
 //---- categorized panels (from improve) --------------------------------------
 
 type Fmt = (n: number) => string;
