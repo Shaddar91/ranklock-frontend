@@ -142,7 +142,10 @@ for (const e of all) {
   catalog[e.id] = { name: e.name, icon };
 
   //Rich detail (build-only file). description is `{ desc: "<html>" }` or `{}`.
-  const desc = plainText(e.description && e.description.desc);
+  //Fall back to .passive then .active for class-B items that omit .desc.
+  const desc = plainText(
+    e.description && (e.description.desc || e.description.passive || e.description.active),
+  );
   if (desc) {
     withDesc += 1;
     //Lean client map for the hover tooltip — desc text only, and only when present.
