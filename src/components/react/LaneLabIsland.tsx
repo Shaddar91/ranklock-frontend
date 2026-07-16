@@ -85,7 +85,6 @@ const ECON_METRICS: readonly MetricOption[] = [
 //farm headline, so it defaults there.
 const FARM_METRICS: readonly MetricOption[] = [
   { key: 'last_hits', label: 'Last hits' },
-  { key: 'souls', label: 'Souls' },
 ];
 
 //---- curve view mode --------------------------------------------------------
@@ -635,7 +634,12 @@ function CurvePanel({
           onChange={(w) => setXWindow(w as XWindow)}
           ariaLabel="Curve window — early game or full match"
         />
-        {metrics.length > 1 && <MetricToggle metrics={metrics} value={metric} onChange={setMetric} />}
+        {metrics.length > 1 && (
+          <>
+            <span style={{ width: 1, height: 18, background: 'var(--border-soft)', flexShrink: 0 }} aria-hidden />
+            <MetricToggle metrics={metrics} value={metric} onChange={setMetric} />
+          </>
+        )}
       </div>
       {anyLoading && points.length === 0 ? (
         <p className="muted" style={{ padding: '24px 2px' }}>Loading the {metricLower} curves…</p>
@@ -822,7 +826,9 @@ function VerdictPanel({ band, playerOverlay = null }: { band: BracketValue; play
   }, [proj9, buckets]);
 
   return (
-    <div className="panel" style={{ padding: '16px 18px' }}>
+    <div className="brass-frame" style={{ padding: '16px 20px' }}>
+      <span className="corner tl" />
+      <span className="corner br" />
       <div className="kicker" style={{ marginBottom: 4 }}>
         9-minute verdict
       </div>
