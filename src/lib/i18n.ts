@@ -50,19 +50,12 @@ export const LOCALES: readonly LocaleDef[] = [
   { code: 'no', hreflang: 'no', label: 'Norsk', translated: false },
 ];
 
-export const LOCALE_CODES: readonly string[] = LOCALES.map((l) => l.code);
-
 //Locales with real translations (currently just en). Drives hreflang + sitemap.
 export const TRANSLATED_LOCALES: readonly LocaleDef[] = LOCALES.filter((l) => l.translated);
 
 const BY_CODE = new Map(LOCALES.map((l) => [l.code, l]));
 //Non-default prefix segments, used to detect + strip a leading locale prefix.
 const PREFIX_CODES = LOCALES.filter((l) => l.code !== DEFAULT_LOCALE).map((l) => l.code);
-
-/** True if `code` is one of the launched locales. */
-export function isValidLocale(code: string | undefined): boolean {
-  return code != null && BY_CODE.has(code);
-}
 
 /** Resolve a (possibly undefined) `Astro.currentLocale` to a LocaleDef, defaulting to en. */
 export function resolveLocale(code: string | undefined): LocaleDef {

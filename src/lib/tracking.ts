@@ -36,14 +36,6 @@ export function push(cmd: unknown[]): void {
   paq().push(cmd);
 }
 
-//Interaction / conversion events (mirrors cloud-lord's API; kept for callers).
-export function track(category: string, action: string, name?: string, value?: number): void {
-  push(['trackEvent', category, action, name, value].filter((x) => x !== undefined));
-}
-export function trackGoal(goalId: number, value?: number): void {
-  push(['trackGoal', goalId, value].filter((x) => x !== undefined));
-}
-
 let initialized = false;
 let scriptInjected = false;
 let lastUrl = '';

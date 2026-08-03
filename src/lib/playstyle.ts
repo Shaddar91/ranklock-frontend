@@ -37,9 +37,10 @@ export interface StatRow {
   served: boolean;
 }
 
-//One radar axis: `you` and `cohort` are 0..1 positions. For compareRadar, 0.5 == the
-//cohort baseline; for selfShapeAxes (own-shape default), `you` is value÷ceiling and
-//`cohort` is unused (0) — the panel supplies any second series itself.
+//One radar axis: `you` and `cohort` are 0..1 positions. For compareRadarVsPlayer,
+//`cohort` carries the picked player's normalized shape; for selfShapeAxes (own-shape
+//default), `you` is value÷ceiling and `cohort` is unused (0) — the panel supplies any
+//second series itself.
 export interface RadarAxis {
   axis: string;
   you: number;
@@ -47,17 +48,7 @@ export interface RadarAxis {
   served: boolean;
 }
 
-//---- radar (from /compare aggregates) ---------------------------------------
-
-//The radar is a PROJECTION of the served /compare aggregates — you vs the cohort
-//one tier up — NOT a separate dataset and NOT the (never-served) /improve percentile
-//radar this used to read. Each axis is the honest ratio of two served per-game
-//averages (you ÷ cohort) mapped onto a 0..1 ring where 0.5 == parity: a player
-//exactly at the cohort average sits on the baseline hexagon and the blob bulges
-//where they beat it. Every axis is higher-is-better (KDA folds deaths in), so no
-//per-axis mirroring is needed. No stat is invented — a missing/zero cohort value
-//can't anchor a ratio, so that axis pins to 0.5 and is flagged `served:false` for
-//the UI to note partial coverage instead of faking a point.
+//---- shared radar primitives --------------------------------------------------
 
 //The metric fields shared by CompareYou and CompareCohort that the radar reads — a
 //structural subset both response sides satisfy, so one accessor serves both.
@@ -79,20 +70,6 @@ const COMPARE_AXES: { axis: string; pick: (s: CompareSide) => number | null }[] 
   { axis: 'Denies', pick: (s) => num(s.avg_denies) },
   { axis: 'KDA', pick: (s) => kda(s.avg_kills, s.avg_deaths, s.avg_assists) },
 ];
-
-//Map you÷cohort onto 0..1 with parity at 0.5 (cohort=0.5, you=0.5·ratio, clamped).
-//A null/zero cohort can't anchor a ratio → unserved, pinned to the baseline.
-function compareAxisPos(you: number | null, cohort: number | null): { pos: number; served: boolean } {
-  if (you == null || cohort == null || cohort <= 0) return { pos: 0.5, served: false };
-  return { pos: clamp(0.5 * (you / cohort), 0, 1), served: true };
-}
-
-export function compareRadar(cmp: CompareResponse): RadarAxis[] {
-  return COMPARE_AXES.map(({ axis, pick }) => {
-    const { pos, served } = compareAxisPos(pick(cmp.you), pick(cmp.cohort));
-    return { axis, you: pos, cohort: 0.5, served };
-  });
-}
 
 //---- self shape (own metrics, NO league baseline) ---------------------------
 

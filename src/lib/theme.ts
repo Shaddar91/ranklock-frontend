@@ -43,17 +43,6 @@ export function isThemeId(value: unknown): value is ThemeId {
   return typeof value === 'string' && VALID.has(value);
 }
 
-//Read the persisted choice (null if none / unavailable / invalid).
-export function getStoredTheme(): ThemeId | null {
-  if (typeof localStorage === 'undefined') return null;
-  try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    return isThemeId(v) ? v : null;
-  } catch {
-    return null; //private mode / disabled storage
-  }
-}
-
 //The skin currently applied to <html> (falls back to the default).
 export function getActiveTheme(): ThemeId {
   if (typeof document === 'undefined') return DEFAULT_THEME;

@@ -60,14 +60,6 @@ export function rankFromBadge(badge: number | null | undefined): { tier: number;
   return { tier: Math.floor(badge / 10), sub: badge % 10 };
 }
 
-//Item category accent colors (prototype CAT_COLOR).
-export const CAT_COLOR: Record<string, string> = {
-  Weapon: '#f87171',
-  Vitality: '#34d399',
-  Spirit: '#a78bfa',
-  Utility: '#60a5fa',
-};
-
 //Meta tier-list pill colors (S/A/B/C/D).
 export const TIER_COLOR: Record<string, string> = {
   S: '#fbbf24',

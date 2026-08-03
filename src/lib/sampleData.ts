@@ -26,23 +26,6 @@ export const HEROES: SampleHero[] = [
   { id: 'bebop', name: 'Bebop', wr: 47.2, pick: 10.9, kda: 2.05, trend: -2.2, tier: 'C' },
 ];
 
-export interface SampleItem {
-  id: string;
-  name: string;
-  cat: string;
-  wr: number;
-  use: number;
-}
-
-export const ITEMS: SampleItem[] = [
-  { id: 'tech-arcane_medallion', name: 'Arcane Medallion', cat: 'Spirit', wr: 54.1, use: 22.3 },
-  { id: 'weapon-advanced_weaponry', name: 'Advanced Weaponry', cat: 'Weapon', wr: 52.8, use: 41.0 },
-  { id: 'armor-advanced_armor', name: 'Improved Armor', cat: 'Vitality', wr: 51.9, use: 38.5 },
-  { id: 'tech-acolytes_glove', name: "Acolyte's Glove", cat: 'Spirit', wr: 51.2, use: 14.7 },
-  { id: 'utility-advanced_recharge', name: 'Advanced Recharge', cat: 'Utility', wr: 50.4, use: 19.8 },
-  { id: 'weapon-adrenaline_rush', name: 'Adrenaline Rush', cat: 'Weapon', wr: 49.7, use: 27.1 },
-];
-
 export interface SampleLeader {
   rank: number;
   name: string;

@@ -17,11 +17,8 @@
 //Both selectors render rank emblems + a tier-range label via lib/ranks, so the
 //"badge tiers, not MMR ranges" contract holds across heroes AND items.
 //============================================================================
-import type { HeroBracket } from '../types/api';
-
 export interface RankBucket {
   //stable selector key. ITEM buckets use the integer the API wants (0..5);
-  //HERO buckets use 'all' | the HeroBracket string the API wants.
   //Leaderboard buckets use arbitrary string keys (not sent to the API).
   key: string | number;
   //tier-range label (emblem-backed) — never an MMR range.
@@ -41,23 +38,6 @@ export const ITEM_BUCKETS: readonly RankBucket[] = [
   { key: 4, label: 'Oracle – Phantom', short: 'Oracle+', tiers: [8, 9] },
   { key: 5, label: 'Ascendant – Eternus', short: 'Ascendant+', tiers: [10, 11] },
 ];
-
-//Heroes: the 4 string brackets the hero_bracket_mv serves, plus All. Labelled
-//by the tier band each string bracket implies (emblem-backed). The hero MV uses
-//a coarser 4-way split than the item 6-way one — kept faithful to its API.
-export const HERO_BUCKETS: readonly RankBucket[] = [
-  { key: 'all', label: 'All ranks', short: 'All', tiers: [] },
-  { key: 'low', label: 'Initiate – Alchemist', short: 'Low', tiers: [1, 2, 3] },
-  { key: 'mid', label: 'Arcanist – Archon', short: 'Mid', tiers: [4, 5, 6, 7] },
-  { key: 'high', label: 'Oracle – Phantom', short: 'High', tiers: [8, 9] },
-  { key: 'top', label: 'Ascendant – Eternus', short: 'Top', tiers: [10, 11] },
-];
-
-//A hero bucket key → the API's bracket param (undefined for "all" so the call
-//omits the param and hits the current-MV path).
-export function heroBracketParam(key: RankBucket['key']): HeroBracket | undefined {
-  return key === 'all' ? undefined : (key as HeroBracket);
-}
 
 //An item bucket key → the API's integer bracket (0 = all).
 export function itemBracketParam(key: RankBucket['key']): number {
