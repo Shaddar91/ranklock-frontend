@@ -4,6 +4,8 @@ import GuideLiveStats from '../../components/react/GuideLiveStats';
 import { getCollection, render } from 'astro:content';
 import { breadcrumbJsonLd, SITE_NAME } from '../../lib/seo';
 import { shortDate, readingTime } from '../../lib/format';
+import { AD_SLOTS } from '../../config/artDirection';
+import AdSlot from '../../components/react/ui/AdSlot';
 
 //SSG guide article (requirements §B.11). One prerendered page per post; the
 //markdown body renders to static HTML (SEO), and the "live stats in this guide"
@@ -90,9 +92,27 @@ const hasLive = post.data.liveHeroes.length > 0 || post.data.liveItems.length > 
         )
       }
 
+      {
+        /* In-article sponsor slot after the post header, before the body (ads plan
+           C5, blog post), gated by PUBLIC_AD_SLOTS. Consent-gated placeholder. */
+        AD_SLOTS === 'on' && (
+          <div style="margin:0 0 22px; display:flex; justify-content:center;">
+            <AdSlot kind="banner" client:load />
+          </div>
+        )
+      }
       <div class="prose">
         <Content />
       </div>
+      {
+        /* Second in-article slot after the body (the between-sections intent; per-h2
+           interleaving would need a rehype pass over the markdown AST — follow-up). */
+        AD_SLOTS === 'on' && (
+          <div style="margin:22px 0 0; display:flex; justify-content:center;">
+            <AdSlot kind="rect" client:load />
+          </div>
+        )
+      }
     </article>
   </main>
 </BaseLayout>

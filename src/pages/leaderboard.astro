@@ -4,6 +4,8 @@ import LeaderboardTable, { LEADERBOARD_PAGE_SIZE } from '../components/react/Lea
 import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { breadcrumbJsonLd } from '../lib/seo';
+import { AD_SLOTS } from '../config/artDirection';
+import AdSlot from '../components/react/ui/AdSlot';
 import type { LeaderboardEntry } from '../types/api';
 
 //SSG leaderboard (requirements §B.1) — top-3 podium + ranked table. Build-time
@@ -35,6 +37,16 @@ const jsonLd = breadcrumbJsonLd(origin, [
     <p class="page-intro">
       The highest-ranked Deadlock players, with a podium for the top three. Filter by rank band — emblems, not MMR.
     </p>
+    {
+      /* In-content sponsor slot above the ladder table (ads plan C5, leaderboard_top),
+         gated by PUBLIC_AD_SLOTS like the site-wide slots. Consent-gated placeholder
+         until a publisher id + ad-unit id exist — never a live ad in LOCAL dev. */
+      AD_SLOTS === 'on' && (
+        <div style="margin-top:20px; display:flex; justify-content:center;">
+          <AdSlot kind="banner" client:load />
+        </div>
+      )
+    }
     <div style="margin-top:20px;">
       <LeaderboardTable initialRows={rows} client:load />
     </div>

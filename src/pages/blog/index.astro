@@ -3,6 +3,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import { breadcrumbJsonLd, SITE_NAME } from '../../lib/seo';
 import { shortDate } from '../../lib/format';
+import { AD_SLOTS } from '../../config/artDirection';
+import AdSlot from '../../components/react/ui/AdSlot';
 
 //SSG guides index (requirements §B.11) — the icy-veins-style SEO surface, built
 //from the blog content collection. Card grid of published posts, newest first.
@@ -39,24 +41,35 @@ const jsonLd = [
         <p class="muted" style="margin-top:20px;">No guides published yet — check back soon.</p>
       ) : (
         <div class="blog-grid" style="margin-top:20px;">
-          {posts.map((post) => (
-            <a class="panel blogcard" href={`/blog/${post.id}`}>
-              {post.data.heroImage && (
-                <img class="bc-hero" src={post.data.heroImage} alt="" loading="lazy" decoding="async" />
-              )}
-              <div class="bc-title">{post.data.title}</div>
-              <p class="bc-desc">{post.data.description}</p>
-              <div class="between" style="margin-top:auto;">
-                <span class="label-xs" style="font-size:10px;">{shortDate(post.data.pubDate.toISOString())}</span>
-                {post.data.tags.length > 0 && (
-                  <div class="blog-tags">
-                    {post.data.tags.slice(0, 2).map((t) => (
-                      <span class="blog-tag">{t}</span>
-                    ))}
-                  </div>
+          {posts.map((post, i) => (
+            <Fragment>
+              <a class="panel blogcard" href={`/blog/${post.id}`}>
+                {post.data.heroImage && (
+                  <img class="bc-hero" src={post.data.heroImage} alt="" loading="lazy" decoding="async" />
                 )}
-              </div>
-            </a>
+                <div class="bc-title">{post.data.title}</div>
+                <p class="bc-desc">{post.data.description}</p>
+                <div class="between" style="margin-top:auto;">
+                  <span class="label-xs" style="font-size:10px;">{shortDate(post.data.pubDate.toISOString())}</span>
+                  {post.data.tags.length > 0 && (
+                    <div class="blog-tags">
+                      {post.data.tags.slice(0, 2).map((t) => (
+                        <span class="blog-tag">{t}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </a>
+              {
+                /* Feed sponsor slot after every 4th card (ads plan C5, blog_feed_mid),
+                   full-width row, gated by PUBLIC_AD_SLOTS. Consent-gated placeholder. */
+                i % 4 === 3 && AD_SLOTS === 'on' && (
+                  <div style="grid-column:1/-1; display:flex; justify-content:center; margin:6px 0;">
+                    <AdSlot kind="banner" client:load />
+                  </div>
+                )
+              }
+            </Fragment>
           ))}
         </div>
       )

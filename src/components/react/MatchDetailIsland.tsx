@@ -9,8 +9,9 @@
 import { useState } from 'react';
 import { isNotFound } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
-import { Chip, EmptyState, GameIcon, MvpBadge } from './ui/index';
+import { AdSlot, Chip, EmptyState, GameIcon, MvpBadge } from './ui/index';
 import { useMatch, useMatchId } from './match/useMatch';
+import { AD_SLOTS } from '../../config/artDirection';
 import { TEAM, teamKills, teamNetWorth, teamPlayers } from '../../lib/match';
 import { count, DASH, duration, fixed, shortDate } from '../../lib/format';
 import type { MatchDetail, MatchPlayerDetail } from '../../types/api';
@@ -166,6 +167,13 @@ function MatchDetailInner() {
   return (
     <div className="container">
       <ScoreHeader match={data} />
+      {/* Mid-content sponsor slot after the score header, before the team tables
+          (ads plan C5, match detail). Gated by PUBLIC_AD_SLOTS; consent-gated placeholder. */}
+      {AD_SLOTS === 'on' && (
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 18px' }}>
+          <AdSlot kind="rect" />
+        </div>
+      )}
       <div className="tabs" role="tablist" aria-label="Match sections" style={{ marginBottom: 18 }}>
         {(['Scoreboard', 'Economy'] as Tab[]).map((t) => (
           <button key={t} type="button" role="tab" aria-selected={tab === t} className={'tab' + (tab === t ? ' on' : '')} onClick={() => setTab(t)}>
@@ -201,6 +209,13 @@ function MatchDetailInner() {
         </div>
       )}
       {tab === 'Economy' && <EconomyTab match={data} />}
+      {/* Second sponsor slot at the foot of the match card (ads plan C5, match detail —
+          the sidebar intent, placed in-flow to avoid a live scoreboard-grid refactor). */}
+      {AD_SLOTS === 'on' && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 18 }}>
+          <AdSlot kind="rect" />
+        </div>
+      )}
     </div>
   );
 }

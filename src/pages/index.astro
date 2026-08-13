@@ -10,6 +10,8 @@ import { buildFetch } from '../lib/buildData';
 import { count, shortDate } from '../lib/format';
 import { resolveAsset } from '../lib/assets';
 import { websiteJsonLd, orgJsonLd, SITE_TAGLINE } from '../lib/seo';
+import { AD_SLOTS } from '../config/artDirection';
+import AdSlot from '../components/react/ui/AdSlot';
 import type { HeroSummary, LeaderboardEntry } from '../types/api';
 
 //SSG home (requirements §B.0). Build-time data is fetched with a timeout + empty
@@ -65,6 +67,15 @@ const entries = [
           <a class="btn btn-primary" href="/heroes"><Glyph name="flame" size={16} /> Browse the meta</a>
           <a class="btn btn-ghost" href="/blog">Read the guides <Glyph name="arrowR" size={15} /></a>
         </div>
+        {
+          /* Home hero sponsor slot below the search + CTAs (ads plan C5, home_banner),
+             gated by PUBLIC_AD_SLOTS. Consent-gated placeholder until ad units exist. */
+          AD_SLOTS === 'on' && (
+            <div style="margin-top:18px;">
+              <AdSlot kind="banner" client:load />
+            </div>
+          )
+        }
       </div>
 
       <div class="brass-frame" style="padding:22px;">
