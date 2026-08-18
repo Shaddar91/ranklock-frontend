@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+//Impressum (C8) — site identity + the public contact mailbox. The operator block
+//is a labeled slot: the legal name and postal address are owner-supplied and drop
+//into that card without restructuring the page.
+const LAST_UPDATED = '2026-08-18';
+const CONTACT = 'privacy@ranklock.app';
+---
+
+<BaseLayout
+  title="Impressum - RankLock"
+  description="Impressum for RankLock: site identity, operator information and the public contact address."
+  canonicalPath="/impressum"
+>
+  <main class="container" style="padding-top:40px; padding-bottom:64px;">
+    <div class="legal">
+      <div class="kicker" style="margin-bottom:10px;">Last updated · {LAST_UPDATED}</div>
+      <h1 class="h-hero" style="font-size:clamp(32px,5vw,48px); margin-bottom:14px;">Impressum</h1>
+
+      <h2>Site identity</h2>
+      <div class="dualcard" style="margin:8px 0 4px;">
+        <div class="dc-label">Site</div>
+        <p style="margin:0;">
+          <strong>RankLock</strong> (<a href="https://ranklock.app">ranklock.app</a>) - an
+          unofficial, fan-made statistics site for the game Deadlock, operated from Serbia
+          by a private individual. Not affiliated with, endorsed by, or sponsored by Valve
+          Corporation.
+        </p>
+      </div>
+
+      <h2>Operator</h2>
+      <div class="dualcard" style="margin:8px 0 4px;">
+        <div class="dc-label">Responsible for content (legal imprint)</div>
+        <p style="margin:0;">
+          The operator's legal name and postal address are published here as supplied by
+          the site operator. Until that block is filled in, the operator can be reached in
+          writing only through the public contact address below.
+        </p>
+      </div>
+
+      <h2>Contact</h2>
+      <p>
+        Email: <a href={`mailto:${CONTACT}`}>{CONTACT}</a>
+      </p>
+
+      <h2>Related pages</h2>
+      <p>
+        <a href="/privacy">Privacy &amp; cookies</a> · <a href="/terms">Terms of use</a> ·
+        <a href="/contact">Contact</a>
+      </p>
+    </div>
+  </main>
+</BaseLayout>

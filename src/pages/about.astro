@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+//About page (C8) — static Astro page on the privacy.astro BaseLayout + Seo
+//pattern: what RankLock is, where the stats come from, how to get in touch.
+const LAST_UPDATED = '2026-08-18';
+const CONTACT = 'privacy@ranklock.app';
+---
+
+<BaseLayout
+  title="About - RankLock"
+  description="RankLock is an unofficial Deadlock stats project: hero and item win-rates, player profiles, leaderboards and guides, computed from public deadlock-api match data."
+  canonicalPath="/about"
+>
+  <main class="container" style="padding-top:40px; padding-bottom:64px;">
+    <div class="legal">
+      <div class="kicker" style="margin-bottom:10px;">Last updated · {LAST_UPDATED}</div>
+      <h1 class="h-hero" style="font-size:clamp(32px,5vw,48px); margin-bottom:14px;">About RankLock</h1>
+      <p style="font-size:16px; color:var(--text-2); max-width:72ch; margin-bottom:8px;">
+        RankLock is an independent, unofficial statistics site for Deadlock. It turns
+        public match data into hero and item win-rates, player profiles, leaderboards
+        and guides, refreshed every patch.
+      </p>
+
+      <h2>What you will find here</h2>
+      <ul>
+        <li><strong>Hero meta</strong> - win-rates, pick-rates and trends per hero, per patch</li>
+        <li><strong>Item win-rates</strong> - how each item performs across the match population</li>
+        <li><strong>Leaderboard</strong> - the top-rated players right now</li>
+        <li><strong>Player profiles and match history</strong> - look up any public player</li>
+        <li><strong>Guides</strong> - patch analysis and meta breakdowns on the <a href="/blog">blog</a></li>
+      </ul>
+
+      <h2>Where the numbers come from</h2>
+      <p>
+        Every stat on the site is computed from match data served by the public
+        <a href="https://deadlock-api.com" target="_blank" rel="noopener noreferrer">deadlock-api</a>
+        project. RankLock aggregates those matches into the ratings, win-rates and trends
+        shown here. Deadlock is a game by Valve Corporation; RankLock is a fan-made
+        project and is not affiliated with, endorsed by, or sponsored by Valve.
+      </p>
+
+      <h2>What RankLock is not</h2>
+      <ul>
+        <li>Not an official Valve product or data feed</li>
+        <li>Not a real-time service - stats refresh on a patch and daily cadence, not live</li>
+        <li>Not selling anything - the site is free, funded by optional ads and <a href="/support">supporters</a></li>
+      </ul>
+
+      <h2>Contact</h2>
+      <p>
+        Questions, corrections and feedback: <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
+        For data and cookie topics see the <a href="/privacy">privacy policy</a>; for the
+        legal fine print see the <a href="/terms">terms of use</a> and the
+        <a href="/impressum">impressum</a>.
+      </p>
+    </div>
+  </main>
+</BaseLayout>

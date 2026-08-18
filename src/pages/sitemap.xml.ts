@@ -37,6 +37,10 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: '/matches', changefreq: 'hourly', priority: '0.7' },
   { path: '/blog', changefreq: 'weekly', priority: '0.7' },
   { path: '/privacy', changefreq: 'monthly', priority: '0.3' },
+  { path: '/about', changefreq: 'monthly', priority: '0.3' },
+  { path: '/contact', changefreq: 'monthly', priority: '0.3' },
+  { path: '/terms', changefreq: 'monthly', priority: '0.3' },
+  { path: '/impressum', changefreq: 'monthly', priority: '0.3' },
 ];
 
 //Advertise per-URL hreflang alternates only once ≥2 locales are actually

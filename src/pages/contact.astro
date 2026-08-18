@@ -1,0 +1,75 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+//Contact page (C8) — one public mailbox for privacy, feedback, bugs and
+//corrections, on the privacy.astro BaseLayout + Seo pattern.
+const LAST_UPDATED = '2026-08-18';
+const CONTACT = 'privacy@ranklock.app';
+---
+
+<BaseLayout
+  title="Contact - RankLock"
+  description="How to reach RankLock: one public mailbox for privacy requests, feedback, bug reports and stat corrections."
+  canonicalPath="/contact"
+>
+  <main class="container" style="padding-top:40px; padding-bottom:64px;">
+    <div class="legal">
+      <div class="kicker" style="margin-bottom:10px;">Last updated · {LAST_UPDATED}</div>
+      <h1 class="h-hero" style="font-size:clamp(32px,5vw,48px); margin-bottom:14px;">Contact</h1>
+      <p style="font-size:16px; color:var(--text-2); max-width:72ch; margin-bottom:8px;">
+        RankLock is run by one person, so there is exactly one mailbox:
+        <a href={`mailto:${CONTACT}`}>{CONTACT}</a>. Mail to this address reaches the
+        operator directly.
+      </p>
+
+      <h2>What to write about</h2>
+      <div class="dualcol">
+        <div class="dualcard">
+          <div class="dc-label">Privacy and data</div>
+          <p style="margin:0;">
+            Consent questions, access or deletion requests, anything about what the site
+            collects. Section 6 of the <a href="/privacy">privacy policy</a> explains what
+            to include so your visitor record can be found.
+          </p>
+        </div>
+        <div class="dualcard">
+          <div class="dc-label">Feedback and bugs</div>
+          <p style="margin:0;">
+            Broken pages, wrong numbers, feature ideas. A page URL and a short description
+            is enough; screenshots help.
+          </p>
+        </div>
+      </div>
+      <div class="dualcol">
+        <div class="dualcard">
+          <div class="dc-label">Stat corrections</div>
+          <p style="margin:0;">
+            If a profile or match looks wrong, include the profile or match URL. Stats come
+            from the public deadlock-api feed, so some mismatches trace back to the source
+            data.
+          </p>
+        </div>
+        <div class="dualcard">
+          <div class="dc-label">Everything else</div>
+          <p style="margin:0;">
+            Press, partnerships, takedown requests and anything that does not fit the other
+            boxes.
+          </p>
+        </div>
+      </div>
+
+      <h2>What to expect</h2>
+      <p>
+        There is no support team and no guaranteed response time, but real mail gets a real
+        answer. Do not send account credentials or other secrets; the site has no accounts
+        and needs none.
+      </p>
+
+      <h2>Other pages</h2>
+      <p>
+        <a href="/privacy">Privacy &amp; cookies</a> · <a href="/terms">Terms of use</a> ·
+        <a href="/impressum">Impressum</a> · <a href="/support">Support RankLock</a>
+      </p>
+    </div>
+  </main>
+</BaseLayout>

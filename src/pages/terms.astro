@@ -1,0 +1,83 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+//Terms of use (C8) — unofficial fan project, public deadlock-api data, no Valve
+//affiliation, no warranty. Mirrors the footer disclaimer.
+const LAST_UPDATED = '2026-08-18';
+const CONTACT = 'privacy@ranklock.app';
+---
+
+<BaseLayout
+  title="Terms of use - RankLock"
+  description="Terms of use for RankLock: an unofficial Deadlock fan project built on public deadlock-api data, provided as-is with no warranty and no affiliation with Valve."
+  canonicalPath="/terms"
+>
+  <main class="container" style="padding-top:40px; padding-bottom:64px;">
+    <div class="legal">
+      <div class="kicker" style="margin-bottom:10px;">Last updated · {LAST_UPDATED}</div>
+      <h1 class="h-hero" style="font-size:clamp(32px,5vw,48px); margin-bottom:14px;">Terms of use</h1>
+      <p style="font-size:16px; color:var(--text-2); max-width:72ch; margin-bottom:8px;">
+        By using RankLock you accept these terms. If you do not accept them, do not use
+        the site. Questions: <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
+      </p>
+
+      <h2>1. What RankLock is</h2>
+      <p>
+        RankLock is an unofficial, fan-made statistics project for the game Deadlock. It
+        is not affiliated with, endorsed by, or sponsored by Valve Corporation. Deadlock,
+        and all related game art and trademarks, are the property of Valve Corporation.
+      </p>
+
+      <h2>2. Where the data comes from</h2>
+      <p>
+        All statistics are computed from public match data provided by the
+        <a href="https://deadlock-api.com" target="_blank" rel="noopener noreferrer">deadlock-api</a>
+        project. RankLock does not have access to private or non-public game data.
+      </p>
+
+      <h2>3. No warranty</h2>
+      <p>
+        The site is provided "as is" and "as available", without any warranty of any kind.
+        Statistics are estimates derived from sampled match data: they can be incomplete,
+        delayed, or wrong, and they change as patches land and data is recomputed. Do not
+        rely on them for anything where accuracy is critical. Availability is not
+        guaranteed; the site may change or shut down at any time.
+      </p>
+
+      <h2>4. Acceptable use</h2>
+      <ul>
+        <li>Use the site for personal, non-commercial purposes</li>
+        <li>Do not scrape or bulk-download the site, and do not hammer the underlying API through it</li>
+        <li>Do not misrepresent RankLock statistics as official Valve data</li>
+        <li>Do not attempt to disrupt the site or probe infrastructure that is not public</li>
+      </ul>
+
+      <h2>5. Content and art</h2>
+      <p>
+        The written guides and the site's own design are © RankLock. Game art, hero
+        likenesses and names are © Valve Corporation and are shown here for identification
+        and commentary. If you believe something on the site infringes your rights, email
+        <a href={`mailto:${CONTACT}`}>{CONTACT}</a> and it will be reviewed and removed if
+        warranted.
+      </p>
+
+      <h2>6. Ads and support</h2>
+      <p>
+        The site is free. With your consent it may show Google AdSense ads, and there is
+        an optional ad-free <a href="/support">support</a> route. Ad behavior and cookies
+        are covered by the <a href="/privacy">privacy policy</a>.
+      </p>
+
+      <h2>7. Changes to these terms</h2>
+      <p>
+        These terms may be updated at any time; the date at the top shows the latest
+        revision. Continued use of the site after a change means you accept the new terms.
+      </p>
+
+      <h2>8. Contact</h2>
+      <p>
+        Questions about these terms: <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
+      </p>
+    </div>
+  </main>
+</BaseLayout>
