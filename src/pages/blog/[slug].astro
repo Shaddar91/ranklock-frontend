@@ -94,7 +94,7 @@ const hasLive = post.data.liveHeroes.length > 0 || post.data.liveItems.length > 
 
       {
         /* In-article sponsor slot after the post header, before the body (ads plan
-           C5, blog post), gated by PUBLIC_AD_SLOTS. Consent-gated placeholder. */
+           C5, blog post), gated by PUBLIC_AD_SLOTS. Placeholder until ad units exist. */
         AD_SLOTS === 'on' && (
           <div style="margin:0 0 22px; display:flex; justify-content:center;">
             <AdSlot kind="banner" client:load />

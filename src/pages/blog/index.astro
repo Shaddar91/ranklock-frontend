@@ -62,7 +62,7 @@ const jsonLd = [
               </a>
               {
                 /* Feed sponsor slot after every 4th card (ads plan C5, blog_feed_mid),
-                   full-width row, gated by PUBLIC_AD_SLOTS. Consent-gated placeholder. */
+                   full-width row, gated by PUBLIC_AD_SLOTS. Placeholder until ad units exist. */
                 i % 4 === 3 && AD_SLOTS === 'on' && (
                   <div style="grid-column:1/-1; display:flex; justify-content:center; margin:6px 0;">
                     <AdSlot kind="banner" client:load />

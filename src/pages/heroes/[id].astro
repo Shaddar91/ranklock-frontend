@@ -94,7 +94,7 @@ const heroKda = kda(hero?.avg_kills, hero?.avg_deaths, hero?.avg_assists);
 
           {
             /* Mid-content sponsor slot after the headline stat grid (ads plan C5,
-               hero_mid), gated by PUBLIC_AD_SLOTS. Consent-gated placeholder. */
+               hero_mid), gated by PUBLIC_AD_SLOTS. Placeholder until ad units exist. */
             AD_SLOTS === 'on' && (
               <div style="margin:0 0 24px; display:flex; justify-content:center;">
                 <AdSlot kind="rect" client:load />

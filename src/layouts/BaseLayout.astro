@@ -133,10 +133,10 @@ const {
     {chrome && <SiteHeader />}
     <slot />
     {
-      /* Site-wide sponsor slot above the footer (the Claude design's ad placement),
-         gated by PUBLIC_AD_SLOTS (config/artDirection). Consent-gated AdSlot: shows
-         the gaslamp "Sponsored" placeholder until ads-consent + a
-         publisher id + an ad-unit slot id exist; becomes a real AdSense unit after. */
+      /* Site-wide sponsor slot above the footer, gated by PUBLIC_AD_SLOTS
+         (config/artDirection). AdSlot shows the gaslamp "Sponsored" placeholder
+         until a publisher id + an ad-unit slot id exist; becomes a real AdSense
+         unit after (ads consent belongs to Google's CMP, not the site banner). */
       chrome && AD_SLOTS === 'on' && (
         <div class="container" style="padding:8px 24px 24px;">
           <AdSlot kind="leaderboard" client:load />
@@ -148,7 +148,7 @@ const {
          the SAME PUBLIC_AD_SLOTS flag as the footer slot above. They're position:fixed
          in the side gutters (components.css .ad-rail), so the content column never
          reflows; a min-width:1760px media query hides them below a wide breakpoint,
-         leaving narrow/normal viewports rail-free. Same consent-gated AdSlot
+         leaving narrow/normal viewports rail-free. Same AdSlot
          placeholder, vertical 'skyscraper' kind. */
       chrome && AD_SLOTS === 'on' && (
         <Fragment>
@@ -162,12 +162,12 @@ const {
       )
     }
     {chrome && <SiteFooter />}
-    <!-- Consent + analytics layer (C6) — global on EVERY page (incl. chrome=false).
-         TrackingProvider is behavior-only (renders null): consent-gated Matomo +
-         SPA route-change pageviews + Consent Mode v2. ConsentBanner is the
-         gaslamp cookie banner. Both are client:load (the eslint client:* guard
-         enforces the directive). Nothing tracks / no ad script loads until the
-         visitor accepts. -->
+    <!-- Consent + analytics layer — global on EVERY page (incl. chrome=false).
+         TrackingProvider is behavior-only (renders null): banner-gated Matomo +
+         SPA route-change pageviews + the Consent Mode v2 baseline. ConsentBanner
+         is the gaslamp cookie banner (analytics only — ads consent belongs to
+         Google's CMP). Both are client:load (the eslint client:* guard enforces
+         the directive). Matomo never loads without the analytics grant. -->
     <TrackingProvider client:load />
     <ConsentBanner client:load />
   </body>

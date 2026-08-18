@@ -1,13 +1,8 @@
-//Consent-gated ad / sponsor slot. Until the visitor grants the "ads/marketing"
-//consent category (lib/consent) this renders the on-brand gaslamp placeholder —
-//never an empty/janky gap, and crucially NO
-//AdSense network call. Once ads-consent is granted AND a publisher id + ad-unit
-//slot id are configured, it loads the AdSense fill instead. Consent Mode v2
-//posture is owned by TrackingProvider; this island grants the ad signal and
-//loads the fill only when consent allows (lib/ads).
-import { useEffect, useState } from 'react';
+//Ad / sponsor slot. With a publisher id + ad-unit slot id configured it loads
+//the AdSense fill — ads consent is gathered by Google's certified CMP inside
+//adsbygoogle.js, not by the site banner. Without a slot id it renders the placeholder.
+import { useEffect } from 'react';
 import Icon from './Icon';
-import { getConsent, onConsentChange } from '../../../lib/consent';
 import { adsenseClient, adsenseConfigured, enableAds, pushAd } from '../../../lib/ads';
 
 type AdKind = 'banner' | 'rect' | 'leaderboard' | 'skyscraper';
@@ -19,7 +14,6 @@ const AD_SIZE: Record<AdKind, string> = {
   skyscraper: '160 × 600',
 };
 
-//Our semantic slot kind → an AdSense responsive format.
 const AD_FORMAT: Record<AdKind, string> = {
   banner: 'horizontal',
   rect: 'rectangle',
@@ -29,22 +23,11 @@ const AD_FORMAT: Record<AdKind, string> = {
 
 interface AdSlotProps {
   kind?: AdKind;
-  //AdSense ad-unit slot id (data-ad-slot). Omit while ad units aren't minted yet
-  //— the placeholder shows until consent AND a publisher id AND a slot id exist.
   adSlot?: string;
 }
 
 export default function AdSlot({ kind = 'banner', adSlot }: AdSlotProps) {
-  const [adsAllowed, setAdsAllowed] = useState(false);
-
-  useEffect(() => {
-    setAdsAllowed(getConsent().ads);
-    return onConsentChange((s) => setAdsAllowed(s.ads));
-  }, []);
-
-  //Show a real ad only when consent is granted, a publisher id is configured, and
-  //a concrete ad-unit slot id was supplied — otherwise the gaslamp placeholder.
-  const showAd = adsAllowed && adsenseConfigured() && !!adSlot;
+  const showAd = adsenseConfigured() && !!adSlot;
 
   useEffect(() => {
     if (!showAd) return;

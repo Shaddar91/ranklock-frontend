@@ -343,17 +343,18 @@ export default function Styleguide() {
           <AdSlot kind="rect" />
         </div>
         <p className="faint" style={{ fontSize: 12, marginTop: 10 }}>
-          Consent-gated: the AdSense fill loads only after "ads/marketing" consent + a
-          configured publisher/slot id. Otherwise this gaslamp placeholder shows — never a
+          The AdSense fill loads once a publisher/slot id is configured — ads consent is
+          gathered by Google's own CMP. Otherwise this gaslamp placeholder shows — never a
           network call.
         </p>
       </Section>
 
       <Section kicker="Privacy" title="Consent (gaslamp re-skin)">
         <p className="muted" style={{ fontSize: 13, margin: '0 0 14px', maxWidth: '64ch' }}>
-          Two-category consent (analytics + ads/marketing), persisted to{' '}
-          <code className="mono">localStorage['ranklock-consent']</code>. The same controls
-          live on <a href="/privacy#consent">/privacy</a>. Nothing tracks until accepted.
+          Analytics consent, persisted to{' '}
+          <code className="mono">localStorage['ranklock-consent']</code>. The same control
+          lives on <a href="/privacy#consent">/privacy</a>. Nothing tracks until accepted.
+          Ads consent belongs to Google's CMP.
         </p>
         <button
           type="button"

@@ -1,13 +1,7 @@
-//============================================================================
-//Global cookie-consent banner — mounted ONCE in BaseLayout (client:load). A
-//re-skin of cloud-lord's MUI Snackbar (requirements §8.3) onto the gaslamp
-//design system (no MUI — the "What NOT To Do" constraint), extended with a
-//SECOND "ads/marketing" consent category that cloud-lord lacked.
-//
-//Nothing tracks and no analytics/ad script loads until the visitor chooses here.
-//The choice is persisted + broadcast by lib/consent; TrackingProvider + AdSlot
-//react to it. A "Customize" view exposes the two categories independently.
-//============================================================================
+//Global cookie-consent banner — mounted once in BaseLayout (client:load). Owns
+//the site's single consent category: analytics (self-hosted Matomo — nothing
+//tracks until the visitor chooses). Ads consent belongs to Google's certified
+//CMP and is never asked here.
 import { useEffect, useState } from 'react';
 import Icon from './ui/Icon';
 import { acceptAll, rejectAll, setConsent, getConsent, hasDecided, REOPEN_EVENT } from '../../lib/consent';
@@ -15,21 +9,16 @@ import { acceptAll, rejectAll, setConsent, getConsent, hasDecided, REOPEN_EVENT 
 export default function ConsentBanner() {
   const [open, setOpen] = useState(false);
   const [customizing, setCustomizing] = useState(false);
-  //Granular state for the Customize view; "Accept all" / "Reject all" ignore it.
   const [analytics, setAnalytics] = useState(true);
-  const [ads, setAds] = useState(false);
 
   useEffect(() => {
     //First visit (no decision) → reveal after a beat so it doesn't fight LCP.
     let t: number | undefined;
     if (!hasDecided()) t = window.setTimeout(() => setOpen(true), 600);
 
-    //"Cookie settings" anywhere can re-summon the banner, pre-filled with the
-    //current choice.
     const reopen = () => {
       const c = getConsent();
       setAnalytics(c.analytics || !c.decided);
-      setAds(c.ads);
       setCustomizing(false);
       setOpen(true);
     };
@@ -52,7 +41,7 @@ export default function ConsentBanner() {
     close();
   };
   const onSave = () => {
-    setConsent({ analytics, ads });
+    setConsent({ analytics });
     close();
   };
 
@@ -71,7 +60,7 @@ export default function ConsentBanner() {
 
         <p className="consent-body">
           RankLock uses first-party analytics (self-hosted Matomo) to see how the site is
-          used, and optional ads to keep it free. Nothing loads until you choose.{' '}
+          used. Nothing tracks until you choose.{' '}
           <a className="consent-link" href="/privacy">
             Privacy &amp; cookies →
           </a>
@@ -84,12 +73,6 @@ export default function ConsentBanner() {
               desc="Self-hosted Matomo. Pageviews & referrers, first-party only — never shared or sold."
               checked={analytics}
               onChange={setAnalytics}
-            />
-            <ConsentRow
-              title="Ads / marketing"
-              desc="Google AdSense. Personalized ads via Google cookies. Off = no ad scripts load at all."
-              checked={ads}
-              onChange={setAds}
             />
           </div>
         )}
