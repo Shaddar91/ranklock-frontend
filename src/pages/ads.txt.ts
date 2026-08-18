@@ -1,9 +1,7 @@
 import type { APIRoute } from 'astro';
 import { adsenseClient, adsenseConfigured } from '../lib/ads';
 
-//ads.txt (C9). Emits the AdSense authorization line when a publisher id was
-//injected at build time; otherwise a single inert comment line so the route
-//stops 404ing without authorizing any account. Generated at BUILD (prerender).
+//ads.txt: AdSense authorization line from the build-time publisher id, else an inert comment (prerender).
 export const prerender = true;
 
 export const GET: APIRoute = () => {
