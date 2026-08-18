@@ -134,7 +134,7 @@ const {
     {
       /* Site-wide sponsor slot above the footer (the Claude design's ad placement),
          gated by PUBLIC_AD_SLOTS (config/artDirection). Consent-gated AdSlot: shows
-         the gaslamp "Sponsored / go ad-free" placeholder until ads-consent + a
+         the gaslamp "Sponsored" placeholder until ads-consent + a
          publisher id + an ad-unit slot id exist; becomes a real AdSense unit after. */
       chrome && AD_SLOTS === 'on' && (
         <div class="container" style="padding:8px 24px 24px;">

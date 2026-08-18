@@ -1,6 +1,6 @@
 //Consent-gated ad / sponsor slot. Until the visitor grants the "ads/marketing"
-//consent category (lib/consent) this renders the on-brand gaslamp placeholder +
-//"go ad-free" supporter hook — never an empty/janky gap, and crucially NO
+//consent category (lib/consent) this renders the on-brand gaslamp placeholder —
+//never an empty/janky gap, and crucially NO
 //AdSense network call. Once ads-consent is granted AND a publisher id + ad-unit
 //slot id are configured, it loads the AdSense fill instead. Consent Mode v2
 //posture is owned by TrackingProvider; this island grants the ad signal and
@@ -29,13 +29,12 @@ const AD_FORMAT: Record<AdKind, string> = {
 
 interface AdSlotProps {
   kind?: AdKind;
-  supportHref?: string;
   //AdSense ad-unit slot id (data-ad-slot). Omit while ad units aren't minted yet
   //— the placeholder shows until consent AND a publisher id AND a slot id exist.
   adSlot?: string;
 }
 
-export default function AdSlot({ kind = 'banner', supportHref = '/support', adSlot }: AdSlotProps) {
+export default function AdSlot({ kind = 'banner', adSlot }: AdSlotProps) {
   const [adsAllowed, setAdsAllowed] = useState(false);
 
   useEffect(() => {
@@ -76,9 +75,6 @@ export default function AdSlot({ kind = 'banner', supportHref = '/support', adSl
           Promo slot · {AD_SIZE[kind]}
         </span>
       </div>
-      <a className="promo-support" href={supportHref}>
-        <Icon name="flame" size={10} /> Go ad-free — support RankLock
-      </a>
     </div>
   );
 }

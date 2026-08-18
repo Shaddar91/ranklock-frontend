@@ -4,9 +4,8 @@ import Glyph from '../components/Glyph.astro';
 import CryptoDonate from '../components/react/donate/CryptoDonate';
 import { KOFI_URL, kofiConfigured } from '../config/donation';
 
-//Support page (C8, requirements §9.4) — the voluntary-support surface the rest of
-//the app links to (the AdSlot "go ad-free" hook and the nav "Support" chip both
-//point at /support). We LEAD WITH VOLUNTARY SUPPORT (Ko-fi for fiat, crypto for
+//Support page — the voluntary-support surface the rest of
+//the app links to (the nav "Support" chip points at /support). We LEAD WITH VOLUNTARY SUPPORT (Ko-fi for fiat, crypto for
 //on-chain) and frame ads as the secondary, opt-in way to help. Static Astro
 //chrome + prose; only the crypto widget is a CSR React island (client:load — the
 //eslint client:* guard enforces the directive). The Ko-fi affordance is a plain
