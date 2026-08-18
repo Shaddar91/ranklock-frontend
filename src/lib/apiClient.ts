@@ -50,6 +50,7 @@ import type {
   PlayerMatchRow,
   PlayerProfileResponse,
   RankBucket,
+  ReadinessResponse,
   SearchResult,
   TrimmedBuild,
 } from '../types/api';
@@ -222,6 +223,7 @@ export const queryKeys = {
   playerPerformance: (id: number, game_mode?: GameMode) =>
     ['player', id, 'performance', game_mode ?? null] as const,
   playerCompare: (id: number, params?: Query) => ['player', id, 'compare', params ?? {}] as const,
+  playerReadiness: (id: number, params?: Query) => ['player', id, 'readiness', params ?? {}] as const,
   playerComparePlayer: (id: number, params?: Query) =>
     ['player', id, 'compare-player', params ?? {}] as const,
   playerImprove: (id: number, params?: Query) => ['player', id, 'improve', params ?? {}] as const,
@@ -329,6 +331,11 @@ export const api = {
     id: number,
     params?: { hero_id?: number; league_offset?: string; target_tier?: number; game_mode?: GameMode },
   ) => apiFetch<CompareResponse>(`/players/${id}/compare`, { query: params }),
+  //Rank-up readiness verdict (backlog A1): the player's recent-window averages vs the
+  //band-above cohort medians. `target_tier` (bracket 1..5) overrides the auto band-above;
+  //200 with matches_in_window:0 means no recent games, 202 while the cohort computes.
+  getPlayerReadiness: (id: number, params?: { target_tier?: number; game_mode?: GameMode }) =>
+    apiFetch<ReadinessResponse>(`/players/${id}/readiness`, { query: params }),
   //Compare you to a SPECIFIC other player on a shared hero. `vs` is the other
   //player's account_id; `hero_id` scopes the overlap. 404 when the two never
   //played the chosen hero together — the picker empty-states that.

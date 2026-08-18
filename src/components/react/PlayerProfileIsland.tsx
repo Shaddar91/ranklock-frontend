@@ -17,7 +17,7 @@ import QueryProvider from './QueryProvider';
 import { EmptyState } from './ui/index';
 import PlayerHeader from './player/PlayerHeader';
 import { CategorizedSection, CoachingPanel, EconomyPanel, PlaystyleRadarPanel } from './player/AnalyticsPanels';
-import { ComparePanel, HeroLedgerPanel, PerformancePanel, RecentMatchesPanel } from './player/PlayerTabs';
+import { ComparePanel, HeroLedgerPanel, PerformancePanel, ReadinessCard, RecentMatchesPanel } from './player/PlayerTabs';
 import { usePlayer, usePlayerHeroes, usePlayerId, usePlayerMatches, usePlayerPerformance, useViewer } from './player/usePlayer';
 import type { PerformanceResponse } from '../../types/api';
 
@@ -96,7 +96,12 @@ function PlayerProfileInner() {
       )}
 
       {tab === 'Matches' && <RecentMatchesPanel id={id} />}
-      {tab === 'Performance' && <PerformancePanel id={id} />}
+      {tab === 'Performance' && (
+        <>
+          <PerformancePanel id={id} />
+          <ReadinessCard id={id} />
+        </>
+      )}
       {tab === 'Heroes' && <HeroLedgerPanel id={id} />}
       {tab === 'Coaching' && (
         <div className="grid">

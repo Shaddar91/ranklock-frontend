@@ -491,9 +491,9 @@ const METRIC_LABEL: Record<string, string> = {
   assists: 'Assists',
   damage_dealt: 'Damage dealt',
 };
-const humanize = (k: string) => METRIC_LABEL[k] ?? k.replace(/_/g, ' ');
+export const humanize = (k: string) => METRIC_LABEL[k] ?? k.replace(/_/g, ' ');
 
-const SEV = {
+export const SEV = {
   high: { c: 'var(--loss)', l: 'Priority' },
   med: { c: 'var(--gold)', l: 'Worth fixing' },
   low: { c: 'var(--win)', l: 'Strength' },

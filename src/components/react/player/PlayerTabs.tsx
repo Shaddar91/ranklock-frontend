@@ -9,12 +9,12 @@
 import { useEffect, useId, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Chip, EmptyState, GameIcon, Icon, RankBadge } from '../ui/index';
-import { buildAheadMessage, PlaystyleRadarPanel } from './AnalyticsPanels';
-import { useCompare, useComparePlayer, usePlayerHeroes, usePlayerHeroesPlayed, usePlayerMatches, usePlayerPerformance } from './usePlayer';
+import { buildAheadMessage, humanize, PlaystyleRadarPanel, SEV } from './AnalyticsPanels';
+import { useCompare, useComparePlayer, usePlayerHeroes, usePlayerHeroesPlayed, usePlayerMatches, usePlayerPerformance, usePlayerReadiness } from './usePlayer';
 import { api, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClient';
 import { rankFromBadge } from '../../../lib/ranks';
 import { count, DASH, duration, fixed, kda, pct, shortDate } from '../../../lib/format';
-import type { HeroLedgerRow, PlayerMatchRow, SearchResult } from '../../../types/api';
+import type { HeroLedgerRow, PlayerMatchRow, ReadinessMetric, SearchResult } from '../../../types/api';
 
 //---- recent matches ---------------------------------------------------------
 
@@ -180,6 +180,86 @@ export function PerformancePanel({ id }: { id: number }) {
   );
 }
 
+//---- rank-up readiness (backlog A1) ------------------------------------------
+
+//The backend sign-corrects each metric into `met` (deaths invert), so severity keys
+//off `met` plus the gap magnitude, not the raw delta's sign.
+const readinessSev = (m: ReadinessMetric): keyof typeof SEV => {
+  if (m.met) return 'low';
+  return Math.abs(m.delta_pct) >= 15 ? 'high' : 'med';
+};
+
+export function ReadinessCard({ id }: { id: number }) {
+  const { data, isPending, isError, error } = usePlayerReadiness(id);
+  const noMatches = !isError && data != null && data.matches_in_window === 0;
+  const target = data?.target_bracket_label;
+
+  return (
+    <div className="panel" style={{ padding: '16px 18px', marginTop: 16 }}>
+      <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <div className="kicker" style={{ marginBottom: 4 }}>
+            Rank-up readiness
+          </div>
+          <h2 className="h-sec" style={{ fontSize: 17 }}>
+            {target ? `Your last ${data?.window} games vs the ${target} median` : 'Are you ready to rank up?'}
+          </h2>
+        </div>
+        {data != null && !noMatches && (
+          <Chip tone={data.ready ? 'win' : 'loss'}>{data.ready ? 'Ready to climb' : 'Not ready yet'}</Chip>
+        )}
+      </div>
+      {isPending ? (
+        <p className="muted">Checking rank-up readiness…</p>
+      ) : isError || !data ? (
+        <EmptyState title="Readiness not served yet" message={buildAheadMessage(error)} icon="target" />
+      ) : noMatches ? (
+        <EmptyState title="No recent matches" message="Play a few matches and the rank-up readiness verdict appears here." icon="target" />
+      ) : (
+        <>
+          <p className="muted" style={{ fontSize: 12.5, margin: '0 0 12px', lineHeight: 1.5 }}>
+            You meet or beat the {target} median on <b className="mono">{data.metrics_met}</b> of{' '}
+            <b className="mono">{data.metrics_total}</b> metrics.
+            {data.clamped ? ' You are in the top band, so the target is the top band itself.' : ''}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {data.metrics.map((m, i) => {
+              const sev = readinessSev(m);
+              return (
+                <div
+                  key={m.metric}
+                  className="flex"
+                  style={{ gap: 12, alignItems: 'flex-start', paddingBottom: 10, borderBottom: i < data.metrics.length - 1 ? '1px solid var(--border-soft)' : 'none' }}
+                >
+                  <span style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, background: SEV[sev].c, flex: 'none' }} />
+                  <div style={{ flex: 1 }}>
+                    <div className="display" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>
+                      {humanize(m.metric)} {m.delta_pct >= 0 ? '+' : ''}
+                      {fixed(m.delta_pct, 1)}% vs {target}
+                    </div>
+                    <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: 0, lineHeight: 1.45 }}>
+                      You average <b className="mono">{fixed(m.user_avg, 1)}</b> against a median of{' '}
+                      <b className="mono">{fixed(m.target_p50, 1)}</b>.
+                    </p>
+                  </div>
+                  <span className="chip" style={{ fontSize: 10, color: SEV[sev].c, borderColor: SEV[sev].c + '55', flex: 'none' }}>
+                    {SEV[sev].l}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {data.fresh_as_of && (
+            <p className="faint" style={{ fontSize: 11, marginTop: 10 }}>
+              Fresh as of {shortDate(data.fresh_as_of)}
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 //---- compare (you vs cohort league) -----------------------------------------
 
 //Deadlock rank-tier names (tier = badge/10, 1..11). Mirrored from the backend's
@@ -199,12 +279,9 @@ const TIER_NAMES: Record<number, string> = {
   11: 'Eternus',
 };
 
-//Comparison-target options. These are the RELATIVE offsets the backend CompareQuery
-//actually reads (hero_id + league_offset only — main.rs:1166-1169). An absolute
-//"jump to tier N" group would need a `target_tier` query param the backend does not
-//consume yet (unknown query keys are silently dropped by serde, so it would fall back
-//to the player's own tier). It is therefore intentionally deferred rather than shipped
-//as a control that silently shows the wrong cohort.
+//Comparison-target options: the RELATIVE league_offsets below; the "Jump to tier" group
+//in the selector sends an absolute target_tier, which overrides league_offset server-side
+//(compare.rs).
 const TARGET_OPTIONS: ReadonlyArray<readonly [string, string]> = [
   ['same', 'Your rank'],
   ['one_up', 'One rank up'],
@@ -445,10 +522,15 @@ export function ComparePanel({ id }: { id: number }) {
   const heroesPlayed = usePlayerHeroesPlayed(id);
   const heroOptions = [...(heroesPlayed.data ?? [])].sort((a, b) => b.matches_played - a.matches_played);
   const [hero, setHero] = useState<number | undefined>(undefined);
-  //Relative comparison target (league_offset). 'same' reproduces the prior
-  //no-offset behaviour (cohort = the player's own tier).
+  //Comparison target: a relative league_offset, or `tier:N` for an absolute tier jump
+  //(target_tier overrides league_offset server-side). 'same' = the player's own tier.
   const [target, setTarget] = useState<string>('same');
-  const { data, isPending, isError, error } = useCompare(id, { hero_id: hero, league_offset: target });
+  const absTier = target.startsWith('tier:') ? Number(target.slice(5)) : undefined;
+  const { data, isPending, isError, error } = useCompare(id, {
+    hero_id: hero,
+    league_offset: absTier == null ? target : undefined,
+    target_tier: absTier,
+  });
 
   const heroSelector = heroOptions.length > 0 && (
     <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
@@ -480,11 +562,20 @@ export function ComparePanel({ id }: { id: number }) {
         onChange={(e) => setTarget(e.target.value)}
         aria-label="Choose the rank to compare against"
       >
-        {TARGET_OPTIONS.map(([value, label]) => (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        ))}
+        <optgroup label="Relative">
+          {TARGET_OPTIONS.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="Jump to tier">
+          {Object.entries(TIER_NAMES).map(([tier, name]) => (
+            <option key={tier} value={`tier:${tier}`}>
+              {name}
+            </option>
+          ))}
+        </optgroup>
       </select>
     </label>
   );

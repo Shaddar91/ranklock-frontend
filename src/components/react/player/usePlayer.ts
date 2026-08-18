@@ -103,6 +103,17 @@ export const useCompare = (id: number, opts?: { hero_id?: number; league_offset?
   });
 };
 
+//Readiness rides the same Normal-only cohort as /improve (player_cohort_benchmarks),
+//so it is pinned to Normal the same way. retry:false so a build-ahead 202/501/404
+//empty-states fast.
+export const usePlayerReadiness = (id: number, opts?: { target_tier?: number }) =>
+  useQuery({
+    queryKey: queryKeys.playerReadiness(id, opts ?? {}),
+    queryFn: () => api.getPlayerReadiness(id, opts),
+    retry: false,
+    enabled: id > 0,
+  });
+
 //THE signature economy curve (C3): your FIXED per-minute soul curve + a league(+hero)
 //comparison you PICK. `vs_band`/`hero` touch ONLY the comparison; the `you` line is
 //invariant across selections (the whole point of the feature). The player line is

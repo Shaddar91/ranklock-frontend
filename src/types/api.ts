@@ -279,6 +279,38 @@ export interface PerformanceResponse {
   brackets: PercentileRow[];
 }
 
+//---- rank-up readiness: GET /players/:id/readiness (readiness.rs) ------------
+
+//One player-vs-target metric row; the array arrives ranked worst-gap-first.
+export interface ReadinessMetric {
+  metric: string;
+  user_avg: number;
+  target_p50: number;
+  delta_pct: number;
+  met: boolean;
+}
+
+//The zero-matches variant returns only the base fields plus
+//status:"no_matches_in_window", so the bracket/sample fields are optional.
+export interface ReadinessResponse {
+  account_id: number;
+  window: string;
+  matches_in_window: number;
+  current_badge?: number | null;
+  current_bracket?: number;
+  current_bracket_label?: string;
+  target_bracket?: number;
+  target_bracket_label?: string;
+  clamped?: boolean;
+  cohort_sample_matches?: number;
+  metrics_met: number;
+  metrics_total: number;
+  ready: boolean;
+  metrics: ReadinessMetric[];
+  fresh_as_of?: string | null;
+  status?: string;
+}
+
 //---- compare ("LeagueCompare") — GET /players/:id/compare -------------------
 
 export interface CompareYou {
