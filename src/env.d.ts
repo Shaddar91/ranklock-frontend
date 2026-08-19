@@ -21,6 +21,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_MATOMO_SITE_ID?: string;
   //Google AdSense publisher id (ca-pub-…).
   readonly PUBLIC_ADSENSE_CLIENT?: string;
+  readonly PUBLIC_ADSENSE_SLOT_BANNER?: string;
+  readonly PUBLIC_ADSENSE_SLOT_RECT?: string;
 }
 
 interface ImportMeta {

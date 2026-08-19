@@ -3,9 +3,8 @@
 //adsbygoogle.js, not by the site banner. Without a slot id it renders the placeholder.
 import { useEffect } from 'react';
 import Icon from './Icon';
-import { adsenseClient, adsenseConfigured, enableAds, pushAd } from '../../../lib/ads';
-
-type AdKind = 'banner' | 'rect' | 'leaderboard' | 'skyscraper';
+import { adsenseClient, adsenseConfigured, enableAds, pushAd, slotFor } from '../../../lib/ads';
+import type { AdKind } from '../../../lib/ads';
 
 const AD_SIZE: Record<AdKind, string> = {
   banner: '970 × 90',
@@ -27,7 +26,8 @@ interface AdSlotProps {
 }
 
 export default function AdSlot({ kind = 'banner', adSlot }: AdSlotProps) {
-  const showAd = adsenseConfigured() && !!adSlot;
+  const slot = adSlot ?? slotFor(kind);
+  const showAd = adsenseConfigured() && !!slot;
 
   useEffect(() => {
     if (!showAd) return;
@@ -41,7 +41,7 @@ export default function AdSlot({ kind = 'banner', adSlot }: AdSlotProps) {
         className="adsbygoogle promo-ad"
         style={{ display: 'block' }}
         data-ad-client={adsenseClient()}
-        data-ad-slot={adSlot}
+        data-ad-slot={slot}
         data-ad-format={AD_FORMAT[kind]}
         data-full-width-responsive="true"
         aria-label="Advertisement"

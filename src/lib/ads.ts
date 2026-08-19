@@ -10,9 +10,18 @@ declare global {
 }
 
 const ADSENSE_CLIENT = import.meta.env.PUBLIC_ADSENSE_CLIENT ?? '';
+const ADSENSE_SLOT_BANNER = import.meta.env.PUBLIC_ADSENSE_SLOT_BANNER ?? '';
+const ADSENSE_SLOT_RECT = import.meta.env.PUBLIC_ADSENSE_SLOT_RECT ?? '';
+
+export type AdKind = 'banner' | 'rect' | 'leaderboard' | 'skyscraper';
 
 export function adsenseClient(): string {
   return ADSENSE_CLIENT;
+}
+
+export function slotFor(kind: AdKind): string | undefined {
+  const id = kind === 'banner' || kind === 'leaderboard' ? ADSENSE_SLOT_BANNER : ADSENSE_SLOT_RECT;
+  return id === '' ? undefined : id;
 }
 
 export function adsenseConfigured(): boolean {
