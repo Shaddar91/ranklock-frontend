@@ -68,11 +68,19 @@ body {
   right: 0;
   height: 82vh;
   min-height: 620px;
+  background-image: var(--atmos-bg);
   background-size: cover;
   background-position: center 22%;
   opacity: 0.5;
   filter: saturate(1.05) contrast(1.02);
   animation: bgfade 0.8s ease;
+}
+/* narrow viewports paint the small optimized plate when HeroBackdrop sets
+   --atmos-bg-sm (our base only); upstream base falls back to --atmos-bg. */
+@media (max-width: 828px) {
+  .atmos .atmos-bg {
+    background-image: var(--atmos-bg-sm, var(--atmos-bg));
+  }
 }
 /* scrim: blend the splash plate into the page so it reads as atmosphere, not a photo. */
 .atmos::after {

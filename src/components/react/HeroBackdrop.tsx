@@ -9,8 +9,8 @@
 //interval on mount. Under prefers-reduced-motion the layer stays on the first hero
 //and never cycles (the fade is also disabled in CSS). Mounted once in BaseLayout;
 //hidden by CSS when `data-atmos="off"`.
-import { useEffect, useState } from 'react';
-import { BACKDROP_HEROES, heroBackdropUrl, ROTATE_SECS } from '../../lib/heroBackdrop';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { BACKDROP_HEROES, BACKDROP_SMALL_MQ, heroBackdropArt, ROTATE_SECS } from '../../lib/heroBackdrop';
 
 export default function HeroBackdrop() {
   const [idx, setIdx] = useState(0);
@@ -21,10 +21,13 @@ export default function HeroBackdrop() {
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return;
 
-    //preload the roster so each rotation is seamless (one-time, decode in bg).
+    //preload the roster so each rotation is seamless (one-time, decode in bg);
+    //the plate preloaded is the one the .atmos-bg media query will paint.
+    const narrow = window.matchMedia?.(BACKDROP_SMALL_MQ).matches;
     for (const h of BACKDROP_HEROES) {
+      const art = heroBackdropArt(h);
       const img = new Image();
-      img.src = heroBackdropUrl(h);
+      img.src = (narrow && art.smallUrl) || art.url;
     }
 
     const id = window.setInterval(
@@ -35,9 +38,16 @@ export default function HeroBackdrop() {
   }, []);
 
   const hero = BACKDROP_HEROES[idx % BACKDROP_HEROES.length] ?? BACKDROP_HEROES[0];
+  const art = heroBackdropArt(hero);
+  //--atmos-bg always paints; --atmos-bg-sm (our base only) feeds the narrow
+  //media query in base.css — background-image only, zero layout change.
+  const style = {
+    '--atmos-bg': `url(${art.url})`,
+    ...(art.smallUrl ? { '--atmos-bg-sm': `url(${art.smallUrl})` } : {}),
+  } as CSSProperties;
   return (
     <div className="atmos" aria-hidden="true">
-      <div key={hero} className="atmos-bg" style={{ backgroundImage: `url(${heroBackdropUrl(hero)})` }} />
+      <div key={hero} className="atmos-bg" style={style} />
     </div>
   );
 }

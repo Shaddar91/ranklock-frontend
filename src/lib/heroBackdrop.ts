@@ -6,7 +6,7 @@
 //public/assets/heroes are intentionally NOT used here: those are cards, not the
 //full-bleed background plates this layer needs.
 
-import { resolveAsset } from './assets';
+import { ASSETS_BASE, DEADLOCK_ASSETS_HOST, rewriteAssetUrl } from './assets';
 
 //Rotation cadence in seconds. The Claude-design slider sat around 16–18s; 18s per
 //the latest direction. Single knob — retune here.
@@ -25,8 +25,28 @@ export const BACKDROP_HEROES = [
   'bebop',
 ] as const;
 
-//Full-bleed hero background plate for a given hero id. Routed through resolveAsset
-//so it follows the swappable asset base (default = theirs; one flip = ours).
-export function heroBackdropUrl(id: string): string {
-  return resolveAsset(`https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/backgrounds/${id}_bg.png`);
+//Width cutoff at which the small optimized plate takes over on our base;
+//base.css carries the matching media query on .atmos-bg.
+export const BACKDROP_SMALL_MQ = '(max-width: 828px)';
+
+//The plates the layer picks from. `url` always resolves to a working plate under
+//either base; `smallUrl` exists only on our base (the R2-only opt/ variants).
+export interface HeroBackdropArt {
+  url: string;
+  smallUrl?: string;
+}
+
+//Full-bleed hero background plate for a given hero id. Upstream base => the
+//verified `<id>_bg.webp` twin; our base => the optimized opt/ pair (828 + 1920).
+//Routed through rewriteAssetUrl so it follows the swappable asset base.
+export function heroBackdropArt(id: string, base?: string): HeroBackdropArt {
+  const b = (base || ASSETS_BASE).replace(/\/+$/, '');
+  const plates = `${DEADLOCK_ASSETS_HOST}/assets-api-res/images/heroes/backgrounds`;
+  if (b === DEADLOCK_ASSETS_HOST) {
+    return { url: rewriteAssetUrl(`${plates}/${id}_bg.webp`, b) };
+  }
+  return {
+    url: rewriteAssetUrl(`${plates}/opt/${id}_bg_1920.webp`, b),
+    smallUrl: rewriteAssetUrl(`${plates}/opt/${id}_bg_828.webp`, b),
+  };
 }
