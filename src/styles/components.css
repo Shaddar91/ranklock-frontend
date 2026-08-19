@@ -877,9 +877,10 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 /* Left/right sponsor rails: position:fixed in the side gutters, flanking the
    centered 1320px content column (.container, half-width 660px) and vertically
    centred. Fixed positioning keeps them out of normal flow, so the content column
-   never reflows; the min-width:1760px media query hides them below a wide
-   breakpoint, leaving narrow/normal viewports rail-free. They wrap the same
-   .promo placeholder (skyscraper kind) and inherit the [data-promo='off'] gate. */
+   never reflows; the min-width:1736px media query shows them exactly when they fit
+   (1320 + 2*(160+24+24) = 1736 — under the >=1920px wide-zoom (base.css, zoom 1.1)
+   the trigger's layout viewport is 1920/1.1 = 1745, still >= 1736). They wrap the
+   same .promo placeholder (skyscraper kind) and inherit the [data-promo='off'] gate. */
 .ad-rail {
   position: fixed;
   top: 50%;
@@ -894,7 +895,7 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 .ad-rail.right {
   right: calc(50% - 660px - 24px - 160px);
 }
-@media (min-width: 1760px) {
+@media (min-width: 1736px) {
   .ad-rail {
     display: block;
   }

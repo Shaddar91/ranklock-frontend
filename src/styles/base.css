@@ -264,6 +264,15 @@ button {
   justify-content: space-between;
 }
 
+/* Wide-desktop scale-up: >=1920px renders everything 10% larger (the px-based system
+   scales uniformly, container 1320 -> 1452 device px). Width media queries evaluate
+   unzoomed, so this trigger is stable; rails stay exact-fit: 1920/1.1 = 1745 >= 1736. */
+@media (min-width: 1920px) {
+  :root {
+    zoom: 1.1;
+  }
+}
+
 @media (max-width: 920px) {
   .container {
     padding: 20px 14px 60px;

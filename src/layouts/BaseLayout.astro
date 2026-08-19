@@ -147,8 +147,8 @@ const {
       /* Left + right sponsor rails flanking the centered content column, gated by
          the SAME PUBLIC_AD_SLOTS flag as the footer slot above. They're position:fixed
          in the side gutters (components.css .ad-rail), so the content column never
-         reflows; a min-width:1760px media query hides them below a wide breakpoint,
-         leaving narrow/normal viewports rail-free. Same AdSlot
+         reflows; a min-width:1736px media query shows them exactly when they fit,
+         incl. under the >=1920px wide-zoom (base.css). Same AdSlot
          placeholder, vertical 'skyscraper' kind. */
       chrome && AD_SLOTS === 'on' && (
         <Fragment>
