@@ -815,6 +815,10 @@ textarea {
 [data-promo='off'] .promo {
   display: none;
 }
+/* No ad returned (site under review / no fill): collapse instead of an empty box. */
+ins.adsbygoogle[data-ad-status='unfilled'] {
+  display: none !important;
+}
 .promo {
   position: relative;
   display: flex;

@@ -2,6 +2,7 @@
 //the AdSense fill — ads consent is gathered by Google's certified CMP inside
 //adsbygoogle.js, not by the site banner. Without a slot id it renders the placeholder.
 import { useEffect } from 'react';
+import type { CSSProperties } from 'react';
 import Icon from './Icon';
 import { adsenseClient, adsenseConfigured, enableAds, pushAd, slotFor } from '../../../lib/ads';
 import type { AdKind } from '../../../lib/ads';
@@ -18,6 +19,14 @@ const AD_FORMAT: Record<AdKind, string> = {
   rect: 'rectangle',
   leaderboard: 'horizontal',
   skyscraper: 'vertical',
+};
+
+//width:100% keeps the ins from collapsing to 0 inside flex-centered wrappers.
+const AD_STYLE: Record<AdKind, CSSProperties> = {
+  banner: { display: 'block', width: '100%' },
+  leaderboard: { display: 'block', width: '100%' },
+  rect: { display: 'block', width: '100%', maxWidth: 336 },
+  skyscraper: { display: 'block', width: '100%', maxWidth: 200 },
 };
 
 interface AdSlotProps {
@@ -39,7 +48,7 @@ export default function AdSlot({ kind = 'banner', adSlot }: AdSlotProps) {
     return (
       <ins
         className="adsbygoogle promo-ad"
-        style={{ display: 'block' }}
+        style={AD_STYLE[kind]}
         data-ad-client={adsenseClient()}
         data-ad-slot={slot}
         data-ad-format={AD_FORMAT[kind]}
