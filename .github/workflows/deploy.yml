@@ -43,6 +43,8 @@ jobs:
       - run: npm run build
         env:
           PUBLIC_ADSENSE_CLIENT: ${{ secrets.PUBLIC_ADSENSE_CLIENT }}
+          PUBLIC_ADSENSE_SLOT_BANNER: ${{ secrets.PUBLIC_ADSENSE_SLOT_BANNER }}
+          PUBLIC_ADSENSE_SLOT_RECT: ${{ secrets.PUBLIC_ADSENSE_SLOT_RECT }}
           PUBLIC_API_BASE_URL: ${{ secrets.PUBLIC_API_BASE_URL }}
           #Asset-CDN cutover knob. Unset secret => empty => code falls back to the
           #deadlock-api CDN (v1 default). The one-flip cutover is: set the
