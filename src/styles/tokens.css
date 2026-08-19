@@ -7,9 +7,8 @@
   / obsidian) is a pure CSS-variable override under [data-theme="…"] in themes.css
   — switching the attribute recolors the whole app with NO layout shift.
 
-  Fonts (Chakra Petch / Cinzel / JetBrains Mono) are loaded via <link> in
-  BaseLayout.astro (preconnect + stylesheet) rather than a render-blocking CSS
-  @import, so the token sheet stays self-contained and CI-cacheable.
+  Fonts (Chakra Petch / Cinzel / JetBrains Mono) are self-hosted: @font-face in
+  fonts.css (latin woff2, font-display: swap), preloads in BaseLayout.astro.
 ============================================================================*/
 
 :root {

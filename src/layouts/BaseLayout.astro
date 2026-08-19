@@ -87,13 +87,10 @@ const {
       locale={currentLocale.code}
     />
 
-    <!-- gaslamp display/mono fonts (Chakra Petch / Cinzel / JetBrains Mono). -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Cinzel:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-    />
+    <!-- self-hosted fonts (@font-face in styles/fonts.css); preload the faces that
+         paint above the fold — the .h-hero display face + the nav/heading weight. -->
+    <link rel="preload" href="/assets/fonts/chakra-petch-700.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/assets/fonts/chakra-petch-600.woff2" as="font" type="font/woff2" crossorigin />
 
     <slot name="head" />
     <script is:inline>
