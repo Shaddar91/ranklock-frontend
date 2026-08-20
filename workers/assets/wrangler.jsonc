@@ -1,0 +1,6 @@
+{
+  //ranklock-assets Workers Static Assets bundle (the Deadlock art mirror). No routes key: the assets.ranklock.app custom domain is Terraform-owned (infrastructure-automation cf/ranklock-assets/static-assets.tf, cloudflare_workers_custom_domain).
+  "name": "ranklock-assets",
+  "compatibility_date": "2026-08-20",
+  "assets": { "directory": "./public" }
+}

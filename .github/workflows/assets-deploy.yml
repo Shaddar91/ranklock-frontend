@@ -1,0 +1,67 @@
+name: Deploy asset worker (ranklock-assets)
+
+#Path-filtered to workers/assets/** so an art refresh never triggers the frontend
+#deploy (deploy.yml) and vice versa. workflow_dispatch allows a manual re-mirror.
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'workers/assets/**'
+      - '.github/workflows/assets-deploy.yml'
+  workflow_dispatch: {}
+
+concurrency:
+  group: assets-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/assets
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install --no-cache-dir Pillow
+
+      #The 233MB art tree is never committed (.gitignore workers/assets/public/):
+      #CI regenerates it from upstream every run. Both scripts default their output
+      #to a script-relative scripts/deadlock/ tree.
+      - name: Mirror upstream art
+        run: python3 scripts/mirror_assets.py
+      - name: Encode optimized background variants
+        run: python3 scripts/optimize_backgrounds.py
+
+      #Assemble the wrangler assets directory: art tree at the served root + the
+      #_headers rules copied to the assets root where Cloudflare reads them.
+      - name: Assemble assets directory
+        run: |
+          rm -rf public && mkdir public
+          cp -a scripts/deadlock/. public/
+          cp _headers public/_headers
+
+      #Refuse to ship an empty/broken bundle over the live one (upstream outage etc.).
+      - name: Sanity-check bundle
+        run: |
+          test -f public/heroes/backgrounds/opt/haze_bg_1920.webp || { echo "FAIL: opt variant missing"; exit 1; }
+          n=$(find public -type f | wc -l)
+          echo "bundle file count: $n"
+          [ "$n" -ge 1000 ] || { echo "FAIL: bundle too small ($n files)"; exit 1; }
+
+      - name: Deploy to Cloudflare (Workers Static Assets)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/assets
+          command: deploy
+
+      - name: Probe live host
+        run: |
+          url="https://assets.ranklock.app/heroes/backgrounds/opt/haze_bg_1920.webp"
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 --retry 5 --retry-delay 4 --retry-all-errors "$url")
+          [ "$code" = "200" ] || { echo "FAIL: post-deploy probe HTTP $code"; exit 1; }
+          echo "probe OK: $url -> 200"
