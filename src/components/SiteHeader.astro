@@ -54,28 +54,143 @@ const showGameMode = GAME_MODE_ROUTES.some((p) => path === p || path.startsWith(
       <span class="wm-text">Rank<b>Lock</b></span>
     </a>
 
-    <nav class="flex nav-links" aria-label="Primary">
-      {
-        links.map((l) => (
-          <a
-            class={'navlink' + (isActive(l.href) ? ' active' : '')}
-            href={l.href}
-            aria-current={isActive(l.href) ? 'page' : undefined}
-          >
-            {l.label}
-          </a>
-        ))
-      }
-    </nav>
+    <details class="nav-disc">
+      <summary class="nav-burger" aria-label="Menu">
+        <svg
+          class="burger-ico"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <line x1="4" y1="7" x2="20" y2="7"></line>
+          <line x1="4" y1="12" x2="20" y2="12"></line>
+          <line x1="4" y1="17" x2="20" y2="17"></line>
+        </svg>
+      </summary>
 
-    <div class="nav-tools flex">
-      {/* Global Normal/Brawl selector — drives ?mode for the mode-separated meta
-          tables (Heroes/Items/Leaderboard/Patches). Scoped OUT of the player page,
-          matches and Lane Lab via GAME_MODE_ROUTES so it never blanks an identity
-          surface. currentPath is still passed for the toggle's own Normal-only copy. */}
-      {showGameMode && <GameModeToggle currentPath={path} client:load />}
-      <SearchBox variant="compact" client:load />
-      <ThemeSwitcher compact client:load />
-    </div>
+      <div class="nav-drawer">
+        <nav class="flex nav-links" aria-label="Primary">
+          {
+            links.map((l) => (
+              <a
+                class={'navlink' + (isActive(l.href) ? ' active' : '')}
+                href={l.href}
+                aria-current={isActive(l.href) ? 'page' : undefined}
+              >
+                {l.label}
+              </a>
+            ))
+          }
+        </nav>
+
+        <div class="nav-tools flex">
+          {/* Global Normal/Brawl selector — drives ?mode for the mode-separated meta
+              tables (Heroes/Items/Leaderboard/Patches). Scoped OUT of the player page,
+              matches and Lane Lab via GAME_MODE_ROUTES so it never blanks an identity
+              surface. currentPath is still passed for the toggle's own Normal-only copy. */}
+          {showGameMode && <GameModeToggle currentPath={path} client:load />}
+          <SearchBox variant="compact" client:load />
+          <ThemeSwitcher compact client:load />
+        </div>
+      </div>
+    </details>
   </div>
 </header>
+
+<style>
+  /*Narrow-width disclosure: <=768px the links+tools collapse behind the hamburger; desktop stays one row via display:contents.*/
+  .nav-disc {
+    display: contents;
+  }
+  .nav-disc > .nav-burger {
+    display: none;
+  }
+  .nav-drawer {
+    display: contents;
+  }
+  /*Load-bearing: reveals the closed <details> content on desktop (modern UAs hide this pseudo; older UAs use display:contents above).*/
+  .nav-disc::details-content {
+    display: contents;
+    content-visibility: visible;
+  }
+
+  @media (max-width: 768px) {
+    .nav-disc {
+      display: block;
+      position: relative;
+      margin-left: auto;
+    }
+    .nav-disc > .nav-burger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-pill);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      list-style: none;
+    }
+    .nav-disc > .nav-burger::-webkit-details-marker {
+      display: none;
+    }
+    .nav-disc > .nav-burger:hover {
+      background: var(--raised);
+      border-color: var(--cyan);
+    }
+    .nav-disc[open] > .nav-burger {
+      border-color: var(--cyan);
+      color: var(--cyan-bright);
+    }
+
+    .nav-drawer {
+      display: none;
+    }
+    .nav-disc[open] .nav-drawer {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: max-content;
+      min-width: 200px;
+      max-width: calc(100vw - 24px);
+      padding: 8px;
+      border-radius: var(--r-card);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: 0 18px 48px -16px rgba(0, 0, 0, 0.7);
+      max-height: calc(100dvh - 72px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    .nav-disc[open] .nav-links {
+      flex-direction: column;
+      align-items: stretch;
+      flex: 0 0 auto;
+      margin-left: 0;
+      overflow: visible;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .nav-disc[open] .nav-links .navlink {
+      padding: 9px 12px;
+      font-size: 14px;
+    }
+    .nav-disc[open] .nav-tools {
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+  }
+</style>
