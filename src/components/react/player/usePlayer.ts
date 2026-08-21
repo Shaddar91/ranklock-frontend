@@ -9,7 +9,7 @@
 //instead of retrying three times (requirements §8.1, §A.6).
 //============================================================================
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, isUnauthorized, queryKeys } from '../../../lib/apiClient';
 import { useGameMode } from '../../../lib/useGameMode';
 import { readNumericId } from '../../../lib/routeParams';
@@ -129,6 +129,11 @@ export const usePlayerEconomyCurve = (
     queryKey: queryKeys.playerEconomyCurve(id, opts ?? {}),
     queryFn: () => api.getPlayerEconomyCurve(id, opts),
     retry: false,
+    //vs_band/hero live in the key, so switching league/hero is a NEW query. keepPreviousData holds
+    //the prior curve on screen (isPending stays false) so only the comparison line re-adjusts — no
+    //whole-panel reload; `you` is invariant across selections, so the retained player line is never
+    //stale-wrong (same flash-avoidance pattern as HeroesTable/LeaderboardTable).
+    placeholderData: keepPreviousData,
     enabled: id > 0,
   });
 
