@@ -327,6 +327,11 @@ textarea {
   border: 1px solid var(--border);
   border-radius: var(--r-card);
 }
+/* scroll box for a .dt sitting flush in an overflow:hidden panel — the panel draws
+   the border + rounds the corners, so this only scrolls the overflowing columns */
+.dt-scroll {
+  overflow-x: auto;
+}
 
 .rank-num {
   font-family: var(--display);
@@ -1092,9 +1097,9 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 /* fixed, bottom-centered consent banner (re-skin of cloud-lord's MUI Snackbar) */
 .consent-wrap {
   position: fixed;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(16px + env(safe-area-inset-bottom));
   z-index: 200;
   display: flex;
   justify-content: center;

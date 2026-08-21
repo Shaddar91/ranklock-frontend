@@ -46,6 +46,7 @@ function winnerLabel(team: number | null): string {
         matches.length === 0 ? (
           <p class="muted" style="padding:24px;">Recent matches load when the stats API is online.</p>
         ) : (
+          <div class="dt-scroll">
           <table class="dt">
             <thead>
               <tr>
@@ -77,6 +78,7 @@ function winnerLabel(team: number | null): string {
               ))}
             </tbody>
           </table>
+          </div>
         )
       }
     </div>
