@@ -552,7 +552,7 @@ textarea {
   display: none;
 }
 
-/* ---------- game-mode toggle (global Normal/Brawl, lives in the nav) ---------- */
+/* ---------- game-mode toggle (global Normal/Brawl, on the meta pages) ---------- */
 .gm-toggle {
   padding: 3px;
   gap: 2px;
@@ -581,7 +581,7 @@ textarea {
   padding: 0 5px 0 2px;
   white-space: nowrap;
 }
-/* On tight viewports the long nav already scrolls; keep the toggle from wrapping. */
+/* Compact the two buttons on tight viewports so the control stays on one line. */
 @media (max-width: 720px) {
   .gm-toggle .minitog {
     padding: 5px 8px;

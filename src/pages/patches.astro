@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import DataAgeChip from '../components/react/DataAgeChip';
 import PatchTrackerIsland from '../components/react/PatchTrackerIsland';
+import GameModeToggle from '../components/react/ui/GameModeToggle';
 import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { breadcrumbJsonLd } from '../lib/seo';
@@ -19,6 +20,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
   { name: 'Patches', path: '/patches' },
 ]);
+const path = Astro.url.pathname;
 ---
 
 <BaseLayout
@@ -28,8 +30,14 @@ const jsonLd = breadcrumbJsonLd(origin, [
   jsonLd={jsonLd}
 >
   <main class="container">
-    <div class="kicker">Patch tracking</div>
-    <h1 class="h-page">Patch meta shifts</h1>
+    <div class="page-head">
+      <div>
+        <div class="kicker">Patch tracking</div>
+        <h1 class="h-page">Patch meta shifts</h1>
+      </div>
+      {/* Mode filter for this page's mode-separated tables; GameModeToggle documents why it sits here, not the nav. */}
+      <GameModeToggle currentPath={path} client:load />
+    </div>
     {/* data-age honesty (Component 11): renders nothing until /meta/data-horizon serves a date */}
     <DataAgeChip client:load />
     <p class="page-intro">

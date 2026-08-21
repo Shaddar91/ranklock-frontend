@@ -1,8 +1,13 @@
-//Global Normal/Brawl game-mode segmented control (migration 022). Mounted ONCE in
-//the site header (SiteHeader.astro); flips the shared `?mode=` store via
-//useGameMode, so every aggregate island re-reads + refetches in lockstep. Styled
-//with the codebase's .brkfilter/.minitog segmented-control vocabulary (same as the
-//MetricToggle / CategorizedSection toggles).
+//Global Normal/Brawl game-mode segmented control (migration 022). Mounted next to
+//the table filters on the four mode-separated meta pages — Heroes, Items, Leaderboard
+//and Patches — and flips the shared `?mode=` store via useGameMode so every aggregate
+//island re-reads + refetches in lockstep (the store is URL-backed, so an in-page
+//toggle drives the islands exactly as the old header-mounted one did). Styled with the
+//codebase's .brkfilter/.minitog segmented-control vocabulary.
+//
+//Kept OFF every other surface, and it must stay off: the player profile (/players/*)
+//is identity, which is mode-AGNOSTIC — a Brawl filter blanked it for accounts with
+//zero Brawl games — and /matches/* per-match lists carry no mode. Do not re-add it there.
 //
 //Only the two COMPETITIVE modes are ever offered — non-competitive modes
 //(CoopBot/PrivateLobby/Tutorial/…) are excluded from stats and never surface here.

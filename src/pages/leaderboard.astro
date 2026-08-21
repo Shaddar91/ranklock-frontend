@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LeaderboardTable, { LEADERBOARD_PAGE_SIZE } from '../components/react/LeaderboardTable';
+import GameModeToggle from '../components/react/ui/GameModeToggle';
 import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { breadcrumbJsonLd } from '../lib/seo';
@@ -23,6 +24,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
   { name: 'Leaderboard', path: '/leaderboard' },
 ]);
+const path = Astro.url.pathname;
 ---
 
 <BaseLayout
@@ -32,8 +34,14 @@ const jsonLd = breadcrumbJsonLd(origin, [
   jsonLd={jsonLd}
 >
   <main class="container">
-    <div class="kicker">Global ranked ladder</div>
-    <h1 class="h-page">Leaderboard</h1>
+    <div class="page-head">
+      <div>
+        <div class="kicker">Global ranked ladder</div>
+        <h1 class="h-page">Leaderboard</h1>
+      </div>
+      {/* Mode filter for this page's mode-separated table; GameModeToggle documents why it sits here, not the nav. */}
+      <GameModeToggle currentPath={path} client:load />
+    </div>
     <p class="page-intro">
       The highest-ranked Deadlock players, with a podium for the top three. Filter by rank band — emblems, not MMR.
     </p>
