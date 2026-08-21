@@ -283,7 +283,7 @@ button {
 
 @media (max-width: 920px) {
   .container {
-    padding: 20px 14px 60px;
+    padding: 20px max(14px, env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
   }
   .h-hero {
     font-size: 38px;
