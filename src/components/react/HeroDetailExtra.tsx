@@ -287,7 +287,7 @@ function HeroDetailExtraInner({ heroId }: { heroId: number }) {
           Builds
         </button>
       </div>
-      <div style={{ paddingTop: 8 }}>
+      <div className="dt-scroll" style={{ paddingTop: 8 }}>
         {tab === 'matchups' && <MatchupsTab heroId={heroId} />}
         {tab === 'synergies' && <SynergiesTab heroId={heroId} />}
         {tab === 'items' && <ItemsTab heroId={heroId} />}

@@ -79,8 +79,8 @@ function PlayerProfileInner() {
       </div>
 
       {tab === 'Overview' && (
-        <div className="grid">
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1.25fr', alignItems: 'start' }}>
+        <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
+          <div className="pl-overview-2">
             <PlaystyleRadarPanel id={id} />
             <EconomyPanel id={id} />
           </div>

@@ -332,6 +332,19 @@ textarea {
 .dt-scroll {
   overflow-x: auto;
 }
+/* Player Overview: radar + economy side-by-side on desktop, stacked on phones.
+   minmax(0,...) lets the Recharts chart panels shrink instead of pinning a phone-width page open. */
+.pl-overview-2 {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  align-items: start;
+}
+@media (max-width: 640px) {
+  .pl-overview-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 
 .rank-num {
   font-family: var(--display);

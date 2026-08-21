@@ -1389,7 +1389,9 @@ function LaneLabInner() {
   };
 
   return (
-    <div className="grid" style={{ gap: 18 }}>
+    //minmax(0,1fr): a 0-floored column so the Recharts chart panels can shrink below the
+    //chart's intrinsic width instead of forcing a horizontal page scroll on a phone.
+    <div className="grid" style={{ gap: 18, gridTemplateColumns: 'minmax(0, 1fr)' }}>
       {/* League A + League B + Hero selectors. One selection drives every panel below. */}
       <div className="between" style={{ flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
         <div>
@@ -1406,12 +1408,12 @@ function LaneLabInner() {
             curves may be sparse or empty until more lane data lands.
           </p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
-          <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end', minWidth: 0, maxWidth: '100%' }}>
+          <label className="flex" style={{ alignItems: 'center', gap: 8, minWidth: 0, maxWidth: '100%' }}>
             <span className="label-xs">League B</span>
             <select
               className="field"
-              style={{ width: 'auto', padding: '7px 10px', fontSize: 12.5 }}
+              style={{ width: 'auto', minWidth: 0, maxWidth: '100%', padding: '7px 10px', fontSize: 12.5 }}
               value={bandB === 'auto' ? 'auto' : String(bandB)}
               onChange={(e) => setBandB(e.target.value === 'auto' ? 'auto' : Number(e.target.value))}
               aria-label="Choose League B — the second league to compare"
@@ -1426,11 +1428,11 @@ function LaneLabInner() {
               ))}
             </select>
           </label>
-          <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
+          <label className="flex" style={{ alignItems: 'center', gap: 8, minWidth: 0, maxWidth: '100%' }}>
             <span className="label-xs">Hero</span>
             <select
               className="field"
-              style={{ width: 'auto', padding: '7px 10px', fontSize: 12.5 }}
+              style={{ width: 'auto', minWidth: 0, maxWidth: '100%', padding: '7px 10px', fontSize: 12.5 }}
               value={heroId ?? ''}
               onChange={(e) => setHeroId(e.target.value === '' ? null : Number(e.target.value))}
               aria-label="Scope the comparison to one hero"
