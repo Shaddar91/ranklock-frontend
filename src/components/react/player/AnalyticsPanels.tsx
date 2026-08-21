@@ -270,6 +270,14 @@ const CURVE_METRICS = [
 ] as const;
 type CurveMetric = (typeof CURVE_METRICS)[number]['key'];
 
+//Signature-curve view: Gap (default — your delta to the cohort median against a zero
+//baseline) or Totals (today's absolute cumulative chart). Two 2-way toggles, not five.
+const SIG_VIEWS = [
+  { key: 'gap', label: 'Gap' },
+  { key: 'totals', label: 'Totals' },
+] as const;
+type SigView = (typeof SIG_VIEWS)[number]['key'];
+
 //THE signature coaching chart (C3): the player's OWN per-minute curve, FIXED, overlaid on a
 //comparison cohort they pick. The LEAGUE selector (rank tier) and the HERO selector move
 //ONLY the comparison line — `you` is invariant. Colours/caption words come from
@@ -278,6 +286,7 @@ type CurveMetric = (typeof CURVE_METRICS)[number]['key'];
 function SignatureCurvePanel({ id }: { id: number }) {
   const sigWords = useSigSeriesWords(); //active skin's series color words
   const [metric, setMetric] = useState<CurveMetric>('souls');
+  const [view, setView] = useState<SigView>('gap');
   //league: undefined = "auto" (default to the rank you're chasing once the profile loads);
   //null = All ranks (vs_band omitted); number = a specific rank tier 0..11.
   const [band, setBand] = useState<number | null | undefined>(undefined);
@@ -304,6 +313,9 @@ function SignatureCurvePanel({ id }: { id: number }) {
   const tierName = effBand != null ? getRank(effBand).name : 'All ranks';
   const cmpLabel = hasCmp ? `${tierName}${heroName ? ` · ${heroName}` : ''} average` : undefined;
   const marker = curveMarker(points);
+  //Gap needs a cohort; with none the delta is undefined, so force Totals (the ungated
+  //you-line) and hide the Gap toggle — the panel never shows an empty Gap chart.
+  const effView: SigView = hasCmp ? view : 'totals';
 
   const leagueSelector = (
     <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
@@ -361,6 +373,24 @@ function SignatureCurvePanel({ id }: { id: number }) {
     </div>
   );
 
+  //Only shown when a cohort exists (see effView) — reuses the metric toggle's control style,
+  //so no new palette; on 360px the two 2-way toggles wrap onto a shared line under the selects.
+  const viewToggle = hasCmp && (
+    <div className="brkfilter" style={{ padding: 3, flexWrap: 'nowrap', flexShrink: 0 }}>
+      {SIG_VIEWS.map((v) => (
+        <button
+          key={v.key}
+          type="button"
+          className={'minitog' + (view === v.key ? ' on' : '')}
+          onClick={() => setView(v.key)}
+          aria-pressed={view === v.key}
+        >
+          {v.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div>
       <div className="between" style={{ marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
@@ -368,7 +398,10 @@ function SignatureCurvePanel({ id }: { id: number }) {
           {leagueSelector}
           {heroSelector}
         </div>
-        {metricToggle}
+        <div className="flex" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          {viewToggle}
+          {metricToggle}
+        </div>
       </div>
       {curve.isPending ? (
         <Loading label={`Loading your ${noun} curve`} />
@@ -386,29 +419,43 @@ function SignatureCurvePanel({ id }: { id: number }) {
         />
       ) : (
         <>
-          <SignatureCurve data={points} youLabel="You" comparisonLabel={cmpLabel} metricLabel={noun} />
+          <SignatureCurve data={points} mode={effView} youLabel="You" comparisonLabel={cmpLabel} metricLabel={noun} />
           {/* Caption colour words are driven by useSigSeriesWords/sigSeriesColor — the
               SAME skin-keyed source the chart lines read — so a word can never name a
               colour the line doesn't render (the C3 no-phantom-cyan guarantee), in any
-              skin. */}
-          <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
-            The <b style={{ color: sigSeriesColor.you }}>{sigWords.you}</b> line is{' '}
-            <b style={{ color: sigSeriesColor.you }}>you</b> — your real per-minute {noun}, and it stays put when you
-            switch league or hero.{' '}
-            {cmpLabel ? (
-              <>
-                The <b style={{ color: sigSeriesColor.comparison }}>{sigWords.comparison} dashed</b> line is{' '}
-                <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b>
-                {comparison?.source === 'on-demand-hero' ? ' (computed live)' : ''} — the cohort you picked; the shaded
-                band is their 25th–75th percentile. Only this line moves when you change the selectors.
-              </>
-            ) : (
-              <>
-                Pick a league to overlay the cohort you&rsquo;re chasing
-                {effBand != null ? ` — ${tierName}'s cohort has no per-minute sample yet` : ''}.
-              </>
-            )}
-          </p>
+              skin. The text is view-aware: Gap describes the delta line + baseline + band;
+              Totals (and the null-comparison state) keep today's absolute-terms wording. */}
+          {effView === 'gap' ? (
+            <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
+              The <b style={{ color: sigSeriesColor.you }}>{sigWords.you}</b> line is your{' '}
+              <b style={{ color: sigSeriesColor.you }}>gap</b> to{' '}
+              <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b> — how many {noun} you&rsquo;re{' '}
+              <b style={{ color: 'var(--win)' }}>ahead</b> (above the baseline) or{' '}
+              <b style={{ color: 'var(--loss)' }}>behind</b> (below it) at each minute. The{' '}
+              <b style={{ color: sigSeriesColor.comparison }}>dashed baseline</b> is the cohort median; the shaded band
+              is their middle 50% (25th–75th percentile), so riding above the band means you&rsquo;re beating
+              three-quarters of them. Re-pick the league or hero and the gap is re-measured against that cohort.
+            </p>
+          ) : (
+            <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
+              The <b style={{ color: sigSeriesColor.you }}>{sigWords.you}</b> line is{' '}
+              <b style={{ color: sigSeriesColor.you }}>you</b> — your real per-minute {noun}, and it stays put when you
+              switch league or hero.{' '}
+              {cmpLabel ? (
+                <>
+                  The <b style={{ color: sigSeriesColor.comparison }}>{sigWords.comparison} dashed</b> line is{' '}
+                  <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b>
+                  {comparison?.source === 'on-demand-hero' ? ' (computed live)' : ''} — the cohort you picked; the shaded
+                  band is their 25th–75th percentile. Only this line moves when you change the selectors.
+                </>
+              ) : (
+                <>
+                  Pick a league to overlay the cohort you&rsquo;re chasing
+                  {effBand != null ? ` — ${tierName}'s cohort has no per-minute sample yet` : ''}.
+                </>
+              )}
+            </p>
+          )}
           {marker && cmpLabel && (
             <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '8px 0 0', lineHeight: 1.5 }}>
               At <b className="mono">{marker.min}:00</b> you had{' '}

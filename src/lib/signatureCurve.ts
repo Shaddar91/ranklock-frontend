@@ -4,7 +4,7 @@
 //`comparison.points` = the selected cohort's p25/p50/p75); recharts wants ONE array keyed
 //by the x value, so we union them by game minute.
 import type { PlayerEconomyCurveResponse } from '../types/api';
-import type { SignaturePoint } from '../components/react/charts/SignatureCurve';
+import type { SignaturePoint, SignatureDeltaPoint } from '../components/react/charts/SignatureCurve';
 
 //Game minute for a per-minute point. The backend buckets are 3-min wide (t_seconds =
 //minute_bucket * 180), so t_seconds/60 is the real match minute (3, 6, 9, …).
@@ -49,4 +49,21 @@ export function curveMarker(
     }
   }
   return best;
+}
+
+//The Gap ("delta") series: for every minute where BOTH your curve and the cohort median
+//exist, the signed distance you − cohort-p50 and the cohort's own p25–p75 spread re-centred
+//on that median (so the band straddles zero). Points missing either side are dropped — the
+//gap is undefined without a cohort (mirrors curveMarker's both-series rule).
+export function signatureDelta(points: SignaturePoint[]): SignatureDeltaPoint[] {
+  const out: SignatureDeltaPoint[] = [];
+  for (const p of points) {
+    if (p.you == null || p.cmp == null) continue;
+    out.push({
+      min: p.min,
+      delta: p.you - p.cmp,
+      deltaBand: p.band ? [p.band[0] - p.cmp, p.band[1] - p.cmp] : undefined,
+    });
+  }
+  return out;
 }

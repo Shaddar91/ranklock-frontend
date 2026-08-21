@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mergeSignatureCurve, curveMarker } from './signatureCurve';
+import { mergeSignatureCurve, curveMarker, signatureDelta } from './signatureCurve';
 import type { SignaturePoint } from '../components/react/charts/SignatureCurve';
 import type {
   PlayerCurvePoint,
@@ -112,5 +112,35 @@ describe('curveMarker', () => {
   it('returns null when no point has both series', () => {
     expect(curveMarker([{ min: 3, you: 1000 }, { min: 9, cmp: 2800 }])).toBeNull();
     expect(curveMarker([])).toBeNull();
+  });
+});
+
+describe('signatureDelta', () => {
+  it('emits the signed gap and the band re-centred on the cohort median', () => {
+    const out = signatureDelta([{ min: 3, you: 1000, cmp: 900, band: [800, 1000] }]);
+    expect(out).toEqual([{ min: 3, delta: 100, deltaBand: [-100, 100] }]);
+  });
+
+  it('drops points missing either your curve or the cohort median', () => {
+    const out = signatureDelta([
+      { min: 3, you: 1000 },
+      { min: 6, cmp: 900 },
+      { min: 9, you: 2000, cmp: 1800, band: [1700, 1900] },
+    ]);
+    expect(out).toEqual([{ min: 9, delta: 200, deltaBand: [-100, 100] }]);
+  });
+
+  it('reports a negative delta when behind, and the band still straddles zero', () => {
+    const out = signatureDelta([{ min: 10, you: 1500, cmp: 2000, band: [1800, 2400] }]);
+    expect(out).toEqual([{ min: 10, delta: -500, deltaBand: [-200, 400] }]);
+  });
+
+  it('omits deltaBand when the cohort had no band at that minute', () => {
+    expect(signatureDelta([{ min: 3, you: 1000, cmp: 900 }])).toEqual([{ min: 3, delta: 100 }]);
+  });
+
+  it('returns an empty array when no point has both series', () => {
+    expect(signatureDelta([{ min: 3, you: 1000 }, { min: 9, cmp: 900 }])).toEqual([]);
+    expect(signatureDelta([])).toEqual([]);
   });
 });

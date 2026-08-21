@@ -19,6 +19,7 @@ import {
   Area,
   Line,
   LabelList,
+  ReferenceLine,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -35,6 +36,7 @@ import {
   tooltipItemStyle,
   tooltipLabelStyle,
 } from './chartTheme';
+import { signatureDelta } from '../../../lib/signatureCurve';
 
 export interface SignaturePoint {
   //game minute (t_seconds / 60) — the x value.
@@ -48,8 +50,24 @@ export interface SignaturePoint {
   band?: [number, number];
 }
 
+//The Gap ("delta") view's per-minute datum: your signed distance to the cohort median,
+//against a zero baseline. Derived from SignaturePoint by signatureDelta (lib/signatureCurve).
+export interface SignatureDeltaPoint {
+  //game minute — the x value.
+  min: number;
+  //you − cohort p50 at this minute: positive = ahead, negative = behind.
+  delta: number;
+  //the cohort's p25..p75 re-centred on its own median ([p25−p50, p75−p50]), so the band
+  //straddles zero; absent when the cohort had no band at this minute.
+  deltaBand?: [number, number];
+}
+
 interface SignatureCurveProps {
   data: SignaturePoint[];
+  //'totals' (default) = today's absolute cumulative chart; 'gap' = the delta view (your
+  //distance to the cohort median against a zero baseline). 'gap' needs a comparison — the
+  //caller forces 'totals' when there is none.
+  mode?: 'gap' | 'totals';
   height?: number;
   //Always "You" — the fixed personal line. Kept a prop only so it reads from one place.
   youLabel?: string;
@@ -68,14 +86,126 @@ interface SignatureCurveProps {
 const fmtK = (v: ChartFmtValue) =>
   typeof v === 'number' ? (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(Math.round(v))) : String(v ?? '');
 
+//Signed compact souls for the Gap axis/tooltip: +1.2k / −300 / 0 (U+2212 minus, matching
+//the app's chip styling).
+const fmtSigned = (v: ChartFmtValue) => {
+  if (typeof v !== 'number') return String(v ?? '');
+  const a = Math.abs(v);
+  const mag = a >= 1000 ? `${(a / 1000).toFixed(1)}k` : String(Math.round(a));
+  return v > 0 ? `+${mag}` : v < 0 ? `−${mag}` : mag;
+};
+
 export default function SignatureCurve({
   data,
+  mode = 'totals',
   height = 320,
   youLabel = 'You',
   comparisonLabel,
   metricLabel = 'souls',
   animate = true,
 }: SignatureCurveProps) {
+  //GAP view — one signed line (you − cohort median) against a zero baseline (the cohort's
+  //own median), with the cohort's middle-50% shaded around zero. Renders the exact quantity
+  //the panel is about; the absolute souls it drops live in the caption's marker readout.
+  if (mode === 'gap') {
+    const gap = signatureDelta(data);
+    let lastIdx = -1;
+    gap.forEach((d, i) => {
+      if (d.delta != null) lastIdx = i;
+    });
+    return (
+      <ResponsiveContainer width="100%" height={height}>
+        <ComposedChart data={gap} margin={{ top: 12, right: 72, bottom: 4, left: 4 }}>
+          <CartesianGrid stroke={gridStroke} strokeOpacity={0.5} vertical={false} />
+          <XAxis
+            dataKey="min"
+            type="number"
+            domain={['dataMin', 'dataMax']}
+            tick={axisTick}
+            tickLine={false}
+            axisLine={{ stroke: gridStroke }}
+            tickFormatter={(m: number) => `${m}:00`}
+          />
+          {/* signed axis — zero is a real reference (the cohort median), NEVER floored;
+              clamp the domain to include 0 so the baseline is always on-chart. */}
+          <YAxis
+            domain={[(d: number) => Math.min(0, d), (d: number) => Math.max(0, d)]}
+            tick={axisTick}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={fmtSigned}
+            width={48}
+          />
+          <Tooltip
+            contentStyle={tooltipContentStyle}
+            labelStyle={tooltipLabelStyle}
+            itemStyle={tooltipItemStyle}
+            formatter={(v: ChartFmtValue) => `${fmtSigned(v)} ${metricLabel}`}
+            labelFormatter={(m) => `Minute ${m}`}
+          />
+          {/* cohort middle-50% re-centred on its median — the band straddles the baseline. */}
+          <Area
+            type="monotone"
+            name="cohort spread"
+            dataKey="deltaBand"
+            legendType="none"
+            stroke="none"
+            fill={sigSeriesColor.comparison}
+            fillOpacity={0.1}
+            isAnimationActive={false}
+            connectNulls
+          />
+          {/* the cohort median IS the baseline — dashed in the cohort hue (same dash as the
+              Totals cohort line) so it stays tellable without colour, labelled with the cohort. */}
+          <ReferenceLine
+            y={0}
+            stroke={sigSeriesColor.comparison}
+            strokeDasharray="7 5"
+            strokeWidth={1.6}
+            label={{
+              value: comparisonLabel,
+              position: 'insideTopLeft',
+              fill: sigSeriesColor.comparison,
+              fontSize: 11,
+              fontWeight: 700,
+            }}
+          />
+          {/* YOU vs the cohort — the amber you-hue line (same star treatment as Totals); its
+              distance above/below the baseline IS the gap. */}
+          <Line
+            type="monotone"
+            name={youLabel}
+            dataKey="delta"
+            stroke={sigSeriesColor.you}
+            strokeWidth={3}
+            dot={{ r: 2, fill: sigSeriesColor.you, strokeWidth: 0 }}
+            activeDot={{ r: 4 }}
+            connectNulls
+            isAnimationActive={animate}
+          >
+            <LabelList
+              dataKey="delta"
+              content={(props: { x?: number | string; y?: number | string; index?: number }) =>
+                props.index === lastIdx ? (
+                  <text
+                    x={Number(props.x ?? 0) + 8}
+                    y={props.y ?? 0}
+                    dy={4}
+                    fill={sigSeriesColor.you}
+                    fontSize={12}
+                    fontWeight={700}
+                    textAnchor="start"
+                  >
+                    {youLabel}
+                  </text>
+                ) : null
+              }
+            />
+          </Line>
+        </ComposedChart>
+      </ResponsiveContainer>
+    );
+  }
   //Index of the LAST non-null datum for a series — that is where its on-chart name label
   //is drawn (like a line title trailing off the right edge).
   const lastIdxOf = (key: 'you' | 'cmp') => {
