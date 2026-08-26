@@ -187,14 +187,14 @@ const windowTables =
                       {windowTables && windowLo && windowHi && (
                         <>
                           The {windowTables} below cover matches played between {shortDate(windowLo)} and{' '}
-                          {shortDate(windowHi)}, the window RankLock's analytics pipeline has folded.
+                          {shortDate(windowHi)}, the window RankLock's analytics pipeline has processed.
                           {patchesInWindow != null &&
                             currentPatch &&
                             ` ${patchesInWindow} patch releases fall inside that span; the current one is the ${currentPatch.version_label}, live since ${shortDate(currentPatch.released_at)}.`}
                         </>
                       )}
                       {synergies.length > 0 &&
-                        `${windowTables && windowLo && windowHi ? ' ' : ''}Duo synergies come from a different source: the upstream deadlock-api.com analytics feed, not RankLock's own match database, so that service sets their sample window.`}
+                        `${windowTables && windowLo && windowHi ? ' ' : ''}Duo synergies come from the upstream deadlock-api.com analytics feed rather than RankLock's own match database, so that service sets their sample window.`}
                     </p>
                   ) : null}
                 </div>
