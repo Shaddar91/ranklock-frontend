@@ -289,7 +289,7 @@ export const api = {
   //Best items by win rate for a hero, scoped to a rank band (rich-analytics tier; served
   //by the MAIN API under /heroes/*, so `apiFetch`). `band` is the numeric rank tier
   //(badge/10, 0..11); omit to aggregate. 501 while the tier is gated off, 202 until the
-  //analytics pipeline serves — callers empty-state both.
+  //analytics pipeline serves.
   //hero_item_win_rates is mode-separated but lane-tier Normal-only (022) — the
   //param exists for symmetry; the UI only ever sends Normal here.
   getHeroItemWinRates: (id: number, params?: { band?: number; game_mode?: GameMode }) =>

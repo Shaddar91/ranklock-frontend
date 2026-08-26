@@ -1,32 +1,35 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import HeroDetailExtra from '../../components/react/HeroDetailExtra';
+import WinRate from '../../components/WinRate.astro';
 import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
 import { breadcrumbJsonLd } from '../../lib/seo';
-import { count, fixed, kda, metaTier, pct } from '../../lib/format';
+import { count, fixed, kda, metaTier, pct, shortDate } from '../../lib/format';
 import { resolveAsset } from '../../lib/assets';
 import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
-import type { HeroSummary } from '../../types/api';
+import type {
+  DataHorizonResponse,
+  HeroItemWinRate,
+  HeroSummary,
+  HeroSynergyRow,
+  MatchupEntry,
+  Patch,
+  TrimmedBuild,
+} from '../../types/api';
 
-//SSG hero detail (requirements §B.3) — one prerendered page per hero id. The
-//entity header + headline stats are baked into static HTML for SEO; the deeper
-//matchups/builds tiers mount as ONE client:visible island that empty-states
-//until those endpoints serve (build-ahead). If the hero list is cold at build,
-//a single noindex placeholder keeps the route building.
+//SSG hero detail: headline stats plus the matchup, synergy, item and build
+//tables are baked at build time. A section with no rows is omitted from the
+//DOM — never an empty-state, never a promise of future data.
 export async function getStaticPaths() {
   const heroes = await buildFetch(api.getHeroes(), [] as HeroSummary[]);
   if (heroes.length === 0) {
-    return [{ params: { id: 'example' }, props: { hero: null } }];
+    return [{ params: { id: 'example' }, props: { hero: null, roster: [] as HeroSummary[] } }];
   }
-  return heroes.map((h) => ({ params: { id: String(h.hero_id) }, props: { hero: h } }));
+  return heroes.map((h) => ({ params: { id: String(h.hero_id) }, props: { hero: h, roster: heroes } }));
 }
 
-interface Props {
-  hero: HeroSummary | null;
-}
-const { hero } = Astro.props;
+const { hero, roster } = Astro.props as { hero: HeroSummary | null; roster: HeroSummary[] };
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const name = hero?.hero_name ?? 'Hero';
@@ -45,6 +48,63 @@ const jsonLd = breadcrumbJsonLd(origin, [
 
 const tier = metaTier(hero?.win_rate);
 const heroKda = kda(hero?.avg_kills, hero?.avg_deaths, hero?.avg_assists);
+
+//Same fetch path as the hero list above (apiClient + buildFetch at build time).
+//A failed or empty endpoint bakes as zero rows and its section is dropped, so a
+//cold origin yields a shorter page, not a broken build.
+const [matchupRows, synergyRows, itemRows, buildRows, horizon, patches] = hero
+  ? await Promise.all([
+      buildFetch(api.getHeroMatchups(hero.hero_id), [] as MatchupEntry[]),
+      buildFetch(api.getHeroSynergies(hero.hero_id), [] as HeroSynergyRow[]),
+      buildFetch(api.getHeroItemWinRates(hero.hero_id), [] as HeroItemWinRate[]),
+      buildFetch(api.getHeroBuilds(hero.hero_id), [] as TrimmedBuild[]),
+      buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null),
+      buildFetch(api.getPatches(), [] as Patch[]),
+    ])
+  : [[] as MatchupEntry[], [] as HeroSynergyRow[], [] as HeroItemWinRate[], [] as TrimmedBuild[], null, [] as Patch[]];
+
+const heroById = new Map(roster.map((h) => [h.hero_id, h]));
+
+const matchups = [...matchupRows].sort((a, b) => b.win_rate - a.win_rate);
+
+const synergies = synergyRows
+  .map((r) => {
+    const partnerId = r.hero_id1 === hero?.hero_id ? r.hero_id2 : r.hero_id1;
+    const winRate = r.matches_played > 0 ? (r.wins / r.matches_played) * 100 : 0;
+    return { partnerId, matches: r.matches_played, winRate };
+  })
+  .filter((r) => r.matches > 0)
+  .sort((a, b) => b.winRate - a.winRate);
+
+const items = itemRows
+  .filter((r) => r.win_rate != null)
+  .sort((a, b) => (b.win_rate ?? 0) - (a.win_rate ?? 0))
+  .slice(0, 20);
+
+const builds = buildRows.slice(0, 12);
+
+const hasStats = hero != null && hero.win_rate != null && hero.picks > 0;
+
+//Provenance for the explanatory copy: each analytics dataset names its own fold
+//window in /meta/data-horizon; patches inside it come from the live patch list.
+const windowOf = (ds: string) => horizon?.datasets.find((d) => d.dataset === ds);
+const windowLo = windowOf('hero-matchups')?.window_lo ?? windowOf('hero-item-win-rates')?.window_lo ?? null;
+const windowHi = windowOf('hero-matchups')?.window_hi ?? windowOf('hero-item-win-rates')?.window_hi ?? null;
+const statsThrough = shortDate(horizon?.max_match_start_time);
+const patchesInWindow =
+  windowLo && windowHi
+    ? patches.filter((p) => p.released_at >= windowLo && p.released_at <= windowHi).length
+    : null;
+const currentPatch = patches.find((p) => p.is_current) ?? null;
+
+const windowTables =
+  matchups.length > 0 && items.length > 0
+    ? 'matchup and item tables'
+    : matchups.length > 0
+      ? 'matchup table'
+      : items.length > 0
+        ? 'item table'
+        : null;
 ---
 
 <BaseLayout title={title} description={description} canonicalPath={canonicalPath} jsonLd={jsonLd} noindex={!hero}>
@@ -102,19 +162,189 @@ const heroKda = kda(hero?.avg_kills, hero?.avg_deaths, hero?.avg_assists);
             )
           }
 
-          <section class="panel panel-pad">
-            <h2 class="h-sec" style="margin-bottom:6px;">Matchups, synergies, best items & builds</h2>
-            <p class="muted" style="font-size:13px; margin:0 0 10px;">
-              Matchups, best-duo synergies, best items by win rate and top community builds — fills in as the analytics pipeline serves.
-            </p>
-            <HeroDetailExtra heroId={hero.hero_id} client:visible />
+          <section class="panel panel-pad" style="margin-bottom:24px;">
+            <h2 class="h-sec" style="margin-bottom:10px;">About these numbers</h2>
+            {
+              hasStats ? (
+                <div>
+                  <p class="muted" style="font-size:14px; line-height:1.65; margin:0 0 10px;">
+                    {name} wins {pct(hero.win_rate)} of {count(hero.picks)} ranked matches in RankLock's
+                    database{statsThrough && `, which holds matches through ${statsThrough}`}. The KDA tile
+                    divides kills plus assists by deaths, working from per-match averages of{' '}
+                    {fixed(hero.avg_kills, 1)} kills, {fixed(hero.avg_deaths, 1)} deaths and{' '}
+                    {fixed(hero.avg_assists, 1)} assists. The souls tile is the average souls {name}{' '}
+                    players earn per match, the currency that buys items in Deadlock.
+                  </p>
+                  <p class="muted" style="font-size:14px; line-height:1.65; margin:0 0 10px;">
+                    Those are all-ranks figures. RankLock sorts ranked players into twelve bands, Obscurus
+                    at the bottom and Eternus at the top, read from the badge value on each account. The{' '}
+                    <a href="/heroes">hero meta table</a> filters to any single band and re-reads win rates
+                    for that lobby alone; the {pct(hero.win_rate)} on this page is {name} across every band
+                    combined.
+                  </p>
+                  {(windowTables && windowLo && windowHi) || synergies.length > 0 ? (
+                    <p class="muted" style="font-size:14px; line-height:1.65; margin:0;">
+                      {windowTables && windowLo && windowHi && (
+                        <>
+                          The {windowTables} below cover matches played between {shortDate(windowLo)} and{' '}
+                          {shortDate(windowHi)}, the window RankLock's analytics pipeline has folded.
+                          {patchesInWindow != null &&
+                            currentPatch &&
+                            ` ${patchesInWindow} patch releases fall inside that span; the current one is the ${currentPatch.version_label}, live since ${shortDate(currentPatch.released_at)}.`}
+                        </>
+                      )}
+                      {synergies.length > 0 &&
+                        `${windowTables && windowLo && windowHi ? ' ' : ''}Duo synergies come from a different source: the upstream deadlock-api.com analytics feed, not RankLock's own match database, so that service sets their sample window.`}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <p class="muted" style="font-size:14px; line-height:1.65; margin:0;">
+                  This hero is marked disabled in the roster data and has no ranked matches in RankLock's
+                  dataset, so there are no win-rate, KDA, matchup or item numbers on this page.
+                </p>
+              )
+            }
           </section>
+
+          {
+            matchups.length > 0 && (
+              <section class="panel panel-pad" style="margin-bottom:24px;">
+                <h2 class="h-sec" style="margin-bottom:10px;">Matchups</h2>
+                <div class="dt-scroll">
+                  <table class="dt">
+                    <thead>
+                      <tr>
+                        <th><span class="th-static">Opponent</span></th>
+                        <th class="num"><span class="th-static">Win rate</span></th>
+                        <th class="num"><span class="th-static">Matches</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {matchups.map((m) => (
+                        <tr>
+                          <td>
+                            <span class="display" style="font-weight:600; color:var(--text);">
+                              vs {heroById.get(m.hero_b_id)?.hero_name ?? `Hero ${m.hero_b_id}`}
+                            </span>
+                          </td>
+                          <td class="num"><WinRate wr={m.win_rate <= 1 ? m.win_rate * 100 : m.win_rate} /></td>
+                          <td class="num"><span class="tnum">{count(m.matches)}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )
+          }
+
+          {
+            synergies.length > 0 && (
+              <section class="panel panel-pad" style="margin-bottom:24px;">
+                <h2 class="h-sec" style="margin-bottom:10px;">Duo synergies</h2>
+                <div class="dt-scroll">
+                  <table class="dt">
+                    <thead>
+                      <tr>
+                        <th><span class="th-static">Duo partner</span></th>
+                        <th class="num"><span class="th-static">Win rate</span></th>
+                        <th class="num"><span class="th-static">Matches</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {synergies.map((s) => {
+                        const partner = heroById.get(s.partnerId);
+                        const partnerName = partner?.hero_name ?? `Hero ${s.partnerId}`;
+                        return (
+                          <tr>
+                            <td>
+                              <span class="flex" style="align-items:center; gap:10px;">
+                                <span class="hav" style="width:28px; height:28px;" title={partnerName}>
+                                  {partner?.icon_url ? (
+                                    <img src={resolveAsset(partner.icon_url)} alt={partnerName} loading="lazy" />
+                                  ) : (
+                                    <span class="icon-mono" style="font-size:12px;" aria-hidden="true">{partnerName.slice(0, 1)}</span>
+                                  )}
+                                </span>
+                                <span class="display" style="font-weight:600; color:var(--text);">with {partnerName}</span>
+                              </span>
+                            </td>
+                            <td class="num"><WinRate wr={s.winRate} /></td>
+                            <td class="num"><span class="tnum">{count(s.matches)}</span></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )
+          }
+
+          {
+            items.length > 0 && (
+              <section class="panel panel-pad" style="margin-bottom:24px;">
+                <h2 class="h-sec" style="margin-bottom:10px;">Best items by win rate</h2>
+                <div class="dt-scroll">
+                  <table class="dt">
+                    <thead>
+                      <tr>
+                        <th><span class="th-static">Item</span></th>
+                        <th class="num"><span class="th-static">Win rate</span></th>
+                        <th class="num"><span class="th-static">Matches</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((r) => {
+                        const itemName = r.item_name ?? `Item ${r.item_id}`;
+                        return (
+                          <tr>
+                            <td>
+                              <span class="flex" style="align-items:center; gap:10px;">
+                                <span class="iicon" style="width:28px; height:28px;" title={itemName}>
+                                  {r.icon_url ? (
+                                    <img src={r.icon_url} alt={itemName} loading="lazy" />
+                                  ) : (
+                                    <span class="icon-mono" style="font-size:12px;" aria-hidden="true">{itemName.slice(0, 1)}</span>
+                                  )}
+                                </span>
+                                <span class="display" style="font-weight:600; color:var(--text);">{itemName}</span>
+                              </span>
+                            </td>
+                            <td class="num"><WinRate wr={(r.win_rate as number) <= 1 ? (r.win_rate as number) * 100 : (r.win_rate as number)} /></td>
+                            <td class="num"><span class="tnum">{count(r.games)}</span></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )
+          }
+
+          {
+            builds.length > 0 && (
+              <section class="panel panel-pad" style="margin-bottom:24px;">
+                <h2 class="h-sec" style="margin-bottom:10px;">Community builds</h2>
+                <ul style="list-style:none; margin:0; padding:8px 0;">
+                  {builds.map((b) => (
+                    <li class="statrow">
+                      <span class="display" style="font-weight:600; color:var(--text);">{b.name}</span>
+                      <span class="mono" style="font-size:12px; color:var(--gold);">♥ {count(b.num_favorites)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )
+          }
         </div>
       ) : (
         <div>
           <h1 class="h-page">Hero stats</h1>
           <p class="page-intro">
-            Hero detail comes online with the stats API. Browse the <a href="/heroes">hero meta table</a> for the
+            No hero data was available when this page was built. Browse the <a href="/heroes">hero meta table</a> for the
             full roster.
           </p>
         </div>
