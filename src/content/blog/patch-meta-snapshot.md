@@ -1,6 +1,6 @@
 ---
 title: "Patch meta snapshot: who's rising, who's falling, and what to watch"
-description: "A reading of the current patch's win-rate movers — the heroes trending up, the items quietly falling off, and how to adjust your picks before the meta settles."
+description: "A reading of the current patch's win-rate movers — the heroes trending up, the items falling off, and what to pick before the meta settles."
 pubDate: 2026-06-20
 updatedDate: 2026-06-20
 author: RankLock

@@ -1,6 +1,6 @@
 ---
 title: "Welcome to the RankLock blog"
-description: "What this blog is for: Deadlock guides and meta notes fused with live, patch-current win-rates — so the advice you read here never goes stale."
+description: "What this blog is for: Deadlock guides and meta notes with live, patch-current win-rates embedded in the text."
 pubDate: 2026-06-01
 author: RankLock
 tags: [announcement, meta]

@@ -24,7 +24,7 @@ const jsonLd = [
 
 <BaseLayout
   title="Deadlock guides & strategy — RankLock"
-  description="Deadlock hero guides, item builds and fundamentals — fused with live win-rates that update every patch, so the advice never goes stale."
+  description="Deadlock hero guides, item builds and fundamentals, with each post's key win-rates pulled live from the current patch."
   canonicalPath="/blog"
   jsonLd={jsonLd}
 >
@@ -32,13 +32,12 @@ const jsonLd = [
     <div class="kicker">Guides fused with live stats</div>
     <h1 class="h-page">Guides</h1>
     <p class="page-intro">
-      Hero guides, builds and fundamentals — each one embeds live win-rates pulled from the current patch, so the
-      numbers never go stale.
+      Hero guides, builds and fundamentals — each one embeds live win-rates pulled from the current patch.
     </p>
 
     {
       posts.length === 0 ? (
-        <p class="muted" style="margin-top:20px;">No guides published yet — check back soon.</p>
+        <p class="muted" style="margin-top:20px;">No guides published yet.</p>
       ) : (
         <div class="blog-grid" style="margin-top:20px;">
           {posts.map((post, i) => (

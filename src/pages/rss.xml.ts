@@ -20,7 +20,7 @@ export const GET: APIRoute = async (context) => {
   return rss({
     title: `${SITE_NAME} — Guides`,
     description:
-      'Deadlock hero guides, item builds and fundamentals from RankLock — fused with live win-rates that update every patch, so the advice never goes stale.',
+      'Deadlock hero guides, item builds and fundamentals from RankLock, with each post\'s key win-rates pulled live from the current patch.',
     //Absolute-URL base for the item links; set in astro.config.mjs.
     site: context.site ?? 'https://ranklock.app',
     items: posts.map((post) => ({

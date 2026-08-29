@@ -1,6 +1,6 @@
 ---
 title: "Soul economy in the first ten minutes: what Lane Lab shows"
-description: "Lane Lab tracks the median souls curve and the win probability behind each 9-minute threshold: 6,060 souls is the median, 8,000 flips the rate past 60%, and 14,000 reaches 87.2%."
+description: "Lane Lab tracks the median souls curve: 6,060 souls is the 9-minute median, 8,000 flips the win rate past 60%, 14,000 reaches 87.2%."
 pubDate: 2026-08-26
 author: RankLock team
 tags: [fundamentals, economy, lane-lab]

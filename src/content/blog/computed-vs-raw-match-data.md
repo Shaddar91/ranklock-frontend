@@ -1,6 +1,6 @@
 ---
 title: "What RankLock computes and what it does not"
-description: "Match pages expose raw scoreboards; tiers, matchup tables, lane curves, and buy timings are computed on top of them within a stated window. MMR and rank distribution stay dark on purpose."
+description: "Match pages expose raw scoreboards; tiers, matchup tables, lane curves and buy timings are computed on top within a stated window. No MMR anywhere."
 pubDate: 2026-08-26
 author: RankLock team
 tags: [meta, data]

@@ -1,6 +1,6 @@
 ---
 title: "Hero matchups 101: how RankLock computes them and how to use them"
-description: "A matchup line is a win-rate over a counted sample. Lash beats Bebop at 54.0% across 465,892 matches and loses to Seven at 45.0% across 430,906. Check the match count first, then the rate."
+description: "A matchup line is a win-rate over a counted sample. Lash beats Bebop at 54.0% across 465,892 matches. Check the match count first, then the rate."
 pubDate: 2026-08-26
 author: RankLock team
 tags: [fundamentals, matchups]

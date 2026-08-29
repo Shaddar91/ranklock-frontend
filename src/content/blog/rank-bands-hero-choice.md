@@ -1,6 +1,6 @@
 ---
 title: "Reading your rank band: what Initiate through Eternus means for hero choice"
-description: "The all-ranks win-rate hides bracket swings. Lash wins about 51% in every bracket while Haze drops 2.6 points at high rank, so filter the heroes grid to your band before you pick."
+description: "The all-ranks win-rate hides bracket swings: Haze drops 2.6 points at high rank. Filter the heroes grid to your band before you pick."
 pubDate: 2026-08-26
 author: RankLock team
 tags: [fundamentals, ranks, picks]

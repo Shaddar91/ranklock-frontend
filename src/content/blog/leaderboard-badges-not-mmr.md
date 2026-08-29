@@ -1,6 +1,6 @@
 ---
 title: "Leaderboard, badges, and the MMR you will not find"
-description: "RankLock's leaderboard orders by badge tier and the entire top 50 sits at Eternus VI. Past the emblem ceiling, win-rate and match count are the only ordering left."
+description: "RankLock's leaderboard orders by badge tier and the entire top 50 sits at Eternus VI. Past the emblem ceiling, win-rate and volume decide."
 pubDate: 2026-08-26
 author: RankLock team
 tags: [ranks, leaderboard]
