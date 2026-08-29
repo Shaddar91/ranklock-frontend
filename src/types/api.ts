@@ -610,7 +610,7 @@ export interface PlayerCurveComparison {
   band: number | null;
   //the selected hero, or null for the all-hero cohort.
   hero_id: number | null;
-  //"cohort-gold" (fast Gold point-lookup) | "on-demand-hero" (live raw-timeline scan).
+  //"cohort-gold" (band histogram Gold) | "cohort-gold-hero" (band x hero histogram Gold, migration 043).
   source: string;
   points: PlayerCurveComparisonPoint[];
 }

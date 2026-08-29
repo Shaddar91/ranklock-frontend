@@ -445,7 +445,7 @@ function SignatureCurvePanel({ id }: { id: number }) {
                 <>
                   The <b style={{ color: sigSeriesColor.comparison }}>{sigWords.comparison} dashed</b> line is{' '}
                   <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b>
-                  {comparison?.source === 'on-demand-hero' ? ' (computed live)' : ''} — the cohort you picked; the shaded
+                   — the cohort you picked; the shaded
                   band is their 25th–75th percentile. Only this line moves when you change the selectors.
                 </>
               ) : (

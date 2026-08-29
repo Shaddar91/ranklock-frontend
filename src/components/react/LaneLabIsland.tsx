@@ -20,7 +20,7 @@
 //    fast Gold league curves (all-hero medians per rank band).
 //  • GET /players/:id/economy-curve?metric=&vs_band=&hero= — each player's own
 //    per-minute line (`you`), the `player_hero_games` no-games guard, and — when
-//    a hero is selected — the on-demand hero-scoped league percentiles via the
+//    a hero is selected — the hero-scoped league percentiles (band x hero Gold) via the
 //    response's `comparison` side (anchored on the first picked player).
 //  • GET /lane-lab/early-econ-verdict?band= — the 9-minute early-econ → win-rate
 //    verdict for League A.
@@ -189,7 +189,7 @@ interface ComparisonSelection {
   //The global hero scope (null = all heroes).
   hero: HeroPick | null;
   //True when the league curves are hero-scoped: a hero is selected AND a picked player
-  //anchors the on-demand per-(band, hero) comparison requests. Without an anchor the
+  //anchors the per-(band, hero) comparison requests. Without an anchor the
   //league curves stay all-heroes and the captions say so (never a silent wrong label).
   heroScopedLeagues: boolean;
   //The anchoring player id for hero-scoped league fetches (first picked player).
@@ -208,7 +208,7 @@ const leagueSeriesLabel = (name: string, sel: Pick<ComparisonSelection, 'hero' |
 
 //Peak per-minute sample size across a league curve — shown as "n =" so a reader can
 //weigh a thin league's curve against a well-sampled one. Structural: serves both the
-//lane-Gold points and the on-demand hero-comparison points.
+//band-Gold points and the band x hero Gold comparison points.
 function peakSamples(points: ReadonlyArray<{ sample_players: number }> | undefined): number {
   return (points ?? []).reduce((m, p) => Math.max(m, p.sample_players), 0);
 }
@@ -410,7 +410,7 @@ function CurvePanel({
   //The economy-curve Gold's match-start sample window ("Apr 1, 2026 – Jun 1, 2026") from
   ///meta/data-horizon, or null when unknown — the league caption then shows no window rather
   //than a hardcoded date (Component 11 data-age honesty). Applies only to the lane-Gold
-  //league curves; hero-scoped on-demand curves are computed live and never claim it.
+  //league curves; hero-scoped league curves come from the band x hero Gold and carry the same window.
   sampleWindow?: string | null;
 }) {
   const [metric, setMetric] = useState<string>(defaultMetric);
@@ -431,8 +431,8 @@ function CurvePanel({
   //---- League A / League B series — two sources, chosen by the hero scope ----
   //No hero (or no anchor): the fast lane-Gold endpoints, one call per league (bucket
   //units — scaled below). Hero + anchor: the player-curve endpoint's `comparison` side,
-  //one call per league with vs_band=<that league> + hero= — the on-demand per-(band,
-  //hero) percentile scan (REAL units, scale 1). The anchor's own `you` series in those
+  //one call per league with vs_band=<that league> + hero= — the band x hero Gold
+  //reconstruction (REAL units, scale 1). The anchor's own `you` series in those
   //responses is unused here; when the anchor IS Player 1 on the global hero and League B,
   //TanStack dedupes the key and one request serves both the league and the player line.
   const laneA = useQuery({
@@ -462,7 +462,7 @@ function CurvePanel({
 
   //Metric-echo guard for the hero-scoped league responses (M1/B1(b) spirit): only trust a
   //payload that echoes the metric this panel asked for; `comparison` may also be null when
-  //the on-demand scan timed out / rich analytics is off — both yield an empty series.
+  //that hero Gold has not folded yet / rich analytics is off — both yield an empty series.
   const cmpA = heroCmpA.data?.metric === metric ? heroCmpA.data.comparison : null;
   const cmpB = heroCmpB.data?.metric === metric ? heroCmpB.data.comparison : null;
 
@@ -593,11 +593,11 @@ function CurvePanel({
         </div>
         {n > 0 && (
           //League A's n plus, for the lane-Gold source, the match window it was computed
-          //from (/meta/data-horizon lineage stamp) — never a hardcoded date. The on-demand
-          //hero-scoped source says what it is instead of claiming the Gold's window.
+          //from (/meta/data-horizon lineage stamp) — never a hardcoded date; the hero-scoped
+          //source shares that window and says it is hero-scoped.
           <span className="mono faint" style={{ fontSize: 12 }}>
             {heroScopedLeagues
-              ? <>n = {count(n)} samples · hero-scoped, computed on demand</>
+              ? <>n = {count(n)} players sampled · hero-scoped{sampleWindow ? <> · {sampleWindow} sample</> : null}</>
               : <>n = {count(n)} players sampled{sampleWindow ? <> · {sampleWindow} sample</> : null}</>}
           </span>
         )}
@@ -685,10 +685,9 @@ function CurvePanel({
               {leagueA.show && !(leagueB?.show ?? false) && <>.</>}
               {heroScopedLeagues && hero ? (
                 <>
-                  {' '}Both league curves are scoped to <b>{hero.name}</b> — percentile medians computed{' '}
-                  <b>on demand</b> from the raw match timeline, not the pre-aggregated all-hero path
+                  {' '}Both league curves are scoped to <b>{hero.name}</b> — medians of players on that hero in that league, not the all-hero curve
                   {(cmpA == null && leagueA.show) || (cmpB == null && (leagueB?.show ?? false)) ? (
-                    <> (a league whose on-demand scan returned nothing — timeout or no sample — is simply not drawn)</>
+                    <> (a league with no folded sample on this hero yet is simply not drawn)</>
                   ) : null}
                   .
                 </>
@@ -1340,7 +1339,7 @@ function LaneLabInner() {
   };
   const liveOverlayB = statusB.hasData ? playerOverlayB : null;
 
-  //Hero-scoped league curves need a player-anchored request (the on-demand comparison
+  //Hero-scoped league curves need a player-anchored request (the hero comparison
   //rides /players/:id/economy-curve) — the first picked player anchors it.
   const anchorId = pickedId ?? pickedIdB;
   const heroScopedLeagues = globalHero != null && anchorId != null;
