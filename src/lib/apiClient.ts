@@ -21,7 +21,6 @@ import type {
   CurrentUser,
   DataHorizonResponse,
   EarlyEconVerdictResponse,
-  EconomyOverlayResponse,
   GameMode,
   HealthResponse,
   HeroBracket,
@@ -177,7 +176,7 @@ export function apiFetch<T>(
 /**
  * Fetch against the standalone Lane Lab service base (ranklock-lane-lab / PUBLIC_LANE_LAB_BASE_URL).
  * Identical typed-ApiError contract as `apiFetch`; only the base URL differs. Public Lane Lab reads
- * use the default `'same-origin'`; the authed `/me/economy-overlay` passes `credentials: 'include'`
+ * use the default `'same-origin'`; authed calls pass `credentials: 'include'`
  * so a logged-in user's `session_id` cookie (shared via the same Redis store) rides along to Lane Lab.
  */
 export function laneLabFetch<T>(
@@ -249,8 +248,6 @@ export const queryKeys = {
   laneEconomyCurve: (params?: Query) => ['lane-lab', 'economy-curve', params ?? {}] as const,
   laneFarmCurve: (params?: Query) => ['lane-lab', 'farm-curve', params ?? {}] as const,
   laneEarlyEconVerdict: (params?: Query) => ['lane-lab', 'early-econ-verdict', params ?? {}] as const,
-  //the signed-in caller's own economy overlay (Lane Lab service /me/economy-overlay).
-  myEconomyOverlay: (params?: Query) => ['me', 'economy-overlay', params ?? {}] as const,
   //data-age freshness metadata (the "Stats through {date}" chip + sample windows).
   dataHorizon: () => ['meta', 'data-horizon'] as const,
   me: () => ['me'] as const,
@@ -384,17 +381,12 @@ export const api = {
   getItemModifiers: (params?: { slot?: string; tier?: number }) =>
     apiFetch<ItemModifier[]>('/items/modifiers', { query: params }),
 
-  //Lane Lab (rich-analytics tier — RICH_ANALYTICS_ENABLED gate). Served by the standalone Lane Lab
-  //SERVICE (ranklock-lane-lab) via `laneLabFetch`/LANE_LAB_BASE, not the main API. `band` is the
-  //rank tier (badge/10, 0..11); omit it to aggregate all bands. 501 while the flag is off, 202 until
-  //the lane producers have run — callers empty-state both.
-  //NOTE: these `/lane-lab/*` paths mirror deadlock-backend/src/handlers/lane_lab.rs (the API the
-  //frontend was modeled on). The standalone service currently exposes /cohort/economy-curve +
-  ///me/economy-overlay instead — see the C4 deliverable for the route-reconciliation the owner/next
-  //component must land (service grows /lane-lab/* OR this island is reworked to the /cohort/* shape).
-  //Lane curves are Normal-only (022 — laning/9-min concepts have no Brawl meaning);
-  //`game_mode` is forwarded for forward-compat but the UI never sends anything but
-  //Normal here (the global toggle is hard-gated off on Lane Lab).
+  //Lane Lab (rich-analytics tier — RICH_ANALYTICS_ENABLED gate), served by deadlock-backend
+  //(`laneLabFetch` resolves to the main API unless PUBLIC_LANE_LAB_BASE_URL overrides it). `band`
+  //is the rank tier (badge/10, 0..11); omit it to aggregate all bands. 501 while the flag is off,
+  //202 until the lane producers have folded — callers empty-state both. Lane curves are
+  //Normal-only (022); `game_mode` is forwarded for forward-compat but the UI never sends anything
+  //but Normal here (the global toggle is hard-gated off on Lane Lab).
   getLaneEconomyCurve: (params?: { band?: number; metric?: string; game_mode?: GameMode }) =>
     laneLabFetch<LaneCurveResponse>('/lane-lab/economy-curve', { query: params }),
   //Per-minute farm (last-hits) curve; same CurveResponse shape + band/cohort overlay as
@@ -404,14 +396,6 @@ export const api = {
     laneLabFetch<LaneCurveResponse>('/lane-lab/farm-curve', { query: params }),
   getLaneEarlyEconVerdict: (params?: { band?: number; game_mode?: GameMode }) =>
     laneLabFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
-  //The signed-in caller's own economy overlay — the cohort curve + the caller's aggregate
-  //(`you`). Served by the standalone Lane Lab SERVICE (laneLabFetch); the shared session cookie
-  //rides along. 401 when not logged in / no linked deadlock account; 501/202 build-ahead like the
-  //sibling lane endpoints. The Lane Lab island consumes only the `you` aggregate for the overlay.
-  getMyEconomyOverlay: (params?: { band?: number }) =>
-    //Authed: carry the session cookie cross-origin (needs a non-wildcard CORS origin server-side).
-    laneLabFetch<EconomyOverlayResponse>('/me/economy-overlay', { query: params, credentials: 'include' }),
-
   //stats + session. rank_distribution is mode-AGNOSTIC (per-player badge histogram —
   //product decision, 022); the param is accepted for symmetry but the backend ignores
   //it (no game_mode dimension on the table).

@@ -413,8 +413,8 @@ function SignatureCurvePanel({ id }: { id: number }) {
         />
       ) : !hasYou ? (
         <EmptyState
-          title="No per-minute timeline yet"
-          message="This player's matches don't have the per-minute detail loaded yet — your curve appears once the match timeline is ingested."
+          title="No per-minute line for this player yet"
+          message="Player lines are built from the matches in the loaded data window; this player's line appears once a data fold covers their games."
           icon="chart"
         />
       ) : (

@@ -47,6 +47,7 @@ import {
   type ViewMode,
   guardedPlayerCurvePoints,
   isThinPlayerSample,
+  laneBandByMinute,
   laneSeriesByMinute,
   mergeEconSeriesByMinute,
   peakPlayerMatches,
@@ -54,7 +55,6 @@ import {
   THIN_SAMPLE_MIN_MATCHES,
 } from '../../lib/laneCurve';
 import type {
-  EconomyOverlayResponse,
   HeroSummary,
   LaneCurveResponse,
   PlayerEconomy,
@@ -214,26 +214,22 @@ function peakSamples(points: ReadonlyArray<{ sample_players: number }> | undefin
 }
 
 //---- the picked-player / my-account economy overlay -------------------------
-//Both the public per-player aggregate (PlayerEconomy) and the signed-in caller's
-//`/me/economy-overlay` `you` side collapse to ONE shape (PlayerOverlay) that feeds the
-//OverlaySummary stat-line + the 9-minute verdict marker — the SCALAR per-game averages.
-//The chart's player LINES are a separate concern: a searched player gets their OWN
-//per-minute curve from getPlayerEconomyCurve (`you`). The "You"/me source has no
-//per-player curve endpoint, so it contributes the stat-line + verdict marker but no
-//chart line (we never draw a flat straight line).
+//The public per-player aggregate (PlayerEconomy) collapses to ONE shape (PlayerOverlay) that
+//feeds the OverlaySummary stat-line — the SCALAR per-game averages. The chart's player LINES
+//come from getPlayerEconomyCurve (`you`, the promoted per-player summary). "Use my account"
+//resolves the signed-in viewer's linked deadlock account and becomes an ordinary player source
+//(isMe only relabels it "You"), so it gets the same line, hero scope and verdict marker.
 
-//What's currently overlaid: a searched player, or the signed-in caller's own account.
-type OverlaySource = { kind: 'player'; player: SearchResult } | { kind: 'me' };
+//What's currently overlaid: a searched player, or (isMe) the signed-in caller's own account.
+type OverlaySource = { kind: 'player'; player: SearchResult; isMe?: boolean };
 
 interface PlayerOverlay {
   //The picked player's name, or "You" for the signed-in account.
   label: string;
   matches: number;
   badge: number;
-  //Every per-game average the per-player economy endpoint serves (C1). The picked-player
-  //source (PlayerEconomy) fills all of these; the "You" source (/me/economy-overlay) only
-  //serves souls + last-hits, so its kills/deaths/assists/denies/damage stay null and the
-  //UI shows an em-dash for them rather than fabricating a value.
+  //Every per-game average the per-player economy endpoint serves (C1); a null renders as an
+  //em-dash rather than a fabricated value.
   avg_net_worth: number | null;
   souls_per_min: number | null;
   last_hits_per_min: number | null;
@@ -260,40 +256,16 @@ function overlayFromPlayer(name: string, e: PlayerEconomy): PlayerOverlay {
   };
 }
 
-function overlayFromMe(o: EconomyOverlayResponse): PlayerOverlay {
-  return {
-    label: 'You',
-    matches: o.you.matches,
-    badge: o.you.badge,
-    avg_net_worth: o.you.avg_net_worth,
-    souls_per_min: o.you.souls_per_min,
-    last_hits_per_min: o.you.last_hits_per_min,
-    //the /me overlay endpoint doesn't serve these yet — search your player name for them.
-    avg_kills: null,
-    avg_deaths: null,
-    avg_assists: null,
-    avg_denies: null,
-    avg_player_damage: null,
-  };
-}
-
 //An overlay only has something to draw when it covers real ranked games with a souls
 //rate — otherwise the player has "no economy data yet" and the picker empty-states it.
 const overlayHasData = (o: PlayerOverlay | null): o is PlayerOverlay =>
   o != null && o.matches > 0 && o.souls_per_min != null;
 
 //The picked player's ESTIMATED 9-minute net worth, projected from their average souls/min
-//pace (× 9 min). NOT a measured value — early/late minutes farm at different rates and we
-//have no per-minute timeline — so every surface that shows it says "est. from avg pace".
+//pace (× 9 min). Only a FALLBACK for a player whose per-minute line is not served yet — the
+//verdict marker prefers the measured 9:00 value from their own curve; the estimate is captioned.
 const projected9MinSouls = (o: PlayerOverlay): number | null =>
   o.souls_per_min != null ? Math.round(o.souls_per_min * 9) : null;
-
-//The `/me/economy-overlay` `you` aggregate is band-INDEPENDENT (the service filters it by
-//account only), but the endpoint's validate_band requires a concrete band 0..=11. So the
-//overlay sends a FIXED valid band: it keeps the 'All ranks' selection from 400ing and stops
-//`you` from refetching every time the UI band changes (the cohort_curve field that band
-//drives is unused here — the overlay reads only `you`).
-const ME_OVERLAY_BAND = 0;
 
 //Status of the active overlay fetch, handed to the picker for its loading/empty/summary UI.
 interface OverlayStatus {
@@ -496,12 +468,22 @@ function CurvePanel({
 
   const scale = bucketScale(metric);
   const mapA = useMemo(
-    () => (heroScopedLeagues ? laneSeriesByMinute(cmpA, 1, viewMode) : laneSeriesByMinute(laneA.data, scale, viewMode)),
-    [heroScopedLeagues, cmpA, laneA.data, scale, viewMode],
+    () => (heroScopedLeagues ? laneSeriesByMinute(cmpA, 1, viewMode, metric) : laneSeriesByMinute(laneA.data, scale, viewMode, metric)),
+    [heroScopedLeagues, cmpA, laneA.data, scale, viewMode, metric],
   );
   const mapB = useMemo(
-    () => (heroScopedLeagues ? laneSeriesByMinute(cmpB, 1, viewMode) : laneSeriesByMinute(laneB.data, scale, viewMode)),
-    [heroScopedLeagues, cmpB, laneB.data, scale, viewMode],
+    () => (heroScopedLeagues ? laneSeriesByMinute(cmpB, 1, viewMode, metric) : laneSeriesByMinute(laneB.data, scale, viewMode, metric)),
+    [heroScopedLeagues, cmpB, laneB.data, scale, viewMode, metric],
+  );
+  //Each league's middle half (p25–p75), drawn as a band behind its median in the cumulative view
+  //so two leagues whose medians nearly coincide still show how wide each one really is.
+  const bandA = useMemo(
+    () => (heroScopedLeagues ? laneBandByMinute(cmpA, 1) : laneBandByMinute(laneA.data, scale)),
+    [heroScopedLeagues, cmpA, laneA.data, scale],
+  );
+  const bandB = useMemo(
+    () => (heroScopedLeagues ? laneBandByMinute(cmpB, 1) : laneBandByMinute(laneB.data, scale)),
+    [heroScopedLeagues, cmpB, laneB.data, scale],
   );
 
   //---- the two players' own per-minute lines ----------------------------------
@@ -523,7 +505,7 @@ function CurvePanel({
     () => (p1NoGames ? [] : guardedPlayerCurvePoints(p1Curve.data, metric)),
     [p1NoGames, p1Curve.data, metric],
   );
-  const p1ByMinute = useMemo(() => playerSeriesByMinute(p1Points, viewMode), [p1Points, viewMode]);
+  const p1ByMinute = useMemo(() => playerSeriesByMinute(p1Points, viewMode, metric), [p1Points, viewMode, metric]);
   const hasP1Curve = p1Points.length > 0;
   //Sample-size disclosure (Component 11 / B6): the n this line actually rests on — the peak
   //per-bucket `matches` from the curve payload — and whether that n is thin (< 5 games), in
@@ -543,7 +525,7 @@ function CurvePanel({
     () => (p2NoGames ? [] : guardedPlayerCurvePoints(p2Curve.data, metric)),
     [p2NoGames, p2Curve.data, metric],
   );
-  const p2ByMinute = useMemo(() => playerSeriesByMinute(p2Points, viewMode), [p2Points, viewMode]);
+  const p2ByMinute = useMemo(() => playerSeriesByMinute(p2Points, viewMode, metric), [p2Points, viewMode, metric]);
   const hasP2Curve = p2Points.length > 0;
   const p2PeakN = peakPlayerMatches(p2Points);
   const p2Thin = hasP2Curve && isThinPlayerSample(p2PeakN);
@@ -554,13 +536,16 @@ function CurvePanel({
   //must not collapse the minutes the other series render on.
   const points = useMemo(
     () =>
-      mergeEconSeriesByMinute({
-        you: leagueA.show ? mapA : null,
-        cohort: leagueB?.show ? mapB : null,
-        player: p1?.show ? p1ByMinute : null,
-        player2: p2?.show ? p2ByMinute : null,
-      }),
-    [leagueA.show, mapA, leagueB, mapB, p1, p1ByMinute, p2, p2ByMinute],
+      mergeEconSeriesByMinute(
+        {
+          you: leagueA.show ? mapA : null,
+          cohort: leagueB?.show ? mapB : null,
+          player: p1?.show ? p1ByMinute : null,
+          player2: p2?.show ? p2ByMinute : null,
+        },
+        viewMode === 'total' ? { you: leagueA.show ? bandA : null, cohort: leagueB?.show ? bandB : null } : undefined,
+      ),
+    [leagueA.show, mapA, leagueB, mapB, p1, p1ByMinute, p2, p2ByMinute, viewMode, bandA, bandB],
   );
 
   //"Where's who" labels — every visible series is named by WHAT IT IS (league display
@@ -660,6 +645,7 @@ function CurvePanel({
             player2Label={p2 && p2.show && hasP2Curve ? (labelP2 ?? undefined) : undefined}
             playerFaint={p1Thin}
             player2Faint={p2Thin}
+            bands={!isRate}
           />
           {/* Caption color words are driven by useEconSeriesWords/econSeriesColor —
               the SAME skin-keyed source of truth the chart lines use — so the words
@@ -674,7 +660,7 @@ function CurvePanel({
                   {isRate ? (
                     <>{metricLower} a <b style={{ color: econSeriesColor.you }}>{leagueA.name}</b> player earns <b>each minute</b></>
                   ) : (
-                    <>average {metricLower} a <b style={{ color: econSeriesColor.you }}>{leagueA.name}</b> player has by each minute of the game</>
+                    <>median {metricLower} a <b style={{ color: econSeriesColor.you }}>{leagueA.name}</b> player has by each minute of the game; the shaded band is that league&rsquo;s middle half (p25–p75)</>
                   )}
                 </>
               )}
@@ -799,7 +785,16 @@ function CurvePanel({
 
 //---- the 9-min early-econ verdict bars --------------------------------------
 
-function VerdictPanel({ band, playerOverlay = null }: { band: BracketValue; playerOverlay?: PlayerOverlay | null }) {
+function VerdictPanel({
+  band,
+  playerOverlay = null,
+  playerId = null,
+}: {
+  band: BracketValue;
+  playerOverlay?: PlayerOverlay | null;
+  //the overlaid player's account id — their own souls line supplies the MEASURED 9:00 value.
+  playerId?: number | null;
+}) {
   const verdict = useQuery({
     queryKey: queryKeys.laneEarlyEconVerdict({ band: bandParam(band) ?? 'all' }),
     queryFn: () => api.getLaneEarlyEconVerdict({ band: bandParam(band) }),
@@ -811,19 +806,33 @@ function VerdictPanel({ band, playerOverlay = null }: { band: BracketValue; play
     [verdict.data],
   );
 
-  //Which bucket the picked player lands in — from their PROJECTED 9-min net worth
-  //(avg pace × 9), not a measured value. Buckets are 1000-souls wide (souls_floor =
-  //souls_bucket_9min × 1000); clamp to the nearest end if the projection falls outside.
+  //The overlaid player's MEASURED 9:00 net worth: their own souls line's 9:00 bucket (the
+  //3rd 180s grid instant), averaged over their games. Falls back to the avg-pace projection
+  //(captioned as an estimate) only while their line is not served.
+  const soulsLine = useQuery({
+    queryKey: queryKeys.playerEconomyCurve(playerId ?? 0, { metric: 'souls' }),
+    queryFn: () => api.getPlayerEconomyCurve(playerId as number, { metric: 'souls' }),
+    retry: false,
+    enabled: playerId != null && playerOverlay != null,
+  });
+  const measured9 = useMemo<number | null>(() => {
+    const pt = guardedPlayerCurvePoints(soulsLine.data, 'souls').find((p) => p.t_seconds === 540);
+    return pt ? Math.round(pt.value) : null;
+  }, [soulsLine.data]);
   const proj9 = playerOverlay ? projected9MinSouls(playerOverlay) : null;
+  const souls9 = measured9 ?? proj9;
+  const isMeasured = measured9 != null;
+  //Which bucket the player lands in. Buckets are 1000-souls wide (souls_floor =
+  //souls_bucket_9min × 1000); clamp to the nearest end if the value falls outside.
   const markedBucket = useMemo<number | null>(() => {
-    if (proj9 == null) return null;
-    const hit = buckets.find((b) => proj9 >= b.souls_floor && proj9 < b.souls_floor + 1000);
+    if (souls9 == null) return null;
+    const hit = buckets.find((b) => souls9 >= b.souls_floor && souls9 < b.souls_floor + 1000);
     if (hit) return hit.souls_bucket_9min;
     const first = buckets[0];
     const last = buckets[buckets.length - 1];
     if (!first || !last) return null;
-    return proj9 < first.souls_floor ? first.souls_bucket_9min : last.souls_bucket_9min;
-  }, [proj9, buckets]);
+    return souls9 < first.souls_floor ? first.souls_bucket_9min : last.souls_bucket_9min;
+  }, [souls9, buckets]);
 
   return (
     <div className="brass-frame" style={{ padding: '16px 20px' }}>
@@ -887,7 +896,7 @@ function VerdictPanel({ band, playerOverlay = null }: { band: BracketValue; play
                 </div>
                 {marked && (
                   <div className="mono" style={{ fontSize: 10.5, color: 'var(--amber-acc)', fontWeight: 700, margin: '5px 0 0 88px' }}>
-                    ◆ {playerOverlay?.label} ≈ here (est. from avg pace)
+                    ◆ {playerOverlay?.label} {isMeasured ? 'lands here (measured 9:00 average)' : '≈ here (est. from avg pace)'}
                   </div>
                 )}
               </div>
@@ -895,12 +904,21 @@ function VerdictPanel({ band, playerOverlay = null }: { band: BracketValue; play
           })}
         </div>
       )}
-      {playerOverlay && proj9 != null && markedBucket != null && buckets.length > 0 && (
+      {playerOverlay && souls9 != null && markedBucket != null && buckets.length > 0 && (
         <p className="muted" style={{ fontSize: 12, margin: '12px 0 0', lineHeight: 1.45 }}>
-          The <b style={{ color: 'var(--amber-acc)' }}>◆</b> bar is where <b>{playerOverlay.label}</b> lands — an{' '}
-          <b>estimate</b> (~{count(proj9)} souls at 9:00) projected from their{' '}
-          {playerOverlay.souls_per_min != null ? count(playerOverlay.souls_per_min) : '—'} souls/min average,{' '}
-          <b>not</b> a measured 9-minute value. Per-minute timeline data isn&rsquo;t loaded yet.
+          {isMeasured ? (
+            <>
+              The <b style={{ color: 'var(--amber-acc)' }}>◆</b> bar is where <b>{playerOverlay.label}</b> lands:{' '}
+              <b>{count(souls9)} souls at 9:00</b>, measured — the average of their own games&rsquo; 9:00 net worth.
+            </>
+          ) : (
+            <>
+              The <b style={{ color: 'var(--amber-acc)' }}>◆</b> bar is where <b>{playerOverlay.label}</b> lands — an{' '}
+              <b>estimate</b> (~{count(souls9)} souls at 9:00) projected from their{' '}
+              {playerOverlay.souls_per_min != null ? count(playerOverlay.souls_per_min) : '—'} souls/min average,{' '}
+              <b>not</b> a measured value: their per-minute line is not served yet.
+            </>
+          )}
         </p>
       )}
     </div>
@@ -918,10 +936,9 @@ function VerdictPanel({ band, playerOverlay = null }: { band: BracketValue; play
 
 //The right empty-state copy for a no-data or errored overlay, by source + error kind.
 function overlayEmptyMessage(source: OverlaySource, error: unknown): string {
-  if (source.kind === 'me') {
+  if (source.isMe) {
     if (isUnauthorized(error)) return 'Sign in to overlay your own account.';
-    if (isDisabled(error)) return 'Your account overlay comes online when the rich-analytics tier is enabled.';
-    if (isComputing(error)) return 'Computing now — your account overlay is being generated.';
+    if (isNotFound(error)) return 'Your linked account has no Normal-mode games in the loaded window yet.';
     return 'No ranked economy data on your account yet.';
   }
   if (isNotFound(error)) return `${source.player.steam_name} is private or has no ranked economy data yet.`;
@@ -1142,18 +1159,17 @@ function PlayerOverlayPicker({
             </div>
           )}
         </div>
-        {loggedIn && overlay?.kind !== 'me' && (
+        {loggedIn && !overlay?.isMe && (
           <button type="button" className="minitog" onClick={onUseMe}>
             Use my account
           </button>
         )}
       </div>
 
-      {/* Per-player hero scope — searched players only (the "me" source has no curve
-          endpoint, so a hero scope would have nothing to apply to). Defaults to following
-          the global Hero selector; can ignore it or pin a specific hero. The no-games
-          guard notice renders right here, where the scope is chosen. */}
-      {overlay?.kind === 'player' && (
+      {/* Per-player hero scope (the signed-in account included). Defaults to following the
+          global Hero selector; can ignore it or pin a specific hero. The no-games guard notice
+          renders right here, where the scope is chosen. */}
+      {overlay && (
         <div className="flex" style={{ marginTop: 10, gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
             <span className="label-xs">Hero scope</span>
@@ -1206,14 +1222,14 @@ function PlayerOverlayPicker({
         </p>
       ) : status.pending ? (
         <p className="muted" style={{ fontSize: 12.5, margin: '12px 0 0' }}>
-          Loading {overlay.kind === 'me' ? 'your account' : overlay.player.steam_name}&rsquo;s economy…
+          Loading {overlay.isMe ? 'your account' : overlay.player.steam_name}&rsquo;s economy…
         </p>
       ) : status.isError || !status.hasData ? (
         <div style={{ marginTop: 12 }}>
           <EmptyState title="No economy data for this player yet" message={overlayEmptyMessage(overlay, status.error)} icon="coins" />
         </div>
       ) : status.data ? (
-        <OverlaySummary data={status.data} accent={accent} isMe={overlay.kind === 'me'} />
+        <OverlaySummary data={status.data} accent={accent} isMe={overlay.isMe ?? false} />
       ) : null}
     </div>
   );
@@ -1239,7 +1255,9 @@ function LaneLabInner() {
   const [heroScope2, setHeroScope2] = useState<HeroScope>('global');
   //Checked/unchecked = in/out of the chart. Config survives an uncheck.
   const [show, setShow] = useState({ a: true, b: true, p1: true, p2: true });
-  const { loggedIn } = useViewer();
+  const { viewer, loggedIn } = useViewer();
+  //"Use my account" needs a linked deadlock account — the id the player-curve endpoint is keyed on.
+  const myAccountId = viewer?.deadlock_account_id ?? null;
 
   //The shared hero catalog (same /heroes source the heroes pages read) — drives the global
   //Hero selector and both per-player scope selectors. Sorted by name for findability.
@@ -1275,30 +1293,22 @@ function LaneLabInner() {
   });
   const sampleWindow = datasetWindowLabel(horizon.data, ECONOMY_CURVE_DATASET);
 
-  //Picked player → public per-player aggregate (MAIN API, C5). My account → the Lane Lab
-  //service `/me/economy-overlay` `you` side. Only the active source's query is enabled.
-  const pickedId = overlay?.kind === 'player' ? overlay.player.account_id : null;
+  //Picked player (or the signed-in account, isMe) → the public per-player aggregate (MAIN API).
+  const pickedId = overlay?.player.account_id ?? null;
   const playerEcon = useQuery({
     queryKey: queryKeys.playerEconomy(pickedId ?? 0),
     queryFn: () => api.getPlayerEconomy(pickedId as number),
     enabled: pickedId != null,
     retry: false,
   });
-  const myEcon = useQuery({
-    queryKey: queryKeys.myEconomyOverlay({ band: ME_OVERLAY_BAND }),
-    queryFn: () => api.getMyEconomyOverlay({ band: ME_OVERLAY_BAND }),
-    enabled: overlay?.kind === 'me',
-    retry: false,
-  });
 
   //Normalize whichever source is active into the shared overlay shape.
-  const playerOverlay = useMemo<PlayerOverlay | null>(() => {
-    if (overlay?.kind === 'player' && playerEcon.data) return overlayFromPlayer(overlay.player.steam_name, playerEcon.data);
-    if (overlay?.kind === 'me' && myEcon.data) return overlayFromMe(myEcon.data);
-    return null;
-  }, [overlay, playerEcon.data, myEcon.data]);
+  const playerOverlay = useMemo<PlayerOverlay | null>(
+    () => (overlay && playerEcon.data ? overlayFromPlayer(overlay.player.steam_name, playerEcon.data) : null),
+    [overlay, playerEcon.data],
+  );
 
-  const activeQuery = overlay?.kind === 'me' ? myEcon : playerEcon;
+  const activeQuery = playerEcon;
   const status: OverlayStatus = {
     pending: overlay != null && activeQuery.isPending,
     isError: overlay != null && activeQuery.isError,
@@ -1310,7 +1320,7 @@ function LaneLabInner() {
   const liveOverlay = status.hasData ? playerOverlay : null;
 
   //---- second player (compare) — same public per-player aggregate, keyed on its own id ----
-  const pickedIdB = overlayB?.kind === 'player' ? overlayB.player.account_id : null;
+  const pickedIdB = overlayB?.player.account_id ?? null;
   const playerEconB = useQuery({
     queryKey: queryKeys.playerEconomy(pickedIdB ?? 0),
     queryFn: () => api.getPlayerEconomy(pickedIdB as number),
@@ -1318,7 +1328,7 @@ function LaneLabInner() {
     retry: false,
   });
   const playerOverlayB = useMemo<PlayerOverlay | null>(
-    () => (overlayB?.kind === 'player' && playerEconB.data ? overlayFromPlayer(overlayB.player.steam_name, playerEconB.data) : null),
+    () => (overlayB && playerEconB.data ? overlayFromPlayer(overlayB.player.steam_name, playerEconB.data) : null),
     [overlayB, playerEconB.data],
   );
   const statusB: OverlayStatus = {
@@ -1357,7 +1367,7 @@ function LaneLabInner() {
 
   //---- assemble the ONE selection object both panels + the chips read ---------
   const p1: PlayerEntity | null =
-    overlay?.kind === 'player'
+    overlay
       ? {
           id: overlay.player.account_id,
           name: overlay.player.steam_name,
@@ -1368,7 +1378,7 @@ function LaneLabInner() {
         }
       : null;
   const p2: PlayerEntity | null =
-    overlayB?.kind === 'player'
+    overlayB
       ? {
           id: overlayB.player.account_id,
           name: overlayB.player.steam_name,
@@ -1466,9 +1476,16 @@ function LaneLabInner() {
       <PlayerOverlayPicker
         overlay={overlay}
         onPick={(player) => setOverlay({ kind: 'player', player })}
-        onUseMe={() => setOverlay({ kind: 'me' })}
+        onUseMe={() => {
+          if (myAccountId == null) return;
+          setOverlay({
+            kind: 'player',
+            isMe: true,
+            player: { account_id: myAccountId, steam_name: 'You', badge: null, matches: 0, win_rate: null },
+          });
+        }}
         onClear={() => setOverlay(null)}
-        loggedIn={loggedIn}
+        loggedIn={loggedIn && myAccountId != null}
         status={status}
         heroScope={heroScope1}
         onHeroScope={setHeroScope1}
@@ -1522,7 +1539,7 @@ function LaneLabInner() {
         sampleWindow={sampleWindow}
       />
 
-      <VerdictPanel band={band} playerOverlay={liveOverlay} />
+      <VerdictPanel band={band} playerOverlay={liveOverlay} playerId={pickedId} />
     </div>
   );
 }

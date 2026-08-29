@@ -57,6 +57,10 @@ export interface EconomyPoint {
   //getPlayerEconomyCurve `you`), NaN where they have no sample, or absent when no second
   //player is picked. Drives the coral `player2` series — the compare-two-players line.
   player2?: number;
+  //[p25, p75] of the league in the `you` / `cohort` slot at THIS minute (cumulative view only);
+  //absent where the league has no band. Recharts draws a range Area from the tuple.
+  youBand?: [number, number];
+  cohortBand?: [number, number];
 }
 
 interface EconomyCurveProps {
@@ -87,6 +91,9 @@ interface EconomyCurveProps {
   //lives in the laning phase; the curves converge late). allowDataOverflow CLIPS to the
   //window rather than dropping data, so a zoom-out control can restore the whole match.
   xDomain?: [number, number];
+  //Draw each drawn league's p25–p75 band behind its median line (default true). The island
+  //passes false in the 'rate' view, where a spread of cumulative quantiles has no meaning.
+  bands?: boolean;
 }
 
 const fmtK = (v: ChartFmtValue) =>
@@ -103,6 +110,7 @@ export default function EconomyCurve({
   player2Faint = false,
   animate = true,
   xDomain,
+  bands = true,
 }: EconomyCurveProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -142,6 +150,33 @@ export default function EconomyCurve({
             style, and the filled area no longer shows an almost-invisible faint-fill
             swatch. That is what makes it obvious which line is which. */}
         <Legend wrapperStyle={{ fontSize: 12, color: 'var(--muted)' }} iconType="plainline" />
+        {/* League bands FIRST so they sit behind the lines: a range Area per drawn league (the
+            datum is the [p25, p75] tuple), faint in the league's own hue, legendType="none" so
+            the legend keeps to the four named series. No draw-on animation for a band. */}
+        {youLabel && bands && (
+          <Area
+            type="monotone"
+            name={`${youLabel} middle half`}
+            dataKey="youBand"
+            legendType="none"
+            stroke="none"
+            fill={econSeriesColor.you}
+            fillOpacity={0.12}
+            isAnimationActive={false}
+          />
+        )}
+        {cohortLabel && bands && (
+          <Area
+            type="monotone"
+            name={`${cohortLabel} middle half`}
+            dataKey="cohortBand"
+            legendType="none"
+            stroke="none"
+            fill={econSeriesColor.cohort}
+            fillOpacity={0.1}
+            isAnimationActive={false}
+          />
+        )}
         {youLabel && (
           //League A's filled area (the skin's lead series accent) — drawn only while the
           //caller keeps it in the comparison set (label passed), like every other slot.

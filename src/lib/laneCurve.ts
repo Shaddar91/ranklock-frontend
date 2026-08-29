@@ -1,21 +1,17 @@
-//Pure per-minute transforms for the Lane Lab economy chart — kept out of the
-//island component so the chart AND the unit tests transform a curve the SAME way.
-//The backend serves cumulative p50 buckets 180s apart; the 'rate' view derives the
-//per-minute amount gained across each bucket. No I/O — safe at build time and in tests.
+//Pure per-minute transforms for the Lane Lab economy chart — kept out of the island component so
+//the chart AND the unit tests transform a curve the SAME way. The backend serves cumulative
+//p25/p50/p75 buckets 180s apart (grid-resampled: one value per surviving player-match per bucket);
+//the 'rate' view derives the per-minute amount gained across each bucket. No I/O — safe at build
+//time and in tests.
 import type { PlayerCurvePoint, PlayerEconomyCurveResponse } from '../types/api';
 
-//The chart's x-axis view: 'rate' = per-minute amount gained; 'total' = cumulative curve.
 export type ViewMode = 'rate' | 'total';
 
-//C5 (findings.md ranklock-fable-blindspots): the served lane/economy curves interleave dense
-//~3M-sample buckets with ~1–7%-sample "straggler" minutes — an artifact of the 3-min
-//match_player_timeline snapshot cadence — so roughly half the plotted points are statistical
-//noise and BOTH the cumulative and per-minute views zigzag. Worse for 'rate': a delta taken
-//across a ~4k-sample straggler subtracts a p50 measured on 4k players from one on 370k,
-//producing a spurious per-minute spike at every dense→sparse transition. Fix: drop any bucket
-//whose sample count is below MIN_SAMPLE_FRACTION of that curve's own peak, so every surviving
-//point — and every 'rate' delta between two of them — rests on a dense (~3M-sample) bucket.
-//Exported + tunable: raise toward 0.1 for a stricter curve, lower to admit more points.
+//Tail guard: a bucket resting on fewer than this fraction of the curve's peak sample count is a
+//handful of very long games, not the cohort — drop it so a 24-sample 165-minute bucket never draws
+//next to a 50M-sample one, and no 'rate' delta is ever taken against it. The producers resample
+//every player-match onto the grid, so no in-game bucket is starved any more; this only trims the
+//far tail. Exported + tunable.
 export const MIN_SAMPLE_FRACTION = 0.05;
 
 //Drop the low-confidence straggler points (C5): keep only points whose sample count is at
@@ -34,48 +30,99 @@ export function dropLowSamplePoints<T>(pts: readonly T[], sampleOf: (p: T) => nu
   return pts.filter((p) => (sampleOf(p) ?? 0) >= floor);
 }
 
+//The game-start value each cumulative metric has at 0:00 — souls start at the 600-soul game
+//constant, every other metric at 0. A rule of the game, not a measurement: used ONLY as the
+//predecessor of the 3:00 bucket in 'rate' mode and never plotted as a point.
+export const SOULS_AT_ZERO = 600;
+export function originValue(metric: string): number {
+  return metric === 'souls' ? SOULS_AT_ZERO : 0;
+}
+//The first real grid instant (3:00). Only a point HERE may anchor its rate on the 0:00 origin; a
+//first surviving point anywhere later has an unknown predecessor and yields no rate.
+const FIRST_GRID_T = 180;
+
+//Per-minute gain between consecutive surviving points: (value − previous) / minutes elapsed. Shared
+//by the league and player lines so the two 'rate' series can never disagree on the origin rule.
+function ratePoints<P>(
+  sorted: readonly P[],
+  tOf: (p: P) => number,
+  vOf: (p: P) => number,
+  metric: string,
+): Map<number, number> {
+  const out = new Map<number, number>();
+  sorted.forEach((p, i) => {
+    const t = tOf(p);
+    const prev = sorted[i - 1];
+    let prevT: number;
+    let prevVal: number;
+    if (prev) {
+      prevT = tOf(prev);
+      prevVal = vOf(prev);
+    } else if (t === FIRST_GRID_T) {
+      prevT = 0;
+      prevVal = originValue(metric);
+    } else {
+      return;
+    }
+    const minutes = (t - prevT) / 60;
+    if (minutes > 0) out.set(Math.round(t / 60), (vOf(p) - prevVal) / minutes);
+  });
+  return out;
+}
+
 //The structural shape of a percentile league curve — BOTH the lane endpoints'
-//LaneCurveResponse AND the player-curve endpoint's on-demand `comparison` side
-//(PlayerCurveComparison) satisfy it, so one transform serves the fast Gold league
-//curves (bucket units — pass the metric's bucket scale) and the hero-scoped
-//on-demand league curves (already real units — pass scale 1).
+//LaneCurveResponse AND the player-curve endpoint's `comparison` side (PlayerCurveComparison)
+//satisfy it, so one transform serves the fast Gold league curves (bucket units — pass the
+//metric's bucket scale) and the hero-scoped league curves (already real units — pass scale 1).
 export interface PercentileCurveLike {
-  points: ReadonlyArray<{ t_seconds: number; p50: number | null; sample_players: number }>;
+  points: ReadonlyArray<{
+    t_seconds: number;
+    p25?: number | null;
+    p50: number | null;
+    p75?: number | null;
+    sample_players: number;
+  }>;
 }
 
 //Convert a lane curve's p50 series into {game-minute → value}, honoring the view mode.
-//'total' passes the cumulative p50 through (×scale). 'rate' returns the per-minute amount
-//GAINED across each 180s bucket — (value[i] − value[i−1]) / minutesElapsed — a true
-//souls/last-hits-per-minute rate (buckets are 3 min apart, so the delta is divided by 3).
-//The first bucket has no predecessor, so it yields no rate point. Keyed by rounded game
-//minute — the SAME grid playerSeriesByMinute uses, so the series overlay cleanly.
+//'total' passes the cumulative p50 through (×scale). 'rate' returns the per-minute amount GAINED
+//across each 180s bucket (ratePoints — the 3:00 bucket anchors on the metric's 0:00 origin).
+//Keyed by rounded game minute — the SAME grid playerSeriesByMinute uses, so the series overlay.
 export function laneSeriesByMinute(
   curve: PercentileCurveLike | null | undefined,
   scale: number,
   mode: ViewMode,
+  metric: string,
 ): Map<number, number> {
-  //Drop sub-5%-of-peak straggler buckets FIRST (C5), so the rate delta is only ever taken
-  //between two dense buckets; then discard null-p50 gaps and sort onto the minute grid.
+  //Drop the tail-guard buckets FIRST, then discard null-p50 gaps and sort onto the minute grid.
   const pts = dropLowSamplePoints(curve?.points ?? [], (p) => p.sample_players)
     .filter((p) => p.p50 != null)
     .sort((a, b) => a.t_seconds - b.t_seconds);
-  const out = new Map<number, number>();
-  pts.forEach((p, i) => {
-    const min = Math.round(p.t_seconds / 60);
-    const val = (p.p50 as number) * scale;
-    if (mode === 'total') {
-      out.set(min, val);
-      return;
-    }
-    //First bucket: every lane metric is cumulative-from-zero (0 at 0:00), so the origin is
-    //the first point's true predecessor — without it the rate view starts at 6:00 and the
-    //whole early game (source samples begin at 3:00) silently disappears.
-    const prev = pts[i - 1];
-    const prevT = prev ? prev.t_seconds : 0;
-    const prevVal = prev ? (prev.p50 as number) * scale : 0;
-    const minutes = (p.t_seconds - prevT) / 60;
-    if (minutes > 0) out.set(min, (val - prevVal) / minutes);
-  });
+  if (mode === 'total') {
+    const out = new Map<number, number>();
+    for (const p of pts) out.set(Math.round(p.t_seconds / 60), (p.p50 as number) * scale);
+    return out;
+  }
+  return ratePoints(
+    pts,
+    (p) => p.t_seconds,
+    (p) => (p.p50 as number) * scale,
+    metric,
+  );
+}
+
+//The league's middle half — [p25, p75] per game minute, real units (×scale) — for the cumulative
+//view only: a spread of cumulative values is a band; per-minute rates of quantiles are not. Same
+//tail guard; a minute missing either quantile has no band there.
+export function laneBandByMinute(
+  curve: PercentileCurveLike | null | undefined,
+  scale: number,
+): Map<number, [number, number]> {
+  const out = new Map<number, [number, number]>();
+  for (const p of dropLowSamplePoints(curve?.points ?? [], (p) => p.sample_players)) {
+    if (p.p25 == null || p.p75 == null) continue;
+    out.set(Math.round(p.t_seconds / 60), [p.p25 * scale, p.p75 * scale]);
+  }
   return out;
 }
 
@@ -118,6 +165,8 @@ export function isThinPlayerSample(peak: number): boolean {
 //carries is the caller's selection state — the slot names are internal only; every
 //user-visible label comes from the selection (league name / player name + hero).
 export type EconSeriesKey = 'you' | 'cohort' | 'player' | 'player2';
+//The two league slots may also carry their p25–p75 band (cumulative view).
+export type EconBandKey = 'you' | 'cohort';
 
 export interface MergedEconPoint {
   //match minute
@@ -126,6 +175,9 @@ export interface MergedEconPoint {
   cohort?: number;
   player?: number;
   player2?: number;
+  //[p25, p75] of the league in that slot at this minute — present only where the band map has it.
+  youBand?: [number, number];
+  cohortBand?: [number, number];
 }
 
 //Merge any subset of per-minute series onto ONE union minute grid — one point per game
@@ -133,9 +185,11 @@ export interface MergedEconPoint {
 //(Recharts renders a gap, never a fabricated point). Pass null/undefined (or an empty map)
 //to omit a series entirely — its key never appears, so the chart draws no line for it.
 //Unlike the old fixed you-grid merge, no series is the "base": unchecking the League A chip
-//must not collapse the grid the other series render on.
+//must not collapse the grid the other series render on. Bands attach to minutes the grid
+//already has — they never add a minute of their own.
 export function mergeEconSeriesByMinute(
   series: Partial<Record<EconSeriesKey, Map<number, number> | null>>,
+  bands?: Partial<Record<EconBandKey, Map<number, [number, number]> | null>>,
 ): MergedEconPoint[] {
   const live = (Object.entries(series) as [EconSeriesKey, Map<number, number> | null | undefined][])
     .filter((e): e is [EconSeriesKey, Map<number, number>] => e[1] != null && e[1].size > 0);
@@ -146,30 +200,34 @@ export function mergeEconSeriesByMinute(
     .map((min) => {
       const p: MergedEconPoint = { min };
       for (const [key, m] of live) p[key] = m.get(min) ?? NaN;
+      const youBand = bands?.you?.get(min);
+      if (youBand) p.youBand = youBand;
+      const cohortBand = bands?.cohort?.get(min);
+      if (cohortBand) p.cohortBand = cohortBand;
       return p;
     });
 }
 
 //The picked player's own per-minute curve (getPlayerEconomyCurve `you`, already REAL units —
 //no ×scale), transformed the same way: 'total' = the cumulative value, 'rate' = the souls /
-//last-hits gained each minute. Same minute grid as laneSeriesByMinute.
-export function playerSeriesByMinute(pts: PlayerCurvePoint[], mode: ViewMode): Map<number, number> {
-  //Same low-sample guard as the rank lines (C5), keyed on the player's per-minute match
-  //count, so the personal 'rate' delta is never computed across a near-empty minute.
+//last-hits gained each minute (same origin rule as the league lines). Same minute grid.
+export function playerSeriesByMinute(
+  pts: PlayerCurvePoint[],
+  mode: ViewMode,
+  metric: string,
+): Map<number, number> {
+  //Same tail guard as the league lines, keyed on the player's per-minute match count, so the
+  //personal 'rate' delta is never computed across a near-empty minute.
   const sorted = dropLowSamplePoints(pts, (p) => p.matches).sort((a, b) => a.t_seconds - b.t_seconds);
-  const out = new Map<number, number>();
-  sorted.forEach((p, i) => {
-    const min = Math.round(p.t_seconds / 60);
-    if (mode === 'total') {
-      out.set(min, p.value);
-      return;
-    }
-    //Origin-anchored first bucket — same reasoning as laneSeriesByMinute (cumulative-from-zero).
-    const prev = sorted[i - 1];
-    const prevT = prev ? prev.t_seconds : 0;
-    const prevVal = prev ? prev.value : 0;
-    const minutes = (p.t_seconds - prevT) / 60;
-    if (minutes > 0) out.set(min, (p.value - prevVal) / minutes);
-  });
-  return out;
+  if (mode === 'total') {
+    const out = new Map<number, number>();
+    for (const p of sorted) out.set(Math.round(p.t_seconds / 60), p.value);
+    return out;
+  }
+  return ratePoints(
+    sorted,
+    (p) => p.t_seconds,
+    (p) => p.value,
+    metric,
+  );
 }

@@ -1,12 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import {
   MIN_SAMPLE_FRACTION,
+  SOULS_AT_ZERO,
   THIN_SAMPLE_MIN_MATCHES,
   dropLowSamplePoints,
   guardedPlayerCurvePoints,
   isThinPlayerSample,
+  laneBandByMinute,
   laneSeriesByMinute,
   mergeEconSeriesByMinute,
+  originValue,
   peakPlayerMatches,
   playerSeriesByMinute,
 } from './laneCurve';
@@ -39,38 +42,55 @@ describe('laneSeriesByMinute', () => {
   const curve = laneCurve([lanePt(180, 1), lanePt(360, 3), lanePt(540, 6)]);
 
   it('total mode maps each game minute to p50 * scale', () => {
-    const out = laneSeriesByMinute(curve, 1000, 'total');
+    const out = laneSeriesByMinute(curve, 1000, 'total', 'last_hits');
     expect(out.get(3)).toBe(1000);
     expect(out.get(6)).toBe(3000);
     expect(out.get(9)).toBe(6000);
     expect(out.size).toBe(3);
   });
 
-  it('rate mode yields the per-minute delta, anchoring the first bucket at the 0:00 origin', () => {
-    const out = laneSeriesByMinute(curve, 1000, 'rate');
-    expect(out.get(3)).toBeCloseTo(1000 / 3, 6); //(1000-0)/3 — metrics are cumulative-from-zero
-    expect(out.get(6)).toBeCloseTo(2000 / 3, 6); //(3000-1000)/3 min ≈ 666.67 souls/min
+  it('rate mode yields the per-minute delta, anchoring the 3:00 bucket on the metric origin', () => {
+    //a count metric starts the game at 0, so the first rate is (1000-0)/3
+    const out = laneSeriesByMinute(curve, 1000, 'rate', 'last_hits');
+    expect(out.get(3)).toBeCloseTo(1000 / 3, 6);
+    expect(out.get(6)).toBeCloseTo(2000 / 3, 6); //(3000-1000)/3 min ≈ 666.67 per min
     expect(out.get(9)).toBe(1000); //(6000-3000)/3
     expect(out.size).toBe(3);
   });
 
+  it('souls anchor the 3:00 bucket on the 600-soul game constant, never on 0', () => {
+    expect(originValue('souls')).toBe(SOULS_AT_ZERO);
+    expect(originValue('last_hits')).toBe(0);
+    const out = laneSeriesByMinute(curve, 1000, 'rate', 'souls');
+    expect(out.get(3)).toBeCloseTo((1000 - 600) / 3, 6);
+    expect(out.get(6)).toBeCloseTo(2000 / 3, 6);
+  });
+
+  it('a first surviving bucket later than 3:00 has no known predecessor and yields no rate point', () => {
+    //nothing at 3:00 (e.g. tail-guarded away or never served) — 6:00 must not be spread from 0:00
+    const late = laneCurve([lanePt(360, 3), lanePt(540, 6)]);
+    const out = laneSeriesByMinute(late, 1000, 'rate', 'souls');
+    expect(out.has(6)).toBe(false);
+    expect(out.get(9)).toBe(1000); //(6000-3000)/3 between two real points still works
+  });
+
   it('filters out null-p50 buckets before computing the delta', () => {
     const withGap = laneCurve([lanePt(180, 1), lanePt(360, null), lanePt(540, 6)]);
-    const total = laneSeriesByMinute(withGap, 1000, 'total');
+    const total = laneSeriesByMinute(withGap, 1000, 'total', 'last_hits');
     expect(total.has(6)).toBe(false);
     expect(total.size).toBe(2);
     //min 9's predecessor is the surviving min-3 bucket: (6000-1000)/6 min ≈ 833.33.
-    const rate = laneSeriesByMinute(withGap, 1000, 'rate');
+    const rate = laneSeriesByMinute(withGap, 1000, 'rate', 'last_hits');
     expect(rate.get(9)).toBeCloseTo(5000 / 6, 6);
   });
 
   it('sorts unsorted input by t_seconds before keying', () => {
     const unsorted = laneCurve([lanePt(540, 6), lanePt(180, 1), lanePt(360, 3)]);
-    expect([...laneSeriesByMinute(unsorted, 1, 'total').keys()]).toEqual([3, 6, 9]);
+    expect([...laneSeriesByMinute(unsorted, 1, 'total', 'last_hits').keys()]).toEqual([3, 6, 9]);
   });
 
   it('returns an empty map for an undefined curve', () => {
-    expect(laneSeriesByMinute(undefined, 1000, 'total').size).toBe(0);
+    expect(laneSeriesByMinute(undefined, 1000, 'total', 'last_hits').size).toBe(0);
   });
 });
 
@@ -78,27 +98,29 @@ describe('playerSeriesByMinute', () => {
   const pts = [playerPt(180, 1000), playerPt(360, 2500), playerPt(540, 4000)];
 
   it('total mode passes the real value straight through (no scale)', () => {
-    const out = playerSeriesByMinute(pts, 'total');
+    const out = playerSeriesByMinute(pts, 'total', 'last_hits');
     expect(out.get(3)).toBe(1000);
     expect(out.get(6)).toBe(2500);
     expect(out.get(9)).toBe(4000);
   });
 
-  it('rate mode yields per-minute gain, anchoring the first bucket at the 0:00 origin', () => {
-    const out = playerSeriesByMinute(pts, 'rate');
-    expect(out.get(3)).toBeCloseTo(1000 / 3, 6); //(1000-0)/3 — cumulative-from-zero origin
+  it('rate mode yields per-minute gain, anchoring the 3:00 bucket on the metric origin', () => {
+    const out = playerSeriesByMinute(pts, 'rate', 'last_hits');
+    expect(out.get(3)).toBeCloseTo(1000 / 3, 6); //(1000-0)/3 — counts start at 0
     expect(out.get(6)).toBeCloseTo(500, 6); //(2500-1000)/3
     expect(out.get(9)).toBeCloseTo(500, 6); //(4000-2500)/3
     expect(out.size).toBe(3);
+    //souls: the same line anchors on the 600-soul constant instead
+    expect(playerSeriesByMinute(pts, 'rate', 'souls').get(3)).toBeCloseTo((1000 - 600) / 3, 6);
   });
 
   it('sorts unsorted input by t_seconds', () => {
     const unsorted = [playerPt(360, 2500), playerPt(180, 1000)];
-    expect([...playerSeriesByMinute(unsorted, 'total').keys()]).toEqual([3, 6]);
+    expect([...playerSeriesByMinute(unsorted, 'total', 'last_hits').keys()]).toEqual([3, 6]);
   });
 
   it('returns an empty map for no points', () => {
-    expect(playerSeriesByMinute([], 'total').size).toBe(0);
+    expect(playerSeriesByMinute([], 'total', 'last_hits').size).toBe(0);
   });
 });
 
@@ -111,14 +133,14 @@ describe('metric-echo mismatch guard (M1/B1 fix b)', () => {
   it('mismatched echo yields no plottable series', () => {
     const pts = guardedPlayerCurvePoints({ metric: 'souls', you }, 'kills');
     expect(pts).toEqual([]);
-    expect(playerSeriesByMinute(pts, 'total').size).toBe(0);
-    expect(playerSeriesByMinute(pts, 'rate').size).toBe(0);
+    expect(playerSeriesByMinute(pts, 'total', 'last_hits').size).toBe(0);
+    expect(playerSeriesByMinute(pts, 'rate', 'last_hits').size).toBe(0);
   });
 
   it('matching echo returns the series untouched', () => {
     const pts = guardedPlayerCurvePoints({ metric: 'kills', you }, 'kills');
     expect(pts).toEqual(you);
-    const out = playerSeriesByMinute(pts, 'total');
+    const out = playerSeriesByMinute(pts, 'total', 'last_hits');
     expect(out.get(3)).toBe(1000);
     expect(out.get(6)).toBe(2500);
   });
@@ -132,7 +154,7 @@ describe('metric-echo mismatch guard (M1/B1 fix b)', () => {
   });
 });
 
-describe('C5 low-sample-point filter', () => {
+describe('tail guard (low-sample-point filter)', () => {
   //The live band-6 souls curve oscillates min6≈370k, min7≈4k (straggler), min8≈368k as the
   //3-min match_player_timeline cadence leaves the in-between minute near-empty. The 4k point
   //is ~1% of the 370k peak, well under the 5% floor, so it must be dropped before the series
@@ -148,7 +170,7 @@ describe('C5 low-sample-point filter', () => {
   });
 
   it('drops the sub-5%-of-peak straggler minute from the total series', () => {
-    const total = laneSeriesByMinute(series, 1000, 'total');
+    const total = laneSeriesByMinute(series, 1000, 'total', 'last_hits');
     expect(total.has(7)).toBe(false); //the 4k-sample straggler is gone
     expect([...total.keys()]).toEqual([6, 8]); //only the two dense minutes survive
     //and no surviving point rests on a sub-threshold sample count
@@ -157,7 +179,7 @@ describe('C5 low-sample-point filter', () => {
   });
 
   it('computes the rate delta between the two DENSE points, never across the straggler', () => {
-    const rate = laneSeriesByMinute(series, 1000, 'rate');
+    const rate = laneSeriesByMinute(series, 1000, 'rate', 'last_hits');
     expect(rate.has(7)).toBe(false);
     //min 8's predecessor is now the surviving min-6 dense point: (7000-5000)/2 min = 1000/min,
     //NOT a spike off the dropped 4k-sample minute.
@@ -172,14 +194,14 @@ describe('C5 low-sample-point filter', () => {
 
   it('keeps every point on a uniformly-sampled curve (peak-relative, not absolute)', () => {
     const uniform = laneCurve([lanePt(180, 1, 40), lanePt(360, 3, 40), lanePt(540, 6, 40)]);
-    expect(laneSeriesByMinute(uniform, 1, 'total').size).toBe(3);
+    expect(laneSeriesByMinute(uniform, 1, 'total', 'last_hits').size).toBe(3);
   });
 
   it('applies the same filter to the player line, keyed on its match count', () => {
     //The player's own line carries `matches`, not `sample_players`; a minute reached by far
     //fewer of their games is the personal-curve analog of a straggler and is dropped too.
     const pts = [playerPt(360, 5000, 400), playerPt(420, 6000, 4), playerPt(480, 7000, 396)];
-    const out = playerSeriesByMinute(pts, 'total');
+    const out = playerSeriesByMinute(pts, 'total', 'last_hits');
     expect(out.has(7)).toBe(false);
     expect([...out.keys()]).toEqual([6, 8]);
   });
@@ -264,10 +286,39 @@ describe('mergeEconSeriesByMinute (composable comparison set)', () => {
     //PlayerCurveComparison.points is structurally a percentile curve — the hero-scoped
     //league series feed the SAME transform as the lane Gold, just unscaled.
     const cmp = { points: [lanePt(180, 700), lanePt(360, 1500)] };
-    const merged = mergeEconSeriesByMinute({ cohort: laneSeriesByMinute(cmp, 1, 'total') });
+    const merged = mergeEconSeriesByMinute({ cohort: laneSeriesByMinute(cmp, 1, 'total', 'last_hits') });
     expect(merged).toEqual([
       { min: 3, cohort: 700 },
       { min: 6, cohort: 1500 },
     ]);
+  });
+});
+
+describe('laneBandByMinute + merged bands', () => {
+  const bandCurve = {
+    points: [
+      { t_seconds: 180, p25: 0.8, p50: 1, p75: 1.3, sample_players: 100 },
+      { t_seconds: 360, p25: 2.5, p50: 3, p75: 3.6, sample_players: 100 },
+      { t_seconds: 540, p25: null, p50: 6, p75: 7, sample_players: 100 },
+      { t_seconds: 9900, p25: 10, p50: 11, p75: 12, sample_players: 1 }, //tail-guarded
+    ],
+  };
+
+  it('maps each surviving minute to its [p25, p75] in real units', () => {
+    const band = laneBandByMinute(bandCurve, 1000);
+    expect(band.get(3)).toEqual([800, 1300]);
+    expect(band.get(6)).toEqual([2500, 3600]);
+    expect(band.has(9)).toBe(false); //a missing quantile → no band at that minute
+    expect(band.has(165)).toBe(false); //tail guard applies to bands too
+  });
+
+  it('attaches bands to the merged grid without adding minutes of their own', () => {
+    const you = laneSeriesByMinute(bandCurve, 1000, 'total', 'souls');
+    const points = mergeEconSeriesByMinute({ you }, { you: laneBandByMinute(bandCurve, 1000) });
+    expect(points.map((p) => p.min)).toEqual([3, 6, 9]);
+    expect(points[0].youBand).toEqual([800, 1300]);
+    expect(points[2].youBand).toBeUndefined();
+    //a band map alone contributes nothing (no series → no grid)
+    expect(mergeEconSeriesByMinute({}, { you: laneBandByMinute(bandCurve, 1000) })).toEqual([]);
   });
 });
