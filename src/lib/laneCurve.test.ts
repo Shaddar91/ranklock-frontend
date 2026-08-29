@@ -316,8 +316,8 @@ describe('laneBandByMinute + merged bands', () => {
     const you = laneSeriesByMinute(bandCurve, 1000, 'total', 'souls');
     const points = mergeEconSeriesByMinute({ you }, { you: laneBandByMinute(bandCurve, 1000) });
     expect(points.map((p) => p.min)).toEqual([3, 6, 9]);
-    expect(points[0].youBand).toEqual([800, 1300]);
-    expect(points[2].youBand).toBeUndefined();
+    expect(points[0]?.youBand).toEqual([800, 1300]);
+    expect(points[2]?.youBand).toBeUndefined();
     //a band map alone contributes nothing (no series → no grid)
     expect(mergeEconSeriesByMinute({}, { you: laneBandByMinute(bandCurve, 1000) })).toEqual([]);
   });
