@@ -36,7 +36,7 @@ const entries = [
   { href: '/items', icon: 'coins', title: 'Item win-rates', blurb: 'What wins at your rank — labelled by badge tier, not MMR.' },
   { href: '/leaderboard', icon: 'trophy', title: 'Leaderboard', blurb: 'The global ranked ladder, top to bottom.' },
   { href: '/matches', icon: 'swords', title: 'Recent matches', blurb: 'Fresh games with team economy and scoreboards.' },
-  { href: '/blog', icon: 'book', title: 'Guides', blurb: 'Strategy fused with live stats that never go stale.' },
+  { href: '/blog', icon: 'book', title: 'Guides', blurb: 'Strategy with the current patch\'s win-rates embedded.' },
   { href: '/support', icon: 'spark', title: 'Support', blurb: 'Back the project.' },
 ] as const;
 ---
@@ -54,11 +54,11 @@ const entries = [
       <div>
         <div class="kicker" style="margin-bottom:14px;">Deadlock intelligence · meta at your rank</div>
         <h1 class="h-hero" style="margin-bottom:18px; max-width:560px;">
-          The meta, <span class="cyan-c">your rank</span>, and guides that update every patch.
+          The meta at <span class="cyan-c">your rank</span>, updated every patch.
         </h1>
         <p style="font-size:16px; color:var(--text-2); max-width:520px; margin-bottom:22px; line-height:1.55;">
-          Per-rank hero & item win-rates, deep match analysis, and a coaching layer that shows how your
-          game compares — minute by minute — to the rank you're chasing.
+          Per-rank hero & item win-rates, full match scoreboards, and a coaching layer that compares
+          your per-minute economy to the rank you're chasing.
         </p>
         <div style="margin-bottom:16px;">
           <SearchBox variant="large" client:load />
