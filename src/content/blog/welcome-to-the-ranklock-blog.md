@@ -19,9 +19,9 @@ article itself. RankLock guides solve that by embedding **live win-rates pulled
 from the current patch** directly in the post. When the meta shifts, the numbers
 in the guide shift with it — no rewrite required.
 
-So a hero guide does not just say "this item is strong." It shows you the
-measured win-rate for that pairing, this patch, at your bracket. The words give
-you the *why*; the live chips keep the *what* honest.
+A hero guide shows you the measured win-rate for that pairing, this patch, at
+your bracket. The words give you the *why*; the live chips keep the *what*
+honest.
 
 ## What you'll find here
 
