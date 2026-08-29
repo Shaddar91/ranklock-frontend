@@ -36,6 +36,8 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: '/leaderboard', changefreq: 'daily', priority: '0.8' },
   { path: '/matches', changefreq: 'hourly', priority: '0.7' },
   { path: '/blog', changefreq: 'weekly', priority: '0.7' },
+  { path: '/faq', changefreq: 'monthly', priority: '0.4' },
+  { path: '/methodology', changefreq: 'monthly', priority: '0.4' },
   { path: '/privacy', changefreq: 'monthly', priority: '0.3' },
   { path: '/about', changefreq: 'monthly', priority: '0.3' },
   { path: '/contact', changefreq: 'monthly', priority: '0.3' },

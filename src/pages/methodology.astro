@@ -1,0 +1,218 @@
+---
+//Methodology page — the exact definitions behind every stat on the site.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { breadcrumbJsonLd } from '../lib/seo';
+
+const LAST_UPDATED = '2026-08-29';
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = breadcrumbJsonLd(origin, [
+  { name: 'Home', path: '/' },
+  { name: 'Methodology', path: '/methodology' },
+]);
+---
+
+<BaseLayout
+  title="Methodology — how RankLock computes its stats | RankLock"
+  description="How RankLock computes its Deadlock stats — the data source, rank bands, win-rate and pick-rate formulas, patch attribution, refresh cadence, and what the site does not publish."
+  canonicalPath="/methodology"
+  jsonLd={jsonLd}
+>
+  <main class="container" style="padding-top:40px; padding-bottom:64px;">
+    <div class="legal">
+      <div class="kicker" style="margin-bottom:10px;">Last updated · {LAST_UPDATED}</div>
+      <h1 class="h-hero" style="font-size:clamp(32px,5vw,48px); margin-bottom:14px;">How RankLock computes its stats</h1>
+      <p style="font-size:16px; color:var(--text-2); max-width:72ch; margin-bottom:8px;">
+        Every number on RankLock is computed from public match data by our own
+        pipeline. This page records the definitions behind those numbers: what the
+        data source is, what a rank means, how win-rates and pick-rates are
+        calculated, how matches are assigned to patches, how often the numbers
+        refresh, and what the site deliberately does not publish.
+      </p>
+
+      <h2>Where the data comes from</h2>
+      <p>
+        RankLock reads match data published by the public
+        <a href="https://deadlock-api.com" target="_blank" rel="noopener noreferrer">deadlock-api</a>
+        project. Every aggregated stat on the site is computed over the 6v6
+        competitive queue. The upstream data stores that queue as
+        <code>match_mode = 'Unranked'</code>; no separate <code>'Ranked'</code> value
+        exists, so &ldquo;competitive&rdquo; on RankLock means exactly that filter,
+        applied in every aggregation job.
+      </p>
+      <p>
+        Matches are loaded in bulk and stored, and statistics are computed over
+        windows of that stored history. What the website serves comes from
+        precomputed tables, assembled by a separate analytics pipeline.
+      </p>
+
+      <h2>What a rank means on RankLock</h2>
+      <p>
+        No stat on RankLock is computed from raw MMR. The pipeline does not read a
+        player's MMR number at all. What it reads is a <strong>badge</strong>: a
+        team-average rank value that the upstream match data assigns to every
+        player in the match. All six players on a team carry the same badge for
+        that match.
+      </p>
+      <p>The badge drives three groupings, depending on the page:</p>
+      <ul>
+        <li>
+          <strong>A 12-band ladder</strong> — band = badge &divide; 10, giving bands
+          0 to 11. This powers the rank selector on hero pages.
+        </li>
+        <li>
+          <strong>Five brackets</strong> — badge ranges 11&ndash;36, 41&ndash;56,
+          61&ndash;76, 81&ndash;96 and 101&ndash;116, plus an &ldquo;all
+          ranks&rdquo; view. The API labels them with the game's rank names, from
+          Initiate&ndash;Seeker at the bottom to Ascendant&ndash;Eternus at the
+          top. Matchup stats use this grouping.
+        </li>
+        <li>
+          <strong>A 4-way bracket</strong> — low (below 80), mid (below 100), high
+          (below 116) and top (116 and up). Hero pages offer this as a simpler
+          filter.
+        </li>
+      </ul>
+      <p>
+        A player's own badge is the badge of their latest match. The leaderboard
+        keeps one row per account and game mode, uses the player's latest non-null
+        match badge, requires at least five matches, and sorts by badge, highest
+        first.
+      </p>
+
+      <h2>How win-rates and pick-rates are calculated</h2>
+      <p>
+        A win-rate is the share of player-slots that won. When a hero shows a
+        54.2% win-rate, that hero won 54.2% of the player-slots it appeared in
+        within the group you are looking at, rounded to one decimal. A 6v6 match
+        produces twelve player-slots, and picks are counted the same way: a
+        hero's pick count is the number of player-slots it occupied.
+      </p>
+      <p>
+        On patch pages, pick-rate divides a hero's appearances by the number of
+        distinct matches in the group. Both teams can pick the same hero in one
+        match, and each pick counts, so the pick-rate scale runs from 0 to 2.
+      </p>
+      <p>
+        Patch win-rates come with a guardrail: when a hero has fewer than 20
+        appearances in a group, the API returns no value instead of a percentage.
+        Small samples produce meaningless swings, so they are suppressed. The
+        &ldquo;movers&rdquo; listed on a patch page are the heroes whose win-rate
+        moved most compared with the immediately previous patch by release date.
+      </p>
+      <p>
+        Matchup pages answer a narrower question: when hero A faces hero B, how
+        often does A win? The win-rate there is A's wins divided by the matches
+        where both heroes appeared, computed per game mode. Filtering that view
+        by bracket constrains side A's badge only.
+      </p>
+
+      <h2>How a match is assigned to a patch</h2>
+      <p>
+        A match belongs to the patch that was live when the match started: its
+        start time falls inside the patch's release-to-end window. One patch is
+        open at any moment — its end date is not yet set — and it covers matches
+        up to the present. Once a match is attributed, it never moves to another
+        patch retroactively.
+      </p>
+      <p>
+        The job that refreshes the patch registry from the upstream changelog is
+        not part of the source we publish from, so we describe only its observed
+        behavior: a patch's release date and label never change once set, and only
+        its end date is updated when the next patch arrives.
+      </p>
+
+      <h2>Lane Lab and player stats</h2>
+      <p>
+        Lane Lab economy curves show the 25th, 50th and 75th percentile of net
+        worth per time bin for a rank band. The pipeline stores only counts in
+        fixed buckets — three-minute time bins and 1,000 net-worth steps for Lane
+        Lab, one-minute bins and 500 steps on the stats surface — and the
+        percentile is reconstructed from those counts when you ask for it. No
+        percentile is stored.
+      </p>
+      <p>
+        The early-economy verdict takes one net-worth reading per player per
+        match, the reading nearest the 9-minute mark between 9:00 and 10:00, and
+        reports the win-rate of players at each reading level within a band.
+        Player percentiles average a player's per-match ratios — kills plus
+        assists per death, with deaths floored at one — and rank that average
+        against every other player in the same bracket and game mode. The
+        &ldquo;improve&rdquo; benchmarks compare a player with averages and
+        nearest-rank percentiles per bracket, hero and match-duration bucket,
+        computed from normal-mode matches only.
+      </p>
+
+      <h2>When the numbers refresh</h2>
+      <p>
+        There is no fixed daily or weekly recomputation. Each pipeline run takes
+        the window from the last completed run, recorded in a ledger, to the
+        current hour. It computes that window's contribution, folds it exactly
+        once into long-lived accumulators, and rebuilds the served tables from
+        them. The schedule behind this is a six-hour timer that is currently
+        switched on by hand, so stats refresh in bursts when the pipeline runs —
+        not on a guaranteed six-hour tick. When the timer will run unattended is
+        an operator decision, not something the code decides.
+      </p>
+      <p>
+        You never have to guess how old a number is. Every analytics response
+        carries an <code>X-Data-Fresh-As-Of</code> header with the timestamp of
+        the last successful run, and data past its freshness threshold — twelve
+        hours for matchup stats, 48 hours for daily and lane datasets — is flagged
+        with <code>X-Data-Stale: true</code> instead of being passed off as fresh.
+        A route whose dataset has never been computed answers
+        &ldquo;computing&rdquo; rather than inventing a number.
+      </p>
+
+      <h2>What RankLock does not publish</h2>
+      <ul>
+        <li>
+          <strong>Raw MMR.</strong> No MMR number is stored or served anywhere;
+          only the rounded badge exists. The per-day MMR history endpoint still
+          answers, but it is empty for most accounts because the upstream MMR
+          feed no longer delivers data. Player pages show the last 1,000 badged
+          matches instead.
+        </li>
+        <li>
+          <strong>Rank distribution.</strong> The endpoint is live but returns an
+          empty set today: the badge field it counts has not been backfilled
+          across all players yet.
+        </li>
+        <li>
+          <strong>Per-rank item win-rates.</strong> Item win-rates are computed
+          for all ranks only. The per-rank read exists but returns empty rather
+          than a fabricated number.
+        </li>
+        <li>
+          <strong>Item tiers, counters and synergies computed by RankLock.</strong>
+          Item stats by bracket, hero counters and hero synergies are proxied from
+          deadlock-api's analytics service and are labeled by that origin in the
+          API. The all-ranks item win-rates are the one item dataset RankLock
+          computes itself.
+        </li>
+        <li>
+          <strong>Arbitrary per-player match timelines.</strong> The detail tier
+          is never scanned in bulk to answer a request. The single carve-out is a
+          player's own economy curve in Lane Lab.
+        </li>
+        <li>
+          <strong>Cohort overlay against your own rank.</strong> Comparing your
+          economy curve with your own rank band requires a service that is built
+          but not deployed, so those routes are not served.
+        </li>
+      </ul>
+
+      <h2>How to check a number yourself</h2>
+      <p>
+        Three public endpoints show the state behind any stat. The
+        <a href="https://api.ranklock.app/api/meta/data-horizon" target="_blank" rel="noopener noreferrer">data horizon</a>
+        reports the newest match in the database and the coverage window of every
+        dataset. The freshness headers travel with every analytics response. And
+        <a href="https://api.ranklock.app/api/patches/current" target="_blank" rel="noopener noreferrer">the current patch</a>
+        shows the open window that every patch stat is attributed to. If a number
+        on the site ever disagrees with what those endpoints imply, treat the
+        endpoints as the truth and
+        <a href="/contact">tell us</a>.
+      </p>
+    </div>
+  </main>
+</BaseLayout>

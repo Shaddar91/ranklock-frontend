@@ -1,0 +1,117 @@
+---
+//FAQ page — real reader questions about how the stats work, answered from the
+//same definitions as /methodology. The JSON-LD FAQPage is built from the same
+//array the page renders, so markup and schema cannot drift apart.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { breadcrumbJsonLd } from '../lib/seo';
+
+const LAST_UPDATED = '2026-08-29';
+
+const faqs = [
+  {
+    q: 'Where does RankLock get its data?',
+    a: `From match data published by the public <a href="https://deadlock-api.com" target="_blank" rel="noopener noreferrer">deadlock-api</a> project. RankLock loads those matches in bulk and computes every aggregated stat itself. The <a href="/methodology">methodology page</a> lists the exact definitions.`,
+  },
+  {
+    q: 'What counts as a competitive match?',
+    a: `The 6v6 competitive queue. In the upstream data that queue is stored as <code>match_mode = 'Unranked'</code> and no separate <code>'Ranked'</code> value exists, so every aggregated stat on the site is computed with exactly that filter.`,
+  },
+  {
+    q: 'What does the rank on a stat page actually mean?',
+    a: `It is a badge, not an MMR number. The upstream match data assigns each match a team-average badge, and every player in the match carries their team's badge for that game. A player's own badge is the badge of their latest match. No stat on RankLock is computed from raw MMR.`,
+  },
+  {
+    q: 'Why do all six players on a team share one badge?',
+    a: `Because the badge in the source data is a team average, not an individual rating. The upstream match record carries one badge per team, and the pipeline assigns it to all six player rows of that team at load time.`,
+  },
+  {
+    q: 'Does RankLock use MMR?',
+    a: `No. Raw MMR is never stored or served; only the rounded badge exists. The per-day MMR history endpoint still answers but is empty for most accounts, because the upstream MMR feed no longer delivers data. Player pages show the last 1,000 badged matches instead.`,
+  },
+  {
+    q: `How is a hero's win-rate calculated?`,
+    a: `As the share of player-slots the hero won: wins over appearances, rounded to one decimal. A 6v6 match produces twelve player-slots. A 54.2% win-rate means the hero won 54.2% of the player-slots it occupied within the group you are viewing.`,
+  },
+  {
+    q: 'How is pick-rate calculated, and why can it pass 100%?',
+    a: `On patch pages, pick-rate divides a hero's appearances by the number of distinct matches in the group. Both teams can pick the same hero in one match and each pick counts, so the scale runs from 0 to 2 — a hero picked by both teams in every match would show 200%.`,
+  },
+  {
+    q: `Why is a hero's patch win-rate sometimes missing?`,
+    a: `It is suppressed on purpose. When a hero has fewer than 20 appearances in a group, the API returns no value instead of a percentage, because samples that small swing wildly. The movers list on a patch page compares each hero against the immediately previous patch by release date.`,
+  },
+  {
+    q: 'How does RankLock decide which patch a match belongs to?',
+    a: `By start time. A match belongs to the patch that was live when it began — its start time falls inside that patch's release-to-end window. One patch is open at a time and covers matches up to the present, and a match never moves to another patch retroactively.`,
+  },
+  {
+    q: 'What do the rank brackets on matchup pages mean?',
+    a: `Five badge ranges — 11–36, 41–56, 61–76, 81–96 and 101–116 — plus an all-ranks view. The API labels them with the game's rank names, from Initiate–Seeker at the bottom to Ascendant–Eternus at the top. Filtering matchups by bracket constrains the badge of the hero you are viewing from, not the opponent's.`,
+  },
+  {
+    q: 'How often do the stats update?',
+    a: `In bursts, when the aggregation pipeline runs. Each run covers the window from the last completed run to the current hour — there is no fixed daily or weekly recompute. The six-hour timer behind it is currently switched on by hand. Every analytics response carries an <code>X-Data-Fresh-As-Of</code> header, and the <a href="https://api.ranklock.app/api/meta/data-horizon" target="_blank" rel="noopener noreferrer">data horizon endpoint</a> shows the newest match in the database.`,
+  },
+  {
+    q: 'Why does a page sometimes say "computing" or warn that data is stale?',
+    a: `A route whose dataset has never been computed answers "computing" rather than inventing a number. Data that is older than its freshness threshold — twelve hours for matchup stats, 48 hours for daily and lane datasets — is flagged with an <code>X-Data-Stale: true</code> response header instead of being passed off as fresh.`,
+  },
+  {
+    q: 'Why is the rank-distribution chart empty?',
+    a: `The endpoint is live, but the player-badge field it counts has not been backfilled across all players yet, so it currently returns an empty set. When the backfill lands, the chart will show an exact histogram of every account with at least one competitive match, bucketed by latest-match badge.`,
+  },
+  {
+    q: 'Where do item stats, counters and synergies come from?',
+    a: `Two different places. All-ranks item win-rates are computed by RankLock from its own match data. Item stats by bracket, hero counters and hero synergies are proxied from deadlock-api's analytics service, not computed from RankLock data. Per-rank item win-rates are not published at all — the read returns empty rather than a fabricated number.`,
+  },
+  {
+    q: 'Can I compare my economy against higher-ranked players?',
+    a: `Partly. Lane Lab serves the 25th, 50th and 75th percentile net-worth curves per rank band, and your own per-minute economy curve can be read for your account. The direct overlay against the band above you requires a service that is built but not deployed, so those routes are not served today.`,
+  },
+];
+
+const stripHtml = (s: string) => s.replace(/<[^>]+>/g, '');
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = [
+  breadcrumbJsonLd(origin, [
+    { name: 'Home', path: '/' },
+    { name: 'FAQ', path: '/faq' },
+  ]),
+  {
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: stripHtml(f.a) },
+    })),
+  },
+];
+---
+
+<BaseLayout
+  title="FAQ — answers about RankLock's stats | RankLock"
+  description="Where RankLock's Deadlock stats come from, how win-rates and rank bands are defined, how often the numbers refresh, and why some stats are missing."
+  canonicalPath="/faq"
+  jsonLd={jsonLd}
+>
+  <main class="container" style="padding-top:40px; padding-bottom:64px;">
+    <div class="legal">
+      <div class="kicker" style="margin-bottom:10px;">Last updated · {LAST_UPDATED}</div>
+      <h1 class="h-hero" style="font-size:clamp(32px,5vw,48px); margin-bottom:14px;">Frequently asked questions</h1>
+      <p style="font-size:16px; color:var(--text-2); max-width:72ch; margin-bottom:8px;">
+        Answers about the numbers on RankLock, where they come from and why some
+        are missing. The full definitions live on the
+        <a href="/methodology">methodology page</a>.
+      </p>
+      {
+        faqs.map((f) => (
+          <>
+            <h2>{f.q}</h2>
+            <p set:html={f.a} />
+          </>
+        ))
+      }
+    </div>
+  </main>
+</BaseLayout>
