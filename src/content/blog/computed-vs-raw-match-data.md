@@ -30,7 +30,7 @@ The raw layer is also the audit trail for everything else on the site. Every
 computed figure in the next section is a count over these records, so any claim
 you doubt can be chased back to the games it came from. When a matchup table
 says a hero struggles into Seven, the matches behind that line are open for
-inspection. Few stats pages anywhere let you do that.
+inspection.
 
 ## The computed layer
 

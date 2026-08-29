@@ -15,8 +15,8 @@ support peels; land it a beat late and the wave has already crashed. This guide
 breaks down the single decision that separates a winning Lash from a feeding one:
 **when to commit the slam.**
 
-The chips below pull RankLock's measured win-rates for the current patch, so the
-numbers in this guide never go stale.
+The chips below pull RankLock's measured win-rates for the current patch; they
+update when the patch changes.
 
 ## Read the cooldowns, not the health bars
 
