@@ -1,9 +1,6 @@
-//Presentational humanization for Build Lab stat labels — pure string work, kept
-//in src/lib so it unit-tests and stays out of the island. Segments upstream stat
-//keys / display names into wrap-friendly Title Case so no stat card clips.
+//Build Lab stat-label humanization: segments boundary-less upstream keys into wrap-friendly Title Case.
 
-//Stat words for segmenting an all-lowercase concatenated key that carries no
-//camelCase or underscore boundary (e.g. "abilityresourceregenpersecond").
+//Dictionary for keys with no camelCase/underscore boundary ("abilityresourceregenpersecond").
 const STAT_WORDS = [
   'ability', 'resource', 'regen', 'per', 'second', 'dash', 'distance', 'meters',
   'duration', 'health', 'melee', 'damage', 'move', 'speed', 'accel', 'max',
@@ -18,8 +15,7 @@ function titleCase(words: string[]): string {
     .join(' ');
 }
 
-//Greedy longest-match over STAT_WORDS; an unmatched run accretes into a trailing
-//chunk so nothing in the key is dropped.
+//Greedy longest-match; unmatched runs accrete so nothing is dropped.
 function dictSegment(s: string): string[] {
   const out: string[] = [];
   let pending = '';
@@ -41,8 +37,6 @@ function dictSegment(s: string): string[] {
   return out;
 }
 
-//Underscores → split; camelCase / letter–digit boundaries → split; a boundary-
-//less lowercase run → dictionary segmentation; otherwise the raw text, Title-cased.
 export function prettyLabel(raw: string): string {
   const s = (raw ?? '').trim();
   if (!s) return '';
@@ -59,8 +53,7 @@ export function prettyLabel(raw: string): string {
   return titleCase(seg.length > 1 ? seg : [s]);
 }
 
-//Build Lab stat label: the upstream display name (strip the single leading "E"
-//enum tag) when present, else the raw key — both routed through prettyLabel.
+//Upstream display name (leading "E" enum tag stripped) when present, else the raw key.
 export function statLabel(key: string, displayStatName?: string): string {
   const dsn = displayStatName?.trim();
   return dsn ? prettyLabel(dsn.replace(/^E/, '')) : prettyLabel(key);
