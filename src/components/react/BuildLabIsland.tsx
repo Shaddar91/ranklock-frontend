@@ -15,6 +15,7 @@ import { api, queryKeys } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, EmptyState, GameIcon } from './ui/index';
 import { count, DASH, fixed } from '../../lib/format';
+import { statLabel } from '../../lib/statLabel';
 import type { HeroBaseStats, ItemModifier, TrimmedBuild } from '../../types/api';
 
 type Tab = 'heroes' | 'builds' | 'items';
@@ -34,14 +35,6 @@ function fmtStat(v: number): string {
 //(builds.rs HeroBaseStats); the shared `stats: Record<string, unknown>` masks
 //this, so we narrow it here at the point of consumption.
 type BaseStatValue = { value: number; display_stat_name?: string };
-
-//Prefer the upstream display label carried on each stat value (e.g.
-//"EMaxHealth"), stripping the single leading "E" enum-tag prefix. Fall back to
-//humanizing the snake_case key when the API omits display_stat_name.
-function statLabel(key: string, v: BaseStatValue): string {
-  const dsn = v.display_stat_name;
-  return dsn ? dsn.replace(/^E/, '') : humanize(key);
-}
 
 //---- shared playable-hero roster -------------------------------------------
 //The /heroes/base-stats snapshot restricted to currently-playable heroes
@@ -129,12 +122,17 @@ function HeroBaseStatsTab({ heroId, onHero }: { heroId: number | null; onHero: (
         <EmptyState title="No numeric base stats" message="This hero's snapshot carries no numeric starting stats." icon="inbox" />
       ) : (
         <div className="stat-grid">
-          {statEntries.map(([k, v]) => (
-            <div key={k} className="tile statile">
-              <div className="label-xs">{statLabel(k, v)}</div>
-              <div className="display tnum" style={{ fontSize: 22, fontWeight: 700 }}>{fmtStat(v.value)}</div>
-            </div>
-          ))}
+          {statEntries.map(([k, v]) => {
+            const label = statLabel(k, v.display_stat_name);
+            return (
+              <div key={k} className="tile statile">
+                <div className="label-xs" title={label} style={{ overflowWrap: 'anywhere', overflow: 'hidden' }}>
+                  {label}
+                </div>
+                <div className="display tnum" style={{ fontSize: 22, fontWeight: 700 }}>{fmtStat(v.value)}</div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

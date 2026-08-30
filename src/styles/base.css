@@ -74,6 +74,8 @@ body {
   opacity: 0.5;
   filter: saturate(1.05) contrast(1.02);
   animation: bgfade 0.8s ease;
+  /* isolate the filtered layer's paint so a hero swap can't smear the old plate */
+  contain: paint;
 }
 /* narrow viewports paint the small optimized plate when HeroBackdrop sets
    --atmos-bg-sm (our base only); upstream base falls back to --atmos-bg. */
