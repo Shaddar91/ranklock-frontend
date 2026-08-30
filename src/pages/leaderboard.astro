@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import LeaderboardTable, { LEADERBOARD_PAGE_SIZE } from '../components/react/LeaderboardTable';
+import LeaderboardTable from '../components/react/LeaderboardTable';
+import { LEADERBOARD_PAGE_SIZE } from '../lib/leaderboardPager';
 import GameModeToggle from '../components/react/ui/GameModeToggle';
 import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
@@ -14,9 +15,9 @@ import type { LeaderboardEntry } from '../types/api';
 //JS). Fetch page 1 of the default band (all ranks, offset 0) at the island's
 //page size, so these rows match — and seed — React Query's default-page key. The
 //rank-band filter + paging are server-driven (min_badge/max_badge + offset).
-const rows = await buildFetch(
+const { rows: initialRows } = await buildFetch(
   api.getLeaderboard({ limit: LEADERBOARD_PAGE_SIZE }),
-  [] as LeaderboardEntry[],
+  { rows: [] as LeaderboardEntry[], total: null },
 );
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
@@ -56,7 +57,7 @@ const path = Astro.url.pathname;
       )
     }
     <div style="margin-top:20px;">
-      <LeaderboardTable initialRows={rows} client:load />
+      <LeaderboardTable initialRows={initialRows} client:load />
     </div>
   </main>
 </BaseLayout>

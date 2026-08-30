@@ -1,10 +1,7 @@
 //Leaderboard island (mount with client:load on /leaderboard).
 //
-//Top-3 podium strip + the ranked table below, with Next/Prev paging. SSG-friendly:
-//the page bakes page 1 of the default band as initialRows so the server render
-//holds the real ladder (SEO without JS). The rank-band filter is SERVER-DRIVEN —
-//a band sends min_badge/max_badge (badge tiers, labelled by rank emblem, never
-//MMR) and offset/limit page the ladder; both ride in the React Query key.
+//Top-3 podium strip + ranked table with URL-backed numbered paging (?page=N).
+//SSG-friendly: page 1 of the default band uses initialRows baked at build time.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, isComputing, queryKeys } from '../../lib/apiClient';
@@ -18,13 +15,15 @@ import { badgeRangeForTiers, type RankBucket } from '../../lib/brackets';
 import { rankFromBadge, subLabel } from '../../lib/ranks';
 import { count, DASH } from '../../lib/format';
 import type { LeaderboardEntry } from '../../types/api';
+import {
+  LEADERBOARD_PAGE_SIZE,
+  lastPage,
+  offsetFromPage,
+  pageFromSearch,
+  pagerWindow,
+} from '../../lib/leaderboardPager';
 
 type RankedEntry = LeaderboardEntry & { rank: number };
-
-//Rows per ladder page. Shared with the SSG seed in leaderboard.astro so the
-//build-time fetch and the page-1 client query request the same window (its rows
-//become React Query's initialData for the default band's first page).
-export const LEADERBOARD_PAGE_SIZE = 50;
 
 //Leaderboard-specific bands: top players cluster in the upper tiers, so the
 //filter offers All + the meaningful high/top bands (rank-emblem labelled).
@@ -102,23 +101,53 @@ function Podium({ rows }: { rows: RankedEntry[] }) {
 function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) {
   const { mode } = useGameMode();
   const [bucket, setBucket] = useState<RankBucket['key']>('all');
-  const [offset, setOffset] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageInput, setPageInput] = useState('1');
 
-  //leaderboard_mv IS mode-separated (one of the 4 widened MVs — 022), so Brawl has
-  //its own ladder; switching modes is a fresh page-1 view. Reset to the first page
-  //on a mode change so the offset doesn't carry over into a different ladder.
+  const offset = offsetFromPage(page);
+
+  //Sync page from URL on mount; re-sync on browser Back/Forward.
+  useEffect(() => {
+    function sync() { setPage(pageFromSearch(window.location.search)); }
+    sync();
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
+
+  useEffect(() => { setPageInput(String(page)); }, [page]);
+
   const prevMode = useRef(mode);
   useEffect(() => {
     if (prevMode.current !== mode) {
       prevMode.current = mode;
-      setOffset(0);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('page');
+      history.replaceState(null, '', url.toString());
+      setPage(1);
     }
   }, [mode]);
 
-  //Server-driven now. The old path loaded a fixed top-100 and filtered bands
-  //CLIENT-SIDE, so picking Oracle/Phantom (tiers 8,9) over a top-100 that is all
-  //tier 10/11 showed an empty table. Instead the band sends min_badge/max_badge
-  //(badge tiers, not a row filter) and offset/limit page the ladder server-side.
+  function goToPage(p: number) {
+    const url = new URL(window.location.href);
+    if (p === 1) {
+      url.searchParams.delete('page');
+    } else {
+      url.searchParams.set('page', String(p));
+    }
+    history.pushState(null, '', url.toString());
+    setPage(p);
+  }
+
+  function changeBucket(key: RankBucket['key']) {
+    setBucket(key);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('page');
+    history.replaceState(null, '', url.toString());
+    setPage(1);
+  }
+
+  //Server-driven band filter: the band sends min_badge/max_badge (badge tiers,
+  //labelled by rank emblem) and offset/limit page the ladder server-side.
   const band = LEADERBOARD_BUCKETS.find((b) => b.key === bucket);
   const badgeRange = badgeRangeForTiers(band?.tiers ?? []);
   const params = {
@@ -128,39 +157,59 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
     game_mode: mode,
   };
 
-  //offset + band + mode ride in the queryKey (queryKeys.leaderboard spreads params)
-  //so every page/band/mode caches separately; keepPreviousData keeps the prior page
-  //on-screen for a smooth swap. initialData seeds ONLY the SSG default key (Normal,
-  //all ranks, page 1) — seeding another page/band/mode with the all-ranks rows is wrong.
-  const isDefaultPage = bucket === 'all' && offset === 0 && mode === 'Normal';
+  //offset + band + mode ride in the queryKey so every page/band/mode caches
+  //separately; keepPreviousData keeps the prior page visible during fetch.
+  //initialData seeds ONLY the SSG default key (Normal, all ranks, page 1).
+  const isDefaultPage = bucket === 'all' && page === 1 && mode === 'Normal';
 
   const { data, isPending, isError, error, isPlaceholderData } = useQuery({
     queryKey: queryKeys.leaderboard(params),
     queryFn: () => api.getLeaderboard(params),
-    initialData: isDefaultPage ? initialRows : undefined,
+    initialData: isDefaultPage ? { rows: initialRows, total: null } : undefined,
     placeholderData: keepPreviousData,
   });
 
-  //# = absolute ladder position for the page/band: page 2 of 50 starts at #51.
+  const rows = data?.rows ?? [];
+  const total = data?.total ?? null;
+  const last = lastPage(total);
+
+  //Auto-clamp: if ?page= exceeds the known total, correct the URL in place.
+  useEffect(() => {
+    if (last !== null && page > last) {
+      const url = new URL(window.location.href);
+      if (last === 1) {
+        url.searchParams.delete('page');
+      } else {
+        url.searchParams.set('page', String(last));
+      }
+      history.replaceState(null, '', url.toString());
+      setPage(last);
+    }
+  }, [last, page]);
+
   const ranked = useMemo<RankedEntry[]>(
-    () => (data ?? []).map((r, i) => ({ ...r, rank: offset + i + 1 })),
-    [data, offset],
+    () => rows.map((r, i) => ({ ...r, rank: offset + i + 1 })),
+    [rows, offset],
   );
 
-  //Podium only crowns the first page; deeper pages are a pure table.
   const podium = offset === 0 ? ranked.slice(0, 3) : [];
   const rest = offset === 0 ? ranked.slice(3) : ranked;
 
-  const hasPrev = offset > 0;
-  //The endpoint returns a bare array (no total), so a full page implies there may
-  //be more and a short page is the last one.
-  const hasNext = (data?.length ?? 0) >= LEADERBOARD_PAGE_SIZE;
-  const showPager = hasPrev || hasNext;
+  const hasPrev = page > 1;
+  const hasNext = rows.length >= LEADERBOARD_PAGE_SIZE;
 
-  function changeBucket(key: RankBucket['key']) {
-    setBucket(key);
-    setOffset(0); //band change → reset to page 1
+  function commitPageInput() {
+    const n = Number(pageInput);
+    if (Number.isInteger(n) && n >= 1) {
+      goToPage(last !== null ? Math.min(n, last) : n);
+    }
   }
+
+  const ranksLabel = ranked.length > 0
+    ? total !== null
+      ? `Ranks ${count(offset + 1)}–${count(offset + ranked.length)} of ${count(total)}`
+      : `Ranks ${count(offset + 1)}–${count(offset + ranked.length)}`
+    : DASH;
 
   const columns = useMemo<DataTableColumn<RankedEntry>[]>(
     () => [
@@ -218,8 +267,6 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
         initialSort={{ key: 'rank', dir: 1 }}
         caption="Top Deadlock players by rank"
         emptyTitle={
-          //202 = healthy, deliberately gating — "offline" is reserved for real
-          //network/5xx failure (B3).
           isComputing(error) ? 'Ladder is computing' : isError ? 'Leaderboard unavailable' : 'No players in this band yet'
         }
         emptyMessage={
@@ -230,29 +277,72 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
               : 'No ranked players for this band yet. Try another bracket or check back after the next data refresh.'
         }
       />
-      {showPager && (
+      {last !== null ? (
+        <nav className="between" style={{ marginTop: 16, gap: 8, flexWrap: 'wrap', alignItems: 'center' }} aria-label="Leaderboard pages">
+          <div className="flex" style={{ gap: 4, flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn-ghost" onClick={() => goToPage(1)} disabled={page === 1 || isPlaceholderData}>
+              <Icon name="arrowR" size={13} style={{ transform: 'scaleX(-1)' }} /> First
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => goToPage(page - 1)} disabled={page === 1 || isPlaceholderData}>
+              <Icon name="arrowR" size={13} style={{ transform: 'scaleX(-1)' }} /> Prev
+            </button>
+            {pagerWindow(page, last).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className="btn btn-ghost"
+                style={p === page ? { fontWeight: 700, color: 'var(--text)' } : undefined}
+                onClick={() => goToPage(p)}
+                disabled={isPlaceholderData}
+                aria-current={p === page ? 'page' : undefined}
+              >
+                {p}
+              </button>
+            ))}
+            <button type="button" className="btn btn-ghost" onClick={() => goToPage(page + 1)} disabled={page >= last || isPlaceholderData}>
+              Next <Icon name="arrowR" size={13} />
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => goToPage(last)} disabled={page >= last || isPlaceholderData}>
+              Last <Icon name="arrowR" size={13} />
+            </button>
+          </div>
+          <label className="label-xs" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            Go to page
+            <input
+              type="number"
+              min={1}
+              max={last}
+              value={pageInput}
+              onChange={(e) => setPageInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') commitPageInput(); }}
+              onBlur={() => setPageInput(String(page))}
+              disabled={isPlaceholderData}
+              style={{ width: 64, textAlign: 'center' }}
+            />
+          </label>
+          <span className="label-xs tnum" aria-live="polite">{ranksLabel}</span>
+        </nav>
+      ) : (hasPrev || hasNext) ? (
         <nav className="between" style={{ marginTop: 16, gap: 12, flexWrap: 'wrap' }} aria-label="Leaderboard pages">
           <button
             type="button"
             className="btn btn-ghost"
-            onClick={() => setOffset((o) => Math.max(0, o - LEADERBOARD_PAGE_SIZE))}
+            onClick={() => goToPage(page - 1)}
             disabled={!hasPrev || isPlaceholderData}
           >
             <Icon name="arrowR" size={13} style={{ transform: 'scaleX(-1)' }} /> Prev
           </button>
-          <span className="label-xs tnum" aria-live="polite">
-            {ranked.length > 0 ? `Ranks ${count(offset + 1)}–${count(offset + ranked.length)}` : DASH}
-          </span>
+          <span className="label-xs tnum" aria-live="polite">{ranksLabel}</span>
           <button
             type="button"
             className="btn btn-ghost"
-            onClick={() => setOffset((o) => o + LEADERBOARD_PAGE_SIZE)}
+            onClick={() => goToPage(page + 1)}
             disabled={!hasNext || isPlaceholderData}
           >
             Next <Icon name="arrowR" size={13} />
           </button>
         </nav>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -23,7 +23,7 @@ const topHeroes = [...heroesRaw]
   .filter((h) => h.win_rate != null)
   .sort((a, b) => (b.win_rate ?? 0) - (a.win_rate ?? 0))
   .slice(0, 5);
-const leaders = await buildFetch(api.getLeaderboard({ limit: 5 }), [] as LeaderboardEntry[]);
+const { rows: leaders } = await buildFetch(api.getLeaderboard({ limit: 5 }), { rows: [] as LeaderboardEntry[], total: null });
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
   .slice(0, 2);

@@ -173,6 +173,43 @@ export function apiFetch<T>(
   return fetchFrom<T>(API_BASE, path, opts);
 }
 
+async function fetchFromWithTotal<T>(
+  base: string,
+  path: string,
+  opts: { query?: Query; init?: RequestInit; credentials?: RequestCredentials } = {},
+): Promise<{ rows: T; total: number | null }> {
+  const url = buildUrl(base, path, opts.query);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      credentials: opts.credentials ?? 'same-origin',
+      headers: { Accept: 'application/json', ...(opts.init?.headers ?? {}) },
+      ...opts.init,
+    });
+  } catch (cause) {
+    throw new ApiError(0, url, `Network request failed: ${String(cause)}`);
+  }
+  if (!res.ok) {
+    const body = await res.text().catch(() => undefined);
+    throw new ApiError(res.status, url, `${res.status} ${res.statusText} for ${path}`, body);
+  }
+  const raw = res.headers.get('x-total-count');
+  const total = raw !== null ? (parseInt(raw, 10) || null) : null;
+  if (res.status === 204 || res.status === 205) {
+    return { rows: undefined as T, total };
+  }
+  return { rows: (await res.json()) as T, total };
+}
+
+/** Like `apiFetch` but also reads the `X-Total-Count` header, returning `{ rows, total }`.
+ *  `total` is null when the header is absent. */
+export function apiFetchWithTotal<T>(
+  path: string,
+  opts: { query?: Query; init?: RequestInit; credentials?: RequestCredentials } = {},
+): Promise<{ rows: T; total: number | null }> {
+  return fetchFromWithTotal<T>(API_BASE, path, opts);
+}
+
 /**
  * Fetch against the standalone Lane Lab service base (ranklock-lane-lab / PUBLIC_LANE_LAB_BASE_URL).
  * Identical typed-ApiError contract as `apiFetch`; only the base URL differs. Public Lane Lab reads
@@ -210,7 +247,7 @@ export const queryKeys = {
   heroItemWinRates: (id: number, params?: Query) => ['hero', id, 'item-win-rates', params ?? {}] as const,
   items: (bracket?: number, game_mode?: GameMode, hero_id?: number) =>
     ['items', bracket ?? 0, game_mode ?? null, hero_id ?? 0] as const,
-  recentMatches: () => ['matches', 'recent'] as const,
+  recentMatches: (params?: Query) => ['matches', 'recent', params ?? {}] as const,
   match: (id: number) => ['match', id] as const,
   search: (q: string) => ['search', q] as const,
   player: (id: number, game_mode?: GameMode) => ['player', id, game_mode ?? null] as const,
@@ -263,8 +300,8 @@ export const api = {
   //SEO / reference surface (SSG build-time fetch + CSR). `offset`/`limit` page the
   //ladder server-side and `min_badge`/`max_badge` (badge = tier*10+subrank) drive the
   //rank-band filter — both implemented backend-side (leaderboard Component 1). Omitting
-  //the badge pair returns the full ladder. The old `cursor` param was vestigial — the
-  //backend `/leaderboard` Paging never read it — so it is dropped.
+  //the badge pair returns the full ladder. Returns `{ rows, total }` where `total` reads
+  //the `X-Total-Count` response header (null when absent).
   getLeaderboard: (params?: {
     patch_id?: number;
     limit?: number;
@@ -272,7 +309,7 @@ export const api = {
     min_badge?: number;
     max_badge?: number;
     game_mode?: GameMode;
-  }) => apiFetch<LeaderboardEntry[]>('/leaderboard', { query: params }),
+  }) => apiFetchWithTotal<LeaderboardEntry[]>('/leaderboard', { query: params }),
   //`band` is a single rank tier 0..11 (badge/10, migration 025 hero_band_mv) — the SAME 12-band
   //ladder Lane Lab filters on. Prefer it over the coarse 4-way `bracket`; omit both for all-ranks.
   getHeroes: (params?: { bracket?: HeroBracket; band?: number; patch_id?: number; game_mode?: GameMode }) =>
@@ -300,7 +337,8 @@ export const api = {
   //`hero_id` scopes the rows to one hero (omit/0 = every hero); the backend 400s a bad value.
   getItems: (bracket?: number, game_mode?: GameMode, hero_id?: number) =>
     apiFetch<ItemStat[]>('/items/stats', { query: { bracket, game_mode, hero_id } }).then(enrichItems),
-  getRecentMatches: () => apiFetch<MatchRow[]>('/matches/recent'),
+  getRecentMatches: (params?: { game_mode?: string; match_mode?: string }) =>
+    apiFetch<MatchRow[]>('/matches/recent', { query: params }),
 
   //per-match / per-user surface (CSR islands)
   getMatch: (id: number) => apiFetch<MatchDetail>(`/matches/${id}`),
@@ -312,8 +350,10 @@ export const api = {
   //enumerate matches, not an aggregate, so they carry no mode.
   getPlayer: (id: number, game_mode?: GameMode) =>
     apiFetch<PlayerProfileResponse>(`/players/${id}`, { query: { game_mode } }),
-  getPlayerMatches: (id: number, params?: { limit?: number; cursor?: string; hero_id?: number }) =>
-    apiFetch<PlayerMatchRow[]>(`/players/${id}/matches`, { query: params }),
+  getPlayerMatches: (
+    id: number,
+    params?: { limit?: number; cursor?: string; hero_id?: number; game_mode?: string; match_mode?: string },
+  ) => apiFetch<PlayerMatchRow[]>(`/players/${id}/matches`, { query: params }),
   getPlayerMmr: (id: number) => apiFetch<MMRHistoryRow[]>(`/players/${id}/mmr`),
   getPlayerHeroes: (id: number, game_mode?: GameMode) =>
     apiFetch<HeroLedgerRow[]>(`/players/${id}/heroes`, { query: { game_mode } }),
