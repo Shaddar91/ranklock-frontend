@@ -89,10 +89,15 @@ export const useImprove = (id: number) =>
   useQuery({ queryKey: queryKeys.playerImprove(id), queryFn: () => api.getPlayerImprove(id), retry: false, enabled: id > 0 });
 
 //opts carries the selected hero_id from /heroes-played plus the optional league/tier
-//knobs; the keys mirror the backend CompareQuery (hero_id/league_offset/target_tier).
-//An absent opts ⇒ the server-default cohort. compare's cohort baseline is
+//knobs and the window bound (last_games XOR last_days); the keys mirror the backend
+//CompareQuery. An absent opts ⇒ the server-default cohort (most-played hero); the
+//playstyle radar passes hero_id:0 explicitly for the all-heroes scope, which caches
+//as a SEPARATE key from this no-param call. compare's cohort baseline is
 //hero_tier_cohort_mv (mode-separated), so it follows the global mode.
-export const useCompare = (id: number, opts?: { hero_id?: number; league_offset?: string; target_tier?: number }) => {
+export const useCompare = (
+  id: number,
+  opts?: { hero_id?: number; league_offset?: string; target_tier?: number; last_games?: number; last_days?: number },
+) => {
   const { mode } = useGameMode();
   const params = { ...(opts ?? {}), game_mode: mode };
   return useQuery({
@@ -138,14 +143,20 @@ export const usePlayerEconomyCurve = (
   });
 
 //Compare-to-a-specific-player: `vs` is the other player's account_id (gates the
-//fetch — undefined/0 means no player picked yet), `hero_id` scopes the shared-hero
-//overlap. retry:false so a build-ahead 202/501 or a 404 (no overlap) empty-states
-//fast instead of retrying. Both players' aggregates are mode-separated → follows mode.
-export const useComparePlayer = (id: number, vs: number | undefined, hero_id?: number) => {
+//fetch — undefined/0 means no player picked yet). opts is the shared scope: hero_id
+//(0 = all heroes) plus the window bound (last_games XOR last_days). retry:false so a
+//build-ahead 202/501 or a 404 (an account with no games at all in the mode)
+//empty-states fast instead of retrying. Both players' aggregates are mode-separated
+//→ follows mode.
+export const useComparePlayer = (
+  id: number,
+  vs: number | undefined,
+  opts?: { hero_id?: number; last_games?: number; last_days?: number },
+) => {
   const { mode } = useGameMode();
   return useQuery({
-    queryKey: queryKeys.playerComparePlayer(id, { vs, hero_id, game_mode: mode }),
-    queryFn: () => api.getPlayerComparePlayer(id, { vs: vs!, hero_id, game_mode: mode }),
+    queryKey: queryKeys.playerComparePlayer(id, { vs, ...(opts ?? {}), game_mode: mode }),
+    queryFn: () => api.getPlayerComparePlayer(id, { vs: vs!, ...(opts ?? {}), game_mode: mode }),
     retry: false,
     enabled: id > 0 && (vs ?? 0) > 0,
   });

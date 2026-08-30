@@ -19,8 +19,27 @@ const side = (over: Partial<CompareYou> = {}): CompareYou => ({
   avg_assists: 8,
   avg_damage: 36400,
   damage_per_min: 910,
+  span_from: null,
+  span_to: null,
   ...over,
 });
+
+//A 0-game side as the backend serves it under a window/hero scope (200): matches 0,
+//every metric and the span null.
+const zeroSide = (): CompareYou =>
+  side({
+    matches: 0,
+    avg_net_worth: null,
+    souls_per_min: null,
+    avg_last_hits: null,
+    last_hits_per_min: null,
+    avg_denies: null,
+    avg_kills: null,
+    avg_deaths: null,
+    avg_assists: null,
+    avg_damage: null,
+    damage_per_min: null,
+  });
 
 const AXIS_ORDER = ['Souls/min', 'Last-hits', 'Kills', 'Assists', 'Denies', 'KDA'];
 
@@ -94,5 +113,38 @@ describe('isAllHeroesCompare', () => {
   });
   it('reads a legacy response without the flag as shared', () => {
     expect(isAllHeroesCompare({ hero_id: 35 })).toBe(false);
+  });
+});
+
+//C4 (ranklock-radar-window-scope-execution): the radar's "You" polygon must be
+//identical solo and under a player overlay at the SAME scope, and a 0-game side
+//maps to an all-zero polygon the chart hides (never a fabricated shape).
+describe('radar You-polygon invariant + 0-game sides', () => {
+  it('solo selfShapeAxes equals the overlay you series under the same scope', () => {
+    const you = side();
+    const solo = selfShapeAxes(you);
+    const overlay = compareRadarVsPlayer(you, side({ souls_per_min: 960, avg_kills: 9 }));
+    expect(overlay.map((a) => a.you)).toEqual(solo.map((a) => a.you));
+    expect(overlay.map((a) => a.served)).toEqual(solo.map((a) => a.served));
+  });
+  it('holds for a windowed all-heroes fixture (hero_id 0 scope shape)', () => {
+    const youAll = side({ matches: 10, souls_per_min: 1053.4, avg_last_hits: 152.6, avg_denies: 1.4 });
+    const solo = selfShapeAxes(youAll);
+    const overlay = compareRadarVsPlayer(youAll, side({ matches: 111 }));
+    expect(overlay.map((a) => a.you)).toEqual(solo.map((a) => a.you));
+  });
+  it('maps a 0-game you side to all-zero unserved axes while their side still draws', () => {
+    const axes = compareRadarVsPlayer(zeroSide(), side());
+    expect(axes.every((a) => a.you === 0 && !a.served)).toBe(true);
+    expect(axes.every((a) => a.cohort > 0)).toBe(true);
+  });
+  it('maps a 0-game them side to all-zero cohort values on served you axes', () => {
+    const axes = compareRadarVsPlayer(side(), zeroSide());
+    expect(axes.every((a) => a.cohort === 0)).toBe(true);
+    expect(axes.every((a) => a.served)).toBe(true);
+  });
+  it('selfShapeAxes on a 0-game side yields nothing served (the panel keeps the empty-grid + caption state)', () => {
+    const axes = selfShapeAxes(zeroSide());
+    expect(axes.every((a) => a.you === 0 && a.cohort === 0 && !a.served)).toBe(true);
   });
 });

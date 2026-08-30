@@ -13,7 +13,9 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
   Legend,
+  DefaultLegendContent,
   Tooltip,
+  type LegendPayload,
 } from 'recharts';
 import {
   type ChartFmtValue,
@@ -36,6 +38,10 @@ interface RadarChartProps {
   youLabel?: string;
   cohortLabel?: string;
   showCohort?: boolean;
+  //Draw the you polygon; false on a 0-game side (the legend entry stays, inactive).
+  showYou?: boolean;
+  //Keep the cohort legend entry while its polygon is hidden (0-game them side).
+  keepCohortLegend?: boolean;
 }
 
 //Live-read the `data-radar` tweak from <html> (SSR-safe default: 'filled').
@@ -57,10 +63,20 @@ export default function RadarChart({
   youLabel = 'You',
   cohortLabel = 'Next tier',
   showCohort = true,
+  showYou = true,
+  keepCohortLegend = false,
 }: RadarChartProps) {
   const mode = useRadarMode();
   const cohortFill = mode === 'line' ? 0 : 0.08;
   const youFill = mode === 'line' ? 0 : 0.25;
+  //Explicit legend payload — a hidden (0-game) series keeps an inactive entry;
+  //v3's Legend overrides the payload prop, so it goes through `content`.
+  const legendPayload: ReadonlyArray<LegendPayload> = [
+    ...(showCohort || keepCohortLegend
+      ? [{ value: cohortLabel, type: 'rect' as const, color: seriesColor.cohort, inactive: !showCohort }]
+      : []),
+    { value: youLabel, type: 'rect' as const, color: seriesColor.you, inactive: !showYou },
+  ];
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsRadar data={data} outerRadius="72%">
@@ -81,15 +97,20 @@ export default function RadarChart({
             strokeWidth={1.6}
           />
         )}
-        <Radar
-          name={youLabel}
-          dataKey="you"
-          stroke={seriesColor.you}
-          fill={seriesColor.you}
-          fillOpacity={youFill}
-          strokeWidth={2.2}
+        {showYou && (
+          <Radar
+            name={youLabel}
+            dataKey="you"
+            stroke={seriesColor.you}
+            fill={seriesColor.you}
+            fillOpacity={youFill}
+            strokeWidth={2.2}
+          />
+        )}
+        <Legend
+          content={(p) => <DefaultLegendContent {...p} payload={legendPayload} />}
+          wrapperStyle={{ fontSize: 12, color: 'var(--muted)' }}
         />
-        <Legend wrapperStyle={{ fontSize: 12, color: 'var(--muted)' }} />
         <Tooltip
           contentStyle={tooltipContentStyle}
           labelStyle={tooltipLabelStyle}

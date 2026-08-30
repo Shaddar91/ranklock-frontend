@@ -6,8 +6,9 @@
 //
 //  • PlaystyleRadarPanel  — the player's own per-game shape across 6 axes, with an
 //                           optional second-player overlay from /compare-player
-//                           (shared hero or all heroes). Derived from SERVED
-//                           aggregates (mode-separated).
+//                           (all heroes by default; hero only on explicit select,
+//                           both sides under the same games/days window). Derived
+//                           from SERVED aggregates (mode-separated).
 //  • EconomyPanel         — soul-curve-vs-cohort + gold-source breakdown. The
 //                           per-minute timeline is an UNBUILT endpoint, so the
 //                           two charts grey out; the served /compare souls/min
@@ -26,7 +27,10 @@ import SignatureCurve from '../charts/SignatureCurve';
 import { sigSeriesColor, useSigSeriesWords } from '../charts/chartTheme';
 import { CatPanel } from './StatLine';
 import { useCompare, useComparePlayer, useImprove, usePlayer, usePlayerEconomyCurve, usePlayerHeroesPlayed } from './usePlayer';
-import { combatRows, compareRadarVsPlayer, economyRows, efficiencyRows, isAllHeroesCompare, laningRows, selfShapeAxes } from '../../../lib/playstyle';
+import { usePlayerScope } from './usePlayerScope';
+import { PlayerScopeControls } from './PlayerScopeControls';
+import { scopeCaption, scopeParams } from '../../../lib/playerScope';
+import { combatRows, compareRadarVsPlayer, economyRows, efficiencyRows, laningRows, selfShapeAxes } from '../../../lib/playstyle';
 import { mergeSignatureCurve, curveMarker } from '../../../lib/signatureCurve';
 import { RANKS, chasingTier, getRank, rankFromBadge } from '../../../lib/ranks';
 import { count, fixed } from '../../../lib/format';
@@ -65,20 +69,24 @@ function Loading({ label }: { label: string }) {
 
 //The player's OWN shape across 6 per-game measures (Souls/min, Last-hits, Kills,
 //Assists, Denies, KDA), each normalized against a FIXED display ceiling (SELF_AXIS_MAX
-//in lib/playstyle) — NOT against a league cohort. An OPTIONAL player picker lets the
-//viewer overlay a second player's shape: both polygons then come from the SAME
-///compare-player response (the pair's shared hero, or all heroes), drawn on the same
-//scale. With nothing picked exactly ONE polygon (the own shape) is drawn.
+//in lib/playstyle) — NOT against a league cohort. The scope controls (Games/Days
+//window presets + hero select, default All heroes) apply to BOTH the solo shape and
+//the optional player overlay, so the "You" polygon never moves when a second player
+//is added — the overlay's you side is the solo side under the same scope.
 export function PlaystyleRadarPanel({ id }: { id: number }) {
-  //No league_offset — the radar needs only the always-populated `you` aggregate; the
-  //cohort/tier baseline is intentionally not read (own-shape view).
-  const { data, isPending, isError, error } = useCompare(id);
+  const { scope, setKind, setN, setHero } = usePlayerScope();
+  const params = scopeParams(scope);
+  //Scoped own shape (hero_id always sent; 0 = all heroes) — a NEW query key,
+  //separate from the no-param useCompare the Categorized-performance panels read.
+  //No league_offset: the radar needs only the always-populated `you` aggregate.
+  const { data, isPending, isError, error } = useCompare(id, params);
   const you = data?.you ?? null;
   const axes = you ? selfShapeAxes(you) : [];
   const servedCount = axes.filter((a) => a.served).length;
-  //Real empty-state ONLY when the player has no usable own data (no matches / every
-  //metric null) — the designed fallback, not the old systemic cohort-empty.
-  const noData = !you || you.matches === 0 || servedCount === 0;
+  //Real empty-state ONLY when there is no own data at all — a 0-game windowed
+  //side (matches:0, a 200) renders honestly instead: no polygon, an inactive
+  //legend entry, and the 0-game caption. A genuine 404 stays an empty state.
+  const noData = !you || (you.matches > 0 && servedCount === 0);
 
   //---- optional player-compare overlay ----------------------------------------
   const [raw, setRaw] = useState('');
@@ -104,17 +112,31 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
     results.length === 0 &&
     (search.data ?? []).every((r) => r.account_id === id);
 
-  //No hero filter — the server picks the pair's most-played shared hero, else
-  //compares all heroes; a 404 here means an account has no games at all.
-  const cmp = useComparePlayer(id, picked?.account_id);
+  //Same scope as the solo call; a 404 here means an account has no games at all
+  //in this mode (a 0-game windowed side is a 200 and renders as such).
+  const cmp = useComparePlayer(id, picked?.account_id, params);
   const cmpData = cmp.data ?? null;
   const noGames = isNotFound(cmp.error);
 
   //Two-series axes (you + picked player, BOTH from the one /compare-player response
-  //so both polygons share the same hero scope) once cmpData loads.
+  //so both polygons share the same scope) once cmpData loads.
   const overlayAxes = cmpData ? compareRadarVsPlayer(cmpData.you, cmpData.them) : null;
   const shownAxes = overlayAxes ?? axes;
+  const effYou = cmpData?.you ?? you;
+  const youZero = effYou != null && effYou.matches === 0;
+  const themZero = cmpData != null && cmpData.them.matches === 0;
   const shownServed = shownAxes.filter((a) => a.served).length;
+
+  const heroName = scope.hero_id === 0 ? null : (cmpData?.hero_name ?? data?.hero_name ?? null);
+  const caption = effYou
+    ? scopeCaption({
+        scope,
+        heroName,
+        you: effYou,
+        themLabel: picked && cmpData ? picked.steam_name : undefined,
+        them: picked && cmpData ? cmpData.them : undefined,
+      })
+    : '';
 
   return (
     <div className="brass-frame" style={{ padding: '18px 20px' }}>
@@ -128,6 +150,7 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
           {picked ? `You vs ${picked.steam_name}` : 'Your shape'}
         </h2>
       </div>
+      <PlayerScopeControls scope={scope} onKind={setKind} onN={setN} onHero={setHero} playerId={id} themId={picked?.account_id} />
       {isPending ? (
         <Loading label="Loading playstyle" />
       ) : isError ? (
@@ -137,10 +160,12 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
       ) : (
         <>
           <RadarChart
-            data={overlayAxes ?? axes}
-            youLabel="You"
-            cohortLabel={picked ? picked.steam_name : 'Your shape'}
-            showCohort={overlayAxes != null}
+            data={shownAxes}
+            youLabel={youZero ? 'You (0 games in this window)' : 'You'}
+            cohortLabel={picked ? (themZero ? `${picked.steam_name} (0 games in this window)` : picked.steam_name) : 'Your shape'}
+            showCohort={overlayAxes != null && !themZero}
+            keepCohortLegend={overlayAxes != null && themZero}
+            showYou={!youZero}
           />
           {picked && cmp.isPending ? (
             <p className="muted" style={{ fontSize: 12.5, margin: '6px 0 0', textAlign: 'center' }}>
@@ -148,17 +173,14 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
             </p>
           ) : picked && noGames ? (
             <p className="muted" style={{ fontSize: 12.5, margin: '6px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
-              No overlapping games — you and {picked.steam_name} share no matches in this mode yet.
+              {picked.steam_name} has no games in this mode yet — pick another player.
             </p>
           ) : (
             <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
-              {shownServed < shownAxes.length
-                ? `Partial — ${shownServed} of ${shownAxes.length} axes shown; the rest fill in as this player logs more matches.`
-                : picked && cmpData
-                ? isAllHeroesCompare(cmpData)
-                  ? `Your shape vs ${picked.steam_name} across all heroes — no shared hero. The blob reaches further on axes where you lead.`
-                  : `Your shape vs ${picked.steam_name} on ${cmpData.hero_name} — your shared hero. The blob reaches further on axes where you lead.`
-                : 'Your shape across six per-game measures — the blob reaches out on the axes you do most.'}
+              {caption}
+              {!youZero && shownServed < shownAxes.length
+                ? ` Partial — ${shownServed} of ${shownAxes.length} axes shown; the rest fill in as more matches land.`
+                : ''}
             </p>
           )}
 

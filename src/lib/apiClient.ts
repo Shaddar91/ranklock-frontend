@@ -324,20 +324,34 @@ export const api = {
   //(main.rs). The old `hero` key was silently dropped server-side (read as hero_id),
   //so the hero selector never filtered — this is the live-bug fix. compare's cohort
   //baseline is hero_tier_cohort_mv (mode-separated), so `game_mode` is meaningful.
+  //hero_id=0 opts into the ALL-heroes you-scope (null cohort side); absent hero_id
+  //keeps the server default (most-played hero + cohort). last_games/last_days are
+  //mutually exclusive window bounds; both absent = all loaded games.
   getPlayerCompare: (
     id: number,
-    params?: { hero_id?: number; league_offset?: string; target_tier?: number; game_mode?: GameMode },
+    params?: {
+      hero_id?: number;
+      league_offset?: string;
+      target_tier?: number;
+      game_mode?: GameMode;
+      last_games?: number;
+      last_days?: number;
+    },
   ) => apiFetch<CompareResponse>(`/players/${id}/compare`, { query: params }),
   //Rank-up readiness verdict (backlog A1): the player's recent-window averages vs the
   //band-above cohort medians. `target_tier` (bracket 1..5) overrides the auto band-above;
   //200 with matches_in_window:0 means no recent games, 202 while the cohort computes.
   getPlayerReadiness: (id: number, params?: { target_tier?: number; game_mode?: GameMode }) =>
     apiFetch<ReadinessResponse>(`/players/${id}/readiness`, { query: params }),
-  //Compare you to a SPECIFIC other player on a shared hero. `vs` is the other
-  //player's account_id; `hero_id` scopes the overlap. 404 when the two never
-  //played the chosen hero together — the picker empty-states that.
-  getPlayerComparePlayer: (id: number, params: { vs: number; hero_id?: number; game_mode?: GameMode }) =>
-    apiFetch<ComparePlayerResponse>(`/players/${id}/compare-player`, { query: params }),
+  //Compare you to a SPECIFIC other player. `vs` is the other player's account_id.
+  //Hero scope is explicit only: absent/0 hero_id = all heroes for both sides; a
+  //non-zero hero_id scopes both. last_games/last_days window both sides (mutually
+  //exclusive). 404 only when an account has no games at all in the mode — a 0-game
+  //side under a scope comes back 200 with matches:0 and null metrics.
+  getPlayerComparePlayer: (
+    id: number,
+    params: { vs: number; hero_id?: number; game_mode?: GameMode; last_games?: number; last_days?: number },
+  ) => apiFetch<ComparePlayerResponse>(`/players/${id}/compare-player`, { query: params }),
   //Keys MUST be hero_id/window/bracket to match improve.rs::ImproveQuery; the old
   //`hero`/`vs_tier` keys were ignored server-side. improve's cohort
   //(player_cohort_benchmarks) is Normal-only (022), so the UI pins this to Normal —

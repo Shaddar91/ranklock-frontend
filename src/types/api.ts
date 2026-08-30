@@ -328,8 +328,20 @@ export interface CompareYou {
   avg_assists: number | null;
   avg_damage: number | null;
   damage_per_min: number | null;
+  //Date span of the games in scope (ISO-8601); null on a 0-game side.
+  span_from: string | null;
+  span_to: string | null;
 }
 
+//Echo of the window the server applied. kind "all" (n null) = all loaded games;
+//"games"/"days" carry the chosen n.
+export interface CompareWindow {
+  kind: 'all' | 'games' | 'days';
+  n: number | null;
+}
+
+//On hero_id=0 (all heroes) there is no cohort row: every metric is null,
+//sample_size 0, deltas/efficiency ratios null, standing "per_hero_only".
 export interface CompareCohort {
   tier: number;
   tier_name: string;
@@ -370,6 +382,7 @@ export interface CompareResponse {
   hero_name: string;
   league_offset: string;
   clamped: boolean;
+  window: CompareWindow;
   you: CompareYou;
   cohort: CompareCohort;
   deltas: CompareDeltas;
@@ -379,18 +392,20 @@ export interface CompareResponse {
 //GET /players/:id/compare-player?vs=&hero_id=  — you vs a SPECIFIC other player.
 //Mirrors CompareResponse, but the comparison term is another PLAYER ("them") rather
 //than a rank cohort; `them` reuses the per-player CompareYou shape (identical metric
-//set, plus the other player's tier/name for labeling). With no hero_id the server
-//picks the pair's most-played shared hero, else falls back to ALL heroes
-//(hero_id 0, hero_name "All heroes", shared_hero:false) — a 404 on that path means an
-//account has no games at all. An explicit hero_id keeps the old no-overlap 404.
+//set, plus the other player's tier/name for labeling). Hero scope is explicit only:
+//absent/0 hero_id = ALL heroes (hero_name "All heroes", shared_hero:false); a non-zero
+//hero_id scopes BOTH sides to that hero. A 404 means an account has no games at all in
+//the mode; a 0-game side under a window/hero scope is a 200 with null metrics.
 export interface ComparePlayerResponse {
   account_id: number;
   vs_account_id: number;
   hero_id: number;
   hero_name: string;
   shared_hero: boolean;
+  window: CompareWindow;
   you: CompareYou;
   them: CompareYou;
+  deltas: CompareDeltas;
   efficiency: CompareEfficiency;
 }
 

@@ -123,9 +123,9 @@ export function compareRadarVsPlayer(you: CompareSide, them: CompareSide): Radar
   });
 }
 
-//True when a /compare-player response is the ALL-HEROES fallback rather than one
-//shared hero. hero_id 0 is the server sentinel; shared_hero:false backs it up. A
-//pre-fallback backend omits shared_hero and only answered 200 on a real shared hero,
+//True when a /compare-player response is scoped to ALL heroes rather than one
+//explicit hero. hero_id 0 is the server sentinel; shared_hero:false backs it up. A
+//pre-scope backend omits shared_hero and only answered 200 on a real shared hero,
 //so an absent flag reads as shared.
 export function isAllHeroesCompare(res: { hero_id: number; shared_hero?: boolean | null }): boolean {
   return res.hero_id === 0 || res.shared_hero === false;

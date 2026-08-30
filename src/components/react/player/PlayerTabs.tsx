@@ -13,7 +13,9 @@ import { buildAheadMessage, humanize, PlaystyleRadarPanel, SEV } from './Analyti
 import { useCompare, useComparePlayer, usePlayerHeroes, usePlayerHeroesPlayed, usePlayerMatches, usePlayerPerformance, usePlayerReadiness } from './usePlayer';
 import { api, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClient';
 import { rankFromBadge } from '../../../lib/ranks';
-import { isAllHeroesCompare } from '../../../lib/playstyle';
+import { scopeCaption, scopeParams } from '../../../lib/playerScope';
+import { usePlayerScope } from './usePlayerScope';
+import { PlayerScopeControls } from './PlayerScopeControls';
 import { MIN_PERCENTILE_SAMPLE, percentileOrdinal } from '../../../lib/percentile';
 import { count, DASH, duration, fixed, kda, pct, shortDate } from '../../../lib/format';
 import type { HeroLedgerRow, PlayerMatchRow, ReadinessMetric, SearchResult } from '../../../types/api';
@@ -299,18 +301,21 @@ const TARGET_OPTIONS: ReadonlyArray<readonly [string, string]> = [
 
 //---- compare to a specific player (optional, behind the rank selector) ------
 
-//Minimal "compare-to-a-specific-player" picker. A debounced typeahead over the
+//"Compare-to-a-specific-player" picker. A debounced typeahead over the
 //SAME /players/search endpoint the nav SearchBox uses (cache is shared via the
-//`search` query key); on select it fetches /players/:id/compare-player and renders
-//the SAME you-vs-them table + efficiency standing/note as the cohort compare above.
-//The server picks the pair's most-played SHARED hero, else compares ALL heroes — a
-//404 means an account has no games at all and shows an explicit empty state.
+//`search` query key); on select it fetches /players/:id/compare-player under the
+//shared scope controls (Games/Days window + hero select, All heroes default) and
+//renders the SAME you-vs-them table + efficiency standing/note as the cohort
+//compare above. A 404 means an account has no games at all in this mode; a 0-game
+//windowed side comes back 200 and shows matches:0 with dashes in the table.
 function ComparePlayerPicker({ id }: { id: number }) {
   const [raw, setRaw] = useState('');
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<SearchResult | null>(null);
   const listId = useId();
+  const { scope, setKind, setN, setHero } = usePlayerScope();
+  const params = scopeParams(scope);
 
   //debounce the query the API sees (250ms) — mirrors SearchBox.
   useEffect(() => {
@@ -330,7 +335,7 @@ function ComparePlayerPicker({ id }: { id: number }) {
   //that is them rather than the misleading "no players found" no-hits note.
   const selfOnly = (search.data?.length ?? 0) > 0 && results.length === 0 && (search.data ?? []).every((r) => r.account_id === id);
 
-  const cmp = useComparePlayer(id, picked?.account_id);
+  const cmp = useComparePlayer(id, picked?.account_id, params);
   const cmpData = cmp.data ?? null;
 
   function pick(r: SearchResult) {
@@ -442,14 +447,22 @@ function ComparePlayerPicker({ id }: { id: number }) {
         )}
       </div>
 
+      <div style={{ marginTop: 12 }}>
+        <PlayerScopeControls scope={scope} onKind={setKind} onN={setN} onHero={setHero} playerId={id} themId={picked?.account_id} />
+      </div>
+
       {picked && (
         <div style={{ marginTop: 14 }}>
           {cmpData ? (
             <>
               <p className="faint" style={{ fontSize: 11, marginBottom: 10 }}>
-                {isAllHeroesCompare(cmpData)
-                  ? `All heroes — you and ${picked.steam_name} share no single hero.`
-                  : `Shared hero: ${cmpData.hero_name}.`}
+                {scopeCaption({
+                  scope,
+                  heroName: cmpData.hero_id === 0 ? null : cmpData.hero_name,
+                  you: cmpData.you,
+                  themLabel: picked.steam_name,
+                  them: cmpData.them,
+                })}
               </p>
               <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 10 }}>
                 <span className="label-xs">
@@ -496,7 +509,7 @@ function ComparePlayerPicker({ id }: { id: number }) {
           ) : isNotFound(cmp.error) ? (
             <EmptyState
               title="No games to compare"
-              message={`You and ${picked.steam_name} have no overlapping matches in this mode yet — pick another player.`}
+              message={`${picked.steam_name} has no matches in this mode yet — pick another player.`}
               icon="users"
             />
           ) : (
