@@ -60,6 +60,13 @@ export function rankFromBadge(badge: number | null | undefined): { tier: number;
   return { tier: Math.floor(badge / 10), sub: badge % 10 };
 }
 
+//The rank you're chasing: one tier above the badge's tier, clamped to the ladder
+//top. null when the badge is unknown.
+export function chasingTier(badge: number | null | undefined): number | null {
+  const r = rankFromBadge(badge);
+  return r ? Math.min(RANKS.length - 1, r.tier + 1) : null;
+}
+
 //Meta tier-list pill colors (S/A/B/C/D).
 export const TIER_COLOR: Record<string, string> = {
   S: '#fbbf24',

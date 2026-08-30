@@ -27,7 +27,7 @@ import { CatPanel } from './StatLine';
 import { useCompare, useComparePlayer, useImprove, usePlayer, usePlayerEconomyCurve, usePlayerHeroesPlayed } from './usePlayer';
 import { combatRows, compareRadarVsPlayer, economyRows, efficiencyRows, laningRows, selfShapeAxes } from '../../../lib/playstyle';
 import { mergeSignatureCurve, curveMarker } from '../../../lib/signatureCurve';
-import { RANKS, getRank, rankFromBadge } from '../../../lib/ranks';
+import { RANKS, chasingTier, getRank, rankFromBadge } from '../../../lib/ranks';
 import { count, fixed } from '../../../lib/format';
 import type { SearchResult } from '../../../types/api';
 
@@ -283,23 +283,18 @@ type SigView = (typeof SIG_VIEWS)[number]['key'];
 //ONLY the comparison line — `you` is invariant. Colours/caption words come from
 //sigSeriesColor/useSigSeriesWords (both keyed to the active skin) so the legend, the
 //caption, and the lines can never disagree — in any skin.
-function SignatureCurvePanel({ id }: { id: number }) {
+function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number | null }) {
   const sigWords = useSigSeriesWords(); //active skin's series color words
   const [metric, setMetric] = useState<CurveMetric>('souls');
   const [view, setView] = useState<SigView>('gap');
-  //league: undefined = "auto" (default to the rank you're chasing once the profile loads);
-  //null = All ranks (vs_band omitted); number = a specific rank tier 0..11.
+  //league: undefined = "auto" (chaseTier — the rank you're chasing, lifted by the parent
+  //off the profile badge); null = All ranks (vs_band omitted); number = a rank tier 0..11.
   const [band, setBand] = useState<number | null | undefined>(undefined);
   //hero: undefined = all heroes (no hero filter).
   const [hero, setHero] = useState<number | undefined>(undefined);
 
-  const profile = usePlayer(id);
   const heroesPlayed = usePlayerHeroesPlayed(id);
-  const playerTier = rankFromBadge(profile.data?.badge)?.tier ?? null;
-  //Default the comparison to the rank ONE tier up — the rank you're chasing (matches the
-  //panel's "vs the rank you're chasing" framing). Falls back to All ranks if tier unknown.
-  const autoBand = playerTier != null ? Math.min(RANKS.length - 1, playerTier + 1) : null;
-  const effBand = band === undefined ? autoBand : band; //null => All ranks
+  const effBand = band === undefined ? chaseTier : band; //null => All ranks
 
   const curve = usePlayerEconomyCurve(id, { metric, vs_band: effBand ?? undefined, hero });
 
@@ -477,9 +472,15 @@ export function EconomyPanel({ id }: { id: number }) {
   //'one_up' makes the "vs the rank you're chasing" kicker literally true — the
   //cohort is the tier directly above the player, not the player's own tier.
   const cmp = useCompare(id, { league_offset: 'one_up' });
+  //ONE chasing tier, lifted off the profile badge (compare's one_up cohort equals it):
+  //title, explanation line and the curve's LEAGUE default all derive from it.
+  const profile = usePlayer(id);
+  const chaseTier = chasingTier(profile.data?.badge);
+  const chaseName = chaseTier != null ? getRank(chaseTier).name : null;
+  const currentTier = rankFromBadge(profile.data?.badge)?.tier ?? null;
   const souls = cmp.data?.you.souls_per_min ?? null;
   const cohortSouls = cmp.data?.cohort.souls_per_min ?? null;
-  const cohortTier = cmp.data?.cohort.tier_name ?? null;
+  const cohortTier = chaseName ?? cmp.data?.cohort.tier_name ?? null;
   const gap = souls != null && cohortSouls != null ? souls - cohortSouls : null;
 
   return (
@@ -494,6 +495,12 @@ export function EconomyPanel({ id }: { id: number }) {
           <h2 className="h-sec" style={{ fontSize: 17 }}>
             Soul curve vs {cohortTier ?? 'tier'}
           </h2>
+          {currentTier != null && chaseName != null && (
+            <p className="faint" style={{ fontSize: 11, margin: '4px 0 0', lineHeight: 1.4 }}>
+              The rank you&rsquo;re chasing = one league above your current rank ({getRank(currentTier).name} →{' '}
+              {chaseName}). Change LEAGUE to compare against any other.
+            </p>
+          )}
         </div>
         {gap != null && (
           <span className={'chip ' + (gap >= 0 ? 'win' : 'loss')} style={{ fontSize: 12 }}>
@@ -515,7 +522,7 @@ export function EconomyPanel({ id }: { id: number }) {
       {/* THE signature per-minute curve (C3): your FIXED soul curve overlaid on a league
           (+hero) cohort you pick — now served by /players/:id/economy-curve. Replaces the
           old build-ahead empty-state. The per-SOURCE gold split below is still unbuilt. */}
-      <SignatureCurvePanel id={id} />
+      <SignatureCurvePanel id={id} chaseTier={chaseTier} />
       <div className="deco-rule" style={{ margin: '18px 0 14px' }}>
         <span className="dia" />
       </div>
