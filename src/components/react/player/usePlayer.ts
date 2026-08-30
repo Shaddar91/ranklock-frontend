@@ -12,6 +12,8 @@ import { useEffect, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, isUnauthorized, queryKeys } from '../../../lib/apiClient';
 import { useGameMode } from '../../../lib/useGameMode';
+import { useMatchMode } from '../../../lib/useMatchMode';
+import { matchModeQuery } from '../../../lib/matchMode';
 import { readNumericId } from '../../../lib/routeParams';
 
 //Read the player id from the URL on mount. undefined = not read yet (the first
@@ -68,9 +70,11 @@ export const usePlayerHeroes = (id: number) =>
 //NOT a hero list derived client-side from /matches. Powers the Compare dropdown.
 export const usePlayerHeroesPlayed = (id: number) => {
   const { mode } = useGameMode();
+  const { matchMode } = useMatchMode();
+  const mm = matchModeQuery(matchMode);
   return useQuery({
-    queryKey: queryKeys.playerHeroesPlayed(id, mode),
-    queryFn: () => api.getPlayerHeroesPlayed(id, mode),
+    queryKey: queryKeys.playerHeroesPlayed(id, mode, mm),
+    queryFn: () => api.getPlayerHeroesPlayed(id, mode, mm),
     enabled: id > 0,
   });
 };
@@ -103,7 +107,8 @@ export const useCompare = (
   opts?: { hero_id?: number; league_offset?: string; target_tier?: number; last_games?: number; last_days?: number },
 ) => {
   const { mode } = useGameMode();
-  const params = { ...(opts ?? {}), game_mode: mode };
+  const { matchMode } = useMatchMode();
+  const params = { ...(opts ?? {}), game_mode: mode, match_mode: matchModeQuery(matchMode) };
   return useQuery({
     queryKey: queryKeys.playerCompare(id, params),
     queryFn: () => api.getPlayerCompare(id, params),
@@ -125,18 +130,21 @@ export const usePlayerReadiness = (id: number, opts?: { target_tier?: number }) 
 
 //THE signature economy curve (C3): your FIXED per-minute soul curve + a league(+hero)
 //comparison you PICK. `vs_band`/`hero` touch ONLY the comparison; the `you` line is
-//invariant across selections (the whole point of the feature). The player line is
-//UNGATED; the comparison rides RICH_ANALYTICS (null when off/computing/hero-scan-timeout).
-//retry:false so a suppressed 404 / build-ahead empty-states fast. NOT mode-separated — the
-//curve SQL pins Unranked/Normal (the timeline detail tier) regardless of the global toggle,
-//so binding it to the mode would just blank the chart for Brawl viewers.
+//invariant across those selections. The player line is UNGATED; the comparison rides
+//RICH_ANALYTICS (null when off/computing/hero-scan-timeout). retry:false so a suppressed
+//404 / build-ahead empty-states fast. game_mode stays Normal-pinned (the timeline detail
+//tier has no Brawl meaning), but match_mode IS a served axis here (ranked-axis 047): the
+//`you` line follows the Unranked/Ranked selector — lane_player_line is 047-keyed, so an
+//unfiltered read would blend the two tracks. Unranked omits the param → byte-identical.
 export const usePlayerEconomyCurve = (
   id: number,
   opts?: { metric?: string; vs_band?: number; hero?: number },
-) =>
-  useQuery({
-    queryKey: queryKeys.playerEconomyCurve(id, opts ?? {}),
-    queryFn: () => api.getPlayerEconomyCurve(id, opts),
+) => {
+  const { matchMode } = useMatchMode();
+  const params = { ...(opts ?? {}), match_mode: matchModeQuery(matchMode) };
+  return useQuery({
+    queryKey: queryKeys.playerEconomyCurve(id, params),
+    queryFn: () => api.getPlayerEconomyCurve(id, params),
     retry: false,
     //vs_band/hero live in the key, so switching league/hero is a NEW query. keepPreviousData holds
     //the prior curve on screen (isPending stays false) so only the comparison line re-adjusts — no
@@ -145,6 +153,7 @@ export const usePlayerEconomyCurve = (
     placeholderData: keepPreviousData,
     enabled: id > 0,
   });
+};
 
 //Compare-to-a-specific-player: `vs` is the other player's account_id (gates the
 //fetch — undefined/0 means no player picked yet). opts is the shared scope: hero_id
@@ -158,9 +167,11 @@ export const useComparePlayer = (
   opts?: { hero_id?: number; last_games?: number; last_days?: number },
 ) => {
   const { mode } = useGameMode();
+  const { matchMode } = useMatchMode();
+  const mm = matchModeQuery(matchMode);
   return useQuery({
-    queryKey: queryKeys.playerComparePlayer(id, { vs, ...(opts ?? {}), game_mode: mode }),
-    queryFn: () => api.getPlayerComparePlayer(id, { vs: vs!, ...(opts ?? {}), game_mode: mode }),
+    queryKey: queryKeys.playerComparePlayer(id, { vs, ...(opts ?? {}), game_mode: mode, match_mode: mm }),
+    queryFn: () => api.getPlayerComparePlayer(id, { vs: vs!, ...(opts ?? {}), game_mode: mode, match_mode: mm }),
     retry: false,
     enabled: id > 0 && (vs ?? 0) > 0,
   });

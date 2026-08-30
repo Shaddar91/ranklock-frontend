@@ -7,6 +7,9 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, isComputing, queryKeys } from '../../lib/apiClient';
 import { computingMessage } from '../../lib/apiStates';
 import { useGameMode } from '../../lib/useGameMode';
+import { useMatchMode } from '../../lib/useMatchMode';
+import { matchModeQuery } from '../../lib/matchMode';
+import MatchModeToggle from './ui/MatchModeToggle';
 import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, Icon, RankBadge, WinBar } from './ui/index';
 import BucketFilter from './ui/BucketFilter';
@@ -100,6 +103,7 @@ function Podium({ rows }: { rows: RankedEntry[] }) {
 
 function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) {
   const { mode } = useGameMode();
+  const { matchMode } = useMatchMode();
   const [bucket, setBucket] = useState<RankBucket['key']>('all');
   const [page, setPage] = useState(1);
   const [pageInput, setPageInput] = useState('1');
@@ -116,16 +120,19 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
 
   useEffect(() => { setPageInput(String(page)); }, [page]);
 
-  const prevMode = useRef(mode);
+  //Reset to page 1 whenever EITHER ladder axis flips (game_mode or the Unranked/Ranked
+  //match_mode) — a page offset from one ladder is meaningless on the other.
+  const prevLadder = useRef(`${mode}:${matchMode}`);
   useEffect(() => {
-    if (prevMode.current !== mode) {
-      prevMode.current = mode;
+    const ladder = `${mode}:${matchMode}`;
+    if (prevLadder.current !== ladder) {
+      prevLadder.current = ladder;
       const url = new URL(window.location.href);
       url.searchParams.delete('page');
       history.replaceState(null, '', url.toString());
       setPage(1);
     }
-  }, [mode]);
+  }, [mode, matchMode]);
 
   function goToPage(p: number) {
     const url = new URL(window.location.href);
@@ -155,12 +162,16 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
     offset,
     ...(badgeRange ?? {}),
     game_mode: mode,
+    //ranked-axis (047): Ranked reads leaderboard_ranked_mv; Unranked omits the param so the
+    //request + cache key stay byte-identical to the pre-047 leaderboard_mv read.
+    match_mode: matchModeQuery(matchMode),
   };
 
-  //offset + band + mode ride in the queryKey so every page/band/mode caches
-  //separately; keepPreviousData keeps the prior page visible during fetch.
-  //initialData seeds ONLY the SSG default key (Normal, all ranks, page 1).
-  const isDefaultPage = bucket === 'all' && page === 1 && mode === 'Normal';
+  //offset + band + mode + match_mode ride in the queryKey so every page/band/ladder caches
+  //separately; keepPreviousData keeps the prior page visible during fetch. initialData seeds
+  //ONLY the SSG default key (Normal + Unranked, all ranks, page 1).
+  const isDefaultPage =
+    bucket === 'all' && page === 1 && mode === 'Normal' && matchMode === 'Unranked';
 
   const { data, isPending, isError, error, isPlaceholderData } = useQuery({
     queryKey: queryKeys.leaderboard(params),
@@ -254,6 +265,12 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
 
   return (
     <div>
+      <div className="between" style={{ marginBottom: 12, gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <MatchModeToggle ariaLabel="Leaderboard ladder — Unranked or Ranked" />
+        {matchMode === 'Ranked' && (
+          <span className="label-xs">Ranked ladder (Normal only) — a separate competitive track from Unranked.</span>
+        )}
+      </div>
       <div className="between" style={{ marginBottom: 16, gap: 16, flexWrap: 'wrap' }}>
         <SearchBox variant="compact" placeholder="Find a player…" />
         <BucketFilter buckets={LEADERBOARD_BUCKETS} value={bucket} onChange={changeBucket} ariaLabel="Leaderboard by rank" />

@@ -37,6 +37,7 @@ import type {
   LaneCurveResponse,
   LeaderboardEntry,
   MatchDetail,
+  MatchMode,
   MatchRow,
   MatchupEntry,
   MMRHistoryRow,
@@ -254,8 +255,8 @@ export const queryKeys = {
   playerMatches: (id: number, params?: Query) => ['player', id, 'matches', params ?? {}] as const,
   playerMmr: (id: number) => ['player', id, 'mmr'] as const,
   playerHeroes: (id: number, game_mode?: GameMode) => ['player', id, 'heroes', game_mode ?? null] as const,
-  playerHeroesPlayed: (id: number, game_mode?: GameMode) =>
-    ['player', id, 'heroes-played', game_mode ?? null] as const,
+  playerHeroesPlayed: (id: number, game_mode?: GameMode, match_mode?: MatchMode) =>
+    ['player', id, 'heroes-played', game_mode ?? null, match_mode ?? null] as const,
   playerBadgeHistory: (id: number) => ['player', id, 'badge-history'] as const,
   playerPerformance: (id: number, game_mode?: GameMode) =>
     ['player', id, 'performance', game_mode ?? null] as const,
@@ -302,6 +303,8 @@ export const api = {
   //rank-band filter — both implemented backend-side (leaderboard Component 1). Omitting
   //the badge pair returns the full ladder. Returns `{ rows, total }` where `total` reads
   //the `X-Total-Count` response header (null when absent).
+  //ranked-axis (047): `match_mode=Ranked` swaps the read to the leaderboard_ranked_mv sibling
+  //matview (the separate ranked ladder); absent/Unranked keeps the pre-047 leaderboard_mv.
   getLeaderboard: (params?: {
     patch_id?: number;
     limit?: number;
@@ -309,6 +312,7 @@ export const api = {
     min_badge?: number;
     max_badge?: number;
     game_mode?: GameMode;
+    match_mode?: MatchMode;
   }) => apiFetchWithTotal<LeaderboardEntry[]>('/leaderboard', { query: params }),
   //`band` is a single rank tier 0..11 (badge/10, migration 025 hero_band_mv) — the SAME 12-band
   //ladder Lane Lab filters on. Prefer it over the coarse 4-way `bracket`; omit both for all-ranks.
@@ -357,8 +361,8 @@ export const api = {
   getPlayerMmr: (id: number) => apiFetch<MMRHistoryRow[]>(`/players/${id}/mmr`),
   getPlayerHeroes: (id: number, game_mode?: GameMode) =>
     apiFetch<HeroLedgerRow[]>(`/players/${id}/heroes`, { query: { game_mode } }),
-  getPlayerHeroesPlayed: (id: number, game_mode?: GameMode) =>
-    apiFetch<HeroPlayed[]>(`/players/${id}/heroes-played`, { query: { game_mode } }),
+  getPlayerHeroesPlayed: (id: number, game_mode?: GameMode, match_mode?: MatchMode) =>
+    apiFetch<HeroPlayed[]>(`/players/${id}/heroes-played`, { query: { game_mode, match_mode } }),
   getPlayerBadgeHistory: (id: number) => apiFetch<BadgeHistoryRow[]>(`/players/${id}/badge-history`),
   getPlayerPerformance: (id: number, game_mode?: GameMode) =>
     apiFetch<PerformanceResponse>(`/players/${id}/performance`, { query: { game_mode } }),
@@ -376,6 +380,7 @@ export const api = {
       league_offset?: string;
       target_tier?: number;
       game_mode?: GameMode;
+      match_mode?: MatchMode;
       last_games?: number;
       last_days?: number;
     },
@@ -392,7 +397,14 @@ export const api = {
   //side under a scope comes back 200 with matches:0 and null metrics.
   getPlayerComparePlayer: (
     id: number,
-    params: { vs: number; hero_id?: number; game_mode?: GameMode; last_games?: number; last_days?: number },
+    params: {
+      vs: number;
+      hero_id?: number;
+      game_mode?: GameMode;
+      match_mode?: MatchMode;
+      last_games?: number;
+      last_days?: number;
+    },
   ) => apiFetch<ComparePlayerResponse>(`/players/${id}/compare-player`, { query: params }),
   //Keys MUST be hero_id/window/bracket to match improve.rs::ImproveQuery; the old
   //`hero`/`vs_tier` keys were ignored server-side. improve's cohort
@@ -415,7 +427,7 @@ export const api = {
   //comparison degrades to null (never a hard fail) when rich-analytics is off/computing.
   getPlayerEconomyCurve: (
     id: number,
-    params?: { metric?: string; vs_band?: number; hero?: number; match?: number },
+    params?: { metric?: string; vs_band?: number; hero?: number; match?: number; match_mode?: MatchMode },
   ) => apiFetch<PlayerEconomyCurveResponse>(`/players/${id}/economy-curve`, { query: params }),
 
   //patch tracking (C9) — fully built backend, previously zero FE refs (§A.4). The

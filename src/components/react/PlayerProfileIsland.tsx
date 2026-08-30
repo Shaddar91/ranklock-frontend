@@ -17,6 +17,7 @@ import { MIN_PERCENTILE_SAMPLE, topPercentFromFraction } from '../../lib/percent
 import QueryProvider from './QueryProvider';
 import { EmptyState } from './ui/index';
 import PlayerHeader from './player/PlayerHeader';
+import MatchModeToggle from './ui/MatchModeToggle';
 import { CategorizedSection, CoachingPanel, EconomyPanel, PlaystyleRadarPanel } from './player/AnalyticsPanels';
 import { ComparePanel, HeroLedgerPanel, PerformancePanel, ReadinessCard, RecentMatchesPanel } from './player/PlayerTabs';
 import { usePlayer, usePlayerHeroes, usePlayerId, usePlayerMatches, usePlayerPerformance, useViewer } from './player/usePlayer';
@@ -80,6 +81,15 @@ function PlayerProfileInner() {
           </button>
         ))}
       </div>
+
+      {/* ranked-axis (047): shown only on tabs whose panels the API serves per match_mode
+          (playstyle, signature curve, compare); identity/coaching/matches stay Unranked. */}
+      {(tab === 'Overview' || tab === 'Compare') && (
+        <div className="between" style={{ margin: '-6px 0 16px', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <MatchModeToggle ariaLabel="Competitive track — Unranked or Ranked" />
+          <span className="label-xs">Applies to playstyle, the signature curve &amp; compare.</span>
+        </div>
+      )}
 
       {tab === 'Overview' && (
         <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>

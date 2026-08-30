@@ -33,6 +33,12 @@ export type HeroBracket = 'low' | 'mid' | 'high' | 'top';
  */
 export type GameMode = 'Normal' | 'StreetBrawl';
 
+//ranked-axis (migration 047): the competitive match_mode is a served dimension alongside
+//game_mode. `Unranked` is the default (byte-identical to pre-047 numbers); `Ranked` opts
+//into the separate ranked competitive track. Non-competitive match_modes (CoopBot/
+//PrivateLobby/…) are excluded from stats and are NEVER offered as a value.
+export type MatchMode = 'Unranked' | 'Ranked';
+
 //---- leaderboard / search ---------------------------------------------------
 
 //GET /leaderboard?patch_id=&limit=&cursor=   (struct LeaderboardEntry)
