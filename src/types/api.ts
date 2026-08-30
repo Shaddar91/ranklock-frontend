@@ -219,7 +219,7 @@ export interface PlayerProfileResponse {
   recent_form: RecentForm;
 }
 
-//GET /players/:id/matches?limit=&cursor=&hero_id=   (struct PlayerMatchRow)
+//GET /players/:id/matches?limit=&cursor=&hero_id=&game_mode=&match_mode=   (struct PlayerMatchRow)
 export interface PlayerMatchRow {
   match_id: number;
   start_time: string;
@@ -231,6 +231,8 @@ export interface PlayerMatchRow {
   assists: number;
   net_worth: number;
   duration_s: number | null;
+  game_mode: string | null;
+  match_mode: string | null;
 }
 
 //GET /players/:id/mmr   (struct MMRHistoryRow)

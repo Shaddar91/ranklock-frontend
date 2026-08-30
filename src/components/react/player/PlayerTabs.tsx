@@ -18,64 +18,120 @@ import { usePlayerScope } from './usePlayerScope';
 import { PlayerScopeControls } from './PlayerScopeControls';
 import { MIN_PERCENTILE_SAMPLE, percentileOrdinal } from '../../../lib/percentile';
 import { count, DASH, duration, fixed, kda, pct, shortDate } from '../../../lib/format';
+import { gameModeLabel, isRanked, slugToGameMode, type MatchesModeSlug } from '../../../lib/matchesMode';
 import type { HeroLedgerRow, PlayerMatchRow, ReadinessMetric, SearchResult } from '../../../types/api';
 
 //---- recent matches ---------------------------------------------------------
 
+function MatchModeChips({ game_mode, match_mode }: { game_mode: string | null; match_mode: string | null }) {
+  const gLabel = gameModeLabel(game_mode);
+  const ranked = isRanked(match_mode);
+  if (!gLabel && !ranked) return null;
+  const tooltip = [game_mode, match_mode].filter(Boolean).join(' · ') || undefined;
+  return (
+    <div style={{ display: 'flex', gap: 4 }}>
+      {gLabel && <Chip title={tooltip}>{gLabel}</Chip>}
+      {ranked && <Chip title={tooltip}>Ranked</Chip>}
+    </div>
+  );
+}
+
 export function RecentMatchesPanel({ id }: { id: number }) {
-  const { data, isPending, isError } = usePlayerMatches(id, 25);
+  const [slug, setSlugState] = useState<MatchesModeSlug>(() => {
+    if (typeof window === 'undefined') return 'normal';
+    const v = new URLSearchParams(window.location.search).get('matches');
+    if (v === 'brawl' || v === 'all') return v;
+    return 'normal';
+  });
+
+  function setSlug(next: MatchesModeSlug) {
+    const url = new URL(window.location.href);
+    if (next === 'normal') url.searchParams.delete('matches');
+    else url.searchParams.set('matches', next);
+    window.history.replaceState(window.history.state, '', url.toString());
+    setSlugState(next);
+  }
+
+  const game_mode = slugToGameMode(slug);
+  const { data, isPending, isError } = usePlayerMatches(id, 25, game_mode);
   //borrow icon_url from the hero ledger (PlayerMatchRow carries no icon).
   const heroes = usePlayerHeroes(id).data ?? [];
   const iconOf = new Map(heroes.map((h) => [h.hero_id, h.icon_url] as const));
   const rows = data ?? [];
 
-  if (isPending) return <p className="muted">Loading matches…</p>;
-  if (isError || rows.length === 0) {
+  const toggle = (
+    <div className="brkfilter gm-toggle" role="group" aria-label="Match mode" style={{ marginBottom: 12 }}>
+      {(['normal', 'brawl', 'all'] as const).map((s) => (
+        <button
+          key={s}
+          type="button"
+          className={'minitog' + (slug === s ? ' on' : '')}
+          aria-pressed={slug === s}
+          onClick={() => setSlug(s)}
+        >
+          {s === 'normal' ? 'Normal' : s === 'brawl' ? 'Brawl' : 'All'}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (isPending) return <div>{toggle}<p className="muted">Loading matches…</p></div>;
+  if (isError) {
     return <EmptyState title="No matches yet" message="Recent matches appear here once this player's match history is ingested." icon="swords" />;
   }
+
   return (
-    <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-      <table className="dt">
-        <thead>
-          <tr>
-            <th><span className="th-static">Result</span></th>
-            <th><span className="th-static">Hero</span></th>
-            <th className="num"><span className="th-static">K / D / A</span></th>
-            <th className="num"><span className="th-static">KDA</span></th>
-            <th className="num"><span className="th-static">Net worth</span></th>
-            <th className="num"><span className="th-static">Duration</span></th>
-            <th className="num"><span className="th-static">When</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((m: PlayerMatchRow) => (
-            <tr key={m.match_id} style={{ boxShadow: `inset 3px 0 0 ${m.winner ? 'var(--win)' : 'var(--loss)'}` }}>
-              <td>
-                <a href={`/matches/${m.match_id}/`} style={{ textDecoration: 'none' }}>
-                  <Chip tone={m.winner ? 'win' : 'loss'}>{m.winner ? 'Victory' : 'Defeat'}</Chip>
-                </a>
-              </td>
-              <td>
-                <div className="flex" style={{ alignItems: 'center', gap: 10 }}>
-                  <GameIcon kind="hero" name={m.hero_name} src={iconOf.get(m.hero_id)} size={30} />
-                  <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
-                    {m.hero_name}
-                  </span>
-                </div>
-              </td>
-              <td className="num tnum">
-                {m.kills} / {m.deaths} / {m.assists}
-              </td>
-              <td className="num tnum">{fixed(kda(m.kills, m.deaths, m.assists))}</td>
-              <td className="num gold-c tnum" style={{ fontWeight: 600 }}>
-                {count(m.net_worth)}
-              </td>
-              <td className="num tnum">{duration(m.duration_s)}</td>
-              <td className="num faint">{shortDate(m.start_time) || DASH}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div>
+      {toggle}
+      {rows.length === 0 ? (
+        <EmptyState title="No matches" message="No matches for this filter." icon="swords" />
+      ) : (
+        <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
+          <table className="dt">
+            <thead>
+              <tr>
+                <th><span className="th-static">Result</span></th>
+                <th><span className="th-static">Hero</span></th>
+                <th><span className="th-static">Mode</span></th>
+                <th className="num"><span className="th-static">K / D / A</span></th>
+                <th className="num"><span className="th-static">KDA</span></th>
+                <th className="num"><span className="th-static">Net worth</span></th>
+                <th className="num"><span className="th-static">Duration</span></th>
+                <th className="num"><span className="th-static">When</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((m: PlayerMatchRow) => (
+                <tr key={m.match_id} style={{ boxShadow: `inset 3px 0 0 ${m.winner ? 'var(--win)' : 'var(--loss)'}` }}>
+                  <td>
+                    <a href={`/matches/${m.match_id}/`} style={{ textDecoration: 'none' }}>
+                      <Chip tone={m.winner ? 'win' : 'loss'}>{m.winner ? 'Victory' : 'Defeat'}</Chip>
+                    </a>
+                  </td>
+                  <td>
+                    <div className="flex" style={{ alignItems: 'center', gap: 10 }}>
+                      <GameIcon kind="hero" name={m.hero_name} src={iconOf.get(m.hero_id)} size={30} />
+                      <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
+                        {m.hero_name}
+                      </span>
+                    </div>
+                  </td>
+                  <td><MatchModeChips game_mode={m.game_mode} match_mode={m.match_mode} /></td>
+                  <td className="num tnum">
+                    {m.kills} / {m.deaths} / {m.assists}
+                  </td>
+                  <td className="num tnum">{fixed(kda(m.kills, m.deaths, m.assists))}</td>
+                  <td className="num gold-c tnum" style={{ fontWeight: 600 }}>
+                    {count(m.net_worth)}
+                  </td>
+                  <td className="num tnum">{duration(m.duration_s)}</td>
+                  <td className="num faint">{shortDate(m.start_time) || DASH}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

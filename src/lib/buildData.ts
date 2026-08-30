@@ -55,7 +55,12 @@ export async function buildFetchNonEmpty<T>(
   ms: number = DEFAULT_TIMEOUT_MS,
 ): Promise<T[]> {
   const rows = await buildFetch(promise, [] as T[], ms);
-  if (rows.length === 0 && process.env.ALLOW_EMPTY_STATS_BUILD !== '1') {
+  //`process.env` is unavailable in the Cloudflare Worker prerender sandbox; fall
+  //back to `import.meta.env` (Vite's server-context env, populated from .env).
+  const allowEmpty =
+    process.env.ALLOW_EMPTY_STATS_BUILD === '1' ||
+    import.meta.env?.ALLOW_EMPTY_STATS_BUILD === '1';
+  if (rows.length === 0 && !allowEmpty) {
     throw new Error(
       `[bake-empty guard] ${label} baked 0 rows — the origin was cold, slow (>${ms}ms) or erroring at build time. ` +
         `Refusing to ship empty prerendered pages over the last-good deploy. ` +

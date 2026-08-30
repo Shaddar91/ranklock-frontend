@@ -50,8 +50,12 @@ export function useViewer() {
 export const usePlayer = (id: number) =>
   useQuery({ queryKey: queryKeys.player(id), queryFn: () => api.getPlayer(id), enabled: id > 0 });
 
-export const usePlayerMatches = (id: number, limit = 20) =>
-  useQuery({ queryKey: queryKeys.playerMatches(id, { limit }), queryFn: () => api.getPlayerMatches(id, { limit }), enabled: id > 0 });
+export const usePlayerMatches = (id: number, limit = 20, game_mode?: string) =>
+  useQuery({
+    queryKey: queryKeys.playerMatches(id, { limit, game_mode }),
+    queryFn: () => api.getPlayerMatches(id, { limit, game_mode }),
+    enabled: id > 0,
+  });
 
 //The hero ledger feeds the IDENTITY header (the avatar hero-art + the "Top heroes"
 //tiles, PlayerHeader) as well as the Heroes tab, so it is mode-agnostic too — a

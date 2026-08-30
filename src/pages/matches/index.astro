@@ -3,13 +3,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
 import { breadcrumbJsonLd } from '../../lib/seo';
-import { duration, shortDate } from '../../lib/format';
-import { rankFromBadge, subLabel } from '../../lib/ranks';
-import type { MatchRow, Badge } from '../../types/api';
+import MatchesFilterIsland from '../../components/react/MatchesFilterIsland';
+import type { MatchRow } from '../../types/api';
 
-//SSG recent matches (requirements §B.6) — a static, JS-free table baked at build
-//(SEO without JS). Per-match detail (/matches/:id) is the CSR island (C5); these
-//rows just link to it. Build-ahead: empty-state on a cold API.
+//SSG recent matches (requirements §B.6) — static rows baked at build time.
+//The React island handles the Normal/Brawl/All toggle with client-side filtering.
+//Per-match detail (/matches/:id) is the CSR island (C5). Build-ahead: empty-state on a cold API.
 const matches = await buildFetch(api.getRecentMatches(), [] as MatchRow[]);
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
@@ -17,14 +16,6 @@ const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
   { name: 'Matches', path: '/matches' },
 ]);
-
-function badgeLabel(b: Badge): string {
-  const rk = rankFromBadge(b);
-  return rk ? subLabel(rk.tier, rk.sub) : '—';
-}
-function winnerLabel(team: number | null): string {
-  return team === 0 ? 'Amber' : team === 1 ? 'Sapphire' : '—';
-}
 ---
 
 <BaseLayout
@@ -41,44 +32,14 @@ function winnerLabel(team: number | null): string {
       scoreboard and economy breakdown.
     </p>
 
-    <div class="panel" style="padding:0; overflow:hidden; margin-top:20px;">
+    <div style="margin-top:20px;">
       {
         matches.length === 0 ? (
-          <p class="muted" style="padding:24px;">No data was available when this page was built.</p>
-        ) : (
-          <div class="dt-scroll">
-          <table class="dt">
-            <thead>
-              <tr>
-                <th><span class="th-static">Match</span></th>
-                <th><span class="th-static">Mode</span></th>
-                <th><span class="th-static">Amber rank</span></th>
-                <th><span class="th-static">Sapphire rank</span></th>
-                <th class="num"><span class="th-static">Duration</span></th>
-                <th><span class="th-static">Result</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {matches.map((m) => (
-                <tr>
-                  <td>
-                    <a href={`/matches/${m.match_id}/`} class="display" style="font-weight:600;">
-                      #{m.match_id}
-                    </a>
-                    <div class="mono" style="font-size:11px; color:var(--muted);">{shortDate(m.start_time)}</div>
-                  </td>
-                  <td><span class="muted">{m.game_mode ?? m.match_mode ?? '—'}</span></td>
-                  <td><span class="amber-c">{badgeLabel(m.average_badge_team0)}</span></td>
-                  <td><span class="sap-c">{badgeLabel(m.average_badge_team1)}</span></td>
-                  <td class="num"><span class="tnum">{duration(m.duration_s)}</span></td>
-                  <td>
-                    <span class={'chip' + (m.winning_team === 0 ? ' gold' : '')}>{winnerLabel(m.winning_team)} win</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div class="panel" style="padding:24px;">
+            <p class="muted">No data was available when this page was built.</p>
           </div>
+        ) : (
+          <MatchesFilterIsland matches={matches} client:load />
         )
       }
     </div>
