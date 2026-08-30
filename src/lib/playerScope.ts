@@ -62,12 +62,13 @@ export function scopeCaption(args: {
   scope: PlayerScope;
   heroName?: string | null;
   you: ScopeSide;
+  youLabel?: string;
   themLabel?: string;
   them?: ScopeSide;
 }): string {
-  const { scope, heroName, you, themLabel, them } = args;
+  const { scope, heroName, you, youLabel, themLabel, them } = args;
   const hero = scope.hero_id === 0 ? 'All heroes' : `on ${heroName ?? 'selected hero'}`;
-  const sides = [sideScopeText('You', you, scope)];
+  const sides = [sideScopeText(youLabel ?? 'You', you, scope)];
   if (themLabel != null && them != null) sides.push(sideScopeText(themLabel, them, scope));
   return `${hero} · ${windowLabel(scope)} · ${sides.join(' · ')}`;
 }

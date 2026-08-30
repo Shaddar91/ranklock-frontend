@@ -13,7 +13,8 @@ import { buildAheadMessage, humanize, PlaystyleRadarPanel, SEV } from './Analyti
 import { useCompare, useComparePlayer, usePlayerHeroes, usePlayerHeroesPlayed, usePlayerMatches, usePlayerPerformance, usePlayerReadiness } from './usePlayer';
 import { api, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClient';
 import { rankFromBadge } from '../../../lib/ranks';
-import { scopeCaption, scopeParams } from '../../../lib/playerScope';
+import { scopeCaption, scopeParams, type PlayerScope } from '../../../lib/playerScope';
+import { compareShareUrl } from '../../../lib/compareShare';
 import { usePlayerScope } from './usePlayerScope';
 import { PlayerScopeControls } from './PlayerScopeControls';
 import { MIN_PERCENTILE_SAMPLE, percentileOrdinal } from '../../../lib/percentile';
@@ -357,6 +358,133 @@ const TARGET_OPTIONS: ReadonlyArray<readonly [string, string]> = [
 
 //---- compare to a specific player (optional, behind the rank selector) ------
 
+//Copies the canonical /compare/{me}/{vs} permalink; the label flip is the same
+//copied affordance the donate copy button uses.
+function ShareCompareButton({ me, vs }: { me: number; vs: number }) {
+  const [copied, setCopied] = useState(false);
+  function share() {
+    try {
+      void navigator.clipboard?.writeText(compareShareUrl(me, vs));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      //clipboard unavailable (insecure context) — nothing to copy into.
+    }
+  }
+  return (
+    <button type="button" className="minitog" onClick={share} aria-label="Copy the link to this comparison">
+      {copied ? 'Copied' : 'Share'}
+    </button>
+  );
+}
+
+//The loaded you-vs-them comparison body. Shared by the picker below and the
+///compare/{a}/{b} shell island (CompareIsland), which preloads the pair and
+//relabels the "You" side with the first player's name.
+export function PairCompareView({
+  id,
+  vsId,
+  vsName,
+  scope,
+  youLabel = 'You',
+  notFoundMessage,
+}: {
+  id: number;
+  vsId: number;
+  vsName: string;
+  scope: PlayerScope;
+  youLabel?: string;
+  notFoundMessage?: string;
+}) {
+  const cmp = useComparePlayer(id, vsId, scopeParams(scope));
+  const cmpData = cmp.data ?? null;
+
+  if (!cmpData) {
+    if (cmp.isPending) return <p className="muted">Loading comparison with {vsName}…</p>;
+    if (isNotFound(cmp.error)) {
+      return (
+        <EmptyState
+          title="No games to compare"
+          message={notFoundMessage ?? `${vsName} has no matches in this mode yet — pick another player.`}
+          icon="users"
+        />
+      );
+    }
+    return <EmptyState title="Comparison not served yet" message={buildAheadMessage(cmp.error)} icon="users" />;
+  }
+
+  //D2 precision — both sides come from the ONE /compare-player response.
+  const rows: [string, number | null, number | null, (n: number) => string][] = [
+    ['Net worth', cmpData.you.avg_net_worth, cmpData.them.avg_net_worth, count],
+    ['Souls / min', cmpData.you.souls_per_min, cmpData.them.souls_per_min, count],
+    ['Last hits / min', cmpData.you.last_hits_per_min, cmpData.them.last_hits_per_min, (n) => fixed(n, 1)],
+    ['Avg denies', cmpData.you.avg_denies, cmpData.them.avg_denies, (n) => fixed(n, 1)],
+    ['Avg kills', cmpData.you.avg_kills, cmpData.them.avg_kills, (n) => fixed(n, 1)],
+    ['Avg deaths', cmpData.you.avg_deaths, cmpData.them.avg_deaths, (n) => fixed(n, 1)],
+    ['Avg assists', cmpData.you.avg_assists, cmpData.them.avg_assists, (n) => fixed(n, 1)],
+    ['Damage dealt', cmpData.you.avg_damage, cmpData.them.avg_damage, count],
+    ['Damage / min', cmpData.you.damage_per_min, cmpData.them.damage_per_min, count],
+  ];
+  const youText = youLabel === 'You' ? 'you' : youLabel;
+
+  return (
+    <>
+      <p className="faint" style={{ fontSize: 11, marginBottom: 10 }}>
+        {scopeCaption({
+          scope,
+          heroName: cmpData.hero_id === 0 ? null : cmpData.hero_name,
+          you: cmpData.you,
+          youLabel,
+          themLabel: vsName,
+          them: cmpData.them,
+        })}
+      </p>
+      <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 10 }}>
+        <span className="label-xs">
+          {cmpData.hero_name} · {youText} ({cmpData.you.tier_name}) vs {vsName} ({cmpData.them.tier_name})
+        </span>
+        <div className="flex" style={{ alignItems: 'center', gap: 8 }}>
+          <ShareCompareButton me={id} vs={vsId} />
+          <Chip tone={cmpData.efficiency.standing === 'ahead' ? 'win' : cmpData.efficiency.standing === 'behind' ? 'loss' : 'neutral'}>
+            {cmpData.efficiency.standing}
+          </Chip>
+        </div>
+      </div>
+      <table className="dt">
+        <thead>
+          <tr>
+            <th>
+              <span className="th-static">Metric</span>
+            </th>
+            <th className="num">
+              <span className="th-static">{youLabel}</span>
+            </th>
+            <th className="num">
+              <span className="th-static">{vsName}</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([label, you, them, fmt]) => (
+            <tr key={label}>
+              <td>{label}</td>
+              <td className="num tnum cyan-c" style={{ fontWeight: 600 }}>
+                {you != null ? fmt(you) : DASH}
+              </td>
+              <td className="num tnum muted">{them != null ? fmt(them) : DASH}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {cmpData.efficiency.note && (
+        <p className="muted" style={{ fontSize: 12.5, marginTop: 12, lineHeight: 1.5 }}>
+          {cmpData.efficiency.note}
+        </p>
+      )}
+    </>
+  );
+}
+
 //"Compare-to-a-specific-player" picker. A debounced typeahead over the
 //SAME /players/search endpoint the nav SearchBox uses (cache is shared via the
 //`search` query key); on select it fetches /players/:id/compare-player under the
@@ -371,7 +499,6 @@ function ComparePlayerPicker({ id }: { id: number }) {
   const [picked, setPicked] = useState<SearchResult | null>(null);
   const listId = useId();
   const { scope, setKind, setN, setHero } = usePlayerScope();
-  const params = scopeParams(scope);
 
   //debounce the query the API sees (250ms) — mirrors SearchBox.
   useEffect(() => {
@@ -391,30 +518,12 @@ function ComparePlayerPicker({ id }: { id: number }) {
   //that is them rather than the misleading "no players found" no-hits note.
   const selfOnly = (search.data?.length ?? 0) > 0 && results.length === 0 && (search.data ?? []).every((r) => r.account_id === id);
 
-  const cmp = useComparePlayer(id, picked?.account_id, params);
-  const cmpData = cmp.data ?? null;
-
   function pick(r: SearchResult) {
     setPicked(r);
     setRaw('');
     setQ('');
     setOpen(false);
   }
-
-  //D2 precision — both sides come from the ONE /compare-player response.
-  const rows: [string, number | null, number | null, (n: number) => string][] = cmpData
-    ? [
-        ['Net worth', cmpData.you.avg_net_worth, cmpData.them.avg_net_worth, count],
-        ['Souls / min', cmpData.you.souls_per_min, cmpData.them.souls_per_min, count],
-        ['Last hits / min', cmpData.you.last_hits_per_min, cmpData.them.last_hits_per_min, (n) => fixed(n, 1)],
-        ['Avg denies', cmpData.you.avg_denies, cmpData.them.avg_denies, (n) => fixed(n, 1)],
-        ['Avg kills', cmpData.you.avg_kills, cmpData.them.avg_kills, (n) => fixed(n, 1)],
-        ['Avg deaths', cmpData.you.avg_deaths, cmpData.them.avg_deaths, (n) => fixed(n, 1)],
-        ['Avg assists', cmpData.you.avg_assists, cmpData.them.avg_assists, (n) => fixed(n, 1)],
-        ['Damage dealt', cmpData.you.avg_damage, cmpData.them.avg_damage, count],
-        ['Damage / min', cmpData.you.damage_per_min, cmpData.them.damage_per_min, count],
-      ]
-    : [];
 
   return (
     <div style={{ marginTop: 18 }}>
@@ -509,72 +618,7 @@ function ComparePlayerPicker({ id }: { id: number }) {
 
       {picked && (
         <div style={{ marginTop: 14 }}>
-          {cmpData ? (
-            <>
-              <p className="faint" style={{ fontSize: 11, marginBottom: 10 }}>
-                {scopeCaption({
-                  scope,
-                  heroName: cmpData.hero_id === 0 ? null : cmpData.hero_name,
-                  you: cmpData.you,
-                  themLabel: picked.steam_name,
-                  them: cmpData.them,
-                })}
-              </p>
-              <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 10 }}>
-                <span className="label-xs">
-                  {cmpData.hero_name} · you ({cmpData.you.tier_name}) vs {picked.steam_name} ({cmpData.them.tier_name})
-                </span>
-                <Chip tone={cmpData.efficiency.standing === 'ahead' ? 'win' : cmpData.efficiency.standing === 'behind' ? 'loss' : 'neutral'}>
-                  {cmpData.efficiency.standing}
-                </Chip>
-              </div>
-              <table className="dt">
-                <thead>
-                  <tr>
-                    <th>
-                      <span className="th-static">Metric</span>
-                    </th>
-                    <th className="num">
-                      <span className="th-static">You</span>
-                    </th>
-                    <th className="num">
-                      <span className="th-static">{picked.steam_name}</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map(([label, you, them, fmt]) => (
-                    <tr key={label}>
-                      <td>{label}</td>
-                      <td className="num tnum cyan-c" style={{ fontWeight: 600 }}>
-                        {you != null ? fmt(you) : DASH}
-                      </td>
-                      <td className="num tnum muted">{them != null ? fmt(them) : DASH}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {cmpData.efficiency.note && (
-                <p className="muted" style={{ fontSize: 12.5, marginTop: 12, lineHeight: 1.5 }}>
-                  {cmpData.efficiency.note}
-                </p>
-              )}
-            </>
-          ) : cmp.isPending ? (
-            <p className="muted">Loading comparison with {picked.steam_name}…</p>
-          ) : isNotFound(cmp.error) ? (
-            <EmptyState
-              title="No games to compare"
-              message={`${picked.steam_name} has no matches in this mode yet — pick another player.`}
-              icon="users"
-            />
-          ) : (
-            <EmptyState
-              title="Comparison not served yet"
-              message={buildAheadMessage(cmp.error)}
-              icon="users"
-            />
-          )}
+          <PairCompareView id={id} vsId={picked.account_id} vsName={picked.steam_name} scope={scope} />
         </div>
       )}
     </div>

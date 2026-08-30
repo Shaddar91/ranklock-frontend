@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import CompareIsland from '../../../components/react/CompareIsland';
+
+//Shareable compare permalink SHELL: one Worker route serves every pair
+//(`prerender = false`, no per-pair SSG); noindex — an OG share surface, not an
+//SEO page; og:image is the per-pair card on og.ranklock.app.
+export const prerender = false;
+const { a, b } = Astro.params;
+---
+
+<BaseLayout title="Player compare — RankLock" noindex={true} image={`https://og.ranklock.app/og/compare/${a}/${b}`}>
+  <main class="wrap">
+    <CompareIsland client:only="react" />
+  </main>
+</BaseLayout>
