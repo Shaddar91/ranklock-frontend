@@ -15,7 +15,7 @@ overreacting to it.
 
 ## What a matchup number is
 
-Take [Lash's matchup table](/heroes/31). His worst common pairing is Seven:
+Take [Lash's matchup table](/heroes/31/). His worst common pairing is Seven:
 Lash wins 45.0% of the 430,906 recorded matches where the two heroes met. His
 best listed pairing is Bebop, at 54.0% across 465,892 matches. Each row is one
 measured quantity: of the matches in the data window where Lash faced that
@@ -39,11 +39,11 @@ site is public, and the pairings your pick fears are listed on yours.
 ## Where the table comes from
 
 The matchup table is computed from raw match records, the same scoreboards you
-can open on the [matches page](/matches). The site counts every match in the
+can open on the [matches page](/matches/). The site counts every match in the
 window where the two heroes appeared on opposite teams, then divides wins by
 games. Nothing is modeled or estimated; a row in the table is a count and a
 division, and [what RankLock computes and what it does
-not](/blog/computed-vs-raw-match-data) walks through that pipeline in full.
+not](/blog/computed-vs-raw-match-data/) walks through that pipeline in full.
 
 That origin explains both the table's strength and its limits. The strength is
 sample size: 430,906 matches behind the Seven row and 465,892 behind the Bebop
@@ -66,7 +66,7 @@ once the window fills in.
 Nine points of win-rate separate Lash's two extreme rows, and the only thing
 that changed is which hero stands across the lane.
 
-The same reading applies to item tables. On [Lash's page](/heroes/31), Magic
+The same reading applies to item tables. On [Lash's page](/heroes/31/), Magic
 Carpet posts a 64.0% win-rate across the 636,736 games where he bought it, and
 Mystic Reverb posts 60.7% across about 1.8 million. Rate and count, same
 discipline.
@@ -81,9 +81,9 @@ discipline.
   for in the lane; it rarely justifies abandoning the pick.
 - **Pair the table with your band.** Matchups shift with bracket the same way
   win-rates do, so read them alongside the [rank band
-  guide](/blog/rank-bands-hero-choice) rather than off the all-ranks page.
+  guide](/blog/rank-bands-hero-choice/) rather than off the all-ranks page.
 - **Re-check after patches.** A balance pass rewrites matchup math, and the
-  tables move with the data window. The [patch tracker](/patches) tells you
+  tables move with the data window. The [patch tracker](/patches/) tells you
   when to look again.
 - **Check the item table on the same page.** Matchups tell you who beats whom;
   the item table beside them tells you what the winners were buying, with the

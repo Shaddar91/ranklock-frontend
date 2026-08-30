@@ -62,7 +62,7 @@ function winnerLabel(team: number | null): string {
               {matches.map((m) => (
                 <tr>
                   <td>
-                    <a href={`/matches/${m.match_id}`} class="display" style="font-weight:600;">
+                    <a href={`/matches/${m.match_id}/`} class="display" style="font-weight:600;">
                       #{m.match_id}
                     </a>
                     <div class="mono" style="font-size:11px; color:var(--muted);">{shortDate(m.start_time)}</div>

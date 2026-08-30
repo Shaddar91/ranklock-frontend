@@ -18,7 +18,7 @@ const jsonLd = [
     { name: 'Home', path: '/' },
     { name: 'Guides', path: '/blog' },
   ]),
-  { '@type': 'Blog', name: `${SITE_NAME} Guides`, url: new URL('/blog', origin).toString() },
+  { '@type': 'Blog', name: `${SITE_NAME} Guides`, url: new URL('/blog/', origin).toString() },
 ];
 ---
 
@@ -42,7 +42,7 @@ const jsonLd = [
         <div class="blog-grid" style="margin-top:20px;">
           {posts.map((post, i) => (
             <Fragment>
-              <a class="panel blogcard" href={`/blog/${post.id}`}>
+              <a class="panel blogcard" href={`/blog/${post.id}/`}>
                 {post.data.heroImage && (
                   <img class="bc-hero" src={post.data.heroImage} alt="" loading="lazy" decoding="async" />
                 )}

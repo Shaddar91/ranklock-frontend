@@ -28,7 +28,7 @@ export const GET: APIRoute = async (context) => {
       description: post.data.description,
       pubDate: post.data.pubDate,
       //relative → resolved to https://ranklock.app/blog/<slug> against `site`.
-      link: `/blog/${post.id}`,
+      link: `/blog/${post.id}/`,
       author: post.data.author,
       categories: post.data.tags,
     })),

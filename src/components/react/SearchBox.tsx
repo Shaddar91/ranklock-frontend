@@ -44,11 +44,11 @@ function SearchInner({ variant = 'large', placeholder }: SearchBoxProps) {
   function onSubmit() {
     const term = raw.trim();
     if (/^\d{3,}$/.test(term)) {
-      goTo(`/players/${term}`);
+      goTo(`/players/${term}/`);
       return;
     }
     const first = results[0];
-    if (first) goTo(`/players/${first.account_id}`);
+    if (first) goTo(`/players/${first.account_id}/`);
   }
 
   const compact = variant === 'compact';
@@ -91,7 +91,7 @@ function SearchInner({ variant = 'large', placeholder }: SearchBoxProps) {
             results.map((r) => {
               const rk = rankFromBadge(r.badge);
               return (
-                <a key={r.account_id} className="search-row" href={`/players/${r.account_id}`} role="option" aria-selected="false">
+                <a key={r.account_id} className="search-row" href={`/players/${r.account_id}/`} role="option" aria-selected="false">
                   {rk && <RankBadge tier={rk.tier} size={24} glow={false} />}
                   <span className="display" style={{ flex: 1, fontWeight: 600, color: 'var(--text)' }}>
                     {r.steam_name}

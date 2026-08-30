@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { SITE_ORIGIN } from '../lib/seo';
-import { TRANSLATED_LOCALES, hreflangAlternates } from '../lib/i18n';
+import { TRANSLATED_LOCALES, hreflangAlternates, pagePath } from '../lib/i18n';
 import type { HeroSummary } from '../types/api';
 
 //Curated SEO sitemap (C7, requirements §7/§8.2). Lists ONLY the indexable English
@@ -54,7 +54,7 @@ const escapeXml = (s: string): string =>
   s.replace(/[<>&'"]/g, (c) => `&${{ '<': 'lt', '>': 'gt', '&': 'amp', "'": 'apos', '"': 'quot' }[c]};`);
 
 function urlBlock(entry: RouteEntry): string {
-  const loc = escapeXml(`${SITE_ORIGIN}${entry.path}`);
+  const loc = escapeXml(`${SITE_ORIGIN}${pagePath(entry.path)}`);
   const lines = [`    <loc>${loc}</loc>`];
   if (entry.lastmod) lines.push(`    <lastmod>${entry.lastmod}</lastmod>`);
   if (entry.changefreq) lines.push(`    <changefreq>${entry.changefreq}</changefreq>`);

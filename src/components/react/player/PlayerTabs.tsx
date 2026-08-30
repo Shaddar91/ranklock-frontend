@@ -51,7 +51,7 @@ export function RecentMatchesPanel({ id }: { id: number }) {
           {rows.map((m: PlayerMatchRow) => (
             <tr key={m.match_id} style={{ boxShadow: `inset 3px 0 0 ${m.winner ? 'var(--win)' : 'var(--loss)'}` }}>
               <td>
-                <a href={`/matches/${m.match_id}`} style={{ textDecoration: 'none' }}>
+                <a href={`/matches/${m.match_id}/`} style={{ textDecoration: 'none' }}>
                   <Chip tone={m.winner ? 'win' : 'loss'}>{m.winner ? 'Victory' : 'Defeat'}</Chip>
                 </a>
               </td>

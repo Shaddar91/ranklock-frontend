@@ -85,19 +85,34 @@ export function stripLocalePrefix(pathname: string): string {
 }
 
 /**
+ * Canonical site-relative form of a page path: leading + trailing slash, the
+ * form the static host serves without a redirect. File routes (a dot in the
+ * last segment) and any ?query/#hash are left untouched.
+ */
+export function pagePath(path: string): string {
+  const m = /^([^?#]*)(.*)$/.exec(path) ?? [path, path, ''];
+  let p = m[1] ?? '';
+  const suffix = m[2] ?? '';
+  if (!p.startsWith('/')) p = `/${p}`;
+  const last = p.slice(p.lastIndexOf('/') + 1);
+  if (p.endsWith('/') || last.includes('.')) return `${p}${suffix}`;
+  return `${p}/${suffix}`;
+}
+
+/**
  * Build the locale-prefixed path for a logical (de-localized) path. English (the
- * default) has no prefix. localePath('en', '/heroes') → '/heroes';
- * localePath('ru', '/heroes') → '/ru/heroes'; localePath('ru', '/') → '/ru/'.
+ * default) has no prefix. localePath('en', '/heroes') → '/heroes/';
+ * localePath('ru', '/heroes') → '/ru/heroes/'; localePath('ru', '/') → '/ru/'.
  */
 export function localePath(code: string, logicalPath: string): string {
-  const clean = logicalPath.startsWith('/') ? logicalPath : `/${logicalPath}`;
+  const clean = pagePath(logicalPath);
   if (code === DEFAULT_LOCALE) return clean;
-  return clean === '/' ? `/${code}/` : `/${code}${clean}`;
+  return `/${code}${clean}`;
 }
 
 export interface Alternate {
   hreflang: string;
-  //Locale-prefixed, site-relative path (e.g. '/heroes' or '/ru/heroes').
+  //Locale-prefixed, site-relative path (e.g. '/heroes/' or '/ru/heroes/').
   path: string;
 }
 

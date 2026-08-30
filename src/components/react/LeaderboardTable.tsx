@@ -63,7 +63,7 @@ function Podium({ rows }: { rows: RankedEntry[] }) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <a
-                  href={`/players/${p.account_id}`}
+                  href={`/players/${p.account_id}/`}
                   className="display"
                   style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none' }}
                 >
@@ -172,7 +172,7 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
         render: (r) => {
           const rk = rankFromBadge(r.badge);
           return (
-            <a className="flex" href={`/players/${r.account_id}`} style={{ alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+            <a className="flex" href={`/players/${r.account_id}/`} style={{ alignItems: 'center', gap: 10, textDecoration: 'none' }}>
               {rk && <RankBadge tier={rk.tier} size={26} glow={false} />}
               <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
                 {r.steam_name}

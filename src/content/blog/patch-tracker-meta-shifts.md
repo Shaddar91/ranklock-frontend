@@ -6,7 +6,7 @@ author: RankLock team
 tags: [meta, patch-notes]
 ---
 
-RankLock's [patch tracker](/patches) has logged 123 patches. Each one turns a
+RankLock's [patch tracker](/patches/) has logged 123 patches. Each one turns a
 few of last month's certainties into guesses, and the tracker is how you catch
 up without reading forums for three hours. This guide gives you a reading order
 for patch week, plus two habits that keep you from trusting numbers that have
@@ -14,7 +14,7 @@ already gone stale.
 
 ## What a patch page contains
 
-Every entry on the [patch list](/patches) opens a page for that patch. The page
+Every entry on the [patch list](/patches/) opens a page for that patch. The page
 shows which heroes gained pick rate after the patch landed, which ones lost it,
 and how win-rates moved, broken out by bracket.
 
@@ -27,7 +27,7 @@ ranks you read.
 The raw material behind every delta is the same match-record layer the rest of
 the site is built on, so a patch page is a computed view over counted games,
 not an editorial opinion. [What RankLock computes and what it does
-not](/blog/computed-vs-raw-match-data) explains that pipeline.
+not](/blog/computed-vs-raw-match-data/) explains that pipeline.
 
 The per-bracket split matters for the same reason it matters on the heroes
 grid. A buff can lift a hero at low rank and leave high rank untouched, and the
@@ -50,9 +50,9 @@ commonly face, you can bank the quiet week and keep practicing.
   tells you what your lobbies will feel like next week. The all-brackets move
   tells you what the average lobby feels, and you do not play there.
 - **Cross-check on the hero page.** The per-bracket win-rates on each hero page
-  update with the data window, so a [page like Lash's](/heroes/31) confirms
+  update with the data window, so a [page like Lash's](/heroes/31/) confirms
   whether a patch-page delta held once games accumulated.
-- **Check your items too.** The [items page](/items) tracks win-rate and
+- **Check your items too.** The [items page](/items/) tracks win-rate and
   average buy timing per item, and a cost or scaling tweak moves those numbers
   before anyone writes a word about it.
 - **Give the list a few days.** Early deltas mix the patch's real effect with
@@ -68,7 +68,7 @@ patch describes a game that no longer exists, and the numbers quoted in this
 article will age the same way, which is why each one carries its patch date.
 
 That rule applies to us as much as to anyone. When you read one of our older
-posts, check its date against the [patch list](/patches) before you act on a
+posts, check its date against the [patch list](/patches/) before you act on a
 number in it; the live chips embedded in the guides update with the data, but a
 quoted stat in prose is frozen on the day it was written.
 
@@ -91,8 +91,8 @@ The final days before a patch are the worst time to invest in a borderline
 pick, because the numbers behind it may be about to change.
 
 Make the tracker's output concrete before you invest. When the patch page flags
-a gainer, confirm the move at your band on the [heroes grid](/heroes) using the
-routine from our [rank bands guide](/blog/rank-bands-hero-choice), then decide
+a gainer, confirm the move at your band on the [heroes grid](/heroes/) using the
+routine from our [rank bands guide](/blog/rank-bands-hero-choice/), then decide
 whether the pick earns practice hours. A delta you cannot confirm at your own
 bracket is someone else's meta.
 

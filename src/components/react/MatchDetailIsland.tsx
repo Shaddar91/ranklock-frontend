@@ -35,7 +35,7 @@ function TeamTable({ players }: { players: MatchPlayerDetail[] }) {
         {players.map((p, i) => (
           <tr key={p.account_id}>
             <td>
-              <a className="flex" href={`/players/${p.account_id}`} style={{ alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+              <a className="flex" href={`/players/${p.account_id}/`} style={{ alignItems: 'center', gap: 10, textDecoration: 'none' }}>
                 <GameIcon kind="hero" name={p.hero_name} src={p.icon_url} size={34} />
                 <div style={{ minWidth: 0 }}>
                   <div className="display" style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

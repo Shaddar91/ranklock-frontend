@@ -110,7 +110,7 @@ function ItemsTableInner({ initialRows, heroes }: { initialRows: ItemStat[]; her
           <Tooltip asChild content={<ItemTooltipContent it={it} />}>
             <a
               className="flex"
-              href={`/items/${it.item_id}`}
+              href={`/items/${it.item_id}/`}
               style={{ alignItems: 'center', gap: 10, textDecoration: 'none', cursor: 'pointer' }}
             >
               <GameIcon kind="item" name={itemLabel(it)} src={it.icon_url} size={28} />

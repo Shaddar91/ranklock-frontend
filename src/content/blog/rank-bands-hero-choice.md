@@ -10,7 +10,7 @@ liveHeroes: [Lash, Haze]
 Open any hero page on RankLock and the first number you meet is the all-ranks
 win-rate, one figure measured across every bracket in the data window. It is
 the number most players check first, and for pick decisions it is the one most
-likely to mislead you. The [heroes grid](/heroes) carries a rank-band filter,
+likely to mislead you. The [heroes grid](/heroes/) carries a rank-band filter,
 and that filter changes real answers. Two heroes from the current window show
 how large the difference can get.
 
@@ -20,11 +20,11 @@ Deadlock's ranked ladder runs twelve named tiers, from Obscurus through
 Initiate, Seeker, Alchemist, Arcanist, Ritualist, Emissary, Archon, Oracle,
 Phantom, and Ascendant up to Eternus, with subranks I through VI in each. The
 highest badge on the ladder, Eternus VI, is badge 116. When you set the band
-filter on the [heroes grid](/heroes), you narrow every win-rate on the page to
+filter on the [heroes grid](/heroes/), you narrow every win-rate on the page to
 games played by people ranked like you.
 
 The same ladder shows up wherever the site brackets its numbers. The [items
-page](/items) groups its stats into bands that read Initiate through Alchemist
+page](/items/) groups its stats into bands that read Initiate through Alchemist
 at the low end and Ascendant through Eternus at the top, so a bracketed number
 anywhere on the site always refers back to these same twelve tiers.
 
@@ -40,7 +40,7 @@ lobby gets stronger.
 
 ## Lash is the same pick everywhere
 
-[Lash's bracket breakdown](/heroes/31) reads 50.8% in the low bracket, 51.1% in
+[Lash's bracket breakdown](/heroes/31/) reads 50.8% in the low bracket, 51.1% in
 the mid bracket, 50.6% in the high bracket, and 50.3% in the top bracket, as of
 the 2026-08-22 patch. Four measurements, all inside a single point.
 
@@ -56,13 +56,13 @@ swing across brackets, set them next to Lash's and you can see how much
 movement a bracket-dependent hero actually shows.
 
 Bracket-proof is not matchup-proof, though. The same page shows [Lash winning
-45.0% into Seven across 430,906 matches](/heroes/31), his worst common pairing.
+45.0% into Seven across 430,906 matches](/heroes/31/), his worst common pairing.
 We cover how to read lines like that in the [matchups
-guide](/blog/hero-matchups-101).
+guide](/blog/hero-matchups-101/).
 
 ## Haze is a different hero at high rank
 
-[Haze](/heroes/13) carries a strong header line: 52.6% wins across 2,081,083
+[Haze](/heroes/13/) carries a strong header line: 52.6% wins across 2,081,083
 picks, a 2.80 KDA, and 44,793 average souls over the full window. Over two
 million picks in a single window means the sample behind her numbers is
 enormous, and the all-ranks figure still rewards her players.
@@ -92,7 +92,7 @@ Before your next session, run this sequence on the grid:
   win-rate. The unfiltered column answers a question about the average lobby,
   and you do not play in the average lobby.
 - **Read pick rate next to win rate.** [Seven currently leads the grid at 55.9%
-  on a 3.7% pick rate, ahead of Victor at 55.5% and Graves at 55.1%.](/heroes)
+  on a 3.7% pick rate, ahead of Victor at 55.5% and Graves at 55.1%.](/heroes/)
   A high rate on a small pick share marks a specialist choice; a 52.6% rate on
   more than two million picks marks a staple. Both can be correct picks, and
   they are different kinds of correct.

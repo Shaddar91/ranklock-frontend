@@ -7,7 +7,7 @@ tags: [fundamentals, economy, lane-lab]
 liveItems: [Improved Spirit]
 ---
 
-Players argue about the laning phase from feel. [Lane Lab](/lane-lab) measures
+Players argue about the laning phase from feel. [Lane Lab](/lane-lab/) measures
 it instead: a median souls curve built from millions of matches, a farm curve
 beside it, and a table that attaches a win probability to each 9-minute souls
 threshold. This guide walks through what the page shows and how to use it
@@ -15,7 +15,7 @@ before your next session. All figures are as of the 2026-08-22 patch.
 
 ## The median curve
 
-[Lane Lab](/lane-lab) tracks cumulative souls over the course of a game. The
+[Lane Lab](/lane-lab/) tracks cumulative souls over the course of a game. The
 median player holds about 6,060 souls at 9:00, about 12,000 at 15:00, and about
 30,800 at 30:00. The farm curve runs beside it: 6.7 last-hits at 3:00, 14.0 at
 6:00, and 20.8 at 9:00.
@@ -32,7 +32,7 @@ are where the slope of that line gets decided.
 
 ## What 9-minute souls are worth
 
-Across roughly 20 million games, [Lane Lab](/lane-lab) attaches a win
+Across roughly 20 million games, [Lane Lab](/lane-lab/) attaches a win
 probability to each 9-minute souls threshold:
 
 - **5,000 souls or more** — 47.0% wins. This is the baseline row, the floor the
@@ -87,11 +87,11 @@ six numbers and the honesty to check them after a loss.
 The farm curve says the median laner reaches 20.8 last-hits by 9:00, and
 last-hits are the income stream you control most directly. The habits behind
 that number, wave management, denies, and camp timing, are covered in our
-[souls economy basics](/blog/souls-economy-basics) guide, so we will not repeat
+[souls economy basics](/blog/souls-economy-basics/) guide, so we will not repeat
 them here.
 
 Item timings give the economy a second clock. The average [Improved
-Spirit](/items) purchase happens at about 14:00, 843 seconds into the game,
+Spirit](/items/) purchase happens at about 14:00, 843 seconds into the game,
 across 7.9 million recorded matches. Set that next to the 15:00 median of
 12,000 souls and the picture is consistent: by the quarter-hour mark the median
 player has both the souls and the first big purchase that converts them into

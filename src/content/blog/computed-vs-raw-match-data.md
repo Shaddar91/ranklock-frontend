@@ -14,7 +14,7 @@ trust a number and how to check it.
 
 ## The raw layer
 
-Start at the [matches page](/matches). Every match row exposes both teams' full
+Start at the [matches page](/matches/). Every match row exposes both teams' full
 scoreboards: kills, deaths, and assists, net worth, last hits, denies, and
 damage. Nothing on that page is derived. It is the record of what happened in
 that game, and it is the layer every other page on the site is built from.
@@ -36,18 +36,18 @@ inspection.
 
 The computed layer aggregates raw records across the window:
 
-- The [heroes grid](/heroes) turns match records into per-hero tiers from S to
+- The [heroes grid](/heroes/) turns match records into per-hero tiers from S to
   D, with win-rate, pick rate, and KDA per hero, filterable by mode and rank
   band. As of the 2026-08-22 patch, [Seven leads it at 55.9% on a 3.7% pick
-  rate](/heroes).
+  rate](/heroes/).
 - Hero pages go deeper: per-bracket win-rates, matchup tables with match
   counts, and per-hero item win-rates like [Lash's Magic Carpet at 64.0% across
-  636,736 games](/heroes/31).
-- [Lane Lab](/lane-lab) computes the median souls curve, about 6,060 souls at
+  636,736 games](/heroes/31/).
+- [Lane Lab](/lane-lab/) computes the median souls curve, about 6,060 souls at
   9:00 for the median player, and attaches a win probability to each 9-minute
   souls threshold.
-- The [items page](/items) computes average buy timing, such as [Improved
-  Spirit at about 14:00 across 7.9 million matches](/items).
+- The [items page](/items/) computes average buy timing, such as [Improved
+  Spirit at about 14:00 across 7.9 million matches](/items/).
 
 Each of these is the same operation at a different grain: count what happened
 across many raw records, then divide. A tier is an ordering of those quotients,
@@ -79,7 +79,7 @@ which window, at which ranks.
 
 Two absences are deliberate. RankLock publishes no MMR anywhere. The items page
 labels its own stats "by badge tier, not MMR", and the
-[leaderboard](/leaderboard) orders players by badge rather than any hidden
+[leaderboard](/leaderboard/) orders players by badge rather than any hidden
 rating. There is also no rank distribution, so the site cannot back any claim
 about what share of players sits in a given tier.
 

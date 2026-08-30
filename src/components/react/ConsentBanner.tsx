@@ -61,7 +61,7 @@ export default function ConsentBanner() {
         <p className="consent-body">
           RankLock uses first-party analytics (self-hosted Matomo) to see how the site is
           used. Nothing tracks until you choose.{' '}
-          <a className="consent-link" href="/privacy">
+          <a className="consent-link" href="/privacy/">
             Privacy &amp; cookies →
           </a>
         </p>

@@ -8,18 +8,18 @@ import SearchBox from './react/SearchBox';
 import ThemeSwitcher from './react/ThemeSwitcher';
 
 const links = [
-  { href: '/heroes', label: 'Heroes' },
-  { href: '/items', label: 'Items' },
-  { href: '/patches', label: 'Patches' },
-  { href: '/build-lab', label: 'Build Lab' },
-  { href: '/lane-lab', label: 'Lane Lab' },
-  { href: '/leaderboard', label: 'Leaderboard' },
-  { href: '/matches', label: 'Matches' },
-  { href: '/blog', label: 'Guides' },
-  { href: '/support', label: 'Support' },
+  { href: '/heroes/', label: 'Heroes' },
+  { href: '/items/', label: 'Items' },
+  { href: '/patches/', label: 'Patches' },
+  { href: '/build-lab/', label: 'Build Lab' },
+  { href: '/lane-lab/', label: 'Lane Lab' },
+  { href: '/leaderboard/', label: 'Leaderboard' },
+  { href: '/matches/', label: 'Matches' },
+  { href: '/blog/', label: 'Guides' },
+  { href: '/support/', label: 'Support' },
 ];
 const path = Astro.url.pathname;
-const isActive = (href: string) => path === href || path === href + '/' || path.startsWith(href + '/');
+const isActive = (href: string) => path === href || path + '/' === href || path.startsWith(href);
 ---
 
 <header class="nav">

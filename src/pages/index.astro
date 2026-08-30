@@ -32,12 +32,12 @@ const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const jsonLd = [websiteJsonLd(origin), orgJsonLd(origin)];
 
 const entries = [
-  { href: '/heroes', icon: 'flame', title: 'Hero meta', blurb: 'Win-rates, tiers and pick rates by rank bracket.' },
-  { href: '/items', icon: 'coins', title: 'Item win-rates', blurb: 'What wins at your rank — labelled by badge tier, not MMR.' },
-  { href: '/leaderboard', icon: 'trophy', title: 'Leaderboard', blurb: 'The global ranked ladder, top to bottom.' },
-  { href: '/matches', icon: 'swords', title: 'Recent matches', blurb: 'Fresh games with team economy and scoreboards.' },
-  { href: '/blog', icon: 'book', title: 'Guides', blurb: 'Strategy with the current patch\'s win-rates embedded.' },
-  { href: '/support', icon: 'spark', title: 'Support', blurb: 'Back the project.' },
+  { href: '/heroes/', icon: 'flame', title: 'Hero meta', blurb: 'Win-rates, tiers and pick rates by rank bracket.' },
+  { href: '/items/', icon: 'coins', title: 'Item win-rates', blurb: 'What wins at your rank — labelled by badge tier, not MMR.' },
+  { href: '/leaderboard/', icon: 'trophy', title: 'Leaderboard', blurb: 'The global ranked ladder, top to bottom.' },
+  { href: '/matches/', icon: 'swords', title: 'Recent matches', blurb: 'Fresh games with team economy and scoreboards.' },
+  { href: '/blog/', icon: 'book', title: 'Guides', blurb: 'Strategy with the current patch\'s win-rates embedded.' },
+  { href: '/support/', icon: 'spark', title: 'Support', blurb: 'Back the project.' },
 ] as const;
 ---
 
@@ -64,8 +64,8 @@ const entries = [
           <SearchBox variant="large" client:load />
         </div>
         <div class="flex" style="gap:12px; flex-wrap:wrap;">
-          <a class="btn btn-primary" href="/heroes"><Glyph name="flame" size={16} /> Browse the meta</a>
-          <a class="btn btn-ghost" href="/blog">Read the guides <Glyph name="arrowR" size={15} /></a>
+          <a class="btn btn-primary" href="/heroes/"><Glyph name="flame" size={16} /> Browse the meta</a>
+          <a class="btn btn-ghost" href="/blog/">Read the guides <Glyph name="arrowR" size={15} /></a>
         </div>
         {
           /* Home hero sponsor slot below the search + CTAs (ads plan C5, home_banner),
@@ -82,7 +82,7 @@ const entries = [
         <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
         <div class="between" style="margin-bottom:14px;">
           <span class="label-xs">Live meta snapshot</span>
-          <a href="/heroes" style="font-size:12px;">All heroes →</a>
+          <a href="/heroes/" style="font-size:12px;">All heroes →</a>
         </div>
         {
           topHeroes.length === 0 ? (
@@ -99,7 +99,7 @@ const entries = [
                     </span>
                   )}
                   <a
-                    href={`/heroes/${h.hero_id}`}
+                    href={`/heroes/${h.hero_id}/`}
                     class="display"
                     style="flex:1; font-weight:600; color:var(--text); text-decoration:none;"
                   >
@@ -142,7 +142,7 @@ const entries = [
             <Glyph name="flame" size={17} color="var(--cyan-bright)" />
             <span class="h-sec" style="font-size:17px;">Top meta heroes</span>
           </span>
-          <a href="/heroes" style="font-size:13px;">All heroes →</a>
+          <a href="/heroes/" style="font-size:13px;">All heroes →</a>
         </div>
         {
           topHeroes.length === 0 ? (
@@ -160,7 +160,7 @@ const entries = [
                 {topHeroes.map((h) => (
                   <tr>
                     <td>
-                      <a href={`/heroes/${h.hero_id}`} class="flex" style="align-items:center; gap:10px; text-decoration:none;">
+                      <a href={`/heroes/${h.hero_id}/`} class="flex" style="align-items:center; gap:10px; text-decoration:none;">
                         {h.icon_url && (
                           <span class="hav" style="width:30px; height:30px;">
                             <img src={resolveAsset(h.icon_url)} alt={h.hero_name} loading="lazy" />
@@ -185,7 +185,7 @@ const entries = [
             <Glyph name="trophy" size={16} color="var(--gold)" />
             <span class="h-sec" style="font-size:17px;">Leaderboard</span>
           </span>
-          <a href="/leaderboard" style="font-size:13px;">Full →</a>
+          <a href="/leaderboard/" style="font-size:13px;">Full →</a>
         </div>
         {
           leaders.length === 0 ? (
@@ -194,7 +194,7 @@ const entries = [
             <div style="display:flex; flex-direction:column; gap:2px;">
               {leaders.map((p, i) => (
                 <a
-                  href={`/players/${p.account_id}`}
+                  href={`/players/${p.account_id}/`}
                   class="flex"
                   style="align-items:center; gap:11px; padding:8px 0; border-bottom:1px solid var(--border-soft); text-decoration:none;"
                 >
@@ -217,7 +217,7 @@ const entries = [
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px;">
         {
           posts.map((post) => (
-            <a class="tile entrycard" href={`/blog/${post.id}`}>
+            <a class="tile entrycard" href={`/blog/${post.id}/`}>
               <div class="display" style="font-weight:700; font-size:15px; color:var(--text); margin-bottom:6px;">
                 {post.data.title}
               </div>

@@ -27,7 +27,7 @@ function MoverRow({ s }: { s: PatchHeroStat }) {
   return (
     <div className="flex" style={{ alignItems: 'center', gap: 10, padding: '7px 0', borderTop: '1px solid var(--border)' }}>
       <GameIcon kind="hero" name={s.hero_name} src={s.icon_url} size={28} />
-      <a href={`/heroes/${s.hero_id}`} className="display" style={{ flex: 1, minWidth: 0, fontWeight: 600, color: 'var(--text)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <a href={`/heroes/${s.hero_id}/`} className="display" style={{ flex: 1, minWidth: 0, fontWeight: 600, color: 'var(--text)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {s.hero_name}
       </a>
       <span className="tnum faint" style={{ fontSize: 12 }}>{pct(s.win_rate == null ? null : s.win_rate * 100)}</span>
@@ -108,7 +108,7 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
         header: 'Hero',
         sortValue: (h) => h.hero_name,
         render: (h) => (
-          <a className="flex" href={`/heroes/${h.hero_id}`} style={{ alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <a className="flex" href={`/heroes/${h.hero_id}/`} style={{ alignItems: 'center', gap: 10, textDecoration: 'none' }}>
             <GameIcon kind="hero" name={h.hero_name} src={h.icon_url} size={28} />
             <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>{h.hero_name}</span>
           </a>

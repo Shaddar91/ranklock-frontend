@@ -8,6 +8,8 @@
 //per-route layer and leaves the locale/hreflang seam to C7.
 //============================================================================
 
+import { pagePath } from './i18n';
+
 export const SITE_NAME = 'RankLock';
 //Canonical production origin. `Astro.site` (astro.config.mjs) is the source of
 //truth for absolute URLs; this mirrors it for use outside an Astro context.
@@ -54,7 +56,7 @@ export function websiteJsonLd(origin: string): Json {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${origin}/players/{search_term_string}`,
+        urlTemplate: `${origin}/players/{search_term_string}/`,
       },
       'query-input': 'required name=search_term_string',
     },
@@ -69,7 +71,7 @@ export function breadcrumbJsonLd(origin: string, crumbs: { name: string; path: s
       '@type': 'ListItem',
       position: i + 1,
       name: c.name,
-      item: new URL(c.path, origin).toString(),
+      item: new URL(pagePath(c.path), origin).toString(),
     })),
   };
 }

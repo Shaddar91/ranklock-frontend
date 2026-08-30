@@ -39,7 +39,7 @@ function HeroCell({ hero }: { hero: HeroSummary }) {
   return (
     <a
       className="flex"
-      href={`/heroes/${hero.hero_id}`}
+      href={`/heroes/${hero.hero_id}/`}
       style={{ alignItems: 'center', gap: 10, textDecoration: 'none', opacity: rosterOnly ? 0.55 : 1 }}
     >
       <GameIcon kind="hero" name={hero.hero_name} src={hero.icon_url} size={30} />

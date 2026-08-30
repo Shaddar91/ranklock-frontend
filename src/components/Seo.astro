@@ -11,6 +11,7 @@ import {
   stripLocalePrefix,
   localePath,
   hreflangAlternates,
+  pagePath,
 } from '../lib/i18n';
 
 interface Props {
@@ -57,7 +58,7 @@ const logicalPath = stripLocalePrefix(canonicalPath ?? Astro.url.pathname);
 //serves duplicate English content until translated, so consolidate to en.
 const selfCanonical = isDefaultLocale(localeDef.code) || localeDef.translated;
 const canonicalTarget = selfCanonical ? localePath(localeDef.code, logicalPath) : logicalPath;
-const canonical = new URL(canonicalTarget, site).toString();
+const canonical = new URL(pagePath(canonicalTarget), site).toString();
 
 //Interim policy: noindex untranslated non-default locales (they serve English).
 //`follow` lets crawlers reach the canonical en pages; the explicit per-page

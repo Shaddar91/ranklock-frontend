@@ -79,7 +79,7 @@ function MatchInspectorInner() {
                         />
                       </td>
                       <td>
-                        <a className="flex" href={`/players/${p.account_id}`} style={{ alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+                        <a className="flex" href={`/players/${p.account_id}/`} style={{ alignItems: 'center', gap: 10, textDecoration: 'none' }}>
                           <GameIcon kind="hero" name={p.hero_name} src={p.icon_url} size={28} />
                           <span className="display" style={{ fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
                             {p.steam_name}

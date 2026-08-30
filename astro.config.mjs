@@ -28,6 +28,7 @@ import cloudflare from '@astrojs/cloudflare';
 export default defineConfig({
   site: 'https://ranklock.app',
   output: 'static',
+  trailingSlash: 'always',
   //Static-first hybrid: output stays 'static' (the SSG SEO surface is untouched);
   //the adapter is here solely so the `prerender = false` dynamic shells
   //(players/:id, matches/:id) can run on a Cloudflare Worker. No KV/R2/D1 — just
