@@ -1,8 +1,7 @@
 //Percentile display for the /performance 0–1 fraction contract; null/NaN render the em-dash.
 import { DASH } from './format';
 
-//Below this many matches a bracket row is noise, not signal — flag or hide it.
-export const MIN_PERCENTILE_SAMPLE = 10;
+export const MIN_PERCENTILE_SAMPLE = 10; //fewer matches than this is noise, not signal
 
 export function percentileOrdinal(fraction: number | null | undefined): string {
   if (fraction == null || Number.isNaN(fraction)) return DASH;
