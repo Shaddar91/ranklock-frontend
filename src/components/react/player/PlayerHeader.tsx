@@ -2,7 +2,8 @@
 //re-wired to the live /players/:id + /players/:id/heroes data. Everything shown
 //is served: rank emblem from `badge`, win-rate/matches from the profile, form
 //dots from the recent matches' winner flags, top heroes from the hero ledger.
-//The "Top N%" chip only renders when /performance served a percentile, and the
+//The "Top N%" chip only renders when /performance served a percentile over a
+//big-enough sample (MIN_PERCENTILE_SAMPLE), and the
 //"My Stats" chip only when the signed-in viewer owns this account (auth branch).
 import { Chip, GameIcon, FormDots, Icon, RankBadge } from '../ui/index';
 import { resolveAsset } from '../../../lib/assets';

@@ -13,6 +13,7 @@ import { buildAheadMessage, humanize, PlaystyleRadarPanel, SEV } from './Analyti
 import { useCompare, useComparePlayer, usePlayerHeroes, usePlayerHeroesPlayed, usePlayerMatches, usePlayerPerformance, usePlayerReadiness } from './usePlayer';
 import { api, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClient';
 import { rankFromBadge } from '../../../lib/ranks';
+import { MIN_PERCENTILE_SAMPLE, percentileOrdinal } from '../../../lib/percentile';
 import { count, DASH, duration, fixed, kda, pct, shortDate } from '../../../lib/format';
 import type { HeroLedgerRow, PlayerMatchRow, ReadinessMetric, SearchResult } from '../../../types/api';
 
@@ -115,14 +116,6 @@ export function HeroLedgerPanel({ id }: { id: number }) {
 
 //---- performance percentiles ------------------------------------------------
 
-const ordinal = (n: number | null | undefined): string => {
-  if (n == null || Number.isNaN(n)) return DASH;
-  const v = Math.round(n);
-  const s = ['th', 'st', 'nd', 'rd'];
-  const m = v % 100;
-  return `${v}${s[(m - 20) % 10] ?? s[m] ?? s[0]}`;
-};
-
 export function PerformancePanel({ id }: { id: number }) {
   const { data, isPending, isError, error } = usePlayerPerformance(id);
 
@@ -133,9 +126,12 @@ export function PerformancePanel({ id }: { id: number }) {
         <div className="kicker" style={{ marginBottom: 4 }}>
           Percentiles
         </div>
-        <h2 className="h-sec" style={{ fontSize: 17, marginBottom: 12 }}>
+        <h2 className="h-sec" style={{ fontSize: 17, marginBottom: 4 }}>
           Where you rank within each bracket
         </h2>
+        <p className="faint" style={{ fontSize: 12, marginBottom: 12 }}>
+          Percentile among players of the same bracket — higher is better; 87th = better than 87% of them.
+        </p>
         {isPending ? (
           <p className="muted">Loading percentiles…</p>
         ) : isError || !data || data.brackets.length === 0 ? (
@@ -153,19 +149,30 @@ export function PerformancePanel({ id }: { id: number }) {
                 </tr>
               </thead>
               <tbody>
-                {data.brackets.map((b) => (
-                  <tr key={b.bracket}>
-                    <td>
-                      <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
-                        {b.bracket_label}
-                      </span>
-                    </td>
-                    <td className="num tnum">{ordinal(b.kda_pct)}</td>
-                    <td className="num tnum">{ordinal(b.net_worth_pct)}</td>
-                    <td className="num tnum">{ordinal(b.win_rate_pct)}</td>
-                    <td className="num tnum faint">{count(b.sample_matches)}</td>
-                  </tr>
-                ))}
+                {data.brackets.map((b) => {
+                  const thin = b.sample_matches < MIN_PERCENTILE_SAMPLE;
+                  return (
+                    <tr key={b.bracket} style={thin ? { opacity: 0.55 } : undefined}>
+                      <td>
+                        <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
+                          {b.bracket_label}
+                        </span>
+                      </td>
+                      {thin ? (
+                        <td className="num faint" colSpan={3}>
+                          n too small
+                        </td>
+                      ) : (
+                        <>
+                          <td className="num tnum">{percentileOrdinal(b.kda_pct)}</td>
+                          <td className="num tnum">{percentileOrdinal(b.net_worth_pct)}</td>
+                          <td className="num tnum">{percentileOrdinal(b.win_rate_pct)}</td>
+                        </>
+                      )}
+                      <td className="num tnum faint">{count(b.sample_matches)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             {data.fresh_as_of && (

@@ -13,6 +13,7 @@
 //============================================================================
 import { useState } from 'react';
 import { isNotFound } from '../../lib/apiClient';
+import { MIN_PERCENTILE_SAMPLE, topPercentFromFraction } from '../../lib/percentile';
 import QueryProvider from './QueryProvider';
 import { EmptyState } from './ui/index';
 import PlayerHeader from './player/PlayerHeader';
@@ -25,11 +26,13 @@ const TABS = ['Overview', 'Matches', 'Performance', 'Heroes', 'Coaching', 'Compa
 type Tab = (typeof TABS)[number];
 
 //"Top N%" from the most-sampled bracket's served win-rate percentile (null when
-///performance hasn't served). win_rate_pct is "better than X%", so top = 100 − X.
+///performance hasn't served or the best bracket's sample is too thin to rank).
+//win_rate_pct is a 0–1 "better than X" fraction, so top = 100 − pct×100.
 function topPercentile(perf: PerformanceResponse | undefined): number | null {
   if (!perf || perf.brackets.length === 0) return null;
   const best = perf.brackets.reduce((a, b) => (b.sample_matches > a.sample_matches ? b : a));
-  return best.win_rate_pct == null ? null : Math.max(1, Math.round(100 - best.win_rate_pct));
+  if (best.win_rate_pct == null || best.sample_matches < MIN_PERCENTILE_SAMPLE) return null;
+  return topPercentFromFraction(best.win_rate_pct);
 }
 
 function PlayerProfileInner() {
