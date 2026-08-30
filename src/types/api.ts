@@ -137,6 +137,12 @@ export interface ItemStat {
   win_rate?: number | null;
   matches?: number | null;
   picks?: number | null;
+  wins?: number | null;
+  losses?: number | null;
+  players?: number | null;
+  //Purchase timing from the upstream row: seconds into the match, and % of match length.
+  avg_buy_time_s?: number | null;
+  avg_buy_time_relative?: number | null;
 }
 
 //---- matches ----------------------------------------------------------------

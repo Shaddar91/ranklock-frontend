@@ -44,6 +44,11 @@ export function itemBracketParam(key: RankBucket['key']): number {
   return typeof key === 'number' ? key : 0;
 }
 
+//The hero <select> value → the API's hero_id; 0 ("All heroes") is omitted from the query.
+export function itemHeroParam(hero: number): number | undefined {
+  return Number.isInteger(hero) && hero > 0 ? hero : undefined;
+}
+
 //A rank band's tiers → the inclusive badge range the backend's /leaderboard
 //filters on (badge = tier*10 + subrank, subranks I–VI). Mirrors the verified
 //items `bracket_badge_range` convention (tier*10+1 … tier*10+6): Oracle–Phantom

@@ -4,9 +4,9 @@ import DataAgeChip from '../components/react/DataAgeChip';
 import ItemsTable from '../components/react/ItemsTable';
 import GameModeToggle from '../components/react/ui/GameModeToggle';
 import { api } from '../lib/apiClient';
-import { buildFetchNonEmpty } from '../lib/buildData';
+import { buildFetch, buildFetchNonEmpty } from '../lib/buildData';
 import { breadcrumbJsonLd } from '../lib/seo';
-import type { ItemStat } from '../types/api';
+import type { HeroSummary, ItemStat } from '../types/api';
 
 //SSG items win-rate table (requirements §B.5). THE BUG FIX lives in ItemsTable:
 //the rank bracket is labelled by BADGE TIER / rank emblem, never an MMR-score
@@ -15,6 +15,11 @@ import type { ItemStat } from '../types/api';
 //fails the build if this bake comes back empty (ALLOW_EMPTY_STATS_BUILD=1 to
 //override) — a cold origin must not silently ship an empty items table.
 const items = await buildFetchNonEmpty<ItemStat>(api.getItems(), '/items/stats (items table)');
+//Hero <select> options for the per-hero ranking; an empty roster only hides the select.
+const heroes = (await buildFetch(api.getHeroes({ game_mode: 'Normal' }), [] as HeroSummary[])).map((h) => ({
+  hero_id: h.hero_id,
+  hero_name: h.hero_name,
+}));
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const jsonLd = breadcrumbJsonLd(origin, [
@@ -43,10 +48,11 @@ const path = Astro.url.pathname;
     <DataAgeChip client:load />
     <p class="page-intro">
       Item win-rates by rank band. Brackets are labelled by Deadlock <strong>badge tier</strong> (rank emblems),
-      not MMR-score ranges — so "meta at your rank" actually means your rank.
+      not MMR-score ranges — so "meta at your rank" actually means your rank. Pick a hero to rank items on that
+      hero; the buy-time column shows when players usually pick each item up.
     </p>
     <div style="margin-top:20px;">
-      <ItemsTable initialRows={items} client:load />
+      <ItemsTable initialRows={items} heroes={heroes} client:load />
     </div>
   </main>
 </BaseLayout>

@@ -208,7 +208,8 @@ export const queryKeys = {
   heroCounters: (id: number) => ['hero', id, 'counters'] as const,
   heroSynergies: (id: number) => ['hero', id, 'synergies'] as const,
   heroItemWinRates: (id: number, params?: Query) => ['hero', id, 'item-win-rates', params ?? {}] as const,
-  items: (bracket?: number, game_mode?: GameMode) => ['items', bracket ?? 0, game_mode ?? null] as const,
+  items: (bracket?: number, game_mode?: GameMode, hero_id?: number) =>
+    ['items', bracket ?? 0, game_mode ?? null, hero_id ?? 0] as const,
   recentMatches: () => ['matches', 'recent'] as const,
   match: (id: number) => ['match', id] as const,
   search: (q: string) => ['search', q] as const,
@@ -296,8 +297,9 @@ export const api = {
   //the bucket the backend's `bracket_badge_range` expects. `game_mode` is forwarded
   //for forward-compat (the /items/stats Gold table is not yet mode-separated, so
   //the backend currently ignores it and returns the same rows for both modes).
-  getItems: (bracket?: number, game_mode?: GameMode) =>
-    apiFetch<ItemStat[]>('/items/stats', { query: { bracket, game_mode } }).then(enrichItems),
+  //`hero_id` scopes the rows to one hero (omit/0 = every hero); the backend 400s a bad value.
+  getItems: (bracket?: number, game_mode?: GameMode, hero_id?: number) =>
+    apiFetch<ItemStat[]>('/items/stats', { query: { bracket, game_mode, hero_id } }).then(enrichItems),
   getRecentMatches: () => apiFetch<MatchRow[]>('/matches/recent'),
 
   //per-match / per-user surface (CSR islands)
