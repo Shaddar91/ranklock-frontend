@@ -35,6 +35,7 @@ interface RadarChartProps {
   height?: number;
   youLabel?: string;
   cohortLabel?: string;
+  showCohort?: boolean;
 }
 
 //Live-read the `data-radar` tweak from <html> (SSR-safe default: 'filled').
@@ -55,6 +56,7 @@ export default function RadarChart({
   height = 300,
   youLabel = 'You',
   cohortLabel = 'Next tier',
+  showCohort = true,
 }: RadarChartProps) {
   const mode = useRadarMode();
   const cohortFill = mode === 'line' ? 0 : 0.08;
@@ -68,15 +70,17 @@ export default function RadarChart({
           tick={{ fill: 'var(--muted)', fontSize: 11, fontFamily: 'var(--display)' }}
         />
         <PolarRadiusAxis domain={[0, 1]} tick={false} axisLine={false} />
-        <Radar
-          name={cohortLabel}
-          dataKey="cohort"
-          stroke={seriesColor.cohort}
-          fill={seriesColor.cohort}
-          fillOpacity={cohortFill}
-          strokeDasharray="5 4"
-          strokeWidth={1.6}
-        />
+        {showCohort && (
+          <Radar
+            name={cohortLabel}
+            dataKey="cohort"
+            stroke={seriesColor.cohort}
+            fill={seriesColor.cohort}
+            fillOpacity={cohortFill}
+            strokeDasharray="5 4"
+            strokeWidth={1.6}
+          />
+        )}
         <Radar
           name={youLabel}
           dataKey="you"

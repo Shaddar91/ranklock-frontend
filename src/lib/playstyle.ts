@@ -91,8 +91,7 @@ const SELF_AXIS_MAX: Record<string, number> = {
 //dependency on any cohort/league value — that framing was removed per the dictation,
 //so this renders regardless of the (separately-tracked, possibly-empty) cohort MV. An
 //axis is `served` whenever the player's own value is present. `cohort` is 0 (there is
-//no baseline); the panel supplies the optional second series (own-mirror today, a
-//picked player once the compare overlay ships).
+//no baseline); the panel draws this as a single polygon unless a player is picked.
 export function selfShapeAxes(you: CompareSide): RadarAxis[] {
   return COMPARE_AXES.map(({ axis, pick }) => {
     const v = pick(you);
@@ -122,6 +121,14 @@ export function compareRadarVsPlayer(you: CompareSide, them: CompareSide): Radar
       served: yv != null,
     };
   });
+}
+
+//True when a /compare-player response is the ALL-HEROES fallback rather than one
+//shared hero. hero_id 0 is the server sentinel; shared_hero:false backs it up. A
+//pre-fallback backend omits shared_hero and only answered 200 on a real shared hero,
+//so an absent flag reads as shared.
+export function isAllHeroesCompare(res: { hero_id: number; shared_hero?: boolean | null }): boolean {
+  return res.hero_id === 0 || res.shared_hero === false;
 }
 
 //---- categorized panels (from improve) --------------------------------------

@@ -13,6 +13,7 @@ import { buildAheadMessage, humanize, PlaystyleRadarPanel, SEV } from './Analyti
 import { useCompare, useComparePlayer, usePlayerHeroes, usePlayerHeroesPlayed, usePlayerMatches, usePlayerPerformance, usePlayerReadiness } from './usePlayer';
 import { api, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClient';
 import { rankFromBadge } from '../../../lib/ranks';
+import { isAllHeroesCompare } from '../../../lib/playstyle';
 import { MIN_PERCENTILE_SAMPLE, percentileOrdinal } from '../../../lib/percentile';
 import { count, DASH, duration, fixed, kda, pct, shortDate } from '../../../lib/format';
 import type { HeroLedgerRow, PlayerMatchRow, ReadinessMetric, SearchResult } from '../../../types/api';
@@ -302,9 +303,9 @@ const TARGET_OPTIONS: ReadonlyArray<readonly [string, string]> = [
 //SAME /players/search endpoint the nav SearchBox uses (cache is shared via the
 //`search` query key); on select it fetches /players/:id/compare-player and renders
 //the SAME you-vs-them table + efficiency standing/note as the cohort compare above.
-//Scoped to the hero chosen in the rank selector. A 404 (the two never overlapped on
-//that hero) shows an explicit empty state rather than an error.
-function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number; heroName?: string }) {
+//The server picks the pair's most-played SHARED hero, else compares ALL heroes — a
+//404 means an account has no games at all and shows an explicit empty state.
+function ComparePlayerPicker({ id }: { id: number }) {
   const [raw, setRaw] = useState('');
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
@@ -329,15 +330,8 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
   //that is them rather than the misleading "no players found" no-hits note.
   const selfOnly = (search.data?.length ?? 0) > 0 && results.length === 0 && (search.data ?? []).every((r) => r.account_id === id);
 
-  const cmp = useComparePlayer(id, picked?.account_id, hero);
-  //D5 shared-hero fallback
-  const cmpAny = useComparePlayer(id, picked?.account_id, undefined);
-  //Prefer the hero-locked comparison; when the locked hero has no shared games fall back to
-  //any shared hero so the picker never dead-ends at "No shared games". With hero undefined the
-  //two hooks share a query key (react-query dedupes → a single fetch, no behaviour change).
-  const cmpData = cmp.data ?? cmpAny.data;
-  //locked hero produced nothing but a shared-hero comparison exists → we fell back.
-  const fellBack = !cmp.data && !!cmpAny.data;
+  const cmp = useComparePlayer(id, picked?.account_id);
+  const cmpData = cmp.data ?? null;
 
   function pick(r: SearchResult) {
     setPicked(r);
@@ -346,8 +340,7 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
     setOpen(false);
   }
 
-  //D2 precision — driven off cmpData so the table shows the locked-hero comparison when it
-  //exists and the shared-hero fallback otherwise (D5).
+  //D2 precision — both sides come from the ONE /compare-player response.
   const rows: [string, number | null, number | null, (n: number) => string][] = cmpData
     ? [
         ['Net worth', cmpData.you.avg_net_worth, cmpData.them.avg_net_worth, count],
@@ -357,6 +350,8 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
         ['Avg kills', cmpData.you.avg_kills, cmpData.them.avg_kills, (n) => fixed(n, 1)],
         ['Avg deaths', cmpData.you.avg_deaths, cmpData.them.avg_deaths, (n) => fixed(n, 1)],
         ['Avg assists', cmpData.you.avg_assists, cmpData.them.avg_assists, (n) => fixed(n, 1)],
+        ['Damage dealt', cmpData.you.avg_damage, cmpData.them.avg_damage, count],
+        ['Damage / min', cmpData.you.damage_per_min, cmpData.them.damage_per_min, count],
       ]
     : [];
 
@@ -451,13 +446,11 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
         <div style={{ marginTop: 14 }}>
           {cmpData ? (
             <>
-              {fellBack && (
-                <p className="faint" style={{ fontSize: 11, marginBottom: 10 }}>
-                  {hero && heroName
-                    ? `No shared ${heroName} games with ${picked.steam_name} — comparing on ${cmpData.hero_name}, a hero you both play, instead.`
-                    : `Comparing on ${cmpData.hero_name}, a hero you both play.`}
-                </p>
-              )}
+              <p className="faint" style={{ fontSize: 11, marginBottom: 10 }}>
+                {isAllHeroesCompare(cmpData)
+                  ? `All heroes — you and ${picked.steam_name} share no single hero.`
+                  : `Shared hero: ${cmpData.hero_name}.`}
+              </p>
               <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 10 }}>
                 <span className="label-xs">
                   {cmpData.hero_name} · you ({cmpData.you.tier_name}) vs {picked.steam_name} ({cmpData.them.tier_name})
@@ -498,22 +491,18 @@ function ComparePlayerPicker({ id, hero, heroName }: { id: number; hero?: number
                 </p>
               )}
             </>
-          ) : cmp.isPending || cmpAny.isPending ? (
+          ) : cmp.isPending ? (
             <p className="muted">Loading comparison with {picked.steam_name}…</p>
-          ) : isNotFound(cmp.error) && isNotFound(cmpAny.error) ? (
+          ) : isNotFound(cmp.error) ? (
             <EmptyState
-              title="No shared games to compare"
-              message={
-                hero && heroName
-                  ? `${picked.steam_name} hasn't played ${heroName} in the overlap window, and you two share no other hero games yet — pick another player.`
-                  : `You and ${picked.steam_name} have no overlapping hero games yet.`
-              }
+              title="No games to compare"
+              message={`You and ${picked.steam_name} have no overlapping matches in this mode yet — pick another player.`}
               icon="users"
             />
           ) : (
             <EmptyState
               title="Comparison not served yet"
-              message={buildAheadMessage(isNotFound(cmp.error) ? cmpAny.error : cmp.error)}
+              message={buildAheadMessage(cmp.error)}
               icon="users"
             />
           )}
@@ -621,6 +610,8 @@ export function ComparePanel({ id }: { id: number }) {
     ['Avg kills', data.you.avg_kills, data.cohort.avg_kills],
     ['Avg deaths', data.you.avg_deaths, data.cohort.avg_deaths],
     ['Avg assists', data.you.avg_assists, data.cohort.avg_assists],
+    ['Damage dealt', data.you.avg_damage, data.cohort.avg_damage],
+    ['Damage / min', data.you.damage_per_min, data.cohort.damage_per_min],
   ];
 
   return (
@@ -679,7 +670,7 @@ export function ComparePanel({ id }: { id: number }) {
           {data.efficiency.note}
         </p>
       )}
-      <ComparePlayerPicker id={id} hero={hero} heroName={data.hero_name} />
+      <ComparePlayerPicker id={id} />
     </div>
   );
 }
