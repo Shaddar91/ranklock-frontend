@@ -8,6 +8,9 @@ import { count, fixed, kda, metaTier, pct, shortDate } from '../../lib/format';
 import { resolveAsset } from '../../lib/assets';
 import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
+import Narrative from '../../components/Narrative.astro';
+import { heroNarrative } from '../../lib/heroNarrative';
+import { HERO_BRACKETS, rosterByBracket } from '../../lib/buildIndexes';
 import type {
   DataHorizonResponse,
   HeroItemWinRate,
@@ -83,7 +86,6 @@ const items = itemRows
 
 const builds = buildRows.slice(0, 12);
 
-const hasStats = hero != null && hero.win_rate != null && hero.picks > 0;
 
 //Provenance for the explanatory copy: each analytics dataset names its own fold
 //window in /meta/data-horizon; patches inside it come from the live patch list.
@@ -97,14 +99,24 @@ const patchesInWindow =
     : null;
 const currentPatch = patches.find((p) => p.is_current) ?? null;
 
-const windowTables =
-  matchups.length > 0 && items.length > 0
-    ? 'matchup and item tables'
-    : matchups.length > 0
-      ? 'matchup table'
-      : items.length > 0
-        ? 'item table'
-        : null;
+const bracketRosters = hero ? await rosterByBracket() : null;
+const sections = hero
+  ? heroNarrative({
+      hero,
+      roster,
+      matchups: matchupRows,
+      synergies,
+      items: itemRows,
+      brackets: HERO_BRACKETS.map((b) => ({ key: b.key, label: b.label, roster: bracketRosters?.get(b.key) ?? [] })),
+      heroName: (id) => heroById.get(id)?.hero_name ?? `Hero ${id}`,
+      statsThrough,
+      window: windowLo && windowHi ? { lo: shortDate(windowLo), hi: shortDate(windowHi) } : null,
+      patchesInWindow,
+      currentPatch: currentPatch
+        ? { label: currentPatch.version_label, since: shortDate(currentPatch.released_at) }
+        : null,
+    })
+  : [];
 ---
 
 <BaseLayout title={title} description={description} canonicalPath={canonicalPath} jsonLd={jsonLd} noindex={!hero}>
@@ -162,50 +174,7 @@ const windowTables =
             )
           }
 
-          <section class="panel panel-pad" style="margin-bottom:24px;">
-            <h2 class="h-sec" style="margin-bottom:10px;">About these numbers</h2>
-            {
-              hasStats ? (
-                <div>
-                  <p class="muted" style="font-size:14px; line-height:1.65; margin:0 0 10px;">
-                    {name} wins {pct(hero.win_rate)} of {count(hero.picks)} ranked matches in RankLock's
-                    database{statsThrough && `, which holds matches through ${statsThrough}`}. The KDA tile
-                    divides kills plus assists by deaths, working from per-match averages of{' '}
-                    {fixed(hero.avg_kills, 1)} kills, {fixed(hero.avg_deaths, 1)} deaths and{' '}
-                    {fixed(hero.avg_assists, 1)} assists. The souls tile is the average souls {name}{' '}
-                    players earn per match, the currency that buys items in Deadlock.
-                  </p>
-                  <p class="muted" style="font-size:14px; line-height:1.65; margin:0 0 10px;">
-                    Those are all-ranks figures. RankLock sorts ranked players into twelve bands, Obscurus
-                    at the bottom and Eternus at the top, read from the badge value on each account. The{' '}
-                    <a href="/heroes/">hero meta table</a> filters to any single band and re-reads win rates
-                    for that lobby alone; the {pct(hero.win_rate)} on this page is {name} across every band
-                    combined.
-                  </p>
-                  {(windowTables && windowLo && windowHi) || synergies.length > 0 ? (
-                    <p class="muted" style="font-size:14px; line-height:1.65; margin:0;">
-                      {windowTables && windowLo && windowHi && (
-                        <>
-                          The {windowTables} below cover matches played between {shortDate(windowLo)} and{' '}
-                          {shortDate(windowHi)}, the window RankLock's analytics pipeline has processed.
-                          {patchesInWindow != null &&
-                            currentPatch &&
-                            ` ${patchesInWindow} patch releases fall inside that span; the current one is the ${currentPatch.version_label}, live since ${shortDate(currentPatch.released_at)}.`}
-                        </>
-                      )}
-                      {synergies.length > 0 &&
-                        `${windowTables && windowLo && windowHi ? ' ' : ''}Duo synergies come from the upstream deadlock-api.com analytics feed rather than RankLock's own match database, so that service sets their sample window.`}
-                    </p>
-                  ) : null}
-                </div>
-              ) : (
-                <p class="muted" style="font-size:14px; line-height:1.65; margin:0;">
-                  This hero is marked disabled in the roster data and has no ranked matches in RankLock's
-                  dataset, so there are no win-rate, KDA, matchup or item numbers on this page.
-                </p>
-              )
-            }
-          </section>
+          <Narrative sections={sections} />
 
           {
             matchups.length > 0 && (

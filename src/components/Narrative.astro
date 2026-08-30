@@ -1,0 +1,22 @@
+---
+//Renders build-time prose sections (lib/narrative) as panels with inline links.
+import type { Section } from '../lib/narrative';
+
+interface Props {
+  sections: Section[];
+}
+const { sections } = Astro.props;
+---
+
+{
+  sections.map((s) => (
+    <section class="panel panel-pad" style="margin-bottom:24px;">
+      <h2 class="h-sec" style="margin-bottom:10px;">{s.heading}</h2>
+      {s.paras.map((p, i) => (
+        <p class="muted" style={`font-size:14px; line-height:1.65; margin:0 0 ${i < s.paras.length - 1 ? '10px' : '0'};`}>
+          {p.map((seg) => (typeof seg === 'string' ? seg : <a href={seg.href}>{seg.text}</a>))}
+        </p>
+      ))}
+    </section>
+  ))
+}
