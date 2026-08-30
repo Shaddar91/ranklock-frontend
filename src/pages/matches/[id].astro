@@ -16,9 +16,10 @@ import MatchInspectorIsland from '../../components/react/MatchInspectorIsland';
 //per-player inspect matrix is a SEPARATE client:visible island so it hydrates
 //only when scrolled into view and never blocks paint (requirements §6.4).
 export const prerender = false;
+const { id } = Astro.params;
 ---
 
-<BaseLayout title="Match — RankLock" noindex={true}>
+<BaseLayout title="Match — RankLock" noindex={true} image={`https://og.ranklock.app/og/match/${id}`}>
   <main class="wrap">
     <MatchDetailIsland client:only="react" />
     <MatchInspectorIsland client:visible />
