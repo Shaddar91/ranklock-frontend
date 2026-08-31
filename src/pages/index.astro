@@ -112,7 +112,7 @@ const entries = [
           )
         }
         <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border-soft); font-size:12px;">
-          <LiveStatusIsland client:load />
+          <LiveStatusIsland client:load hasSnapshot={topHeroes.length > 0} />
         </div>
       </div>
     </section>

@@ -1,29 +1,27 @@
 import { useQuery } from '@tanstack/react-query';
-import { api, queryKeys, isComputing, isDisabled } from '../../lib/apiClient';
+import { api, queryKeys } from '../../lib/apiClient';
+import { liveStatusLine } from '../../lib/liveStatus';
 import QueryProvider from './QueryProvider';
 
-//Hydrated demo island (used on the home page with `client:load`). It proves the
-//React + TanStack Query + typed apiClient pipeline end-to-end and is build-ahead
-//safe: if the API is unreachable (nothing is live yet — §8.1) it empty-states
-//instead of crashing the page.
-function LiveStatusInner() {
-  const { data, isPending, isError, error } = useQuery({
+//Home "Live meta snapshot" status line: re-probes /health live in the browser (client:load +
+//always-refetch) so a stale build-baked verdict never sticks, and defers wording to liveStatusLine
+//(offline only on a genuine failure with no baked rows — a bad base-URL bake can't pin it on a live page).
+function LiveStatusInner({ hasSnapshot }: { hasSnapshot: boolean }) {
+  const { data, status, error } = useQuery({
     queryKey: queryKeys.health(),
     queryFn: () => api.getHealth(),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
-
-  if (isPending) return <p className="muted">Checking API…</p>;
-  if (isError) {
-    const note = isDisabled(error) ? 'analytics disabled' : isComputing(error) ? 'computing' : 'offline';
-    return <p className="muted">API unavailable ({note}) — the site renders without it.</p>;
-  }
-  return <p className="ok">API reachable — status: {data.status}</p>;
+  const phase = status === 'success' ? 'ok' : status === 'error' ? 'error' : 'pending';
+  const line = liveStatusLine({ phase, hasSnapshot, error, status: data?.status });
+  return <p className={line.className}>{line.text}</p>;
 }
 
-export default function LiveStatusIsland() {
+export default function LiveStatusIsland({ hasSnapshot = false }: { hasSnapshot?: boolean }) {
   return (
     <QueryProvider>
-      <LiveStatusInner />
+      <LiveStatusInner hasSnapshot={hasSnapshot} />
     </QueryProvider>
   );
 }
