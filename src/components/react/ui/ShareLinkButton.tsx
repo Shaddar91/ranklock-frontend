@@ -1,5 +1,6 @@
-//Copies a canonical URL to the clipboard with a Copied flip — the OG card rides any shared link.
+//Prominent shared share affordance — accent-bordered button with a share icon and a Copied flip; the OG card rides any copied link.
 import { useState } from 'react';
+import Icon from './Icon';
 
 export default function ShareLinkButton({ url, label = 'Share' }: { url: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -13,8 +14,9 @@ export default function ShareLinkButton({ url, label = 'Share' }: { url: string;
     }
   }
   return (
-    <button type="button" className="minitog" onClick={share} aria-label={`Copy link: ${url}`}>
-      {copied ? 'Copied' : label}
+    <button type="button" className={'share-btn' + (copied ? ' copied' : '')} onClick={share} aria-label={`Copy link: ${url}`}>
+      <Icon name="share" size={15} />
+      {copied ? 'Copied ✓' : label}
     </button>
   );
 }

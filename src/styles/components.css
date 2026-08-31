@@ -156,6 +156,39 @@
   border-color: var(--border);
 }
 
+/* ---------- share button: one prominent style across match / overview / compare ---------- */
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--display);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--cyan-deep);
+  background: rgba(34, 211, 238, 0.09);
+  color: var(--cyan-bright);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--t-fast);
+}
+.share-btn svg {
+  flex: none;
+  opacity: 0.9;
+}
+.share-btn:hover {
+  background: rgba(34, 211, 238, 0.18);
+  border-color: var(--cyan-bright);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.12);
+}
+.share-btn.copied {
+  border-color: var(--win);
+  color: var(--win);
+  background: rgba(52, 211, 153, 0.12);
+}
+
 /* ---------- fields ---------- */
 input,
 select,

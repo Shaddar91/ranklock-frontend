@@ -22,6 +22,7 @@ const IPATHS = {
   filter: 'M22 3H2l8 9.46V19l4 2v-8.54L22 3Z',
   spark: 'M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1M7.7 16.3l-2.1 2.1',
   inbox: 'M22 12h-6l-2 3h-4l-2-3H2M5 5h14l3 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6l3-7Z',
+  share: 'M15 5a3 3 0 1 0 6 0a3 3 0 1 0-6 0M3 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0M15 19a3 3 0 1 0 6 0a3 3 0 1 0-6 0M8.59 13.51 15.42 17.49M15.41 6.51 8.59 10.49',
 } as const;
 
 export type IconName = keyof typeof IPATHS;

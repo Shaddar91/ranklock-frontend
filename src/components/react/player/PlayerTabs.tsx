@@ -376,8 +376,9 @@ function ShareCompareButton({ me, vs, heroId }: { me: number; vs: number; heroId
     }
   }
   return (
-    <button type="button" className="minitog" onClick={share} aria-label="Copy the link to this comparison">
-      {copied ? 'Copied' : 'Share'}
+    <button type="button" className={'share-btn' + (copied ? ' copied' : '')} onClick={share} aria-label="Copy the link to this comparison">
+      <Icon name="share" size={15} />
+      {copied ? 'Copied ✓' : 'Share'}
     </button>
   );
 }

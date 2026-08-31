@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { isNotFound } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
 import { AdSlot, Chip, EmptyState, GameIcon, MvpBadge } from './ui/index';
+import ShareLinkButton from './ui/ShareLinkButton';
 import { useMatch, useMatchId } from './match/useMatch';
 import { AD_SLOTS } from '../../config/artDirection';
 import { TEAM, teamKills, teamNetWorth, teamPlayers } from '../../lib/match';
@@ -86,6 +87,7 @@ function ScoreHeader({ match }: { match: MatchDetail }) {
           <span className="faint" style={{ fontSize: 12 }}>
             {shortDate(match.start_time) || DASH}
           </span>
+          <ShareLinkButton url={`https://ranklock.app/matches/${match.match_id}/`} label="Share match" />
         </div>
       </div>
       <div className="flex" style={{ alignItems: 'center', gap: 20, justifyContent: 'center' }}>
