@@ -3,7 +3,7 @@ import { compareSharePath, compareShareUrl, readComparePair } from './compareSha
 
 describe('compareShareUrl', () => {
   it('builds the canonical share URL for a pair', () => {
-    expect(compareShareUrl(76561198, 123456)).toBe('https://ranklock.app/compare/76561198/123456');
+    expect(compareShareUrl(76561198, 123456)).toBe('https://ranklock.app/compare/76561198/123456/');
   });
 
   it('builds the site-relative path', () => {
