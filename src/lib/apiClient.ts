@@ -319,6 +319,8 @@ export const api = {
     patch_id?: number;
     limit?: number;
     offset?: number;
+    //full-depth keyset: ?after_rank=N serves ranks N+1.. in index time past the offset ceiling (unbanded only).
+    after_rank?: number;
     min_badge?: number;
     max_badge?: number;
     game_mode?: GameMode;

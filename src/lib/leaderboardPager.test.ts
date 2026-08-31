@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  afterRankForPage,
   lastPage,
   LEADERBOARD_PAGE_SIZE,
+  MAX_OFFSET,
+  OFFSET_LAST_PAGE,
   offsetFromPage,
   pageFromSearch,
   pagerWindow,
+  usesKeyset,
 } from './leaderboardPager';
 
 describe('pageFromSearch', () => {
@@ -22,6 +26,7 @@ describe('pageFromSearch', () => {
     expect(pageFromSearch('?page=1')).toBe(1);
     expect(pageFromSearch('?page=7')).toBe(7);
     expect(pageFromSearch('?page=2000')).toBe(2000);
+    expect(pageFromSearch('?page=20112')).toBe(20112);
   });
 });
 
@@ -51,10 +56,43 @@ describe('lastPage', () => {
     expect(lastPage(100)).toBe(2);
     expect(lastPage(500)).toBe(10);
   });
-  it('clamps at MAX_OFFSET / PAGE_SIZE', () => {
-    const cap = Math.ceil(100_000 / LEADERBOARD_PAGE_SIZE);
-    expect(lastPage(100_001)).toBe(cap);
-    expect(lastPage(999_999)).toBe(cap);
+  //Clamp removed: the deep ladder is fully reachable (deep pages ride the ?after_rank= keyset path).
+  it('no longer clamps at MAX_OFFSET — full ladder depth', () => {
+    expect(lastPage(100_001)).toBe(2001);
+    expect(lastPage(999_999)).toBe(20_000);
+    expect(lastPage(1_005_590)).toBe(20_112);
+  });
+});
+
+describe('afterRankForPage', () => {
+  it('is the offset of the page — rows come back ranked offset+1..offset+size', () => {
+    expect(afterRankForPage(1)).toBe(0);
+    expect(afterRankForPage(2)).toBe(50);
+    expect(afterRankForPage(2001)).toBe(100_000);
+    expect(afterRankForPage(20_112)).toBe(1_005_550);
+  });
+  it('equals offsetFromPage so a keyset page matches the offset page at that depth', () => {
+    for (const p of [1, 7, 2000, 2001, 2002, 50_000]) {
+      expect(afterRankForPage(p)).toBe(offsetFromPage(p));
+    }
+  });
+});
+
+describe('usesKeyset', () => {
+  it('keeps the cheap offset path while offset <= MAX_OFFSET', () => {
+    expect(usesKeyset(1)).toBe(false);
+    expect(usesKeyset(2000)).toBe(false);
+    expect(usesKeyset(2001)).toBe(false);
+  });
+  it('switches to the keyset path once offset passes MAX_OFFSET', () => {
+    expect(usesKeyset(2002)).toBe(true);
+    expect(usesKeyset(20_112)).toBe(true);
+  });
+  it('OFFSET_LAST_PAGE is the deepest offset-servable page', () => {
+    expect(OFFSET_LAST_PAGE).toBe(2001);
+    expect(offsetFromPage(OFFSET_LAST_PAGE)).toBe(MAX_OFFSET);
+    expect(usesKeyset(OFFSET_LAST_PAGE)).toBe(false);
+    expect(usesKeyset(OFFSET_LAST_PAGE + 1)).toBe(true);
   });
 });
 
@@ -74,7 +112,8 @@ describe('pagerWindow', () => {
     expect(pagerWindow(100, 100)).toEqual([96, 97, 98, 99, 100]);
     expect(pagerWindow(99, 100)).toEqual([96, 97, 98, 99, 100]);
   });
-  it('total=null fallback: Prev/Next only when total is null', () => {
-    expect(lastPage(null)).toBeNull();
+  it('holds the 5-wide window deep in the ladder', () => {
+    expect(pagerWindow(20_000, 20_112)).toEqual([19_998, 19_999, 20_000, 20_001, 20_002]);
+    expect(pagerWindow(20_112, 20_112)).toEqual([20_108, 20_109, 20_110, 20_111, 20_112]);
   });
 });

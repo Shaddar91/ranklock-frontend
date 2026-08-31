@@ -19,11 +19,14 @@ import { rankFromBadge, subLabel } from '../../lib/ranks';
 import { count, DASH } from '../../lib/format';
 import type { LeaderboardEntry } from '../../types/api';
 import {
+  afterRankForPage,
   LEADERBOARD_PAGE_SIZE,
   lastPage,
+  OFFSET_LAST_PAGE,
   offsetFromPage,
   pageFromSearch,
   pagerWindow,
+  usesKeyset,
 } from '../../lib/leaderboardPager';
 
 type RankedEntry = LeaderboardEntry & { rank: number };
@@ -157,9 +160,12 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
   //labelled by rank emblem) and offset/limit page the ladder server-side.
   const band = LEADERBOARD_BUCKETS.find((b) => b.key === bucket);
   const badgeRange = badgeRangeForTiers(band?.tiers ?? []);
+  //Past the backend offset ceiling the deep, unbanded ladder seeks by ?after_rank= (index-time keyset);
+  //the keyset can't address a band, so a band always stays on the cheap offset path (and caps below).
+  const keyset = !badgeRange && usesKeyset(page);
   const params = {
     limit: LEADERBOARD_PAGE_SIZE,
-    offset,
+    ...(keyset ? { after_rank: afterRankForPage(page) } : { offset }),
     ...(badgeRange ?? {}),
     game_mode: mode,
     //ranked-axis (047): Ranked reads leaderboard_ranked_mv; Unranked omits the param so the
@@ -182,7 +188,9 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
 
   const rows = data?.rows ?? [];
   const total = data?.total ?? null;
-  const last = lastPage(total);
+  const fullLast = lastPage(total);
+  //A band can't ride the keyset, so it can't page past the offset ceiling — cap its last page there.
+  const last = fullLast !== null && badgeRange ? Math.min(fullLast, OFFSET_LAST_PAGE) : fullLast;
 
   //Auto-clamp: if ?page= exceeds the known total, correct the URL in place.
   useEffect(() => {
@@ -206,7 +214,6 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
   const podium = offset === 0 ? ranked.slice(0, 3) : [];
   const rest = offset === 0 ? ranked.slice(3) : ranked;
 
-  const hasPrev = page > 1;
   const hasNext = rows.length >= LEADERBOARD_PAGE_SIZE;
 
   function commitPageInput() {
@@ -219,8 +226,13 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
   const ranksLabel = ranked.length > 0
     ? total !== null
       ? `Ranks ${count(offset + 1)}–${count(offset + ranked.length)} of ${count(total)}`
-      : `Ranks ${count(offset + 1)}–${count(offset + ranked.length)}`
+      : `Ranks ${count(offset + 1)}–${count(offset + ranked.length)} of …`
     : DASH;
+
+  //Render the numbered pager frame the instant rows exist — before the X-Total-Count header lands `last`
+  //is null, so fall back to a bound that fills the same 5-wide window (no late pop-in). "Last" stays
+  //disabled until the real total is known.
+  const displayLast = last ?? (hasNext ? Math.max(page + 2, 5) : page);
 
   const columns = useMemo<DataTableColumn<RankedEntry>[]>(
     () => [
@@ -294,7 +306,7 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
               : 'No ranked players for this band yet. Try another bracket or check back after the next data refresh.'
         }
       />
-      {last !== null ? (
+      {ranked.length > 0 || last !== null ? (
         <nav className="between" style={{ marginTop: 16, gap: 8, flexWrap: 'wrap', alignItems: 'center' }} aria-label="Leaderboard pages">
           <div className="flex" style={{ gap: 4, flexWrap: 'wrap' }}>
             <button type="button" className="btn btn-ghost" onClick={() => goToPage(1)} disabled={page === 1 || isPlaceholderData}>
@@ -303,7 +315,7 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
             <button type="button" className="btn btn-ghost" onClick={() => goToPage(page - 1)} disabled={page === 1 || isPlaceholderData}>
               <Icon name="arrowR" size={13} style={{ transform: 'scaleX(-1)' }} /> Prev
             </button>
-            {pagerWindow(page, last).map((p) => (
+            {pagerWindow(page, displayLast).map((p) => (
               <button
                 key={p}
                 type="button"
@@ -316,10 +328,10 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
                 {p}
               </button>
             ))}
-            <button type="button" className="btn btn-ghost" onClick={() => goToPage(page + 1)} disabled={page >= last || isPlaceholderData}>
+            <button type="button" className="btn btn-ghost" onClick={() => goToPage(page + 1)} disabled={(last !== null ? page >= last : !hasNext) || isPlaceholderData}>
               Next <Icon name="arrowR" size={13} />
             </button>
-            <button type="button" className="btn btn-ghost" onClick={() => goToPage(last)} disabled={page >= last || isPlaceholderData}>
+            <button type="button" className="btn btn-ghost" onClick={() => { if (last !== null) goToPage(last); }} disabled={last === null || page >= last || isPlaceholderData}>
               Last <Icon name="arrowR" size={13} />
             </button>
           </div>
@@ -328,7 +340,7 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
             <input
               type="number"
               min={1}
-              max={last}
+              max={last ?? undefined}
               value={pageInput}
               onChange={(e) => setPageInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitPageInput(); }}
@@ -338,26 +350,6 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
             />
           </label>
           <span className="label-xs tnum" aria-live="polite">{ranksLabel}</span>
-        </nav>
-      ) : (hasPrev || hasNext) ? (
-        <nav className="between" style={{ marginTop: 16, gap: 12, flexWrap: 'wrap' }} aria-label="Leaderboard pages">
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => goToPage(page - 1)}
-            disabled={!hasPrev || isPlaceholderData}
-          >
-            <Icon name="arrowR" size={13} style={{ transform: 'scaleX(-1)' }} /> Prev
-          </button>
-          <span className="label-xs tnum" aria-live="polite">{ranksLabel}</span>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => goToPage(page + 1)}
-            disabled={!hasNext || isPlaceholderData}
-          >
-            Next <Icon name="arrowR" size={13} />
-          </button>
         </nav>
       ) : null}
     </div>
