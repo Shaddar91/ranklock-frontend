@@ -664,6 +664,52 @@ export interface PlayerEconomyCurveResponse {
   player_hero_games?: number;
 }
 
+//GET /lane-lab/souls-sources?band=&metric_group=&match_mode=  and
+//GET /players/:account_id/souls-sources?hero=&match_mode=  (migration 048). Per-3-min
+//souls-by-source curves for the "you vs tier" stack. `souls_avg` is ALREADY real souls
+//(Σ souls_x1000 / denom / 1000) — no client scaling. Six groups arrive in a FIXED order
+//(lane_creeps, neutrals, heroes, objectives, denies, losses); a bucket with no sample omits its
+//point. Both routes are Normal-only server-side and ride the Unranked/Ranked axis via
+//?match_mode=. The cohort is RICH_ANALYTICS-gated (501 off / 202 until the first fold); the
+//per-player route is ungated + suppression-404'd. The upstream gold_* columns stay PROC-only —
+//"souls" is the only wording on the wire (owner 2026-08-31).
+export interface SoulsCohortPoint {
+  minute_bucket: number;
+  //wall-clock seconds at this point (= minute_bucket * 180).
+  t_seconds: number;
+  //the tier's average souls FROM THIS SOURCE at this bucket (real souls).
+  souls_avg: number;
+  player_count: number;
+}
+export interface SoulsPlayerPoint {
+  minute_bucket: number;
+  t_seconds: number;
+  souls_avg: number;
+  //how many of the player's matches reached this bucket.
+  matches: number;
+}
+export interface SoulsCohortGroupSeries {
+  souls_group: string;
+  points: SoulsCohortPoint[];
+}
+export interface SoulsPlayerGroupSeries {
+  souls_group: string;
+  points: SoulsPlayerPoint[];
+}
+export interface SoulsCohortResponse {
+  band: number | null;
+  match_mode: MatchMode;
+  groups: SoulsCohortGroupSeries[];
+}
+export interface PlayerSoulsResponse {
+  account_id: number;
+  hero_id: number | null;
+  match_mode: MatchMode;
+  groups: SoulsPlayerGroupSeries[];
+  //Present ONLY when ?hero= was sent: the player's match count on that hero (0 ⇒ empty series).
+  player_hero_games?: number;
+}
+
 //GET /heroes/:id/item-win-rates?band=  — best items by win rate for a hero, scoped
 //to a rank band (rich-analytics tier, served by the MAIN API under /heroes/*). `band`
 //is the numeric rank tier (badge/10, 0..11); omit to aggregate. Payload fields are the

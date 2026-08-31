@@ -49,9 +49,11 @@ import type {
   PlayerEconomyCurveResponse,
   PlayerMatchRow,
   PlayerProfileResponse,
+  PlayerSoulsResponse,
   RankBucket,
   ReadinessResponse,
   SearchResult,
+  SoulsCohortResponse,
   TrimmedBuild,
 } from '../types/api';
 //Fills item_name/icon_url the stats endpoints leave null (see itemCatalog.ts).
@@ -287,6 +289,10 @@ export const queryKeys = {
   laneEconomyCurve: (params?: Query) => ['lane-lab', 'economy-curve', params ?? {}] as const,
   laneFarmCurve: (params?: Query) => ['lane-lab', 'farm-curve', params ?? {}] as const,
   laneEarlyEconVerdict: (params?: Query) => ['lane-lab', 'early-econ-verdict', params ?? {}] as const,
+  //Souls-by-source (migration 048): the tier cohort curve + the player's own line. band/hero and
+  //match_mode fold into params so each rank/hero/track caches separately.
+  laneSoulsSources: (params?: Query) => ['lane-lab', 'souls-sources', params ?? {}] as const,
+  playerSoulsSources: (id: number, params?: Query) => ['player', id, 'souls-sources', params ?? {}] as const,
   //data-age freshness metadata (the "Stats through {date}" chip + sample windows).
   dataHorizon: () => ['meta', 'data-horizon'] as const,
   me: () => ['me'] as const,
@@ -429,6 +435,12 @@ export const api = {
     id: number,
     params?: { metric?: string; vs_band?: number; hero?: number; match?: number; match_mode?: MatchMode },
   ) => apiFetch<PlayerEconomyCurveResponse>(`/players/${id}/economy-curve`, { query: params }),
+  //The player's OWN souls-by-source line (migration 048; served by the MAIN API). UNGATED +
+  //suppression-404'd like the economy curve. `hero` scopes to one hero (player_hero_games:0 ⇒ the
+  //six series come back empty, never a silent all-heroes fallback). Normal-only server-side;
+  //`match_mode` follows the Unranked/Ranked axis (047 — Unranked omits the param, byte-identical).
+  getPlayerSoulsSources: (id: number, params?: { hero?: number; match_mode?: MatchMode }) =>
+    apiFetch<PlayerSoulsResponse>(`/players/${id}/souls-sources`, { query: params }),
 
   //patch tracking (C9) — fully built backend, previously zero FE refs (§A.4). The
   //patch LIST is mode-agnostic; the per-patch hero stats + movers are mode-separated
@@ -464,6 +476,11 @@ export const api = {
     laneLabFetch<LaneCurveResponse>('/lane-lab/farm-curve', { query: params }),
   getLaneEarlyEconVerdict: (params?: { band?: number; game_mode?: GameMode }) =>
     laneLabFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
+  //Cohort souls-by-source (migration 048) — the tier half of the "you vs tier" stack. `band` is the
+  //rank tier (badge/10, 0..11; omit to aggregate all bands); `metric_group` narrows to one source
+  //(unknown ⇒ all six). RICH_ANALYTICS-gated (501 off, 202 until the first fold); `match_mode` per 047.
+  getLaneSoulsSources: (params?: { band?: number; metric_group?: string; match_mode?: MatchMode }) =>
+    laneLabFetch<SoulsCohortResponse>('/lane-lab/souls-sources', { query: params }),
   //stats + session. rank_distribution is mode-AGNOSTIC (per-player badge histogram —
   //product decision, 022); the param is accepted for symmetry but the backend ignores
   //it (no game_mode dimension on the table).

@@ -46,6 +46,18 @@ export const seriesColor = {
   win: 'var(--win)',
 } as const;
 
+//Souls-source group palette (migration 048 panel) — THEME-AWARE CSS vars. One hue per source; the
+//SAME hue paints your bar and the tier's (opacity tells you/tier apart), and the loss line reuses
+//--loss so a subtraction always reads red. All six vars already ship in every skin.
+export const soulsGroupColor = {
+  lane_creeps: 'var(--cyan-bright)',
+  neutrals: 'var(--sapphire-acc)',
+  heroes: 'var(--amber-acc)',
+  objectives: 'var(--win)',
+  denies: 'var(--econ-player2)',
+  losses: 'var(--loss)',
+} as const;
+
 //Economy-curve series palette — THEME-AWARE. tokens.css --econ-* holds the default
 //palette (what the foundry + aether skins render); themes.css re-skins the vars per
 //skin (arcane / gaslamp / obsidian do, each from its own accent family). The chart

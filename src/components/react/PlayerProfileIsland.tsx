@@ -87,7 +87,7 @@ function PlayerProfileInner() {
       {(tab === 'Overview' || tab === 'Compare') && (
         <div className="between" style={{ margin: '-6px 0 16px', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <MatchModeToggle ariaLabel="Competitive track — Unranked or Ranked" />
-          <span className="label-xs">Applies to playstyle, the signature curve &amp; compare.</span>
+          <span className="label-xs">Applies to playstyle, the signature curve, souls sources &amp; compare.</span>
         </div>
       )}
 

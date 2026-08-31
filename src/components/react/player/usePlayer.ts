@@ -155,6 +155,35 @@ export const usePlayerEconomyCurve = (
   });
 };
 
+//Souls-by-source (migration 048). The player's own per-3-min souls line by source and the tier
+//cohort it stacks against. game_mode is Normal-only server-side (no param), but match_mode IS a
+//served axis (047): both follow the Unranked/Ranked selector — Unranked omits the param, so the
+//call is byte-identical to pre-047. The per-player line is UNGATED (retry:false so a suppressed 404
+//empty-states fast); the cohort is RICH_ANALYTICS-gated (202/501 → the panel drops the tier half).
+//keepPreviousData holds the prior stack while the track/band re-fetches, so only the data re-adjusts.
+export const usePlayerSoulsSources = (id: number, hero?: number) => {
+  const { matchMode } = useMatchMode();
+  const mm = matchModeQuery(matchMode);
+  return useQuery({
+    queryKey: queryKeys.playerSoulsSources(id, { hero, match_mode: mm }),
+    queryFn: () => api.getPlayerSoulsSources(id, { hero, match_mode: mm }),
+    retry: false,
+    placeholderData: keepPreviousData,
+    enabled: id > 0,
+  });
+};
+
+export const useCohortSoulsSources = (band?: number) => {
+  const { matchMode } = useMatchMode();
+  const mm = matchModeQuery(matchMode);
+  return useQuery({
+    queryKey: queryKeys.laneSoulsSources({ band, match_mode: mm }),
+    queryFn: () => api.getLaneSoulsSources({ band, match_mode: mm }),
+    retry: false,
+    placeholderData: keepPreviousData,
+  });
+};
+
 //Compare-to-a-specific-player: `vs` is the other player's account_id (gates the
 //fetch — undefined/0 means no player picked yet). opts is the shared scope: hero_id
 //(0 = all heroes) plus the window bound (last_games XOR last_days). retry:false so a

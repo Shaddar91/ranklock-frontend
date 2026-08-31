@@ -9,10 +9,9 @@
 //                           (all heroes by default; hero only on explicit select,
 //                           both sides under the same games/days window). Derived
 //                           from SERVED aggregates (mode-separated).
-//  • EconomyPanel         — soul-curve-vs-cohort + gold-source breakdown. The
-//                           per-minute timeline is an UNBUILT endpoint, so the
-//                           two charts grey out; the served /compare souls/min
-//                           headline still renders.
+//  • EconomyPanel         — soul-curve-vs-cohort + souls-by-source breakdown (you vs
+//                           tier, migration 048). The signature curve and the souls
+//                           stack are served; the /compare souls/min headline sits above.
 //  • CoachingPanel        — "how to climb" tips from /improve callouts.
 //  • CategorizedSection   — Combat/Economy (from /improve) + Laning/Efficiency
 //                           (from /compare), with a vs-bracket ⇄ compare toggle.
@@ -21,17 +20,29 @@ import { useEffect, useId, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, isComputing, isDisabled, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClient';
 import { useGameMode } from '../../../lib/useGameMode';
+import { useMatchMode } from '../../../lib/useMatchMode';
 import { EmptyState, Icon, RankBadge } from '../ui/index';
 import RadarChart from '../charts/RadarChart';
 import SignatureCurve from '../charts/SignatureCurve';
+import SoulsSourceChart from '../charts/SoulsSourceChart';
 import { sigSeriesColor, useSigSeriesWords } from '../charts/chartTheme';
 import { CatPanel } from './StatLine';
-import { useCompare, useComparePlayer, useImprove, usePlayer, usePlayerEconomyCurve, usePlayerHeroesPlayed } from './usePlayer';
+import {
+  useCohortSoulsSources,
+  useCompare,
+  useComparePlayer,
+  useImprove,
+  usePlayer,
+  usePlayerEconomyCurve,
+  usePlayerHeroesPlayed,
+  usePlayerSoulsSources,
+} from './usePlayer';
 import { usePlayerScope } from './usePlayerScope';
 import { PlayerScopeControls } from './PlayerScopeControls';
 import { scopeCaption, scopeParams } from '../../../lib/playerScope';
 import { combatRows, compareRadarVsPlayer, economyRows, efficiencyRows, laningRows, selfShapeAxes } from '../../../lib/playstyle';
 import { mergeSignatureCurve, curveMarker } from '../../../lib/signatureCurve';
+import { buildSoulsSourceSeries, hasCohortSouls, isPlayerSoulsEmpty } from '../../../lib/soulsSources';
 import { RANKS, chasingTier, getRank, rankFromBadge } from '../../../lib/ranks';
 import { count, fixed } from '../../../lib/format';
 import type { SearchResult } from '../../../types/api';
@@ -493,6 +504,57 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
   );
 }
 
+//---- souls-by-source (migration 048) ----------------------------------------
+
+//SOULS SOURCE — YOU VS TIER. Your own per-3-min souls-by-source stack beside your tier's, with souls
+//lost to deaths as a line below zero (never mixed into the stack). The player line is ungated; the
+//tier rides the rich-analytics tier (drawn only once it has folded). match_mode follows the page's
+//Unranked/Ranked selector; game_mode is Normal-only server-side (Brawl gets the note).
+function SoulsSourcePanel({ id, band }: { id: number; band?: number }) {
+  const { matchMode } = useMatchMode();
+  const player = usePlayerSoulsSources(id);
+  const cohort = useCohortSoulsSources(band);
+  const rows = buildSoulsSourceSeries(player.data, cohort.data);
+  const cohortHas = hasCohortSouls(cohort.data);
+
+  return (
+    <div>
+      <div className="label-xs" style={{ marginBottom: 12 }}>
+        Souls source — you vs tier
+      </div>
+      {player.isPending ? (
+        <Loading label="Loading your souls sources" />
+      ) : player.isError ? (
+        <EmptyState
+          title="Souls-source breakdown not served yet"
+          message={buildAheadMessage(
+            player.error,
+            'Per-source souls splits (lane creeps, neutrals, hero kills…) arrive with the rich-analytics tier.',
+          )}
+          icon="coins"
+        />
+      ) : isPlayerSoulsEmpty(player.data) ? (
+        <EmptyState
+          title="No folded matches yet"
+          message="Your souls-by-source line appears once a data fold covers your matches."
+          icon="coins"
+        />
+      ) : (
+        <>
+          <SoulsSourceChart data={rows} showTier={cohortHas} />
+          <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
+            Each colour is a souls source stacked into your net worth at that minute — <b>solid bars are you</b>,
+            {cohortHas ? ' faded bars your tier' : ' your tier fills in with the rich-analytics tier'}. Souls{' '}
+            <b style={{ color: 'var(--loss)' }}>lost to deaths</b> are the line below zero, never mixed into the stack.
+            {matchMode === 'Ranked' ? ' Ranked matches only.' : ''}
+          </p>
+          <NormalOnlyNote what="Souls-source curves" />
+        </>
+      )}
+    </div>
+  );
+}
+
 export function EconomyPanel({ id }: { id: number }) {
   //'one_up' makes the "vs the rank you're chasing" kicker literally true — the
   //cohort is the tier directly above the player, not the player's own tier.
@@ -545,16 +607,13 @@ export function EconomyPanel({ id }: { id: number }) {
         </p>
       )}
       {/* THE signature per-minute curve (C3): your FIXED soul curve overlaid on a league
-          (+hero) cohort you pick — now served by /players/:id/economy-curve. Replaces the
-          old build-ahead empty-state. The per-SOURCE gold split below is still unbuilt. */}
+          (+hero) cohort you pick — served by /players/:id/economy-curve. */}
       <SignatureCurvePanel id={id} chaseTier={chaseTier} />
       <div className="deco-rule" style={{ margin: '18px 0 14px' }}>
         <span className="dia" />
       </div>
-      <div className="label-xs" style={{ marginBottom: 12 }}>
-        Gold source — you vs tier
-      </div>
-      <EmptyState title="Gold-source breakdown not served yet" message="Per-source farm splits (lane creeps, neutrals, hero kills…) arrive with the rich-tier economy job." icon="coins" />
+      {/* Per-source souls stack (migration 048): where your net worth comes from, you vs your tier. */}
+      <SoulsSourcePanel id={id} band={currentTier ?? undefined} />
     </div>
   );
 }
