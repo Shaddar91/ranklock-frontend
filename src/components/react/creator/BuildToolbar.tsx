@@ -11,13 +11,14 @@ interface BuildToolbarProps {
   onLoad: (build: BuildInput) => void;
 }
 
-//trailingSlash is 'always' site-wide — a slashless share URL would redirect (and drop nothing,
-//but the canonical form is what we hand out).
-const BUILD_LAB_PATH = '/build-lab/';
+//Shares land on the /build/ noindex shell, not the indexable /build-lab meta page. trailingSlash is
+//'always' site-wide, so the path keeps its trailing slash (slash before the hash) — the fragment
+//carries the build and dodges the redirect.
+const SHARE_PATH = '/build/';
 
 function shareUrl(build: BuildInput): string {
   const origin = typeof window === 'undefined' ? '' : window.location.origin;
-  return `${origin}${BUILD_LAB_PATH}${buildShareHash(build)}`;
+  return `${origin}${SHARE_PATH}${buildShareHash(build)}`;
 }
 
 function newDraftId(): string {

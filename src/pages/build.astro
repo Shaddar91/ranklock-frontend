@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BuildLabIsland from '../components/react/BuildLabIsland';
+
+//Shared-build landing SHELL: a noindex surface for `#b1:<payload>` share links,
+//kept off the indexable /build-lab meta page. The per-build OG card is deferred,
+//so og:image stays the generic default; the island reads the fragment client-side
+//and names the hero in the tab title.
+---
+
+<BaseLayout
+  title="Shared build — RankLock"
+  description="Open a shared Deadlock build in the RankLock creator — its items, imbues, conditionals and calculated Weapon, Vitality and Spirit stats, souls cost included."
+  noindex={true}
+>
+  <main class="container">
+    <div class="kicker">Theorycraft</div>
+    <h1 class="h-page">Shared build</h1>
+    <p class="page-intro">
+      A build shared from the RankLock creator. Tweak it and read its calculated Weapon, Vitality and Spirit stats and
+      souls cost, then open the full <a href="/build-lab/">Build Lab</a> to theorycraft your own.
+    </p>
+    <div style="margin-top:20px;">
+      <BuildLabIsland client:load />
+    </div>
+  </main>
+</BaseLayout>

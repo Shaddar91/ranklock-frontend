@@ -1,7 +1,7 @@
 //Build Creator (statlocker parity, scope a): pick a hero, fill the item board, imbue items onto
 //abilities, flip conditionals, and read the calculated Weapon / Vitality / Spirit panels + souls
 //spend. All math is computeStats'; this component only assembles the BuildInput and renders.
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { computeStats, type BaseStats } from '../../../lib/computeStats';
@@ -89,10 +89,14 @@ export default function BuildCreator() {
   const abilities = useMemo(() => imbueAbilities(abilityQuery.data), [abilityQuery.data]);
 
   //A shared link round-trips through the fragment; read it once, after hydration.
+  const [sharedLoaded, setSharedLoaded] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const shared = readBuildFromHash(window.location.hash);
-    if (shared) loadBuild(shared);
+    if (shared) {
+      loadBuild(shared);
+      setSharedLoaded(true);
+    }
   }, [loadBuild]);
 
   useEffect(() => {
@@ -107,6 +111,14 @@ export default function BuildCreator() {
     () => computeStats(hero?.stats ?? NO_BASE, catalog, build),
     [hero, catalog, build],
   );
+
+  //Name the hero in the tab title on a shared-build landing — the /build/ shell is
+  //server-rendered before the fragment is known, so only the client can name the hero.
+  const heroName = hero?.hero_name ?? null;
+  useEffect(() => {
+    if (!sharedLoaded || typeof document === 'undefined' || !heroName) return;
+    document.title = `${heroName} build — RankLock`;
+  }, [sharedLoaded, heroName]);
 
   if (roster.isPending) {
     return <p className="muted" style={{ padding: '14px 2px' }}>Loading heroes…</p>;
