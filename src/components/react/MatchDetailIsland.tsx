@@ -11,11 +11,46 @@ import { isNotFound } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
 import { AdSlot, Chip, EmptyState, GameIcon, MvpBadge } from './ui/index';
 import ShareLinkButton from './ui/ShareLinkButton';
-import { useMatch, useMatchId } from './match/useMatch';
+import { useMatch, useMatchId, useMatchInspect } from './match/useMatch';
 import { AD_SLOTS } from '../../config/artDirection';
+import MatchNetWorthChart, { type NetWorthSeries } from './charts/MatchNetWorthChart';
+import { seriesColor } from './charts/chartTheme';
 import { TEAM, teamKills, teamNetWorth, teamPlayers } from '../../lib/match';
+import {
+  hasEconomyTimeline,
+  playerNetWorthSeries,
+  type PlayerSeriesMeta,
+  teamNetWorthSeries,
+  windowNote,
+} from '../../lib/matchInspect';
 import { count, DASH, duration, fixed, shortDate } from '../../lib/format';
 import type { MatchDetail, MatchPlayerDetail } from '../../types/api';
+
+//A per-player opacity ramp so up-to-six same-team lines stay individually tellable
+//(the team hue already tells the sides apart; opacity separates teammates).
+const PLAYER_FADE = [1, 0.82, 0.66, 0.52, 0.42, 0.34];
+
+//Map the per-player series metadata to drawn lines: team hue + a within-team fade.
+function playerSeries(meta: PlayerSeriesMeta[]): NetWorthSeries[] {
+  const seen: Record<number, number> = {};
+  return meta.map((m) => {
+    const i = seen[m.team] ?? 0;
+    seen[m.team] = i + 1;
+    return {
+      key: m.key,
+      name: m.name,
+      color: m.team === TEAM.amber ? seriesColor.amber : seriesColor.sapphire,
+      opacity: PLAYER_FADE[Math.min(i, PLAYER_FADE.length - 1)],
+    };
+  });
+}
+
+const TEAM_SERIES: NetWorthSeries[] = [
+  { key: 'amber', name: 'Amber', color: seriesColor.amber },
+  { key: 'sapphire', name: 'Sapphire', color: seriesColor.sapphire },
+];
+
+type EconView = 'Teams' | 'Players';
 
 type Tab = 'Scoreboard' | 'Economy';
 
@@ -118,14 +153,25 @@ function ScoreHeader({ match }: { match: MatchDetail }) {
 }
 
 function EconomyTab({ match }: { match: MatchDetail }) {
+  const [view, setView] = useState<EconView>('Teams');
+  //Only mounts while the Economy tab is selected, so the inspect fetch is deferred
+  //until it's opened; the deferred inspector island shares this one request.
+  const { data: inspect, isPending, isError } = useMatchInspect(match.match_id);
+
   const amberNw = teamNetWorth(teamPlayers(match, TEAM.amber));
   const sapphireNw = teamNetWorth(teamPlayers(match, TEAM.sapphire));
   const leadK = (amberNw - sapphireNw) / 1000;
+
+  const players = inspect?.in_window ? inspect.players : [];
+  const showChart = hasEconomyTimeline(players);
+  const teamRows = showChart ? teamNetWorthSeries(players) : [];
+  const perPlayer = showChart ? playerNetWorthSeries(players) : { rows: [], series: [] };
+
   return (
     <div className="panel" style={{ padding: '18px 22px' }}>
       <div className="between" style={{ marginBottom: 8, flexWrap: 'wrap', gap: 10 }}>
         <h2 className="h-sec" style={{ fontSize: 17 }}>
-          Net worth
+          Net worth over time
         </h2>
         <Chip tone={leadK >= 0 ? 'win' : 'loss'}>
           {leadK >= 0 ? 'Amber' : 'Sapphire'} +{fixed(Math.abs(leadK), 1)}k at end
@@ -133,15 +179,54 @@ function EconomyTab({ match }: { match: MatchDetail }) {
       </div>
       <p className="muted" style={{ fontSize: 13, margin: '0 0 12px' }}>
         Final team net worth — Amber <b className="amber-c mono">{count(amberNw)}</b> vs Sapphire{' '}
-        <b className="sap-c mono">{count(sapphireNw)}</b>.
+        <b className="sap-c mono">{count(sapphireNw)}</b> souls.
       </p>
-      {/* The per-minute net-worth timeline is an UNBUILT endpoint — empty-state it
-          (build-ahead) while keeping the layout reserved; the totals above are live. */}
-      <EmptyState
-        title="Net-worth timeline not served yet"
-        message="The per-minute economy timeline comes online with the match-inspect pipeline; the final totals above are live."
-        icon="chart"
-      />
+
+      {isPending && <p className="muted" style={{ fontSize: 13 }}>Loading the per-minute economy…</p>}
+
+      {!isPending && (isError || !inspect) && (
+        <EmptyState
+          title="Economy timeline unavailable"
+          message="The per-minute net-worth series couldn't be loaded — the final totals above are live."
+          icon="chart"
+        />
+      )}
+
+      {!isPending && inspect && !inspect.in_window && (
+        <EmptyState
+          title="Per-minute economy not kept for this match"
+          message={`The net-worth timeline is kept for ${windowNote(inspect.window_days)}; this match is older. The final totals above stay live.`}
+          icon="chart"
+        />
+      )}
+
+      {!isPending && inspect && inspect.in_window && !showChart && (
+        <EmptyState title="No timeline samples" message="This match is in the window but carries no per-minute samples." icon="chart" />
+      )}
+
+      {showChart && (
+        <>
+          <div className="tabs" role="tablist" aria-label="Economy view" style={{ marginBottom: 10 }}>
+            {(['Teams', 'Players'] as EconView[]).map((v) => (
+              <button
+                key={v}
+                type="button"
+                role="tab"
+                aria-selected={view === v}
+                className={'tab' + (view === v ? ' on' : '')}
+                onClick={() => setView(v)}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          {view === 'Teams' ? (
+            <MatchNetWorthChart data={teamRows} series={TEAM_SERIES} filled />
+          ) : (
+            <MatchNetWorthChart data={perPlayer.rows} series={playerSeries(perPlayer.series)} height={300} />
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -218,6 +218,65 @@ export interface MatchDetail {
   players: MatchPlayerDetail[];
 }
 
+//---- match inspect (GET /matches/:id/inspect) -------------------------------
+//Rolling-window per-match DETAIL tier (migration 051 window; C3 backend): items in
+//buy order + a per-sample net-worth ("souls") timeline, powering the Economy chart
+//and the who-bought-what inspector. A match outside the N-day window (or an unknown
+//id) comes back in_window:false / players:[] with window_days echoed — never a 404 —
+//so the UI empty-states with the real N. SOULS is the net worth, never "gold".
+
+//One purchased item in a player's build. Array order = BUY order.
+export interface MatchInspectItem {
+  item_id: number;
+  //null when the code decodes but the catalog carries no name/icon yet (still renders).
+  item_name: string | null;
+  icon_url: string | null;
+  bought_s: number | null;
+  //null when never sold (upstream sold_time_s==0 self-sparsifies to a null element).
+  sold_s: number | null;
+}
+
+//One stored timeline sample (ascending t_seconds). `souls` = net worth at t.
+export interface MatchInspectTimelinePoint {
+  t_seconds: number;
+  souls: number;
+  last_hits: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  player_damage: number;
+}
+
+//One ability in level-up order. Served only once the ability tier ships (C1
+//deferred it) — optional, so the UI renders it when present and skips it until then.
+export interface MatchInspectAbility {
+  ability_id: number;
+  ability_name: string | null;
+  icon_url: string | null;
+  leveled_s: number | null;
+}
+
+export interface MatchInspectPlayer {
+  account_id: number;
+  steam_name: string;
+  hero_id: number;
+  hero_name: string;
+  hero_icon_url: string | null;
+  team: number;
+  items: MatchInspectItem[];
+  souls_timeline: MatchInspectTimelinePoint[];
+  //present only once the deferred ability tier ships; absent today.
+  abilities?: MatchInspectAbility[];
+}
+
+export interface MatchInspect {
+  match_id: number;
+  //null until migration 051 lands (never a 500); the empty-state reads "the last N days".
+  window_days: number | null;
+  in_window: boolean;
+  players: MatchInspectPlayer[];
+}
+
 //---- players ----------------------------------------------------------------
 
 //Recent-form add-on, flattened sibling on the player profile (analytics::RecentForm).

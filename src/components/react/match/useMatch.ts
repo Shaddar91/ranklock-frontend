@@ -16,3 +16,7 @@ export function useMatchId(): number | null | undefined {
 
 export const useMatch = (id: number) =>
   useQuery({ queryKey: queryKeys.match(id), queryFn: () => api.getMatch(id), enabled: id > 0 });
+
+//Rolling-window per-match detail; the Economy tab + inspector share ONE request via the cache.
+export const useMatchInspect = (id: number) =>
+  useQuery({ queryKey: queryKeys.matchInspect(id), queryFn: () => api.getMatchInspect(id), enabled: id > 0 });

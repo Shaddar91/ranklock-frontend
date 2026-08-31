@@ -38,6 +38,7 @@ import type {
   LaneCurveResponse,
   LeaderboardEntry,
   MatchDetail,
+  MatchInspect,
   MatchMode,
   MatchRow,
   MatchupEntry,
@@ -255,6 +256,8 @@ export const queryKeys = {
     ['items', bracket ?? 0, game_mode ?? null, hero_id ?? 0] as const,
   recentMatches: (params?: Query) => ['matches', 'recent', params ?? {}] as const,
   match: (id: number) => ['match', id] as const,
+  //rolling-window per-match detail (items in buy order + per-minute souls timeline).
+  matchInspect: (id: number) => ['match', id, 'inspect'] as const,
   search: (q: string) => ['search', q] as const,
   player: (id: number, game_mode?: GameMode) => ['player', id, game_mode ?? null] as const,
   playerMatches: (id: number, params?: Query) => ['player', id, 'matches', params ?? {}] as const,
@@ -364,6 +367,11 @@ export const api = {
 
   //per-match / per-user surface (CSR islands)
   getMatch: (id: number) => apiFetch<MatchDetail>(`/matches/${id}`),
+  //Rolling-window per-match detail (C3): items in buy order + per-minute souls timeline
+  //(+ ability order once that tier ships). 200 in_window:false / players:[] for a match
+  //outside the window or an unknown id — never a 404 — so the UI empty-states with the
+  //echoed window_days. Shared by the Economy chart and the who-bought-what inspector.
+  getMatchInspect: (id: number) => apiFetch<MatchInspect>(`/matches/${id}/inspect`),
   searchPlayers: (q: string, limit?: number) =>
     apiFetch<SearchResult[]>('/players/search', { query: { q, limit } }),
   //Per-player aggregates are mode-separated (022): the profile headline, hero
