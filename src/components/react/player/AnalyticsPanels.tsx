@@ -46,6 +46,8 @@ import { buildSoulsSourceSeries, hasCohortSouls, isPlayerSoulsEmpty } from '../.
 import { RANKS, chasingTier, getRank, rankFromBadge } from '../../../lib/ranks';
 import { count, fixed } from '../../../lib/format';
 import type { SearchResult } from '../../../types/api';
+import ShareLinkButton from '../ui/ShareLinkButton';
+import { compareShareUrl } from '../../../lib/compareShare';
 
 //Coaching/playstyle are derived from /improve, whose cohort is Normal-only (022). In
 //Brawl mode this content is STILL Normal — surface that so the page never silently
@@ -288,6 +290,7 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
                   Clear
                 </button>
               )}
+              {picked && <ShareLinkButton url={compareShareUrl(id, picked.account_id)} />}
             </div>
           </div>
         </>
