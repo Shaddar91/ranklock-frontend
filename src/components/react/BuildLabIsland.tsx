@@ -16,6 +16,7 @@ import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, EmptyState, GameIcon } from './ui/index';
 import { count, DASH, fixed } from '../../lib/format';
 import { statLabel } from '../../lib/statLabel';
+import { groupBaseStats, statUnit } from '../../lib/baseStatGroups';
 import { abilityOrderSequence, formatUpdated, isUpdatedThisPatch, SORT_MODES, type BuildSort } from '../../lib/buildMeta';
 import BuildCreator from './creator/BuildCreator';
 import type { HeroAbility, HeroBaseStats, ItemModifier, TrimmedBuild } from '../../types/api';
@@ -107,10 +108,26 @@ function HeroBaseStatsTab({ heroId, onHero }: { heroId: number | null; onHero: (
     );
   }
 
-  //Only entries whose nested value is numeric are display-worthy stat tiles.
+  //Only entries whose nested value is numeric are display-worthy; grouped into
+  //gameplay sections with the engine scalers/zero-defaults collapsed (§presentation).
   const statEntries = Object.entries(active.stats)
     .filter((e): e is [string, BaseStatValue] => typeof (e[1] as { value?: unknown } | null)?.value === 'number')
-    .sort((a, b) => a[0].localeCompare(b[0]));
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([key, v]) => ({ key, value: v.value, label: statLabel(key, v.display_stat_name) }));
+  const { groups, raw } = groupBaseStats(statEntries);
+
+  const tile = (s: { key: string; value: number; label: string }) => {
+    const unit = statUnit(s.key);
+    return (
+      <div key={s.key} className="tile statile">
+        <div className="label-xs" title={s.label} style={{ overflowWrap: 'anywhere', overflow: 'hidden' }}>{s.label}</div>
+        <div className="display tnum" style={{ fontSize: 22, fontWeight: 700 }}>
+          {fmtStat(s.value)}
+          {unit && <span className="muted" style={{ fontSize: 13, fontWeight: 600, marginLeft: 3 }}>{unit}</span>}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -123,18 +140,21 @@ function HeroBaseStatsTab({ heroId, onHero }: { heroId: number | null; onHero: (
       {statEntries.length === 0 ? (
         <EmptyState title="No numeric base stats" message="This hero's snapshot carries no numeric starting stats." icon="inbox" />
       ) : (
-        <div className="stat-grid">
-          {statEntries.map(([k, v]) => {
-            const label = statLabel(k, v.display_stat_name);
-            return (
-              <div key={k} className="tile statile">
-                <div className="label-xs" title={label} style={{ overflowWrap: 'anywhere', overflow: 'hidden' }}>
-                  {label}
-                </div>
-                <div className="display tnum" style={{ fontSize: 22, fontWeight: 700 }}>{fmtStat(v.value)}</div>
-              </div>
-            );
-          })}
+        <div style={{ display: 'grid', gap: 18 }}>
+          {groups.map((g) => (
+            <section key={g.key}>
+              <div className="label-xs" style={{ marginBottom: 8, color: 'var(--cyan)', letterSpacing: '0.1em' }}>{g.label}</div>
+              <div className="stat-grid">{g.stats.map(tile)}</div>
+            </section>
+          ))}
+          {raw.length > 0 && (
+            <details>
+              <summary className="label-xs" style={{ cursor: 'pointer', color: 'var(--muted)' }}>
+                Raw engine values · {raw.length}
+              </summary>
+              <div className="stat-grid" style={{ marginTop: 12 }}>{raw.map(tile)}</div>
+            </details>
+          )}
         </div>
       )}
     </div>
