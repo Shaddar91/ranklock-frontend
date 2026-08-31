@@ -16,9 +16,11 @@ import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, EmptyState, GameIcon } from './ui/index';
 import { count, DASH, fixed } from '../../lib/format';
 import { statLabel } from '../../lib/statLabel';
-import type { HeroBaseStats, ItemModifier, TrimmedBuild } from '../../types/api';
+import { abilityOrderSequence, formatUpdated, isUpdatedThisPatch, SORT_MODES, type BuildSort } from '../../lib/buildMeta';
+import BuildCreator from './creator/BuildCreator';
+import type { HeroAbility, HeroBaseStats, ItemModifier, TrimmedBuild } from '../../types/api';
 
-type Tab = 'heroes' | 'builds' | 'items';
+type Tab = 'creator' | 'builds' | 'heroes' | 'items';
 
 //snake_case stat key → "Title Case" label. The raw starting_stats keys are an
 //upstream concern; this is a presentational humanization, not invented data.
@@ -139,26 +141,56 @@ function HeroBaseStatsTab({ heroId, onHero }: { heroId: number | null; onHero: (
   );
 }
 
-//---- builds -----------------------------------------------------------------
-//Top community builds for the selected hero — GET /heroes/:id/builds (Redis-
-//cached, ≤20/hero). The endpoint carries no playstyle/role/archetype dimension,
-//so this is honestly labelled "by favorites" and sorted num_favorites-desc; NO
-//playstyle classifier is invented. Empty-states honestly when a hero has none.
+//---- meta tab (builds) ------------------------------------------------------
+//The hero's meta builds — GET /heroes/:id/builds?sort=weekly|favorites. Default is the
+//server's recency-weighted weekly sort (stale-favorites giants demoted); the FE never
+//re-sorts by lifetime favorites. Each card shows only signals the wire carries — weekly +
+//all-time favorites, last update, an "updated this patch" badge, and the learn order drawn
+//with the abilities-route icons. NO win-rate: our matches can't rank builds (items anonymized).
+
+function AbilityOrderRow({ build, abilities }: { build: TrimmedBuild; abilities: Map<number, HeroAbility> }) {
+  const seq = abilityOrderSequence(build.ability_order)
+    .map((id) => abilities.get(id))
+    .filter((a): a is HeroAbility => !!a);
+  if (seq.length === 0) return null;
+  return (
+    <div className="flex" style={{ alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+      <span className="label-xs" style={{ marginRight: 2 }}>Order</span>
+      {seq.map((a, i) => (
+        <span key={`${a.ability_id}-${i}`} className="flex" style={{ alignItems: 'center', gap: 4 }}>
+          <GameIcon kind="item" name={a.name} src={a.icon_url} size={24} />
+          {i < seq.length - 1 && <span className="faint" aria-hidden="true">›</span>}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function HeroBuildsTab({ heroId, onHero }: { heroId: number | null; onHero: (id: number) => void }) {
   const { heroes, isPending: rosterPending, isError: rosterError } = useHeroRoster();
   const active = heroes.find((h) => h.hero_id === heroId) ?? heroes[0] ?? null;
+  const [sort, setSort] = useState<BuildSort>('weekly');
 
   const { data, isPending, isError } = useQuery<TrimmedBuild[]>({
-    queryKey: queryKeys.heroBuilds(active?.hero_id ?? -1),
-    queryFn: () => api.getHeroBuilds(active!.hero_id),
+    queryKey: queryKeys.heroBuilds(active?.hero_id ?? -1, sort),
+    queryFn: () => api.getHeroBuilds(active!.hero_id, sort),
     enabled: active != null,
   });
+  const abilitiesQ = useQuery<HeroAbility[]>({
+    queryKey: queryKeys.heroAbilities(active?.hero_id ?? -1),
+    queryFn: () => api.getHeroAbilities(active!.hero_id),
+    enabled: active != null,
+  });
+  const abilities = useMemo(() => {
+    const m = new Map<number, HeroAbility>();
+    for (const a of abilitiesQ.data ?? []) m.set(a.ability_id, a);
+    return m;
+  }, [abilitiesQ.data]);
 
-  const builds = useMemo(
-    () => [...(data ?? [])].sort((a, b) => (b.num_favorites ?? 0) - (a.num_favorites ?? 0)).slice(0, 20),
-    [data],
-  );
+  //Server order is authoritative (the recency model lives server-side); the FE only caps the list.
+  const builds = useMemo(() => (data ?? []).slice(0, 20), [data]);
+  const nowS = Math.floor(Date.now() / 1000);
+  const patch = active?.patch_id ?? null;
 
   if (rosterPending) return <p className="muted" style={{ padding: '14px 2px' }}>Loading heroes…</p>;
   if (rosterError || heroes.length === 0 || !active) {
@@ -175,26 +207,59 @@ function HeroBuildsTab({ heroId, onHero }: { heroId: number | null; onHero: (id:
     <div>
       <div className="between" style={{ gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
         <HeroSelect heroes={heroes} activeId={active.hero_id} onHero={onHero} />
-        <span className="label-xs">Top community builds (by favorites)</span>
+        <div className="tabs" role="tablist" aria-label="Sort builds">
+          {SORT_MODES.map((m) => (
+            <button
+              key={m.value}
+              type="button"
+              role="tab"
+              aria-selected={sort === m.value}
+              className={'tab' + (sort === m.value ? ' on' : '')}
+              title={m.hint}
+              onClick={() => setSort(m.value)}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
       </div>
       {isPending ? (
         <p className="muted" style={{ padding: '14px 2px' }}>Loading builds…</p>
       ) : isError || builds.length === 0 ? (
         <EmptyState
           title="No community builds for this hero yet"
-          message="Published community builds for this hero will appear here, most-favorited first."
+          message="Published community builds for this hero will appear here — trending first."
           icon="book"
         />
       ) : (
-        <ul style={{ listStyle: 'none', margin: 0, padding: '8px 0' }}>
-          {builds.map((b, i) => (
-            <li key={`${b.name}-${i}`} className="statrow">
-              <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>{b.name}</span>
-              <span className="mono" style={{ fontSize: 12, color: 'var(--gold)' }}>
-                ♥ {count(b.num_favorites)}
-              </span>
-            </li>
-          ))}
+        <ul style={{ listStyle: 'none', margin: 0, padding: '4px 0', display: 'grid', gap: 10 }}>
+          {builds.map((b, i) => {
+            const fresh = isUpdatedThisPatch(b.last_updated_timestamp, patch);
+            return (
+              <li key={`${b.hero_build_id || b.name}-${i}`} className="tile" style={{ padding: '12px 14px' }}>
+                <div className="between" style={{ gap: 10, alignItems: 'baseline', marginBottom: 8 }}>
+                  <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>{b.name}</span>
+                  {fresh && (
+                    <span
+                      className="label-xs"
+                      style={{ padding: '2px 8px', borderRadius: 999, border: '1px solid var(--cyan)', color: 'var(--cyan)', whiteSpace: 'nowrap' }}
+                    >
+                      Updated this patch
+                    </span>
+                  )}
+                </div>
+                <AbilityOrderRow build={b} abilities={abilities} />
+                <div className="between" style={{ gap: 12, marginTop: 8, fontSize: 12 }}>
+                  <span className="mono" title="Weekly favorites — the recency signal" style={{ color: 'var(--gold)' }}>
+                    ♥ {b.num_weekly_favorites == null ? DASH : count(b.num_weekly_favorites)} weekly
+                  </span>
+                  <span className="faint mono">
+                    {b.num_favorites == null ? DASH : count(b.num_favorites)} all-time · updated {formatUpdated(b.last_updated_timestamp, nowS)}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
@@ -298,27 +363,40 @@ function ItemModifiersTab() {
   );
 }
 
+const TABS: { value: Tab; label: string }[] = [
+  { value: 'creator', label: 'Creator' },
+  { value: 'builds', label: 'Meta builds' },
+  { value: 'heroes', label: 'Hero base stats' },
+  { value: 'items', label: 'Item modifiers' },
+];
+
 function BuildLabInner() {
-  const [tab, setTab] = useState<Tab>('heroes');
-  //Island-level hero selection, shared by the base-stats and builds tabs so a
-  //hero picked on one tab stays picked on the other.
+  //Default to the creator so a shared `#b1:` link lands on it (the creator reads the fragment
+  //itself). Fixed for server + client render — no hydration mismatch.
+  const [tab, setTab] = useState<Tab>('creator');
+  //Island-level hero selection, shared by the base-stats and meta-builds tabs so a hero picked
+  //on one stays picked on the other.
   const [heroId, setHeroId] = useState<number | null>(null);
   return (
     <div>
       <div className="tabs" role="tablist" aria-label="Build Lab">
-        <button type="button" role="tab" aria-selected={tab === 'heroes'} className={'tab' + (tab === 'heroes' ? ' on' : '')} onClick={() => setTab('heroes')}>
-          Hero base stats
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'builds'} className={'tab' + (tab === 'builds' ? ' on' : '')} onClick={() => setTab('builds')}>
-          Builds
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'items'} className={'tab' + (tab === 'items' ? ' on' : '')} onClick={() => setTab('items')}>
-          Item modifiers
-        </button>
+        {TABS.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.value}
+            className={'tab' + (tab === t.value ? ' on' : '')}
+            onClick={() => setTab(t.value)}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
       <div style={{ paddingTop: 12 }}>
-        {tab === 'heroes' && <HeroBaseStatsTab heroId={heroId} onHero={setHeroId} />}
+        {tab === 'creator' && <BuildCreator />}
         {tab === 'builds' && <HeroBuildsTab heroId={heroId} onHero={setHeroId} />}
+        {tab === 'heroes' && <HeroBaseStatsTab heroId={heroId} onHero={setHeroId} />}
         {tab === 'items' && <ItemModifiersTab />}
       </div>
     </div>

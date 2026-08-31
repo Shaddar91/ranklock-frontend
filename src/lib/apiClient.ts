@@ -23,6 +23,7 @@ import type {
   EarlyEconVerdictResponse,
   GameMode,
   HealthResponse,
+  HeroAbility,
   HeroBracket,
   HeroCountersResponse,
   HeroItemWinRate,
@@ -58,6 +59,7 @@ import type {
 } from '../types/api';
 //Fills item_name/icon_url the stats endpoints leave null (see itemCatalog.ts).
 import { enrichItems } from './itemCatalog';
+import type { BuildSort } from './buildMeta';
 
 //Public production API base. Overridden at build time by CI via
 //PUBLIC_API_BASE_URL (requirements §A.2 — never a committed .env.production).
@@ -242,7 +244,8 @@ export const queryKeys = {
   heroes: (params?: Query) => ['heroes', params ?? {}] as const,
   heroStats: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
     ['hero', id, 'stats', bracket ?? null, game_mode ?? null] as const,
-  heroBuilds: (id: number) => ['hero', id, 'builds'] as const,
+  heroBuilds: (id: number, sort?: string) => ['hero', id, 'builds', sort ?? 'weekly'] as const,
+  heroAbilities: (id: number) => ['hero', id, 'abilities'] as const,
   heroMatchups: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
     ['hero', id, 'matchups', bracket ?? null, game_mode ?? null] as const,
   heroCounters: (id: number) => ['hero', id, 'counters'] as const,
@@ -260,6 +263,7 @@ export const queryKeys = {
   playerHeroesPlayed: (id: number, game_mode?: GameMode, match_mode?: MatchMode) =>
     ['player', id, 'heroes-played', game_mode ?? null, match_mode ?? null] as const,
   playerBadgeHistory: (id: number) => ['player', id, 'badge-history'] as const,
+  playerBuilds: (id: number) => ['player', id, 'builds'] as const,
   playerPerformance: (id: number, game_mode?: GameMode) =>
     ['player', id, 'performance', game_mode ?? null] as const,
   playerCompare: (id: number, params?: Query) => ['player', id, 'compare', params ?? {}] as const,
@@ -326,7 +330,13 @@ export const api = {
     apiFetch<HeroSummary[]>('/heroes', { query: params }),
   getHeroStats: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
     apiFetch<HeroSummary>(`/heroes/${id}/stats`, { query: { bracket, game_mode } }),
-  getHeroBuilds: (id: number) => apiFetch<TrimmedBuild[]>(`/heroes/${id}/builds`),
+  //Meta list for a hero (C1 76e92bb). `sort=weekly` (default) = weekly_favorites × recency (demotes
+  //stale-favorites giants); `sort=favorites` = the lifetime-popularity list. Cached per sort server-side.
+  getHeroBuilds: (id: number, sort?: BuildSort) =>
+    apiFetch<TrimmedBuild[]>(`/heroes/${id}/builds`, { query: { sort } }),
+  //The hero's abilities (id/name/icon/slot order) — warmed proxy backing the imbue prompt + ability
+  //order rendering. 502 with an empty list when the upstream assets payload is briefly unavailable.
+  getHeroAbilities: (id: number) => apiFetch<HeroAbility[]>(`/heroes/${id}/abilities`),
   getHeroMatchups: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
     apiFetch<MatchupEntry[]>(`/heroes/${id}/matchups`, { query: { bracket, game_mode } }),
   getHeroCounters: (id: number) => apiFetch<HeroCountersResponse>(`/heroes/${id}/counters`),
@@ -370,6 +380,9 @@ export const api = {
   getPlayerHeroesPlayed: (id: number, game_mode?: GameMode, match_mode?: MatchMode) =>
     apiFetch<HeroPlayed[]>(`/players/${id}/heroes-played`, { query: { game_mode, match_mode } }),
   getPlayerBadgeHistory: (id: number) => apiFetch<BadgeHistoryRow[]>(`/players/${id}/badge-history`),
+  //The player's published in-game builds (C1 author_id proxy). Empty array for a player who never
+  //published; suppression-404'd like every by-account surface. Newest-first.
+  getPlayerBuilds: (id: number) => apiFetch<TrimmedBuild[]>(`/players/${id}/builds`),
   getPlayerPerformance: (id: number, game_mode?: GameMode) =>
     apiFetch<PerformanceResponse>(`/players/${id}/performance`, { query: { game_mode } }),
   //Keys MUST be hero_id/league_offset/target_tier to match the backend CompareQuery

@@ -16,8 +16,8 @@ const jsonLd = breadcrumbJsonLd(origin, [
 ---
 
 <BaseLayout
-  title="Deadlock Build Lab — hero base stats & item modifiers | RankLock"
-  description="Inspect Deadlock hero base stats per patch and every buildable item's modifiers — the raw numbers behind theorycrafting builds."
+  title="Deadlock Build Creator & meta builds | RankLock"
+  description="Theorycraft Deadlock builds with a live stat calculator — Weapon, Vitality and Spirit panels, imbues, conditionals and souls cost — then share by link. Plus the trending community meta builds, hero base stats and item modifiers."
   canonicalPath="/build-lab"
   jsonLd={jsonLd}
 >
@@ -25,8 +25,9 @@ const jsonLd = breadcrumbJsonLd(origin, [
     <div class="kicker">Theorycraft</div>
     <h1 class="h-page">Build Lab</h1>
     <p class="page-intro">
-      The raw numbers behind builds — each hero's base starting stats by patch, and every buildable item with its
-      modifiers, slot, tier and cost.
+      Build a loadout in the creator and read its calculated Weapon, Vitality and Spirit stats live, imbues and souls
+      cost included — then share it by link. See the trending community meta builds per hero, each hero's base stats by
+      patch, and every buildable item with its modifiers.
     </p>
     <div style="margin-top:20px;">
       <BuildLabIsland client:load />

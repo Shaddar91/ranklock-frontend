@@ -52,6 +52,11 @@ export function useViewer() {
 export const usePlayer = (id: number) =>
   useQuery({ queryKey: queryKeys.player(id), queryFn: () => api.getPlayer(id), enabled: id > 0 });
 
+//The player's published in-game builds (C1 author_id proxy). UNGATED; retry:false so a
+//never-published empty array or a suppression-404 empty-states fast (not three retries).
+export const usePlayerBuilds = (id: number) =>
+  useQuery({ queryKey: queryKeys.playerBuilds(id), queryFn: () => api.getPlayerBuilds(id), retry: false, enabled: id > 0 });
+
 export const usePlayerMatches = (id: number, limit = 20, game_mode?: string) =>
   useQuery({
     queryKey: queryKeys.playerMatches(id, { limit, game_mode }),

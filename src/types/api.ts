@@ -123,6 +123,11 @@ export interface BuildCategory {
 }
 
 export interface TrimmedBuild {
+  //hero_id/hero_build_id ride the wire from C1 (76e92bb): they key the meta card and are the only
+  //hero signal on the per-author profile list (which spans heroes). #[serde(default)] on the backend
+  //means a pre-C1 cached blob decodes them as 0.
+  hero_id: number;
+  hero_build_id: number;
   name: string;
   author_account_id: number;
   version: number;
@@ -131,6 +136,19 @@ export interface TrimmedBuild {
   last_updated_timestamp: number | null;
   ability_order?: unknown;
   categories: BuildCategory[];
+}
+
+//GET /heroes/:id/abilities (C1) — the hero's abilities (id/name/icon/slot + computed order), a
+//warmed slim of the assets hero payload joined to the ability catalog. Slots with no catalog
+//ability are dropped server-side.
+export interface HeroAbility {
+  ability_id: number;
+  class_name: string;
+  slot: string;
+  order: number;
+  name: string;
+  icon_url?: string | null;
+  ability_type?: string | null;
 }
 
 //---- items (GET /items/stats) -----------------------------------------------

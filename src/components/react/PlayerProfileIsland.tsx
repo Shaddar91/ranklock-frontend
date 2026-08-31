@@ -20,10 +20,11 @@ import PlayerHeader from './player/PlayerHeader';
 import MatchModeToggle from './ui/MatchModeToggle';
 import { CategorizedSection, CoachingPanel, EconomyPanel, PlaystyleRadarPanel } from './player/AnalyticsPanels';
 import { ComparePanel, HeroLedgerPanel, PerformancePanel, ReadinessCard, RecentMatchesPanel } from './player/PlayerTabs';
+import PlayerBuildsPanel from './player/PlayerBuildsPanel';
 import { usePlayer, usePlayerHeroes, usePlayerId, usePlayerMatches, usePlayerPerformance, useViewer } from './player/usePlayer';
 import type { PerformanceResponse } from '../../types/api';
 
-const TABS = ['Overview', 'Matches', 'Performance', 'Heroes', 'Coaching', 'Compare'] as const;
+const TABS = ['Overview', 'Matches', 'Performance', 'Heroes', 'Builds', 'Coaching', 'Compare'] as const;
 type Tab = (typeof TABS)[number];
 
 //"Top N%" from the most-sampled bracket's served win-rate percentile (null when
@@ -116,6 +117,7 @@ function PlayerProfileInner() {
         </>
       )}
       {tab === 'Heroes' && <HeroLedgerPanel id={id} />}
+      {tab === 'Builds' && <PlayerBuildsPanel id={id} />}
       {tab === 'Coaching' && (
         <div className="grid">
           <CoachingPanel id={id} />
