@@ -44,6 +44,9 @@ export default function AdSlot({ kind = 'banner', adSlot }: AdSlotProps) {
     pushAd();
   }, [showAd]);
 
+  //No configured ad unit -> render nothing at all (owner 2026-08-31: no empty frames).
+  if (!showAd) return null;
+
   if (showAd) {
     return (
       <ins
