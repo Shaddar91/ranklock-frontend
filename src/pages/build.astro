@@ -2,10 +2,9 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import BuildLabIsland from '../components/react/BuildLabIsland';
 
-//Shared-build landing SHELL: a noindex surface for `#b1:<payload>` share links,
-//kept off the indexable /build-lab meta page. The per-build OG card is deferred,
-//so og:image stays the generic default; the island reads the fragment client-side
-//and names the hero in the tab title.
+//Shared-build landing SHELL: a noindex surface for `#b1:<payload>` share links, kept
+//off the indexable /build-lab meta page. The per-build OG card is deferred, so og:image
+//stays the generic default; the island reads the fragment and names the hero in the tab.
 ---
 
 <BaseLayout
