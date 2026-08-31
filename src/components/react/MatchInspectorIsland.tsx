@@ -39,7 +39,7 @@ function MatchInspectorInner() {
 
   return (
     <div className="container" style={{ marginTop: 18 }}>
-      <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="panel catpanel" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="cat-h">
           <span className="display" style={{ flex: 1 }}>
             Inspector · all players

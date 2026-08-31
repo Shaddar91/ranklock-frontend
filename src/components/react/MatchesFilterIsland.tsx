@@ -17,6 +17,10 @@ function winnerLabel(team: number | null): string {
 export default function MatchesFilterIsland({ matches }: { matches: MatchRow[] }) {
   const [slug, setSlug] = useState<MatchesModeSlug>('normal');
   const rows = filterMatchRows(matches, slug);
+  //average_badge_team0/1 is the rank block, which is not ingested (re-fold skip-list #5),
+  //so it is 0/null (no rank) on every row — hide the two rank columns until real badges
+  //land (rankFromBadge is the same real-rank test badgeLabel uses; they self-restore then).
+  const hasTeamBadges = rows.some((m) => rankFromBadge(m.average_badge_team0) != null || rankFromBadge(m.average_badge_team1) != null);
 
   return (
     <div>
@@ -43,8 +47,8 @@ export default function MatchesFilterIsland({ matches }: { matches: MatchRow[] }
                 <tr>
                   <th><span className="th-static">Match</span></th>
                   <th><span className="th-static">Mode</span></th>
-                  <th><span className="th-static">Amber rank</span></th>
-                  <th><span className="th-static">Sapphire rank</span></th>
+                  {hasTeamBadges && <th><span className="th-static">Amber rank</span></th>}
+                  {hasTeamBadges && <th><span className="th-static">Sapphire rank</span></th>}
                   <th className="num"><span className="th-static">Duration</span></th>
                   <th><span className="th-static">Result</span></th>
                 </tr>
@@ -74,8 +78,8 @@ export default function MatchesFilterIsland({ matches }: { matches: MatchRow[] }
                           )}
                         </div>
                       </td>
-                      <td><span className="amber-c">{badgeLabel(m.average_badge_team0)}</span></td>
-                      <td><span className="sap-c">{badgeLabel(m.average_badge_team1)}</span></td>
+                      {hasTeamBadges && <td><span className="amber-c">{badgeLabel(m.average_badge_team0)}</span></td>}
+                      {hasTeamBadges && <td><span className="sap-c">{badgeLabel(m.average_badge_team1)}</span></td>}
                       <td className="num"><span className="tnum">{duration(m.duration_s)}</span></td>
                       <td>
                         <span className={'chip' + (m.winning_team === 0 ? ' gold' : '')}>{winnerLabel(m.winning_team)} win</span>

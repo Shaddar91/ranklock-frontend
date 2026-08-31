@@ -6,6 +6,7 @@
 //big-enough sample (MIN_PERCENTILE_SAMPLE), and the
 //"My Stats" chip only when the signed-in viewer owns this account (auth branch).
 import { Chip, GameIcon, FormDots, Icon, RankBadge } from '../ui/index';
+import ShareLinkButton from '../ui/ShareLinkButton';
 import { resolveAsset } from '../../../lib/assets';
 import { cssVars } from '../../../lib/cssVars';
 import { count, pct } from '../../../lib/format';
@@ -70,6 +71,7 @@ export default function PlayerHeader({ player, heroes, formWins, topPercentile, 
                   <Icon name="trophy" size={12} /> Top {topPercentile}%
                 </span>
               )}
+              <ShareLinkButton url={`https://ranklock.app/players/${player.account_id}/`} />
             </div>
             <div className="flex" style={{ alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
               {rk && (
