@@ -7,6 +7,7 @@ import { itemNarrative, type ItemHeroRow, type ItemPeer } from '../../lib/itemNa
 import { toPct, type Section } from '../../lib/narrative';
 import Narrative from '../../components/Narrative.astro';
 import WinRate from '../../components/WinRate.astro';
+import GameArt from '../../components/GameArt.astro';
 import { breadcrumbJsonLd } from '../../lib/seo';
 import { count, pct } from '../../lib/format';
 import { resolveAsset } from '../../lib/assets';
@@ -149,15 +150,7 @@ const slotLabel = item?.slot ? item.slot.charAt(0).toUpperCase() + item.slot.sli
       item ? (
         <div>
           <div class="entity-head">
-            <span class="entity-art">
-              {item.icon ? (
-                <img src={item.icon} alt={name} />
-              ) : (
-                <span class="icon-mono" style="font-size:32px; display:flex; width:100%; height:100%; align-items:center; justify-content:center;">
-                  {name.slice(0, 1)}
-                </span>
-              )}
-            </span>
+            <GameArt name={name} src={item.icon} wrapClass="entity-art" fontSize={32} eager />
             <div>
               <div class="kicker">Item · Deadlock{slotLabel ? ` · ${slotLabel}` : ''}</div>
               <h1 class="h-page">{name}</h1>

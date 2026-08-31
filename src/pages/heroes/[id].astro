@@ -5,7 +5,7 @@ import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
 import { breadcrumbJsonLd } from '../../lib/seo';
 import { count, fixed, kda, metaTier, pct, shortDate } from '../../lib/format';
-import { resolveAsset } from '../../lib/assets';
+import GameArt from '../../components/GameArt.astro';
 import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
 import Narrative from '../../components/Narrative.astro';
@@ -129,15 +129,7 @@ const sections = hero
       hero ? (
         <div>
           <div class="entity-head">
-            <span class="entity-art">
-              {hero.icon_url ? (
-                <img src={resolveAsset(hero.icon_url)} alt={name} />
-              ) : (
-                <span class="icon-mono" style="font-size:32px; display:flex; width:100%; height:100%; align-items:center; justify-content:center;">
-                  {name.slice(0, 1)}
-                </span>
-              )}
-            </span>
+            <GameArt name={name} src={hero.icon_url} wrapClass="entity-art" fontSize={32} eager />
             <div>
               <div class="kicker">Hero · Deadlock</div>
               <h1 class="h-page">{name}</h1>
@@ -229,13 +221,7 @@ const sections = hero
                           <tr>
                             <td>
                               <span class="flex" style="align-items:center; gap:10px;">
-                                <span class="hav" style="width:28px; height:28px;" title={partnerName}>
-                                  {partner?.icon_url ? (
-                                    <img src={resolveAsset(partner.icon_url)} alt={partnerName} loading="lazy" />
-                                  ) : (
-                                    <span class="icon-mono" style="font-size:12px;" aria-hidden="true">{partnerName.slice(0, 1)}</span>
-                                  )}
-                                </span>
+                                <GameArt name={partnerName} src={partner?.icon_url} wrapClass="hav" wrapStyle="width:28px; height:28px;" />
                                 <span class="display" style="font-weight:600; color:var(--text);">with {partnerName}</span>
                               </span>
                             </td>
@@ -271,13 +257,7 @@ const sections = hero
                           <tr>
                             <td>
                               <span class="flex" style="align-items:center; gap:10px;">
-                                <span class="iicon" style="width:28px; height:28px;" title={itemName}>
-                                  {r.icon_url ? (
-                                    <img src={r.icon_url} alt={itemName} loading="lazy" />
-                                  ) : (
-                                    <span class="icon-mono" style="font-size:12px;" aria-hidden="true">{itemName.slice(0, 1)}</span>
-                                  )}
-                                </span>
+                                <GameArt name={itemName} src={r.icon_url} wrapClass="iicon" wrapStyle="width:28px; height:28px;" />
                                 <span class="display" style="font-weight:600; color:var(--text);">{itemName}</span>
                               </span>
                             </td>

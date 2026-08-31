@@ -1,0 +1,31 @@
+---
+//SSR twin of the React GameIcon (components/react/ui/GameIcon.tsx) for .astro pages:
+//hero/item art with a monogram fallback that fires when src is absent OR fails to load,
+//so a missing CDN asset never leaves a broken-image glyph. Only client code is the inline onerror.
+import { resolveAsset } from '../lib/assets';
+
+interface Props {
+  name: string;
+  src?: string | null;
+  wrapClass: string;
+  wrapStyle?: string;
+  fontSize?: number;
+  eager?: boolean;
+}
+
+const { name, src, wrapClass, wrapStyle, fontSize = 12, eager = false } = Astro.props;
+const url = resolveAsset(src ?? null);
+const monoFill = `width:100%;height:100%;align-items:center;justify-content:center;font-size:${fontSize}px`;
+---
+
+<span class={wrapClass} style={wrapStyle} title={name}>
+  {url && (
+    <img
+      src={url}
+      alt={name}
+      loading={eager ? 'eager' : 'lazy'}
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+    />
+  )}
+  <span class="icon-mono" style={`display:${url ? 'none' : 'flex'};${monoFill}`} aria-hidden="true">{name.slice(0, 1)}</span>
+</span>

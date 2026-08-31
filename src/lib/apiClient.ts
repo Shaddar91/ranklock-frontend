@@ -58,7 +58,7 @@ import type {
   TrimmedBuild,
 } from '../types/api';
 //Fills item_name/icon_url the stats endpoints leave null (see itemCatalog.ts).
-import { enrichItems } from './itemCatalog';
+import { enrichItems, isPublicItem } from './itemCatalog';
 import type { BuildSort } from './buildMeta';
 
 //Public production API base. Overridden at build time by CI via
@@ -472,7 +472,7 @@ export const api = {
   getHeroBaseStatsOne: (id: number, patch_id?: string) =>
     apiFetch<HeroBaseStats>(`/heroes/${id}/base-stats`, { query: { patch_id } }),
   getItemModifiers: (params?: { slot?: string; tier?: number }) =>
-    apiFetch<ItemModifier[]>('/items/modifiers', { query: params }),
+    apiFetch<ItemModifier[]>('/items/modifiers', { query: params }).then((rows) => rows.filter((r) => isPublicItem(r.item_id))),
 
   //Lane Lab (rich-analytics tier — RICH_ANALYTICS_ENABLED gate), served by deadlock-backend
   //(`laneLabFetch` resolves to the main API unless PUBLIC_LANE_LAB_BASE_URL overrides it). `band`

@@ -8,7 +8,7 @@ import { getCollection } from 'astro:content';
 import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { count, shortDate } from '../lib/format';
-import { resolveAsset } from '../lib/assets';
+import GameArt from '../components/GameArt.astro';
 import { websiteJsonLd, orgJsonLd, SITE_TAGLINE } from '../lib/seo';
 import { AD_SLOTS } from '../config/artDirection';
 import AdSlot from '../components/react/ui/AdSlot';
@@ -94,9 +94,7 @@ const entries = [
               {topHeroes.slice(0, 3).map((h) => (
                 <div class="flex" style="align-items:center; gap:10px;">
                   {h.icon_url && (
-                    <span class="hav" style="width:28px; height:28px;">
-                      <img src={resolveAsset(h.icon_url)} alt={h.hero_name} loading="lazy" />
-                    </span>
+                    <GameArt name={h.hero_name} src={h.icon_url} wrapClass="hav" wrapStyle="width:28px; height:28px;" />
                   )}
                   <a
                     href={`/heroes/${h.hero_id}/`}
@@ -162,9 +160,7 @@ const entries = [
                     <td>
                       <a href={`/heroes/${h.hero_id}/`} class="flex" style="align-items:center; gap:10px; text-decoration:none;">
                         {h.icon_url && (
-                          <span class="hav" style="width:30px; height:30px;">
-                            <img src={resolveAsset(h.icon_url)} alt={h.hero_name} loading="lazy" />
-                          </span>
+                          <GameArt name={h.hero_name} src={h.icon_url} wrapClass="hav" wrapStyle="width:30px; height:30px;" fontSize={13} />
                         )}
                         <span class="display" style="font-weight:600; color:var(--text);">{h.hero_name}</span>
                       </a>

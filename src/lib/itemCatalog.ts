@@ -14,6 +14,12 @@
 import catalog from '../data/items-catalog.json';
 import { resolveAsset } from './assets';
 
+//Internal/unreleased tuning items — the only /items entries (3 of 251) with no shop icon and 0 recorded matches; Valve never ships them in the shop, so they stay out of the public buildable-item catalog (task ranklock-items-assets-fix).
+export const INTERNAL_ITEM_IDS = new Set<number>([4284855775, 3449296332, 2861048274]);
+export function isPublicItem(id: number | null | undefined): boolean {
+  return id == null || !INTERNAL_ITEM_IDS.has(id);
+}
+
 export interface ItemMeta {
   name: string;
   icon: string | null;
