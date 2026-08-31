@@ -7,7 +7,7 @@ describe('compareShareUrl', () => {
   });
 
   it('builds the site-relative path', () => {
-    expect(compareSharePath(1, 2)).toBe('/compare/1/2');
+    expect(compareSharePath(1, 2)).toBe('/compare/1/2/');
   });
 });
 

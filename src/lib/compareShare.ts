@@ -2,7 +2,7 @@
 import { SITE_ORIGIN } from './seo';
 
 export function compareSharePath(me: number, vs: number): string {
-  return `/compare/${me}/${vs}`;
+  return `/compare/${me}/${vs}/`;
 }
 
 export function compareShareUrl(me: number, vs: number): string {
