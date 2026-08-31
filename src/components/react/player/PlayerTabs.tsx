@@ -22,6 +22,8 @@ import { PlayerScopeControls } from './PlayerScopeControls';
 import { MIN_PERCENTILE_SAMPLE, percentileOrdinal } from '../../../lib/percentile';
 import { count, DASH, duration, fixed, kda, pct, shortDate } from '../../../lib/format';
 import { gameModeLabel, isRanked, slugToGameMode, type MatchesModeSlug } from '../../../lib/matchesMode';
+import { filterRowsByRanked } from '../../../lib/matchesRanked';
+import { useMatchesRanked } from '../../../lib/useMatchesRanked';
 import type { HeroLedgerRow, PlayerMatchRow, ReadinessMetric, SearchResult } from '../../../types/api';
 
 //---- recent matches ---------------------------------------------------------
@@ -56,36 +58,53 @@ export function RecentMatchesPanel({ id }: { id: number }) {
   }
 
   const game_mode = slugToGameMode(slug);
+  const { ranked, setRanked } = useMatchesRanked();
   const { data, isPending, isError } = usePlayerMatches(id, 25, game_mode);
   //borrow icon_url from the hero ledger (PlayerMatchRow carries no icon).
   const heroes = usePlayerHeroes(id).data ?? [];
   const iconOf = new Map(heroes.map((h) => [h.hero_id, h.icon_url] as const));
-  const rows = data ?? [];
+  //client-filter the fetched page by match_mode (rows carry it), mirroring the /matches list.
+  const rows = filterRowsByRanked(data ?? [], ranked);
 
-  const toggle = (
-    <div className="brkfilter gm-toggle" role="group" aria-label="Match mode" style={{ marginBottom: 12 }}>
-      {(['normal', 'brawl', 'all'] as const).map((s) => (
-        <button
-          key={s}
-          type="button"
-          className={'minitog' + (slug === s ? ' on' : '')}
-          aria-pressed={slug === s}
-          onClick={() => setSlug(s)}
-        >
-          {s === 'normal' ? 'Normal' : s === 'brawl' ? 'Brawl' : 'All'}
-        </button>
-      ))}
+  const controls = (
+    <div className="flex" style={{ gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+      <div className="brkfilter gm-toggle" role="group" aria-label="Match mode">
+        {(['normal', 'brawl', 'all'] as const).map((s) => (
+          <button
+            key={s}
+            type="button"
+            className={'minitog' + (slug === s ? ' on' : '')}
+            aria-pressed={slug === s}
+            onClick={() => setSlug(s)}
+          >
+            {s === 'normal' ? 'Normal' : s === 'brawl' ? 'Brawl' : 'All'}
+          </button>
+        ))}
+      </div>
+      <div className="brkfilter gm-toggle" role="group" aria-label="Ranked filter">
+        {(['any', 'ranked', 'unranked'] as const).map((r) => (
+          <button
+            key={r}
+            type="button"
+            className={'minitog' + (ranked === r ? ' on' : '')}
+            aria-pressed={ranked === r}
+            onClick={() => setRanked(r)}
+          >
+            {r === 'any' ? 'Any' : r === 'ranked' ? 'Ranked' : 'Unranked'}
+          </button>
+        ))}
+      </div>
     </div>
   );
 
-  if (isPending) return <div>{toggle}<p className="muted">Loading matches…</p></div>;
+  if (isPending) return <div>{controls}<p className="muted">Loading matches…</p></div>;
   if (isError) {
     return <EmptyState title="No matches yet" message="Recent matches appear here once this player's match history is ingested." icon="swords" />;
   }
 
   return (
     <div>
-      {toggle}
+      {controls}
       {rows.length === 0 ? (
         <EmptyState title="No matches" message="No matches for this filter." icon="swords" />
       ) : (

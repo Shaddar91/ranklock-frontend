@@ -3,9 +3,9 @@
 //URL so its API calls are byte-identical to pre-047. Pure URL<->mode mapping lives in matchMode.ts.
 import { useCallback, useSyncExternalStore } from 'react';
 import type { MatchMode } from '../types/api';
-import { DEFAULT_MATCH_MODE, MATCH_MODE_PARAM, matchModeFromParam, matchModeToParam } from './matchMode';
+import { DEFAULT_MATCH_MODE, MATCH_MODE_CHANGE_EVENT, MATCH_MODE_PARAM, matchModeFromParam, matchModeToParam } from './matchMode';
 
-const CHANGE_EVENT = 'ranklock:matchmode';
+const CHANGE_EVENT = MATCH_MODE_CHANGE_EVENT;
 
 function readFromUrl(): MatchMode {
   if (typeof window === 'undefined') return DEFAULT_MATCH_MODE;

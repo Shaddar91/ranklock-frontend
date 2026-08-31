@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { duration, shortDate } from '../../lib/format';
 import { rankFromBadge, subLabel } from '../../lib/ranks';
 import { filterMatchRows, gameModeLabel, isRanked, type MatchesModeSlug } from '../../lib/matchesMode';
+import { filterRowsByRanked } from '../../lib/matchesRanked';
+import { useMatchesRanked } from '../../lib/useMatchesRanked';
 import type { Badge, MatchRow } from '../../types/api';
 
 function badgeLabel(b: Badge): string {
@@ -16,7 +18,8 @@ function winnerLabel(team: number | null): string {
 
 export default function MatchesFilterIsland({ matches }: { matches: MatchRow[] }) {
   const [slug, setSlug] = useState<MatchesModeSlug>('normal');
-  const rows = filterMatchRows(matches, slug);
+  const { ranked: rankedFilter, setRanked } = useMatchesRanked();
+  const rows = filterRowsByRanked(filterMatchRows(matches, slug), rankedFilter);
   //average_badge_team0/1 is the rank block, which is not ingested (re-fold skip-list #5),
   //so it is 0/null (no rank) on every row — hide the two rank columns until real badges
   //land (rankFromBadge is the same real-rank test badgeLabel uses; they self-restore then).
@@ -24,18 +27,33 @@ export default function MatchesFilterIsland({ matches }: { matches: MatchRow[] }
 
   return (
     <div>
-      <div className="brkfilter gm-toggle" role="group" aria-label="Match mode" style={{ marginBottom: 12 }}>
-        {(['normal', 'brawl', 'all'] as const).map((s) => (
-          <button
-            key={s}
-            type="button"
-            className={'minitog' + (slug === s ? ' on' : '')}
-            aria-pressed={slug === s}
-            onClick={() => setSlug(s)}
-          >
-            {s === 'normal' ? 'Normal' : s === 'brawl' ? 'Brawl' : 'All'}
-          </button>
-        ))}
+      <div className="flex" style={{ gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+        <div className="brkfilter gm-toggle" role="group" aria-label="Match mode">
+          {(['normal', 'brawl', 'all'] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={'minitog' + (slug === s ? ' on' : '')}
+              aria-pressed={slug === s}
+              onClick={() => setSlug(s)}
+            >
+              {s === 'normal' ? 'Normal' : s === 'brawl' ? 'Brawl' : 'All'}
+            </button>
+          ))}
+        </div>
+        <div className="brkfilter gm-toggle" role="group" aria-label="Ranked filter">
+          {(['any', 'ranked', 'unranked'] as const).map((r) => (
+            <button
+              key={r}
+              type="button"
+              className={'minitog' + (rankedFilter === r ? ' on' : '')}
+              aria-pressed={rankedFilter === r}
+              onClick={() => setRanked(r)}
+            >
+              {r === 'any' ? 'Any' : r === 'ranked' ? 'Ranked' : 'Unranked'}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
         {rows.length === 0 ? (

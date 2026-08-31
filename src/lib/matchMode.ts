@@ -3,6 +3,7 @@ import type { MatchMode } from '../types/api';
 
 export const DEFAULT_MATCH_MODE: MatchMode = 'Unranked';
 export const MATCH_MODE_PARAM = 'ranked';
+export const MATCH_MODE_CHANGE_EVENT = 'ranklock:matchmode';
 
 export function matchModeFromParam(raw: string | null | undefined): MatchMode {
   if (raw == null) return DEFAULT_MATCH_MODE;
