@@ -15,6 +15,8 @@ import { api, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClie
 import { rankFromBadge } from '../../../lib/ranks';
 import { scopeCaption, scopeParams, type PlayerScope } from '../../../lib/playerScope';
 import { compareShareUrl } from '../../../lib/compareShare';
+import { useGameMode } from '../../../lib/useGameMode';
+import { useMatchMode } from '../../../lib/useMatchMode';
 import { usePlayerScope } from './usePlayerScope';
 import { PlayerScopeControls } from './PlayerScopeControls';
 import { MIN_PERCENTILE_SAMPLE, percentileOrdinal } from '../../../lib/percentile';
@@ -360,11 +362,13 @@ const TARGET_OPTIONS: ReadonlyArray<readonly [string, string]> = [
 
 //Copies the canonical /compare/{me}/{vs} permalink; the label flip is the same
 //copied affordance the donate copy button uses.
-function ShareCompareButton({ me, vs }: { me: number; vs: number }) {
+function ShareCompareButton({ me, vs, heroId }: { me: number; vs: number; heroId: number }) {
+  const { mode } = useGameMode();
+  const { matchMode } = useMatchMode();
   const [copied, setCopied] = useState(false);
   function share() {
     try {
-      void navigator.clipboard?.writeText(compareShareUrl(me, vs));
+      void navigator.clipboard?.writeText(compareShareUrl(me, vs, { hero_id: heroId, game_mode: mode, match_mode: matchMode }));
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -444,7 +448,7 @@ export function PairCompareView({
           {cmpData.hero_name} · {youText} ({cmpData.you.tier_name}) vs {vsName} ({cmpData.them.tier_name})
         </span>
         <div className="flex" style={{ alignItems: 'center', gap: 8 }}>
-          <ShareCompareButton me={id} vs={vsId} />
+          <ShareCompareButton me={id} vs={vsId} heroId={scope.hero_id} />
           <Chip tone={cmpData.efficiency.standing === 'ahead' ? 'win' : cmpData.efficiency.standing === 'behind' ? 'loss' : 'neutral'}>
             {cmpData.efficiency.standing}
           </Chip>

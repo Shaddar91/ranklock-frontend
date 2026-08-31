@@ -3,8 +3,12 @@
 import { useRef, useState } from 'react';
 import { DEFAULT_SCOPE, type PlayerScope, type PlayerScopeKind } from '../../../lib/playerScope';
 
-export function usePlayerScope() {
-  const [scope, setScope] = useState<PlayerScope>(DEFAULT_SCOPE);
+//initialHeroId seeds the hero scope from a shared /compare link (0 = all heroes);
+//it only sets the FIRST render's hero, after which the picker owns the state.
+export function usePlayerScope(initialHeroId = 0) {
+  const [scope, setScope] = useState<PlayerScope>(() =>
+    initialHeroId > 0 ? { ...DEFAULT_SCOPE, hero_id: initialHeroId } : DEFAULT_SCOPE,
+  );
   const lastN = useRef<{ games: number | 'all'; days: number }>({ games: DEFAULT_SCOPE.n, days: 30 });
 
   const setKind = (kind: PlayerScopeKind) =>

@@ -1,16 +1,55 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import CompareIsland from '../../../components/react/CompareIsland';
+import { api } from '../../../lib/apiClient';
+import { buildFetch } from '../../../lib/buildData';
+import { rankFromBadge, subLabel } from '../../../lib/ranks';
 
-//Shareable compare permalink SHELL: one Worker route serves every pair
-//(`prerender = false`, no per-pair SSG); noindex — an OG share surface, not an
-//SEO page; og:image is the per-pair card on og.ranklock.app.
+//Shareable compare permalink SHELL (`prerender=false`, noindex): one Worker route
+//per pair. Names+ranks fetched server-side for the unfurl; the tab selection
+//(hero+mode) rides the query into the island AND the OG card. Fallback never blocks.
 export const prerender = false;
+
 const { a, b } = Astro.params;
+const q = Astro.url.searchParams;
+
+function posInt(raw: string | null | undefined): number | undefined {
+  const n = Number(raw);
+  return raw != null && Number.isInteger(n) && n > 0 ? n : undefined;
+}
+const heroId = posInt(q.get('hero'));
+const ranked = /^(1|true|ranked)$/i.test((q.get('ranked') ?? '').trim());
+const brawl = (q.get('mode') ?? '').trim().toLowerCase() === 'brawl';
+
+//Name + current rank per side for the unfurl; a failed/absent fetch leaves the
+//side null and the generic strings win — the live view still loads client-side.
+async function nameRank(id: string | undefined): Promise<{ name: string; rank: string } | null> {
+  const n = posInt(id);
+  if (!n) return null;
+  const p = await buildFetch(api.getPlayer(n), null);
+  if (!p) return null;
+  const r = rankFromBadge(p.badge);
+  return { name: p.steam_name, rank: r ? subLabel(r.tier, r.sub) : 'Unranked' };
+}
+const [pa, pb] = await Promise.all([nameRank(a), nameRank(b)]);
+
+const named = pa && pb;
+const title = named ? `${pa.name} vs ${pb.name} — Player compare` : 'Player compare — RankLock';
+//undefined → BaseLayout/Seo fall back to the generic site description.
+const description = named ? `${pa.name} (${pa.rank}) vs ${pb.name} (${pb.rank}) on RankLock` : undefined;
+
+//Translate the site's selection slugs → the OG card's ComparePlayerQuery param
+//names (mirror C1) so the card renders the same hero/mode that was on screen.
+const og = new URLSearchParams();
+if (heroId) og.set('hero_id', String(heroId));
+if (brawl) og.set('game_mode', 'StreetBrawl');
+if (ranked) og.set('match_mode', 'Ranked');
+const ogq = og.toString();
+const image = `https://og.ranklock.app/og/compare/${a}/${b}${ogq ? `?${ogq}` : ''}`;
 ---
 
-<BaseLayout title="Player compare — RankLock" noindex={true} image={`https://og.ranklock.app/og/compare/${a}/${b}`}>
+<BaseLayout title={title} description={description} noindex={true} image={image}>
   <main class="wrap">
-    <CompareIsland client:only="react" />
+    <CompareIsland client:only="react" initialHeroId={heroId ?? 0} />
   </main>
 </BaseLayout>

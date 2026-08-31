@@ -1,6 +1,9 @@
 //Compare permalink island: mounted client:only on compare/[a]/[b].astro; reads
 //both account ids from the URL and hosts the profile ComparePanel pair
-//machinery (PairCompareView) with the pair preloaded.
+//machinery (PairCompareView) with the pair preloaded. The shell forwards the
+//shared hero selection as `initialHeroId`; the game/match mode selection rides
+//the URL (?mode/?ranked) that useGameMode/useMatchMode already read inside
+//useComparePlayer, so the reopened view mirrors what the sharer had on screen.
 import { useEffect, useState } from 'react';
 import QueryProvider from './QueryProvider';
 import { EmptyState } from './ui/index';
@@ -17,9 +20,9 @@ function usePairIds(): { a: number; b: number } | null | undefined {
   return pair;
 }
 
-function CompareInner() {
+function CompareInner({ initialHeroId }: { initialHeroId: number }) {
   const pair = usePairIds();
-  const { scope, setKind, setN, setHero } = usePlayerScope();
+  const { scope, setKind, setN, setHero } = usePlayerScope(initialHeroId);
   const aProfile = usePlayer(pair?.a ?? 0);
   const bProfile = usePlayer(pair?.b ?? 0);
 
@@ -70,10 +73,10 @@ function CompareInner() {
   );
 }
 
-export default function CompareIsland() {
+export default function CompareIsland({ initialHeroId = 0 }: { initialHeroId?: number }) {
   return (
     <QueryProvider>
-      <CompareInner />
+      <CompareInner initialHeroId={initialHeroId} />
     </QueryProvider>
   );
 }

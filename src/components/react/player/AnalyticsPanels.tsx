@@ -88,6 +88,8 @@ function Loading({ label }: { label: string }) {
 //is added — the overlay's you side is the solo side under the same scope.
 export function PlaystyleRadarPanel({ id }: { id: number }) {
   const { scope, setKind, setN, setHero } = usePlayerScope();
+  const { mode } = useGameMode();
+  const { matchMode } = useMatchMode();
   const params = scopeParams(scope);
   //Scoped own shape (hero_id always sent; 0 = all heroes) — a NEW query key,
   //separate from the no-param useCompare the Categorized-performance panels read.
@@ -290,7 +292,11 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
                   Clear
                 </button>
               )}
-              {picked && <ShareLinkButton url={compareShareUrl(id, picked.account_id)} />}
+              {picked && (
+                <ShareLinkButton
+                  url={compareShareUrl(id, picked.account_id, { hero_id: scope.hero_id, game_mode: mode, match_mode: matchMode })}
+                />
+              )}
             </div>
           </div>
         </>
