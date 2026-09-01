@@ -71,20 +71,23 @@ def download(url: str, dest: str, force: bool) -> str:
 
 
 def iter_image_urls(entry: dict, formats: set[str]):
-    """Yield image URLs from an entry's 'image' (str) or 'images' (dict)."""
-    img = entry.get("image")
-    if isinstance(img, str) and img.startswith("http"):
-        yield img
-    images = entry.get("images") or {}
-    if isinstance(images, dict):
-        for url in images.values():
-            if not (isinstance(url, str) and url.startswith("http")):
+    """Yield every upstream image URL anywhere in an entry (image, image_webp, shop_image*,
+    the images{} dict, nested fields): the app links whatever field the API serves, so the
+    mirror must hold them all."""
+    stack = [entry]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, dict):
+            stack.extend(node.values())
+        elif isinstance(node, list):
+            stack.extend(node)
+        elif isinstance(node, str) and node.startswith("http") and "/images/" in node:
+            ext = node.split("?", 1)[0].rsplit(".", 1)[-1].lower()
+            if ext not in ("png", "webp", "svg", "jpg"):
                 continue
-            ext = url.rsplit(".", 1)[-1].lower()
-            # If a format filter is set, keep only matching extensions.
             if formats and ext not in formats:
                 continue
-            yield url
+            yield node
 
 
 def rel_path(url: str) -> str:
