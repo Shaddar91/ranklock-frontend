@@ -76,6 +76,9 @@ body {
   animation: bgfade 0.8s ease;
   /* isolate the filtered layer's paint so a hero swap can't smear the old plate */
   contain: paint;
+  /* some opt plates bake a corrupt rainbow strip into their rightmost ~13% (cover maps it to the viewport's right edge); fade the plate out before it so only clean art reaches the edge. */
+  -webkit-mask-image: linear-gradient(to right, #000 0 76%, transparent 86%);
+  mask-image: linear-gradient(to right, #000 0 76%, transparent 86%);
 }
 /* narrow viewports paint the small optimized plate when HeroBackdrop sets
    --atmos-bg-sm (our base only); upstream base falls back to --atmos-bg. */
