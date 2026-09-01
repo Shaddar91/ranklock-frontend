@@ -18,7 +18,15 @@ def process(png_path: str, out_dir: str) -> tuple[int, int, int]:
     written = skipped = nbytes = 0
     notes = []
     with Image.open(png_path) as im:
-        im = im.convert("RGB")
+        # Flatten onto black: the upstream PNGs keep garbage RGB under alpha=0 (haze's right
+        # edge), and a bare convert("RGB") exposes it as a rainbow strip in the served plate.
+        if im.mode in ("RGBA", "LA", "P"):
+            rgba = im.convert("RGBA")
+            flat = Image.new("RGBA", rgba.size, (0, 0, 0, 255))
+            flat.alpha_composite(rgba)
+            im = flat.convert("RGB")
+        else:
+            im = im.convert("RGB")
         src_w, src_h = im.size
         for w in WIDTHS:
             out = os.path.join(out_dir, f"{stem}_{w}.webp")

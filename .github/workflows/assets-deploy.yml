@@ -50,6 +50,7 @@ jobs:
           n=$(find public -type f | wc -l)
           echo "bundle file count: $n"
           [ "$n" -ge 1000 ] || { echo "FAIL: bundle too small ($n files)"; exit 1; }
+          python3 scripts/verify_bundle.py public
 
       - name: Deploy to Cloudflare (Workers Static Assets)
         uses: cloudflare/wrangler-action@v3

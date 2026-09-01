@@ -152,7 +152,11 @@ def main() -> int:
     print(f"\nTOTAL: {total['ok']} downloaded, {total['skip']} cached, "
           f"{total['fail']} failed -> {args.out}")
 
-    mirror_rc = 1 if total["fail"] else 0
+    # A handful of upstream 404s (retired heroes) must not block the deploy; a real outage
+    # (many failures, or nothing fetched) still fails the run so the bundle is never shipped.
+    attempted = total["ok"] + total["skip"] + total["fail"]
+    outage = total["fail"] and (total["ok"] + total["skip"] == 0 or total["fail"] * 50 > attempted)
+    mirror_rc = 1 if outage else 0
 
     #--upload: chain into the R2 sync so one command = re-mirror then re-sync. The
     #uploader works on the assets ROOT (this script's dir), which holds both the
