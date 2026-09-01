@@ -2,6 +2,7 @@
 //lays a build out over the 4+4+4+4 item board, and answers which items an imbue can actually
 //move (the ability-scoped property set derived from STAT_DEFS). No React, no I/O.
 import { STAT_DEFS, type ItemMods, type ModifierRow } from '../../../lib/computeStats';
+import { itemIcon } from '../../../lib/itemCatalog';
 import { formatModifier, toModifierRows } from '../../../lib/itemOverlay';
 import type { HeroAbility, ItemModifier } from '../../../types/api';
 
@@ -41,7 +42,9 @@ export function normalizeCatalog(rows: ItemModifier[] | undefined): CatalogItem[
       item_slot_type: r.item_slot_type,
       item_tier: r.item_tier,
       cost: r.cost,
-      icon: r.shop_image_webp,
+      //Catalog icon join — the modifiers payload ships no icon for some shop items;
+      //letter tiles stay only for entries the catalog is also missing.
+      icon: itemIcon(r.item_id, r.shop_image_webp),
       modifiers,
     });
   }

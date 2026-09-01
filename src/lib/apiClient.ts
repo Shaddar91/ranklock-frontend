@@ -237,7 +237,7 @@ export function laneLabFetch<T>(
 //(the cache-key analog of the backend's widened Redis keys). Factories that take a
 //`params` object fold `game_mode` into it at the call site (the params spread into
 //the key already), so only the discrete-arg factories below grow a `game_mode`
-//parameter. Mode-agnostic surfaces (health/me/search/recent-matches/mmr/
+//parameter. Mode-agnostic surfaces (health/me/search/mmr/
 //badge-history/builds/base-stats/patch-list) deliberately do NOT carry it.
 export const queryKeys = {
   health: () => ['health'] as const,
@@ -362,8 +362,10 @@ export const api = {
   //`hero_id` scopes the rows to one hero (omit/0 = every hero); the backend 400s a bad value.
   getItems: (bracket?: number, game_mode?: GameMode, hero_id?: number) =>
     apiFetch<ItemStat[]>('/items/stats', { query: { bracket, game_mode, hero_id } }).then(enrichItems),
-  getRecentMatches: (params?: { game_mode?: string; match_mode?: string }) =>
-    apiFetch<MatchRow[]>('/matches/recent', { query: params }),
+  //Offset paging (ui-residuals C1): limit ≤50, offset ≤100k; the offset path answers with
+  //X-Total-Count so the /matches pager can size itself (`total` null until that ships live).
+  getRecentMatches: (params?: { game_mode?: string; match_mode?: string; limit?: number; offset?: number }) =>
+    apiFetchWithTotal<MatchRow[]>('/matches/recent', { query: params }),
 
   //per-match / per-user surface (CSR islands)
   getMatch: (id: number) => apiFetch<MatchDetail>(`/matches/${id}`),

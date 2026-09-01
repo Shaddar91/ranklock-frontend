@@ -1,10 +1,24 @@
-//React island for /matches — client-side Normal/Brawl/All toggle over SSG-fetched rows.
-import { useState } from 'react';
-import { duration, shortDate } from '../../lib/format';
+//React island for /matches — server-paged list (?page=N, leaderboard-style numbered pager)
+//with server-side Normal/Brawl/All + Any/Ranked/Unranked filters. SSG seeds page 1 of the
+//default filters; every other page/filter combination fetches live.
+import { useEffect, useRef, useState } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { api, queryKeys } from '../../lib/apiClient';
+import QueryProvider from './QueryProvider';
+import { Icon } from './ui/index';
+import { count, DASH, duration, shortDate } from '../../lib/format';
 import { rankFromBadge, subLabel } from '../../lib/ranks';
-import { filterMatchRows, gameModeLabel, isRanked, type MatchesModeSlug } from '../../lib/matchesMode';
-import { filterRowsByRanked } from '../../lib/matchesRanked';
+import { gameModeLabel, isRanked, type MatchesModeSlug } from '../../lib/matchesMode';
 import { useMatchesRanked } from '../../lib/useMatchesRanked';
+import {
+  lastPage,
+  MATCHES_LAST_PAGE,
+  MATCHES_PAGE_SIZE,
+  offsetFromPage,
+  pageFromSearch,
+  pagerWindow,
+  recentMatchesParams,
+} from '../../lib/matchesPager';
 import type { Badge, MatchRow } from '../../types/api';
 
 function badgeLabel(b: Badge): string {
@@ -16,14 +30,104 @@ function winnerLabel(team: number | null): string {
   return team === 0 ? 'Amber' : team === 1 ? 'Sapphire' : '—';
 }
 
-export default function MatchesFilterIsland({ matches }: { matches: MatchRow[] }) {
+interface MatchesIslandProps {
+  initialRows: MatchRow[];
+  initialTotal: number | null;
+}
+
+function MatchesInner({ initialRows, initialTotal }: MatchesIslandProps) {
   const [slug, setSlug] = useState<MatchesModeSlug>('normal');
   const { ranked: rankedFilter, setRanked } = useMatchesRanked();
-  const rows = filterRowsByRanked(filterMatchRows(matches, slug), rankedFilter);
-  //average_badge_team0/1 is the rank block, which is not ingested (re-fold skip-list #5),
-  //so it is 0/null (no rank) on every row — hide the two rank columns until real badges
-  //land (rankFromBadge is the same real-rank test badgeLabel uses; they self-restore then).
-  const hasTeamBadges = rows.some((m) => rankFromBadge(m.average_badge_team0) != null || rankFromBadge(m.average_badge_team1) != null);
+  const [page, setPage] = useState(1);
+  const [pageInput, setPageInput] = useState('1');
+
+  //Sync page from URL on mount; re-sync on browser Back/Forward.
+  useEffect(() => {
+    function sync() { setPage(pageFromSearch(window.location.search)); }
+    sync();
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
+
+  useEffect(() => { setPageInput(String(page)); }, [page]);
+
+  //Reset to page 1 when either filter flips — an offset under one filter set is
+  //meaningless under another.
+  const prevFilters = useRef(`${slug}:${rankedFilter}`);
+  useEffect(() => {
+    const f = `${slug}:${rankedFilter}`;
+    if (prevFilters.current !== f) {
+      prevFilters.current = f;
+      const url = new URL(window.location.href);
+      url.searchParams.delete('page');
+      history.replaceState(null, '', url.toString());
+      setPage(1);
+    }
+  }, [slug, rankedFilter]);
+
+  function goToPage(p: number) {
+    const url = new URL(window.location.href);
+    if (p === 1) {
+      url.searchParams.delete('page');
+    } else {
+      url.searchParams.set('page', String(p));
+    }
+    history.pushState(null, '', url.toString());
+    setPage(p);
+  }
+
+  const params = recentMatchesParams(page, slug, rankedFilter);
+  const isDefaultKey = page === 1 && slug === 'normal' && rankedFilter === 'any';
+
+  const { data, isPending, isError, isPlaceholderData } = useQuery({
+    queryKey: queryKeys.recentMatches(params),
+    queryFn: () => api.getRecentMatches(params),
+    initialData:
+      isDefaultKey && initialRows.length > 0 ? { rows: initialRows, total: initialTotal } : undefined,
+    placeholderData: keepPreviousData,
+  });
+
+  const rows = data?.rows ?? [];
+  const total = data?.total ?? null;
+  const last = lastPage(total);
+
+  //Auto-clamp: if ?page= exceeds the known total, correct the URL in place.
+  useEffect(() => {
+    if (last !== null && page > last) {
+      const url = new URL(window.location.href);
+      if (last === 1) {
+        url.searchParams.delete('page');
+      } else {
+        url.searchParams.set('page', String(last));
+      }
+      history.replaceState(null, '', url.toString());
+      setPage(last);
+    }
+  }, [last, page]);
+
+  const hasNext = rows.length >= MATCHES_PAGE_SIZE && page < MATCHES_LAST_PAGE;
+  const atEnd = last !== null ? page >= last : !hasNext;
+
+  function commitPageInput() {
+    const n = Number(pageInput);
+    if (Number.isInteger(n) && n >= 1) {
+      goToPage(Math.min(n, last ?? MATCHES_LAST_PAGE));
+    }
+  }
+
+  const offset = offsetFromPage(page);
+  const rangeLabel =
+    rows.length > 0
+      ? `Matches ${count(offset + 1)}–${count(offset + rows.length)} of ${total !== null ? count(total) : '…'}`
+      : DASH;
+
+  //Numbered frame renders as soon as rows exist — before X-Total-Count lands `last` is
+  //null, so fill the same 5-wide window from a bound ("Last" stays disabled until real).
+  const displayLast = last ?? (hasNext ? Math.max(page + 2, 5) : page);
+
+  const hasTeamBadges = rows.some(
+    (m) => rankFromBadge(m.average_badge_team0) != null || rankFromBadge(m.average_badge_team1) != null,
+  );
 
   return (
     <div>
@@ -57,7 +161,13 @@ export default function MatchesFilterIsland({ matches }: { matches: MatchRow[] }
       </div>
       <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
         {rows.length === 0 ? (
-          <p className="muted" style={{ padding: '24px' }}>No matches for this filter.</p>
+          <p className="muted" style={{ padding: '24px' }}>
+            {isPending
+              ? 'Loading matches…'
+              : isError
+                ? 'Matches are unavailable — the stats API is offline.'
+                : 'No matches for this filter.'}
+          </p>
         ) : (
           <div className="dt-scroll">
             <table className="dt">
@@ -110,6 +220,60 @@ export default function MatchesFilterIsland({ matches }: { matches: MatchRow[] }
           </div>
         )}
       </div>
+      {rows.length > 0 || last !== null ? (
+        <nav className="between" style={{ marginTop: 16, gap: 8, flexWrap: 'wrap', alignItems: 'center' }} aria-label="Recent match pages">
+          <div className="flex" style={{ gap: 4, flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn-ghost" onClick={() => goToPage(1)} disabled={page === 1 || isPlaceholderData}>
+              <Icon name="arrowR" size={13} style={{ transform: 'scaleX(-1)' }} /> First
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => goToPage(page - 1)} disabled={page === 1 || isPlaceholderData}>
+              <Icon name="arrowR" size={13} style={{ transform: 'scaleX(-1)' }} /> Prev
+            </button>
+            {pagerWindow(page, displayLast).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className="btn btn-ghost"
+                style={p === page ? { fontWeight: 700, color: 'var(--text)' } : undefined}
+                onClick={() => goToPage(p)}
+                disabled={isPlaceholderData}
+                aria-current={p === page ? 'page' : undefined}
+              >
+                {p}
+              </button>
+            ))}
+            <button type="button" className="btn btn-ghost" onClick={() => goToPage(page + 1)} disabled={atEnd || isPlaceholderData}>
+              Next <Icon name="arrowR" size={13} />
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => { if (last !== null) goToPage(last); }} disabled={last === null || page >= last || isPlaceholderData}>
+              Last <Icon name="arrowR" size={13} />
+            </button>
+          </div>
+          <label className="label-xs" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            Go to page
+            <input
+              type="number"
+              min={1}
+              max={last ?? undefined}
+              value={pageInput}
+              onChange={(e) => setPageInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') commitPageInput(); }}
+              onBlur={() => setPageInput(String(page))}
+              disabled={isPlaceholderData}
+              style={{ width: 64, textAlign: 'center' }}
+            />
+          </label>
+          <span className="label-xs tnum" aria-live="polite">{rangeLabel}</span>
+        </nav>
+      ) : null}
     </div>
+  );
+}
+
+export default function MatchesFilterIsland(props: MatchesIslandProps) {
+  return (
+    <QueryProvider>
+      <MatchesInner {...props} />
+    </QueryProvider>
   );
 }

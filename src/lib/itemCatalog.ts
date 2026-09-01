@@ -52,3 +52,9 @@ export function enrichItemMeta<T extends ItemMetaRow>(row: T): T {
 export function enrichItems<T extends ItemMetaRow>(rows: T[]): T[] {
   return rows.map(enrichItemMeta);
 }
+
+//Icon join for wire rows that carry their own icon field (the Creator's modifiers payload):
+//wire value wins, the catalog fills a null — the enrichItemMeta rule, minus the name.
+export function itemIcon(id: number | null | undefined, wireIcon: string | null | undefined): string | null {
+  return resolveAsset(wireIcon ?? itemMeta(id)?.icon ?? null);
+}
