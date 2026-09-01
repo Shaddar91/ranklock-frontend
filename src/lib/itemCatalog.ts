@@ -44,8 +44,7 @@ export function enrichItems<T extends ItemMetaRow>(rows: T[]): T[] {
   return rows.map(enrichItemMeta);
 }
 
-//Creator rows carry their own icon field: wire wins, then catalog, then the glyph map
-//(items with no shop tile that /items/modifiers still lists).
+//Creator rows: wire icon wins, then catalog, then the glyph map (items with no shop tile).
 export function itemIcon(id: number | null | undefined, wireIcon: string | null | undefined): string | null {
   const wire = isImageUrl(wireIcon) ? wireIcon : null;
   const glyph = id == null ? null : GLYPHS[String(id)]?.icon;
