@@ -52,6 +52,7 @@ const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/items-
 const OUT_DETAIL = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/items-detail.json');
 const OUT_DESC = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/item-descriptions.json');
 const OUT_UPGRADES = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/item-upgrades.json');
+const OUT_GLYPHS = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/items-glyphs.json');
 
 //The upstream `description.desc` carries light HTML (<span class="highlight">…</span>,
 //<br>, entities). Flatten it to plain text for a clean, injection-safe detail page.
@@ -95,22 +96,13 @@ if (!Array.isArray(all)) {
   upstreamFail('unexpected response (not an array)');
 }
 
-//Only type==="upgrade" entries are the buildable shop items /items/stats reports;
-//abilities/weapons/misc are excluded. Prefer the dedicated SHOP art (shop_image_webp /
-//shop_image) over plain image/image_webp: for items the latter is the mono UPGRADE glyph
-//(e.g. Silencer -> upgrades/mods_weapon/emp_bullets.png) while the shop fields carry the
-//colored shop tile (items/weapon/silencer.webp) — the SAME art the live /items API serves.
-//
-//Then SKIP any entry that STILL has no real colored shop art: a null icon, the monochrome
-//weapon-mod glyph (upgrades/mods_weapon/*), or a malformed non-image URL (the feed emits
-//`.../images/panorama:""` for a couple of stubs, e.g. Toughness / Endless Magazine). Those
-//are deprecated / pre-release / internal upgrade definitions — the live /items shop API
-//serves NONE of them and the CDN has no shop tile, so a detail page for them could only ever
-//render the reported mono-glyph or blank monogram fallback. Dropping them keeps every
-//generated item page on real shop art (detail == list). Verified 2026-07-08: this drops 22
-//of 251 upgrade entries, none of which appear in the live /items feed, so no shop-served
-//item loses its page.
+//Only type==="upgrade" entries are buildable shop items. The catalog keeps entries whose
+//first art field is a colored shop tile (shop_image_webp/shop_image, else image_webp/image
+//unless that is the mono upgrades/mods_weapon glyph or a malformed URL); those get item pages.
+//Entries with no shop tile get no page, but any valid non-ability art they do have goes to
+//items-glyphs.json so the Build Lab creator can still draw an icon (/items/modifiers lists them).
 const catalog = {};
+const glyphs = {};
 const detail = {};
 const descriptions = {};
 let withIcon = 0;
@@ -143,6 +135,10 @@ for (const e of all) {
 
   const icon = e.shop_image_webp || e.shop_image || e.image_webp || e.image || null;
   if (!icon || icon.includes('upgrades/mods_weapon') || !/\.(webp|png|jpg)$/i.test(icon)) {
+    const glyph = [e.image_webp, e.shop_image_webp, e.image, e.shop_image].find(
+      (u) => typeof u === 'string' && /\.(webp|png)$/i.test(u) && !u.includes('/abilities/'),
+    );
+    if (glyph) glyphs[e.id] = { name: e.name, icon: glyph };
     skipped += 1;
     continue;
   }
@@ -197,6 +193,7 @@ const outputs = [
   [OUT_DETAIL, JSON.stringify(detail) + '\n'],
   [OUT_DESC, JSON.stringify(descriptions) + '\n'],
   [OUT_UPGRADES, JSON.stringify(upgradesMap) + '\n'],
+  [OUT_GLYPHS, JSON.stringify(glyphs) + '\n'],
 ];
 
 if (CHECK) {
@@ -240,5 +237,6 @@ console.log(`gen-item-catalog: wrote ${ids.length} items (${withIcon} with icon)
 console.log(`gen-item-catalog: wrote ${ids.length} items (${withDesc} with description) -> ${OUT_DETAIL}`);
 console.log(`gen-item-catalog: wrote ${withDesc} descriptions -> ${OUT_DESC}`);
 console.log(`gen-item-catalog: wrote ${Object.keys(upgradesMap).length} upgrade lineages -> ${OUT_UPGRADES}`);
+console.log(`gen-item-catalog: wrote ${Object.keys(glyphs).length} glyph-only icons -> ${OUT_GLYPHS}`);
 console.log(`gen-item-catalog: skipped ${skipped} art-less/deprecated upgrade entries (no colored shop tile)`);
 console.log(`gen-item-catalog: skipped ${codenameSkipped} raw-codename upgrade entries (no display name, not in live /items)`);

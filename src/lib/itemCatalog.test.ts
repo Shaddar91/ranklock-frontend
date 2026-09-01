@@ -35,8 +35,17 @@ describe('itemIcon — creator catalog icon join', () => {
     expect(itemIcon(ENDURING_SPIRIT, null)).toBe(meta!.icon);
   });
 
-  it('stays null for entries the catalog is also missing (letter-tile fallback)', () => {
-    expect(itemIcon(1248737459, null)).toBeNull(); //Ammo Scavenger — disabled upstream, excluded from the catalog
+  it('falls back to the glyph map for entries the catalog skips (no shop tile)', () => {
+    expect(itemIcon(1248737459, null)).toMatch(/upgrades\/mods_weapon\/ammo_scavenger\.webp$/); //Ammo Scavenger
+  });
+
+  it('treats a malformed wire icon as missing and falls through', () => {
+    const junk = 'https://assets-bucket.deadlock-api.com/assets-api-res/images/panorama:""';
+    expect(itemIcon(2858617477, junk)).toMatch(/upgrades\/mods_armor\/health\.webp$/); //Toughness
+    expect(itemIcon(3346798998, junk)).toBeNull(); //Endless Magazine — only ability art upstream
+  });
+
+  it('stays null when nothing is known (letter-tile fallback)', () => {
     expect(itemIcon(null, null)).toBeNull();
     expect(itemIcon(undefined, undefined)).toBeNull();
   });
