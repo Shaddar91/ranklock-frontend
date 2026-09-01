@@ -247,7 +247,7 @@ export const queryKeys = {
     ['hero', id, 'stats', bracket ?? null, game_mode ?? null] as const,
   heroBuilds: (id: number, sort?: string) => ['hero', id, 'builds', sort ?? 'weekly'] as const,
   heroAbilities: (id: number) => ['hero', id, 'abilities'] as const,
-  heroMatchups: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
+  heroMatchups: (id: number, bracket?: number, game_mode?: GameMode) =>
     ['hero', id, 'matchups', bracket ?? null, game_mode ?? null] as const,
   heroCounters: (id: number) => ['hero', id, 'counters'] as const,
   heroSynergies: (id: number) => ['hero', id, 'synergies'] as const,
@@ -342,7 +342,7 @@ export const api = {
   //The hero's abilities (id/name/icon/slot order) — warmed proxy backing the imbue prompt + ability
   //order rendering. 502 with an empty list when the upstream assets payload is briefly unavailable.
   getHeroAbilities: (id: number) => apiFetch<HeroAbility[]>(`/heroes/${id}/abilities`),
-  getHeroMatchups: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
+  getHeroMatchups: (id: number, bracket?: number, game_mode?: GameMode) =>
     apiFetch<MatchupEntry[]>(`/heroes/${id}/matchups`, { query: { bracket, game_mode } }),
   getHeroCounters: (id: number) => apiFetch<HeroCountersResponse>(`/heroes/${id}/counters`),
   getHeroSynergies: (id: number) => apiFetch<HeroSynergiesResponse>(`/heroes/${id}/synergies`),

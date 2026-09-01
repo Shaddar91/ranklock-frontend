@@ -20,6 +20,7 @@ import PlayerHeader from './player/PlayerHeader';
 import MatchModeToggle from './ui/MatchModeToggle';
 import { CategorizedSection, CoachingPanel, EconomyPanel, PlaystyleRadarPanel } from './player/AnalyticsPanels';
 import { ComparePanel, HeroLedgerPanel, PerformancePanel, ReadinessCard, RecentMatchesPanel } from './player/PlayerTabs';
+import MatchupsPanel from './player/MatchupsPanel';
 import PlayerBuildsPanel from './player/PlayerBuildsPanel';
 import { usePlayer, usePlayerHeroes, usePlayerId, usePlayerMatches, usePlayerPerformance, useViewer } from './player/usePlayer';
 import type { PerformanceResponse } from '../../types/api';
@@ -98,6 +99,7 @@ function PlayerProfileInner() {
             <PlaystyleRadarPanel id={id} />
             <EconomyPanel id={id} />
           </div>
+          <MatchupsPanel id={id} />
           <CoachingPanel id={id} />
           <CategorizedSection id={id} />
           <div>
