@@ -58,6 +58,9 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: workers/assets
+          #no package.json here, so the action would fall back to wrangler 3.x, which cannot read
+          #an assets-only wrangler.jsonc ("Missing entry-point"); pin the 4.x line the repo uses.
+          wranglerVersion: "4.128.0"
           command: deploy
 
       - name: Probe live host
