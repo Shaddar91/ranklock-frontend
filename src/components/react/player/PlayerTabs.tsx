@@ -10,13 +10,11 @@ import { useEffect, useId, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Chip, EmptyState, GameIcon, Icon, RankBadge } from '../ui/index';
 import { buildAheadMessage, humanize, PlaystyleRadarPanel, SEV } from './AnalyticsPanels';
+import { ShareCompareButton } from './ShareCompareButton';
 import { useCompare, useComparePlayer, usePlayerHeroes, usePlayerHeroesPlayed, usePlayerMatches, usePlayerPerformance, usePlayerReadiness } from './usePlayer';
 import { api, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClient';
 import { rankFromBadge } from '../../../lib/ranks';
 import { scopeCaption, scopeParams, type PlayerScope } from '../../../lib/playerScope';
-import { compareShareUrl } from '../../../lib/compareShare';
-import { useGameMode } from '../../../lib/useGameMode';
-import { useMatchMode } from '../../../lib/useMatchMode';
 import { usePlayerScope } from './usePlayerScope';
 import { PlayerScopeControls } from './PlayerScopeControls';
 import { MIN_PERCENTILE_SAMPLE, percentileOrdinal } from '../../../lib/percentile';
@@ -378,29 +376,6 @@ const TARGET_OPTIONS: ReadonlyArray<readonly [string, string]> = [
 ];
 
 //---- compare to a specific player (optional, behind the rank selector) ------
-
-//Copies the canonical /compare/{me}/{vs} permalink; the label flip is the same
-//copied affordance the donate copy button uses.
-function ShareCompareButton({ me, vs, heroId }: { me: number; vs: number; heroId: number }) {
-  const { mode } = useGameMode();
-  const { matchMode } = useMatchMode();
-  const [copied, setCopied] = useState(false);
-  function share() {
-    try {
-      void navigator.clipboard?.writeText(compareShareUrl(me, vs, { hero_id: heroId, game_mode: mode, match_mode: matchMode }));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      //clipboard unavailable (insecure context) — nothing to copy into.
-    }
-  }
-  return (
-    <button type="button" className={'share-btn' + (copied ? ' copied' : '')} onClick={share} aria-label="Copy the link to this comparison">
-      <Icon name="share" size={15} />
-      {copied ? 'Copied ✓' : 'Share'}
-    </button>
-  );
-}
 
 //The loaded you-vs-them comparison body. Shared by the picker below and the
 ///compare/{a}/{b} shell island (CompareIsland), which preloads the pair and

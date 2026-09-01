@@ -39,6 +39,7 @@ import {
 } from './usePlayer';
 import { usePlayerScope } from './usePlayerScope';
 import { PlayerScopeControls } from './PlayerScopeControls';
+import { ShareCompareButton } from './ShareCompareButton';
 import { scopeCaption, scopeParams } from '../../../lib/playerScope';
 import { combatRows, compareRadarVsPlayer, economyRows, efficiencyRows, laningRows, selfShapeAxes } from '../../../lib/playstyle';
 import { mergeSignatureCurve, curveMarker } from '../../../lib/signatureCurve';
@@ -46,8 +47,6 @@ import { buildSoulsSourceSeries, hasCohortSouls, isPlayerSoulsEmpty } from '../.
 import { RANKS, chasingTier, getRank, rankFromBadge } from '../../../lib/ranks';
 import { count, fixed } from '../../../lib/format';
 import type { SearchResult } from '../../../types/api';
-import ShareLinkButton from '../ui/ShareLinkButton';
-import { compareShareUrl } from '../../../lib/compareShare';
 
 //Coaching/playstyle are derived from /improve, whose cohort is Normal-only (022). In
 //Brawl mode this content is STILL Normal — surface that so the page never silently
@@ -88,8 +87,6 @@ function Loading({ label }: { label: string }) {
 //is added — the overlay's you side is the solo side under the same scope.
 export function PlaystyleRadarPanel({ id }: { id: number }) {
   const { scope, setKind, setN, setHero } = usePlayerScope();
-  const { mode } = useGameMode();
-  const { matchMode } = useMatchMode();
   const params = scopeParams(scope);
   //Scoped own shape (hero_id always sent; 0 = all heroes) — a NEW query key,
   //separate from the no-param useCompare the Categorized-performance panels read.
@@ -157,13 +154,16 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
     <div className="brass-frame" style={{ padding: '18px 20px' }}>
       <span className="corner tl" />
       <span className="corner br" />
-      <div style={{ marginBottom: 8 }}>
-        <div className="kicker" style={{ marginBottom: 4 }}>
-          Playstyle
+      <div className="between" style={{ marginBottom: 8, gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        <div>
+          <div className="kicker" style={{ marginBottom: 4 }}>
+            Playstyle
+          </div>
+          <h2 className="h-sec" style={{ fontSize: 17 }}>
+            {picked ? `You vs ${picked.steam_name}` : 'Your shape'}
+          </h2>
         </div>
-        <h2 className="h-sec" style={{ fontSize: 17 }}>
-          {picked ? `You vs ${picked.steam_name}` : 'Your shape'}
-        </h2>
+        {picked && <ShareCompareButton me={id} vs={picked.account_id} heroId={scope.hero_id} />}
       </div>
       <PlayerScopeControls scope={scope} onKind={setKind} onN={setN} onHero={setHero} playerId={id} themId={picked?.account_id} />
       {isPending ? (
@@ -291,11 +291,6 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
                 >
                   Clear
                 </button>
-              )}
-              {picked && (
-                <ShareLinkButton
-                  url={compareShareUrl(id, picked.account_id, { hero_id: scope.hero_id, game_mode: mode, match_mode: matchMode })}
-                />
               )}
             </div>
           </div>

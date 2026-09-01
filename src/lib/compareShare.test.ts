@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { compareSelectionQuery, compareSharePath, compareShareUrl, readComparePair } from './compareShare';
+import type { GameMode, MatchMode } from '../types/api';
 
 describe('compareShareUrl', () => {
   it('builds the canonical share URL for a pair', () => {
@@ -74,5 +75,31 @@ describe('readComparePair', () => {
     expect(readComparePair('/compare/1.5/456')).toBeNull();
     expect(readComparePair('/compare/0/456')).toBeNull();
     expect(readComparePair('/compare/123/-4')).toBeNull();
+  });
+});
+
+//C2 — the Compare tab and the Overview playstyle overlay render the SAME ShareCompareButton,
+//which builds its link from (me, vs, heroId) + the active mode axes. For one pair + selection the
+//two surfaces must copy an identical, canonical (slashed) link — this locks that shared contract.
+describe('ShareCompareButton — Compare-tab / Overview URL parity', () => {
+  const link = (me: number, vs: number, heroId: number, mode: GameMode, matchMode: MatchMode) =>
+    compareShareUrl(me, vs, { hero_id: heroId, game_mode: mode, match_mode: matchMode });
+
+  it('gives the identical slashed link for the same pair from either surface', () => {
+    const me = 111;
+    const other = 222;
+    const hero = 6;
+    const compareTab = link(me, other, hero, 'Normal', 'Ranked'); //Compare tab: vs = vsId
+    const overview = link(me, other, hero, 'Normal', 'Ranked'); //Overview overlay: vs = picked.account_id
+    expect(overview).toBe(compareTab);
+    expect(overview).toBe('https://ranklock.app/compare/111/222/?hero=6&ranked=1');
+  });
+
+  it('keeps the canonical trailing slash (the slashless variant 404s) and omits every default', () => {
+    expect(link(1, 2, 0, 'Normal', 'Unranked')).toBe('https://ranklock.app/compare/1/2/');
+  });
+
+  it('carries every non-default axis either surface can select', () => {
+    expect(link(1, 2, 15, 'StreetBrawl', 'Ranked')).toBe('https://ranklock.app/compare/1/2/?hero=15&mode=brawl&ranked=1');
   });
 });
