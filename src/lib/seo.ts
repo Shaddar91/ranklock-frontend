@@ -16,7 +16,7 @@ export const SITE_NAME = 'RankLock';
 export const SITE_ORIGIN = 'https://ranklock.app';
 export const SITE_TAGLINE = 'Deadlock stats, guides & coaching';
 export const DEFAULT_DESCRIPTION =
-  'Deadlock hero & item win-rates by rank, player profiles, per-match scoreboards, and a per-player coaching layer that updates every patch.';
+  'Deadlock hero & item win-rates by rank, player profiles, per-match scoreboards, and per-player coaching that updates every patch.';
 
 //Twitter/X handle for the `twitter:site` card attribution. Placeholder until a
 //real handle exists — public, not a secret.

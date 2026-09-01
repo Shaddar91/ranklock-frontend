@@ -126,8 +126,8 @@ export default function BuildCreator() {
   if (roster.isError || heroes.length === 0) {
     return (
       <EmptyState
-        title="Heroes not served yet"
-        message="Hero base-stats are snapshotted per patch — the creator opens once that snapshot serves."
+        title="Heroes not available yet"
+        message="Base stats are captured once per patch. The creator opens once this patch's capture lands."
         icon="chart"
       />
     );

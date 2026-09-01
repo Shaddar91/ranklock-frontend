@@ -102,8 +102,8 @@ function HeroBaseStatsTab({ heroId, onHero }: { heroId: number | null; onHero: (
   if (isError || heroes.length === 0 || !active) {
     return (
       <EmptyState
-        title="Base stats not served yet"
-        message="Hero base-stats are snapshotted per patch — the table is empty until the patch snapshot hook runs."
+        title="Base stats not available yet"
+        message="Base stats are captured once per patch. This patch's capture hasn't landed yet."
         icon="chart"
       />
     );
@@ -139,7 +139,7 @@ function HeroBaseStatsTab({ heroId, onHero }: { heroId: number | null; onHero: (
         </span>
       </div>
       {statEntries.length === 0 ? (
-        <EmptyState title="No numeric base stats" message="This hero's snapshot carries no numeric starting stats." icon="inbox" />
+        <EmptyState title="No numeric base stats" message="No numeric starting stats were recorded for this hero this patch." icon="inbox" />
       ) : (
         <div style={{ display: 'grid', gap: 18 }}>
           {groups.map((g) => (
@@ -217,8 +217,8 @@ function HeroBuildsTab({ heroId, onHero }: { heroId: number | null; onHero: (id:
   if (rosterError || heroes.length === 0 || !active) {
     return (
       <EmptyState
-        title="Heroes not served yet"
-        message="The playable-hero roster is snapshotted per patch — builds appear once it serves."
+        title="Heroes not available yet"
+        message="The hero roster is captured once per patch. Builds appear once this patch's capture lands."
         icon="inbox"
       />
     );
@@ -356,7 +356,7 @@ function ItemModifiersTab() {
   //it grants, NOT a build editor. Rendered in every state (incl. empty/loading).
   const explainer = (
     <p className="muted" style={{ fontSize: 12.5, margin: '0 0 12px' }}>
-      {'Every buildable item and the stat bonuses (“modifiers”) it grants — the numeric substrate for builds, not a build editor.'}
+      {'Every buildable item and the stat bonuses (“modifiers”) it grants. To put a build together, use the Creator tab.'}
     </p>
   );
 
@@ -367,8 +367,8 @@ function ItemModifiersTab() {
         <p className="muted" style={{ padding: '14px 2px' }}>Loading item modifiers…</p>
       ) : isError || items.length === 0 ? (
         <EmptyState
-          title="Item modifiers not served yet"
-          message="The buildable-item modifier blob warms from the assets API — it appears here once the cache is primed."
+          title="Item modifiers not available yet"
+          message="The item list is still loading on the server. Check back in a few minutes."
           icon="inbox"
         />
       ) : (

@@ -289,7 +289,7 @@ export default function Styleguide() {
             initialSort={{ key: 'wr', dir: -1 }}
             caption="Hero meta — win rate, pick rate, KDA by rank bracket"
             emptyTitle="No heroes match"
-            emptyMessage="Nothing served for this bracket yet — try another filter."
+            emptyMessage="No data for this bracket yet — try another filter."
           />
         </div>
       </Section>
@@ -297,7 +297,7 @@ export default function Styleguide() {
       <Section kicker="States" title="Empty & skeleton">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 16 }}>
           <div className="tile" style={{ padding: 8 }}>
-            <EmptyState title="Not served yet" message="This endpoint comes online with the data pipeline (§8.1)." icon="inbox" />
+            <EmptyState title="Not available yet" message="This data isn't computed yet. It fills in after the next refresh." icon="inbox" />
           </div>
           <div className="tile" style={{ padding: 16 }}>
             <Skeleton height={18} style={{ marginBottom: 12 }} />

@@ -162,7 +162,7 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
     return (
       <EmptyState
         title="No patches tracked yet"
-        message="Patch tracking comes online once the patch ingestion job has populated the patch tables."
+        message="Patches appear here once the first patch data arrives."
         icon="inbox"
       />
     );
@@ -280,7 +280,7 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
               ? computingMessage('patch hero stats are being generated', detailQ.error)
               : detailQ.isError
                 ? 'The stats API is offline — patch hero stats fill in when it comes back.'
-                : 'Nothing served for this patch/bracket yet. Try another bracket or check back after the next data refresh.'
+                : 'No data for this patch and bracket yet. Try another bracket or check back after the next refresh.'
           }
         />
       </div>

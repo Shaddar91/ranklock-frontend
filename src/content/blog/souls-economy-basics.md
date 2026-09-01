@@ -22,7 +22,7 @@ on one and ignore the rest:
 2. **Neutrals** — the multiplier. Clear camps between waves, not instead of them.
 3. **Combat** — the spike. Only worth it when the trade is in your favor.
 
-The coaching layer on your profile breaks your income down by source and compares
+The coaching panels on your profile break your income down by source and compare
 it to the rank above you, so you can see *which* stream you are leaking.
 
 ## Deny what you cannot take

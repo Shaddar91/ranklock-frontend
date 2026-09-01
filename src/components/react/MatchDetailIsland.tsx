@@ -242,7 +242,7 @@ function MatchDetailInner() {
   if (isPending) return <p className="muted">Loading match {id}…</p>;
   if (isError || !data) {
     return isNotFound(error) ? (
-      <EmptyState title={`No data for match ${id}`} message="This match hasn't been ingested, or the id is unknown." icon="inbox" />
+      <EmptyState title={`No data for match ${id}`} message="This match isn't in RankLock's data, or the id is wrong." icon="inbox" />
     ) : (
       <EmptyState title="Couldn't load this match" message="The stats API is unreachable right now — try again shortly." icon="inbox" />
     );

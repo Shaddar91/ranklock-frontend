@@ -252,7 +252,7 @@ function about(input: HeroNarrativeInput): Section {
     `Figures on this page come from ${count(hero.picks)} ranked ${name} games in RankLock's own match database${statsThrough ? `, current through ${statsThrough}` : ''}. `,
   ];
   if (window) {
-    p.push(`The matchup and item tables cover ${window.lo} to ${window.hi}, the window the analytics pipeline has processed`);
+    p.push(`The matchup and item tables cover ${window.lo} to ${window.hi}, the window RankLock has processed so far`);
     if (patchesInWindow != null && currentPatch) {
       p.push(`; ${patchesInWindow} patch releases fall inside it, and the current patch is ${currentPatch.label}, live since ${currentPatch.since}`);
     }

@@ -200,7 +200,7 @@ function ItemsTableInner({ initialRows, heroes }: { initialRows: ItemStat[]; her
             ? computingMessage('item win-rates are being generated', error)
             : isError
               ? 'The stats API is offline — item win-rates fill in when it comes back online.'
-              : 'Nothing served for this hero and rank band yet. Try another bracket or hero, or check back after the next data refresh.'
+              : 'No data for this hero and rank band yet. Try another bracket or hero, or check back after the next refresh.'
         }
       />
     </div>

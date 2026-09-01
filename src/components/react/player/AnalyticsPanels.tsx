@@ -63,9 +63,9 @@ function NormalOnlyNote({ what }: { what: string }) {
 }
 
 //Translate a build-ahead query error into the right empty-state copy.
-export function buildAheadMessage(error: unknown, fallback = 'Comes online with the analytics pipeline.'): string {
+export function buildAheadMessage(error: unknown, fallback = 'Not computed yet — check back after the next refresh.'): string {
   if (isComputing(error)) return 'Computing now — the first result is being generated. Check back shortly.';
-  if (isDisabled(error)) return 'The rich-analytics tier is currently disabled on the API.';
+  if (isDisabled(error)) return 'This part of the stats service is switched off right now.';
   if (isNotFound(error)) return 'No analytics for this player yet.';
   return fallback;
 }
@@ -169,7 +169,7 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
       {isPending ? (
         <Loading label="Loading playstyle" />
       ) : isError ? (
-        <EmptyState title="Playstyle radar not served yet" message={buildAheadMessage(error)} icon="target" />
+        <EmptyState title="Playstyle radar not available yet" message={buildAheadMessage(error)} icon="target" />
       ) : noData ? (
         <EmptyState title="No playstyle data yet" message="No matches recorded for this player yet." icon="target" />
       ) : (
@@ -454,7 +454,7 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
       ) : !hasYou ? (
         <EmptyState
           title="No per-minute line for this player yet"
-          message="Player lines are built from the matches in the loaded data window; this player's line appears once a data fold covers their games."
+          message="This player's line appears once their matches are in the loaded data window."
           icon="chart"
         />
       ) : (
@@ -535,17 +535,17 @@ function SoulsSourcePanel({ id, band }: { id: number; band?: number }) {
         <Loading label="Loading your souls sources" />
       ) : player.isError ? (
         <EmptyState
-          title="Souls-source breakdown not served yet"
+          title="Souls-source breakdown not available yet"
           message={buildAheadMessage(
             player.error,
-            'Per-source souls splits (lane creeps, neutrals, hero kills…) arrive with the rich-analytics tier.',
+            'Per-source souls splits (lane creeps, neutrals, hero kills…) are not computed yet.',
           )}
           icon="coins"
         />
       ) : isPlayerSoulsEmpty(player.data) ? (
         <EmptyState
-          title="No folded matches yet"
-          message="Your souls-by-source line appears once a data fold covers your matches."
+          title="No counted matches yet"
+          message="Your souls-by-source line appears once your matches are in the loaded data window."
           icon="coins"
         />
       ) : (
@@ -553,7 +553,7 @@ function SoulsSourcePanel({ id, band }: { id: number; band?: number }) {
           <SoulsSourceChart data={rows} showTier={cohortHas} />
           <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
             Each colour is a souls source stacked into your net worth at that minute — <b>solid bars are you</b>,
-            {cohortHas ? ' faded bars your tier' : ' your tier fills in with the rich-analytics tier'}. Souls{' '}
+            {cohortHas ? ' faded bars your tier' : ' your tier fills in after the next refresh'}. Souls{' '}
             <b style={{ color: 'var(--loss)' }}>lost to deaths</b> are the line below zero, never mixed into the stack.
             {matchMode === 'Ranked' ? ' Ranked matches only.' : ''}
           </p>
@@ -664,9 +664,9 @@ export function CoachingPanel({ id }: { id: number }) {
         </h2>
       </div>
       {isPending ? (
-        <Loading label="Synthesizing coaching tips" />
+        <Loading label="Loading coaching tips" />
       ) : isError || tips.length === 0 ? (
-        <EmptyState title="Coaching tips not served yet" message={buildAheadMessage(error)} icon="book" />
+        <EmptyState title="Coaching tips not available yet" message={buildAheadMessage(error)} icon="book" />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {tips.map((t, i) => {

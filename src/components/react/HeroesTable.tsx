@@ -142,7 +142,7 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
             ? computingMessage('the hero meta table is being generated', error)
             : isError
               ? 'The stats API is offline — the meta table fills in when it comes back online.'
-              : 'Nothing served for this rank tier yet. Try another rank or check back after the next data refresh. Low ranks are sampled thinly.'
+              : 'No data for this rank tier yet. Try another rank or check back after the next refresh. Low ranks are sampled thinly.'
         }
       />
     </div>

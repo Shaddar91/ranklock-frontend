@@ -99,7 +99,7 @@ export function RecentMatchesPanel({ id }: { id: number }) {
 
   if (isPending) return <div>{controls}<p className="muted">Loading matches…</p></div>;
   if (isError) {
-    return <EmptyState title="No matches yet" message="Recent matches appear here once this player's match history is ingested." icon="swords" />;
+    return <EmptyState title="No matches yet" message="Recent matches appear here once this player's history is in RankLock's data." icon="swords" />;
   }
 
   return (
@@ -166,7 +166,7 @@ export function HeroLedgerPanel({ id }: { id: number }) {
 
   if (isPending) return <p className="muted">Loading hero ledger…</p>;
   if (isError || rows.length === 0) {
-    return <EmptyState title="No hero ledger yet" message="Per-hero win rates appear here once this player's matches are aggregated." icon="users" />;
+    return <EmptyState title="No hero ledger yet" message="Per-hero win rates appear here once this player's matches are counted." icon="users" />;
   }
   return (
     <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))' }}>
@@ -216,7 +216,7 @@ export function PerformancePanel({ id }: { id: number }) {
         {isPending ? (
           <p className="muted">Loading percentiles…</p>
         ) : isError || !data || data.brackets.length === 0 ? (
-          <EmptyState title="Percentiles not served yet" message={buildAheadMessage(error)} icon="chart" />
+          <EmptyState title="Percentiles not available yet" message={buildAheadMessage(error)} icon="chart" />
         ) : (
           <>
             <table className="dt">
@@ -300,7 +300,7 @@ export function ReadinessCard({ id }: { id: number }) {
       {isPending ? (
         <p className="muted">Checking rank-up readiness…</p>
       ) : isError || !data ? (
-        <EmptyState title="Readiness not served yet" message={buildAheadMessage(error)} icon="target" />
+        <EmptyState title="Readiness not available yet" message={buildAheadMessage(error)} icon="target" />
       ) : noMatches ? (
         <EmptyState title="No recent matches" message="Play a few matches and the rank-up readiness verdict appears here." icon="target" />
       ) : (
@@ -434,7 +434,7 @@ export function PairCompareView({
         />
       );
     }
-    return <EmptyState title="Comparison not served yet" message={buildAheadMessage(cmp.error)} icon="users" />;
+    return <EmptyState title="Comparison not available yet" message={buildAheadMessage(cmp.error)} icon="users" />;
   }
 
   //D2 precision — both sides come from the ONE /compare-player response.
@@ -733,7 +733,7 @@ export function ComparePanel({ id }: { id: number }) {
       <div className="panel" style={{ padding: '18px 20px' }}>
         {selector}
         <div style={{ marginTop: 12 }}>
-          <EmptyState title="Comparison not served yet" message={buildAheadMessage(error)} icon="users" />
+          <EmptyState title="Comparison not available yet" message={buildAheadMessage(error)} icon="users" />
         </div>
       </div>
     );

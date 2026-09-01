@@ -144,9 +144,9 @@ const bandParam = (v: BracketValue): number | undefined => (v === 'all' ? undefi
 //copy (mirrors AnalyticsPanels.buildAheadMessage, re-stated so the island is
 //self-contained). 501/202 are the EXPECTED pre-data states, not failures.
 function laneAheadMessage(error: unknown): string {
-  if (isDisabled(error)) return 'Coming soon — the rich-analytics tier is currently disabled on the API.';
+  if (isDisabled(error)) return 'Coming soon — this part of the stats service is switched off right now.';
   if (isComputing(error)) return 'Computing now — the lane curves are being generated. Check back shortly.';
-  return 'The per-minute lane curve comes online with the lane-analytics pipeline.';
+  return 'Per-minute lane curves are not computed yet. Check back after the next refresh.';
 }
 
 //---- the comparison-set entity model ----------------------------------------
@@ -630,7 +630,7 @@ function CurvePanel({
         <p className="muted" style={{ padding: '24px 2px' }}>Loading the {metricLower} curves…</p>
       ) : points.length === 0 ? (
         <EmptyState
-          title={`${metricLabel} curve not served yet`}
+          title={`${metricLabel} curve not available yet`}
           message={emptyMessage}
           icon="chart"
         />
@@ -850,7 +850,7 @@ function VerdictPanel({
       {verdict.isPending ? (
         <p className="muted" style={{ padding: '14px 2px' }}>Loading the early-econ verdict…</p>
       ) : verdict.isError || buckets.length === 0 ? (
-        <EmptyState title="Early-econ verdict not served yet" message={laneAheadMessage(verdict.error)} icon="coins" />
+        <EmptyState title="Early-econ verdict not available yet" message={laneAheadMessage(verdict.error)} icon="coins" />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {buckets.map((b) => {
@@ -915,7 +915,7 @@ function VerdictPanel({
               The <b style={{ color: 'var(--amber-acc)' }}>◆</b> bar is where <b>{playerOverlay.label}</b> lands — an{' '}
               <b>estimate</b> (~{count(souls9)} souls at 9:00) projected from their{' '}
               {playerOverlay.souls_per_min != null ? count(playerOverlay.souls_per_min) : '—'} souls/min average,{' '}
-              <b>not</b> a measured value: their per-minute line is not served yet.
+              <b>not</b> a measured value: their per-minute line is not available yet.
             </>
           )}
         </p>
@@ -941,7 +941,7 @@ function overlayEmptyMessage(source: OverlaySource, error: unknown): string {
     return 'No ranked economy data on your account yet.';
   }
   if (isNotFound(error)) return `${source.player.steam_name} is private or has no ranked economy data yet.`;
-  if (isDisabled(error)) return 'The per-player overlay comes online when the analytics tier is enabled.';
+  if (isDisabled(error)) return 'The per-player overlay is not available yet.';
   if (isComputing(error)) return 'Computing now — check back shortly.';
   return `No economy data for ${source.player.steam_name} yet.`;
 }

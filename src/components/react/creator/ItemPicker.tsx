@@ -90,8 +90,8 @@ export default function ItemPicker({
     return (
       <div className="panel panel-pad">
         <EmptyState
-          title="Item catalog not served yet"
-          message="The buildable-item modifier blob warms from the assets API — items appear here once the cache is primed."
+          title="Item catalog not available yet"
+          message="The item list is still loading on the server. Check back in a few minutes."
           icon="inbox"
         />
       </div>

@@ -21,7 +21,7 @@ export default function HeroBackdrop() {
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return;
 
-    //preload the roster so each rotation is seamless (one-time, decode in bg);
+    //preload the roster so rotations never flash (one-time, decode in bg);
     //the plate preloaded is the one the .atmos-bg media query will paint.
     const narrow = window.matchMedia?.(BACKDROP_SMALL_MQ).matches;
     for (const h of BACKDROP_HEROES) {
