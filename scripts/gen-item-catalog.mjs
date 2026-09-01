@@ -51,6 +51,7 @@ const SRC = 'https://assets.deadlock-api.com/v2/items';
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/items-catalog.json');
 const OUT_DETAIL = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/items-detail.json');
 const OUT_DESC = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/item-descriptions.json');
+const OUT_UPGRADES = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/item-upgrades.json');
 
 //The upstream `description.desc` carries light HTML (<span class="highlight">…</span>,
 //<br>, entities). Flatten it to plain text for a clean, injection-safe detail page.
@@ -116,6 +117,13 @@ let withIcon = 0;
 let withDesc = 0;
 let skipped = 0;
 let codenameSkipped = 0;
+//`component_items` refs are CLASS NAMES (e.g. upgrade_hollow_point_rounds), not ids —
+//pre-index every upgrade entry by class_name so lineage resolves in one pass.
+const idByClass = new Map();
+for (const e of all) {
+  if (e.type === 'upgrade' && e.id != null && typeof e.class_name === 'string') idByClass.set(e.class_name, e.id);
+}
+const pendingUpgrades = [];
 for (const e of all) {
   if (e.type !== 'upgrade' || e.id == null) continue;
 
@@ -160,6 +168,22 @@ for (const e of all) {
     active: e.is_active_item ?? null,
     desc,
   };
+
+  if (Array.isArray(e.component_items) && e.component_items.length > 0) {
+    pendingUpgrades.push([e.id, e.component_items]);
+  }
+}
+
+//4. src/data/item-upgrades.json — { [item_id]: [component_item_id, ...] }, the
+//"upgrades from" lineage for the item hover overlay. Components resolve via the
+//class index; only components that survived the catalog filters are kept, so
+//every emitted id renders with a real name+icon through itemCatalog.itemMeta().
+const upgradesMap = {};
+for (const [id, comps] of pendingUpgrades) {
+  const resolved = comps
+    .map((c) => idByClass.get(c))
+    .filter((cid) => cid != null && cid in catalog);
+  if (resolved.length > 0) upgradesMap[id] = resolved;
 }
 
 const ids = Object.keys(catalog);
@@ -172,6 +196,7 @@ const outputs = [
   [OUT, JSON.stringify(catalog) + '\n'],
   [OUT_DETAIL, JSON.stringify(detail) + '\n'],
   [OUT_DESC, JSON.stringify(descriptions) + '\n'],
+  [OUT_UPGRADES, JSON.stringify(upgradesMap) + '\n'],
 ];
 
 if (CHECK) {
@@ -214,5 +239,6 @@ for (const [path, fresh] of outputs) writeFileSync(path, fresh);
 console.log(`gen-item-catalog: wrote ${ids.length} items (${withIcon} with icon) -> ${OUT}`);
 console.log(`gen-item-catalog: wrote ${ids.length} items (${withDesc} with description) -> ${OUT_DETAIL}`);
 console.log(`gen-item-catalog: wrote ${withDesc} descriptions -> ${OUT_DESC}`);
+console.log(`gen-item-catalog: wrote ${Object.keys(upgradesMap).length} upgrade lineages -> ${OUT_UPGRADES}`);
 console.log(`gen-item-catalog: skipped ${skipped} art-less/deprecated upgrade entries (no colored shop tile)`);
 console.log(`gen-item-catalog: skipped ${codenameSkipped} raw-codename upgrade entries (no display name, not in live /items)`);

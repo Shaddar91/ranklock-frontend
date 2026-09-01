@@ -13,7 +13,8 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
-import { DataTable, type DataTableColumn, EmptyState, GameIcon } from './ui/index';
+import { DataTable, type DataTableColumn, EmptyState, GameIcon, ItemOverlayCard, Tooltip } from './ui/index';
+import { overlayFromWire, splitBrawl } from '../../lib/itemOverlay';
 import { count, DASH, fixed } from '../../lib/format';
 import { statLabel } from '../../lib/statLabel';
 import { groupBaseStats, statUnit } from '../../lib/baseStatGroups';
@@ -288,6 +289,19 @@ function HeroBuildsTab({ heroId, onHero }: { heroId: number | null; onHero: (id:
 
 //---- item modifiers ---------------------------------------------------------
 
+//Item cell = the overlay trigger: hover, keyboard focus or tap opens the full
+//card (name, slot·tier·cost, every modifier, upgrade lineage).
+function itemCell(it: ItemModifier) {
+  return (
+    <Tooltip content={<ItemOverlayCard data={overlayFromWire(it)} />}>
+      <span className="flex" style={{ alignItems: 'center', gap: 10 }}>
+        <GameIcon kind="item" name={it.item_name ?? 'Item'} src={it.shop_image_webp} size={28} />
+        <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>{it.item_name ?? `Item ${it.item_id ?? ''}`}</span>
+      </span>
+    </Tooltip>
+  );
+}
+
 function ItemModifiersTab() {
   const { data, isPending, isError } = useQuery<ItemModifier[]>({
     queryKey: queryKeys.itemModifiers(),
@@ -296,15 +310,19 @@ function ItemModifiersTab() {
   const items = data ?? [];
   const [slot, setSlot] = useState<string>('');
 
+  //Street Brawl rows (brawl shop-art path — see lib/itemOverlay) never mix into
+  //the competitive table; they render in their own labeled section below.
+  const { competitive, brawl } = useMemo(() => splitBrawl(items, (it) => it.shop_image_webp), [items]);
+
   const slots = useMemo(() => {
     const set = new Set<string>();
-    items.forEach((it) => it.item_slot_type && set.add(it.item_slot_type));
+    competitive.forEach((it) => it.item_slot_type && set.add(it.item_slot_type));
     return [...set].sort();
-  }, [items]);
+  }, [competitive]);
 
   const rows = useMemo(
-    () => (slot === '' ? items : items.filter((it) => it.item_slot_type === slot)),
-    [items, slot],
+    () => (slot === '' ? competitive : competitive.filter((it) => it.item_slot_type === slot)),
+    [competitive, slot],
   );
 
   const columns = useMemo<DataTableColumn<ItemModifier>[]>(
@@ -313,16 +331,21 @@ function ItemModifiersTab() {
         key: 'item',
         header: 'Item',
         sortValue: (it) => it.item_name ?? '',
-        render: (it) => (
-          <div className="flex" style={{ alignItems: 'center', gap: 10 }}>
-            <GameIcon kind="item" name={it.item_name ?? 'Item'} src={it.shop_image_webp} size={28} />
-            <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>{it.item_name ?? `Item ${it.item_id ?? ''}`}</span>
-          </div>
-        ),
+        render: itemCell,
       },
       { key: 'slot', header: 'Slot', sortValue: (it) => it.item_slot_type ?? '', render: (it) => <span className="faint">{it.item_slot_type ?? DASH}</span> },
       { key: 'tier', header: 'Tier', numeric: true, sortValue: (it) => it.item_tier, render: (it) => <span className="tnum">{it.item_tier ?? DASH}</span> },
       { key: 'cost', header: 'Cost', numeric: true, sortValue: (it) => it.cost, render: (it) => <span className="tnum gold-c">{it.cost == null ? DASH : count(it.cost)}</span> },
+      { key: 'mods', header: 'Modifiers', numeric: true, sortValue: (it) => it.modifiers.length, render: (it) => <span className="tnum">{count(it.modifiers.length)}</span> },
+    ],
+    [],
+  );
+
+  const brawlColumns = useMemo<DataTableColumn<ItemModifier>[]>(
+    () => [
+      { key: 'item', header: 'Item', sortValue: (it) => it.item_name ?? '', render: itemCell },
+      { key: 'slot', header: 'Slot', sortValue: (it) => it.item_slot_type ?? '', render: (it) => <span className="faint">{it.item_slot_type ?? DASH}</span> },
+      { key: 'shop', header: 'Shop', sortValue: () => '', render: () => <span className="chip">Street Brawl</span> },
       { key: 'mods', header: 'Modifiers', numeric: true, sortValue: (it) => it.modifiers.length, render: (it) => <span className="tnum">{count(it.modifiers.length)}</span> },
     ],
     [],
@@ -377,6 +400,25 @@ function ItemModifiersTab() {
             emptyTitle="No items for this slot"
             emptyMessage="Try another slot."
           />
+          {brawl.length > 0 && (
+            <details style={{ marginTop: 18 }}>
+              <summary className="label-xs" style={{ cursor: 'pointer', color: 'var(--muted)' }}>
+                Street Brawl items · {count(brawl.length)}
+              </summary>
+              <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 12px' }}>
+                Sold only in the Street Brawl mode shop — they never appear in competitive matches. The catalog lists
+                them at tier 5 / 9,999 souls; those are placeholders, not prices, so this table drops both columns.
+              </p>
+              <DataTable
+                columns={brawlColumns}
+                rows={brawl}
+                rowKey={(it, i) => it.item_id ?? i}
+                caption="Street Brawl shop items — slot and modifier count"
+                emptyTitle="No Street Brawl items"
+                emptyMessage="The catalog served none."
+              />
+            </details>
+          )}
         </div>
       )}
     </div>

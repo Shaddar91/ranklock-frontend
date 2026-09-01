@@ -2,6 +2,7 @@
 //lays a build out over the 4+4+4+4 item board, and answers which items an imbue can actually
 //move (the ability-scoped property set derived from STAT_DEFS). No React, no I/O.
 import { STAT_DEFS, type ItemMods, type ModifierRow } from '../../../lib/computeStats';
+import { formatModifier, toModifierRows } from '../../../lib/itemOverlay';
 import type { HeroAbility, ItemModifier } from '../../../types/api';
 
 export type Bucket = 'weapon' | 'vitality' | 'spirit' | 'flex';
@@ -28,27 +29,12 @@ export function bucketOf(slot: string | null | undefined): Bucket {
   return slot === 'weapon' || slot === 'vitality' || slot === 'spirit' ? slot : 'flex';
 }
 
-function toModifierRow(v: unknown): ModifierRow | null {
-  const r = v as Partial<ModifierRow> | null;
-  if (!r || typeof r.property_type !== 'string' || typeof r.value !== 'number') return null;
-  return {
-    property_type: r.property_type,
-    value: r.value,
-    is_percent: r.is_percent === true,
-    label: typeof r.label === 'string' ? r.label : null,
-  };
-}
-
 /** Wire rows (`modifiers: unknown[]`, nullable id) → the catalog computeStats consumes. */
 export function normalizeCatalog(rows: ItemModifier[] | undefined): CatalogItem[] {
   const out: CatalogItem[] = [];
   for (const r of rows ?? []) {
     if (r.item_id == null) continue;
-    const modifiers: ModifierRow[] = [];
-    for (const raw of r.modifiers ?? []) {
-      const row = toModifierRow(raw);
-      if (row) modifiers.push(row);
-    }
+    const modifiers: ModifierRow[] = toModifierRows(r.modifiers);
     out.push({
       item_id: r.item_id,
       item_name: r.item_name,
@@ -118,10 +104,4 @@ export function hasAbilityScopedMods(item: CatalogItem | undefined): boolean {
   return item != null && item.modifiers.some((m) => ABILITY_SCOPED_PROPS.has(m.property_type));
 }
 
-/** "+8% Weapon Damage" — one modifier row rendered from the values on the wire. */
-export function modifierSummary(row: ModifierRow): string {
-  const sign = row.value > 0 ? '+' : '';
-  const unit = row.is_percent ? '%' : '';
-  const value = Number.isInteger(row.value) ? String(row.value) : row.value.toFixed(1);
-  return `${sign}${value}${unit} ${row.label ?? ''}`.trim();
-}
+export const modifierSummary = formatModifier;
