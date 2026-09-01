@@ -36,7 +36,19 @@ const resp = (
   metric: 'souls',
   points: [],
   you,
-  comparison: cmp == null ? null : { band: 2, hero_id: null, source: 'cohort-gold', points: cmp },
+  comparison:
+    cmp == null
+      ? null
+      : {
+          band: 2,
+          hero_id: null,
+          source: 'cohort-gold',
+          cohort: 'team_average',
+          rank: null,
+          tier: null,
+          division: null,
+          points: cmp,
+        },
 });
 
 describe('mergeSignatureCurve', () => {

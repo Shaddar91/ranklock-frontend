@@ -646,8 +646,17 @@ export interface LaneCurvePoint {
   p50: number | null;
   p75: number | null;
 }
+//Per-player rank cohort (migration 052, DESIGN §8): 'player_rank' selects the exact display
+//rank (`rank`) or a whole league level (`tier`, `division` null); 'team_average' is the
+//pre-052 badge-band path (`band`) and always carries rank/tier/division null. A curve is
+//NEVER both — the backend 400s a request that mixes band with rank/tier/division.
+export type RankCohort = 'player_rank' | 'team_average';
 export interface LaneCurveResponse {
   band: number | null;
+  cohort: RankCohort;
+  rank: number | null;
+  tier: number | null;
+  division: number | null;
   metric: string;
   points: LaneCurvePoint[];
 }
@@ -721,12 +730,19 @@ export interface PlayerCurveComparisonPoint {
   sample_players: number;
 }
 export interface PlayerCurveComparison {
-  //the selected league (rank tier 0..11, badge/10); null = all-bands cohort.
+  //the selected league (rank tier 0..11, badge/10); null = all-bands cohort, or any rank cohort.
   band: number | null;
   //the selected hero, or null for the all-hero cohort.
   hero_id: number | null;
-  //"cohort-gold" (band histogram Gold) | "cohort-gold-hero" (band x hero histogram Gold, migration 043).
+  //"cohort-gold" (band histogram Gold) | "cohort-gold-hero" (band x hero histogram Gold, migration
+  //043) | "cohort-rank-hero" (rank x hero histogram Gold, migration 052, DESIGN §8).
   source: string;
+  cohort: RankCohort;
+  //DESIGN §8: the display rank/tier/division this comparison resolved to; null unless `cohort` is
+  //'player_rank' (division is also null at league level — a bare tier with no division picked).
+  rank: number | null;
+  tier: number | null;
+  division: number | null;
   points: PlayerCurveComparisonPoint[];
 }
 export interface PlayerEconomyCurveResponse {

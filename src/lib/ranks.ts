@@ -30,7 +30,7 @@ export const RANKS: readonly RankMeta[] = [
   { tier: 11, name: 'Eternus', color: '#5ce9a9' },
 ];
 
-const SUBRANK_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI'] as const;
+export const SUBRANK_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI'] as const;
 
 //Clamp a tier into range and return a definite RankMeta (never undefined —
 //tsconfig noUncheckedIndexedAccess makes raw RANKS[t] possibly-undefined).

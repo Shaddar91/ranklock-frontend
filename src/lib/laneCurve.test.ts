@@ -1,11 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import {
   MIN_SAMPLE_FRACTION,
+  RANK_MIN_SAMPLE,
   SOULS_AT_ZERO,
   THIN_SAMPLE_MIN_MATCHES,
+  cohortParamsFor,
+  defaultCohortFromProbe,
   dropLowSamplePoints,
   guardedPlayerCurvePoints,
   isThinPlayerSample,
+  isThinRankSample,
   laneBandByMinute,
   laneSeriesByMinute,
   mergeEconSeriesByMinute,
@@ -29,7 +33,15 @@ const lanePt = (t_seconds: number, p50: number | null, sample_players = 50): Lan
   p50,
   p75: null,
 });
-const laneCurve = (points: LaneCurvePoint[]): LaneCurveResponse => ({ band: 2, metric: 'souls', points });
+const laneCurve = (points: LaneCurvePoint[]): LaneCurveResponse => ({
+  band: 2,
+  cohort: 'team_average',
+  rank: null,
+  tier: null,
+  division: null,
+  metric: 'souls',
+  points,
+});
 //matches (the player-line sample analog) defaults to a uniform 5 for the same reason.
 const playerPt = (t_seconds: number, value: number, matches = 5): PlayerCurvePoint => ({
   minute_bucket: t_seconds / 180,
@@ -320,5 +332,68 @@ describe('laneBandByMinute + merged bands', () => {
     expect(points[2]?.youBand).toBeUndefined();
     //a band map alone contributes nothing (no series → no grid)
     expect(mergeEconSeriesByMinute({}, { you: laneBandByMinute(bandCurve, 1000) })).toEqual([]);
+  });
+});
+
+describe('cohortParamsFor (DESIGN §8 param mapping)', () => {
+  it('team_average always resolves to {band}, even with no tier picked ("All")', () => {
+    expect(cohortParamsFor('team_average', 7, 3)).toEqual({ band: 7 });
+    expect(cohortParamsFor('team_average', undefined, undefined)).toEqual({ band: undefined });
+  });
+
+  it('player_rank resolves to {tier, division} when a valid tier (>=1) is picked', () => {
+    expect(cohortParamsFor('player_rank', 7, 3)).toEqual({ tier: 7, division: 3 });
+    //division 'All' -> undefined, division only qualifies a tier (curves.rs resolve_cohort)
+    expect(cohortParamsFor('player_rank', 7, undefined)).toEqual({ tier: 7, division: undefined });
+  });
+
+  it('player_rank with no valid tier (Obscurus=0, or "All"=undefined) has no cohort to query', () => {
+    expect(cohortParamsFor('player_rank', undefined, undefined)).toBeNull();
+    expect(cohortParamsFor('player_rank', 0, undefined)).toBeNull();
+  });
+
+  it('never returns a mix of band and tier/division (the backend 400s that combination)', () => {
+    const rank = cohortParamsFor('player_rank', 7, 3);
+    expect(rank).not.toHaveProperty('band');
+    const team = cohortParamsFor('team_average', 7, 3);
+    expect(team).not.toHaveProperty('tier');
+    expect(team).not.toHaveProperty('division');
+  });
+});
+
+describe('isThinRankSample (500-floor honest-empty)', () => {
+  it('flags a player-rank sample below RANK_MIN_SAMPLE', () => {
+    expect(RANK_MIN_SAMPLE).toBe(500);
+    expect(isThinRankSample('player_rank', 200)).toBe(true);
+    expect(isThinRankSample('player_rank', 499)).toBe(true);
+  });
+
+  it('does not flag at or above the floor', () => {
+    expect(isThinRankSample('player_rank', 500)).toBe(false);
+    expect(isThinRankSample('player_rank', 50000)).toBe(false);
+  });
+
+  it('a genuinely empty sample (0) is "no data", not "thin" — a different empty-state', () => {
+    expect(isThinRankSample('player_rank', 0)).toBe(false);
+  });
+
+  it('team_average never gates on the floor, at any sample size', () => {
+    expect(isThinRankSample('team_average', 1)).toBe(false);
+    expect(isThinRankSample('team_average', 200)).toBe(false);
+  });
+});
+
+describe('defaultCohortFromProbe (the cohort switch smart default, DESIGN §9)', () => {
+  it('defaults to player_rank when the probe has rows', () => {
+    expect(defaultCohortFromProbe('rows')).toBe('player_rank');
+  });
+
+  it('falls back to team_average when the probe is empty or errors', () => {
+    expect(defaultCohortFromProbe('empty')).toBe('team_average');
+    expect(defaultCohortFromProbe('error')).toBe('team_average');
+  });
+
+  it('resolves nothing while the probe is pending — caller keeps the current default', () => {
+    expect(defaultCohortFromProbe('pending')).toBeNull();
   });
 });

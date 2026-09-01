@@ -456,9 +456,22 @@ export const api = {
   //the `comparison` cohort. `metric` = souls (default) | last_hits; `match` narrows `you` to
   //one game. Served by the MAIN API. Suppressed/unknown account ⇒ 404 (empty-state); the
   //comparison degrades to null (never a hard fail) when rich-analytics is off/computing.
+  //`rank`/`tier`/`division` (DESIGN §8) pick the per-player-rank hero comparison instead of
+  //`vs_band` when `hero` is set — mutually exclusive with `vs_band` (400 if both arrive); `you`
+  //and `player_hero_games` never depend on this choice, so an unscoped caller may keep sending
+  //`vs_band` regardless of which cohort is active elsewhere on the page.
   getPlayerEconomyCurve: (
     id: number,
-    params?: { metric?: string; vs_band?: number; hero?: number; match?: number; match_mode?: MatchMode },
+    params?: {
+      metric?: string;
+      vs_band?: number;
+      hero?: number;
+      match?: number;
+      match_mode?: MatchMode;
+      rank?: number;
+      tier?: number;
+      division?: number;
+    },
   ) => apiFetch<PlayerEconomyCurveResponse>(`/players/${id}/economy-curve`, { query: params }),
   //The player's OWN souls-by-source line (migration 048; served by the MAIN API). UNGATED +
   //suppression-404'd like the economy curve. `hero` scopes to one hero (player_hero_games:0 ⇒ the
@@ -492,13 +505,27 @@ export const api = {
   //202 until the lane producers have folded — callers empty-state both. Lane curves are
   //Normal-only (022); `game_mode` is forwarded for forward-compat but the UI never sends anything
   //but Normal here (the global toggle is hard-gated off on Lane Lab).
-  getLaneEconomyCurve: (params?: { band?: number; metric?: string; game_mode?: GameMode }) =>
-    laneLabFetch<LaneCurveResponse>('/lane-lab/economy-curve', { query: params }),
+  //`rank`/`tier`/`division` (DESIGN §8, migration 052) select the per-player rank cohort instead —
+  //mutually exclusive with `band` (the backend 400s a request carrying both).
+  getLaneEconomyCurve: (params?: {
+    band?: number;
+    metric?: string;
+    game_mode?: GameMode;
+    rank?: number;
+    tier?: number;
+    division?: number;
+  }) => laneLabFetch<LaneCurveResponse>('/lane-lab/economy-curve', { query: params }),
   //Per-minute farm (last-hits) curve; same CurveResponse shape + band/cohort overlay as
   //the economy curve. The endpoint serves last_hits + souls only — callers default to
-  //last_hits (the farm headline). Same 501/202 build-ahead states.
-  getLaneFarmCurve: (params?: { band?: number; metric?: string; game_mode?: GameMode }) =>
-    laneLabFetch<LaneCurveResponse>('/lane-lab/farm-curve', { query: params }),
+  //last_hits (the farm headline). Same 501/202 build-ahead states + rank/tier/division cohort.
+  getLaneFarmCurve: (params?: {
+    band?: number;
+    metric?: string;
+    game_mode?: GameMode;
+    rank?: number;
+    tier?: number;
+    division?: number;
+  }) => laneLabFetch<LaneCurveResponse>('/lane-lab/farm-curve', { query: params }),
   getLaneEarlyEconVerdict: (params?: { band?: number; game_mode?: GameMode }) =>
     laneLabFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
   //Cohort souls-by-source (migration 048) — the tier half of the "you vs tier" stack. `band` is the

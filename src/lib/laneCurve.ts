@@ -3,7 +3,7 @@
 //p25/p50/p75 buckets 180s apart (grid-resampled: one value per surviving player-match per bucket);
 //the 'rate' view derives the per-minute amount gained across each bucket. No I/O — safe at build
 //time and in tests.
-import type { PlayerCurvePoint, PlayerEconomyCurveResponse } from '../types/api';
+import type { PlayerCurvePoint, PlayerEconomyCurveResponse, RankCohort } from '../types/api';
 
 export type ViewMode = 'rate' | 'total';
 
@@ -230,4 +230,49 @@ export function playerSeriesByMinute(
     (p) => p.value,
     metric,
   );
+}
+
+//---- per-player rank cohort selection (DESIGN §8, migration 052) ------------
+//One league slot's resolved query params for the active cohort. EXACTLY one of {band} /
+//{tier[,division]} is ever returned — curves.rs 400s a request carrying both — so this is the
+//single place that decides which, shared by the lane-Gold fetch and the hero-scoped comparison
+//fetch (both take the same three params).
+export interface CohortParams {
+  band?: number;
+  tier?: number;
+  division?: number;
+}
+
+//null = no valid selection to query (player-rank mode with the league selector sitting on
+//Obscurus or "All" — neither has a per-player-rank cohort). Callers must gate their query's
+//`enabled` on a non-null result instead of sending an empty request, which the backend would
+//silently resolve to the ALL-BANDS team-average cohort (DESIGN's "never blend the two cohort
+//definitions" rule).
+export function cohortParamsFor(
+  cohort: RankCohort,
+  tierOrBand: number | undefined,
+  division: number | undefined,
+): CohortParams | null {
+  if (cohort === 'team_average') return { band: tierOrBand };
+  if (tierOrBand == null || tierOrBand < 1) return null;
+  return { tier: tierOrBand, division };
+}
+
+//Thin per-player-rank cells (DESIGN §9 / Failure cases): a division of a low-population tier
+//(Eternus ≈ 200 rows/division/week) can return real but too-few rows to trust — the UI must not
+//draw them, only name the floor. team_average never gates on this (its samples are large).
+export const RANK_MIN_SAMPLE = 500;
+export function isThinRankSample(cohort: RankCohort, peakSamplePlayers: number): boolean {
+  return cohort === 'player_rank' && peakSamplePlayers > 0 && peakSamplePlayers < RANK_MIN_SAMPLE;
+}
+
+//The cohort switch's smart default (DESIGN §9): "player rank" when a probe query against the
+//current league actually has rows, else "team average" — captioned either way once resolved.
+//'pending' keeps whatever the switch already shows; the caller applies this only until the user
+//touches the switch themselves, after which their explicit pick stands.
+export type CohortProbeState = 'pending' | 'rows' | 'empty' | 'error';
+export function defaultCohortFromProbe(state: CohortProbeState): RankCohort | null {
+  if (state === 'rows') return 'player_rank';
+  if (state === 'empty' || state === 'error') return 'team_average';
+  return null;
 }
