@@ -160,7 +160,7 @@ export default function MatchupsPanel({ id }: { id: number }) {
       ) : state.kind === 'empty' ? (
         <EmptyState title="No matchups yet" message="No matches recorded for this player yet." icon="swords" />
       ) : (
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 14 }}>
+        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(400px,1fr))', gap: 14 }}>
           {state.cards.map((c) => (
             <HeroCard key={c.hero.hero_id} card={c} />
           ))}
