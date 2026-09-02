@@ -230,6 +230,39 @@
   display: block;
 }
 
+/* ---------- hero page header: the hero's own gloat plate + name wordmark ---------- */
+.hero-head {
+  align-items: flex-end;
+  gap: 24px;
+}
+.hero-plate {
+  width: 280px;
+  max-width: 100%;
+  flex: none;
+  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.45));
+}
+.hero-plate img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.hero-head .hero-head-text {
+  padding-bottom: 28px;
+}
+.hero-wordmark {
+  display: none;
+  margin-left: auto;
+  align-self: center;
+  height: 150px;
+  width: auto;
+  opacity: 0.32;
+}
+@media (min-width: 1100px) {
+  .hero-wordmark {
+    display: block;
+  }
+}
+
 /* ---------- blog / guides ---------- */
 .blog-grid {
   display: grid;

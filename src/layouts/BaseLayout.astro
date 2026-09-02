@@ -31,6 +31,8 @@ interface Props {
   modifiedTime?: string;
   //render the shared nav + footer (default true).
   chrome?: boolean;
+  //pin the hero-art backdrop to one hero class (hero pages); unset => the rotating roster.
+  backdropHero?: string;
 }
 
 //Current locale from the URL (en at root, /ru/… etc.). Fallback-rewritten pages
@@ -51,6 +53,7 @@ const {
   publishedTime,
   modifiedTime,
   chrome = true,
+  backdropHero,
 } = Astro.props;
 ---
 
@@ -125,7 +128,7 @@ const {
          not mounted at all (no roster preloads, no timer) and data-atmos="off" on
          <html>. SSR renders the first hero (no flash / works without JS); the island
          cycles the roster on the client. Decorative + behind all content. */
-      ATMOS === 'hero' && <HeroBackdrop client:idle />
+      ATMOS === 'hero' && <HeroBackdrop client:idle hero={backdropHero} />
     }
     {chrome && <SiteHeader />}
     <slot />

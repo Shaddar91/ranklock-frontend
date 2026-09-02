@@ -4,6 +4,7 @@ import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { SITE_ORIGIN } from '../lib/seo';
 import { TRANSLATED_LOCALES, hreflangAlternates, pagePath } from '../lib/i18n';
+import { releasedRoster } from '../lib/heroRoster';
 import type { HeroSummary } from '../types/api';
 
 //Curated SEO sitemap (C7, requirements §7/§8.2). Lists ONLY the indexable English
@@ -80,7 +81,7 @@ export const GET: APIRoute = async () => {
 
   //Hero roster — bounded curated subset (~22). Build-ahead: empty on a cold API,
   //so no hero pages are advertised until the stats API serves them.
-  const heroes = await buildFetch(api.getHeroes(), [] as HeroSummary[]);
+  const heroes = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'sitemap.xml');
   for (const h of heroes) {
     if (h.hero_id == null) continue;
     routes.push({ path: `/heroes/${h.hero_id}`, changefreq: 'weekly', priority: '0.7' });

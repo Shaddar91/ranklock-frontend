@@ -8,15 +8,20 @@
 //backdrop and there is no flash. The client preloads the roster, then starts the
 //interval on mount. Under prefers-reduced-motion the layer stays on the first hero
 //and never cycles (the fade is also disabled in CSS). Mounted once in BaseLayout;
-//hidden by CSS when `data-atmos="off"`.
+//hidden by CSS when `data-atmos="off"`. A `hero` prop pins that one plate (hero
+//pages): no rotation, no roster preload.
 import { useEffect, useState, type CSSProperties } from 'react';
 import { BACKDROP_HEROES, BACKDROP_SMALL_MQ, heroBackdropArt, ROTATE_SECS } from '../../lib/heroBackdrop';
 
-export default function HeroBackdrop() {
+interface Props {
+  hero?: string;
+}
+
+export default function HeroBackdrop({ hero: pinned }: Props) {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    if (BACKDROP_HEROES.length < 2) return;
+    if (pinned || BACKDROP_HEROES.length < 2) return;
     //honor reduced-motion: keep the first hero, don't cycle.
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return;
@@ -35,9 +40,9 @@ export default function HeroBackdrop() {
       ROTATE_SECS * 1000,
     );
     return () => window.clearInterval(id);
-  }, []);
+  }, [pinned]);
 
-  const hero = BACKDROP_HEROES[idx % BACKDROP_HEROES.length] ?? BACKDROP_HEROES[0];
+  const hero = pinned ?? BACKDROP_HEROES[idx % BACKDROP_HEROES.length] ?? BACKDROP_HEROES[0];
   const art = heroBackdropArt(hero);
   //--atmos-bg always paints; --atmos-bg-sm (our base only) feeds the narrow
   //media query in base.css — background-image only, zero layout change.

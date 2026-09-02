@@ -10,6 +10,8 @@ import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
 import Narrative from '../../components/Narrative.astro';
 import { heroNarrative } from '../../lib/heroNarrative';
+import { heroArt } from '../../lib/heroArt';
+import { releasedRoster } from '../../lib/heroRoster';
 import { HERO_BRACKETS, rosterByBracket } from '../../lib/buildIndexes';
 import type {
   DataHorizonResponse,
@@ -25,7 +27,7 @@ import type {
 //tables are baked at build time. A section with no rows is omitted from the
 //DOM — never an empty-state, never a promise of future data.
 export async function getStaticPaths() {
-  const heroes = await buildFetch(api.getHeroes(), [] as HeroSummary[]);
+  const heroes = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'heroes/[id]');
   if (heroes.length === 0) {
     return [{ params: { id: 'example' }, props: { hero: null, roster: [] as HeroSummary[] } }];
   }
@@ -50,6 +52,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
 ]);
 
 const tier = metaTier(hero?.win_rate);
+const art = heroArt(hero?.icon_url);
 const heroKda = kda(hero?.avg_kills, hero?.avg_deaths, hero?.avg_assists);
 
 //Same fetch path as the hero list above (apiClient + buildFetch at build time).
@@ -119,7 +122,14 @@ const sections = hero
   : [];
 ---
 
-<BaseLayout title={title} description={description} canonicalPath={canonicalPath} jsonLd={jsonLd} noindex={!hero}>
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath={canonicalPath}
+  jsonLd={jsonLd}
+  noindex={!hero}
+  backdropHero={art?.cls}
+>
   <main class="container">
     <nav class="kicker" style="margin-bottom:14px;">
       <a href="/heroes/" style="color:var(--muted);">← All heroes</a>
@@ -128,13 +138,31 @@ const sections = hero
     {
       hero ? (
         <div>
-          <div class="entity-head">
-            <GameArt name={name} src={hero.icon_url} wrapClass="entity-art" fontSize={32} eager />
-            <div>
+          <div class={art ? 'entity-head hero-head' : 'entity-head'}>
+            {
+              art ? (
+                <span class="hero-plate" title={name}>
+                  <img
+                    src={art.cardGloat}
+                    alt={name}
+                    width="280"
+                    height="380"
+                    loading="eager"
+                    fetchpriority="high"
+                    data-fallback={art.card}
+                    onerror="if(this.src!==this.dataset.fallback){this.src=this.dataset.fallback}else{this.onerror=null;this.style.display='none'}"
+                  />
+                </span>
+              ) : (
+                <GameArt name={name} src={hero.icon_url} wrapClass="entity-art" fontSize={32} eager />
+              )
+            }
+            <div class="hero-head-text">
               <div class="kicker">Hero · Deadlock</div>
               <h1 class="h-page">{name}</h1>
               {tier && <span class="chip" style="margin-top:6px;">Meta tier {tier}</span>}
             </div>
+            {art && <img class="hero-wordmark" src={art.nameSvg} alt="" aria-hidden="true" loading="lazy" onerror="this.remove()" />}
           </div>
 
           <div class="stat-grid" style="margin-bottom:24px;">

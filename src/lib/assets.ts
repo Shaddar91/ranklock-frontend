@@ -62,6 +62,8 @@ const WEBP_TWIN_PREFIXES = ['heroes/'];
 //resolves to its .webp twin; anything else (svg, already-webp, foreign, nullish)
 //passes through untouched, so the GameIcon monogram fallback still fires on a
 //genuinely missing asset.
+export function preferWebp(url: string, base?: string): string;
+export function preferWebp(url: string | null | undefined, base?: string): string | null | undefined;
 export function preferWebp(url: string | null | undefined, base?: string): string | null | undefined {
   if (!url || !url.endsWith('.png')) return url;
   const b = (base || DEADLOCK_ASSETS_HOST).replace(/\/+$/, '');
