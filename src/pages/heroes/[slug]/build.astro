@@ -1,0 +1,315 @@
+---
+//SSG per-hero build page: the item sets and buy order our own matches measure,
+//the rank-scoped item table, and the community's published builds with their
+//upstream attribution. Every section is baked at build time; only the rank
+//filter on the item table hydrates.
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GameArt from '../../../components/GameArt.astro';
+import Narrative from '../../../components/Narrative.astro';
+import WinRate from '../../../components/WinRate.astro';
+import ItemsTable from '../../../components/react/ItemsTable';
+import { api } from '../../../lib/apiClient';
+import { buildFetch } from '../../../lib/buildData';
+import { dataHorizon } from '../../../lib/buildIndexes';
+import { breadcrumbJsonLd } from '../../../lib/seo';
+import { count, shortDate } from '../../../lib/format';
+import { formatUpdated } from '../../../lib/buildMeta';
+import { heroArt } from '../../../lib/heroArt';
+import { heroPath, slugRoster } from '../../../lib/heroSlugs';
+import { releasedRoster } from '../../../lib/heroRoster';
+import {
+  buildNarrative,
+  buyOrderByPos,
+  dedupeSetItems,
+  itemName,
+  rankedSets,
+  sumMatchupBrackets,
+} from '../../../lib/buildNarrative';
+import { toPct } from '../../../lib/narrative';
+import type {
+  HeroBuildStats,
+  HeroItemWinRate,
+  HeroSummary,
+  ItemStat,
+  MatchupEntry,
+  ScoredBuild,
+} from '../../../types/api';
+
+export async function getStaticPaths() {
+  const heroes = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'heroes/[slug]/build');
+  if (heroes.length === 0) return [];
+  return slugRoster(heroes, 'heroes/[slug]/build').map(({ slug, ...hero }) => ({
+    params: { slug },
+    props: { hero: hero as HeroSummary, roster: heroes },
+  }));
+}
+
+const { hero, roster } = Astro.props as { hero: HeroSummary; roster: HeroSummary[] };
+const name = hero.hero_name;
+const emptyStats: HeroBuildStats = {
+  hero_id: hero.hero_id,
+  tier: 0,
+  match_mode: 'Ranked',
+  game_mode: 'Normal',
+  item_sets: [],
+  buy_order: [],
+};
+
+//Badge buckets 1-5 are the only unambiguous matchup read: bracket 0 returns one row
+//per match_mode with no way to tell them apart (deadlock-backend analytics.rs MATCHUP_SQL).
+const MATCHUP_BUCKETS = [1, 2, 3, 4, 5];
+
+const [stats, builds, itemWinRates, rankItems, horizon, ...matchupPages] = await Promise.all([
+  buildFetch(api.getHeroBuildStats(hero.hero_id), emptyStats),
+  buildFetch(api.getHeroBuilds(hero.hero_id, 'weekly', true), [] as ScoredBuild[]),
+  buildFetch(api.getHeroItemWinRates(hero.hero_id), [] as HeroItemWinRate[]),
+  buildFetch(api.getItems(0, undefined, hero.hero_id), [] as ItemStat[]),
+  dataHorizon(),
+  ...MATCHUP_BUCKETS.map((b) => buildFetch(api.getHeroMatchups(hero.hero_id, b), [] as MatchupEntry[])),
+]);
+
+const heroById = new Map(roster.map((h) => [h.hero_id, h]));
+const matchups = sumMatchupBrackets(matchupPages as MatchupEntry[][], hero.hero_id);
+const sets = rankedSets(stats.item_sets);
+const positions = buyOrderByPos(stats.buy_order);
+const nowSeconds = Math.floor(Date.now() / 1000);
+
+const sections = buildNarrative({
+  hero,
+  roster,
+  itemSets: stats.item_sets,
+  buyOrder: stats.buy_order,
+  itemWinRates,
+  builds,
+  matchups,
+  heroName: (id) => heroById.get(id)?.hero_name ?? `Hero ${id}`,
+});
+
+const windowOf = (ds: string) => horizon?.datasets.find((d) => d.dataset === ds);
+const statsThrough = shortDate(horizon?.max_match_start_time);
+const setWindow = windowOf('hero-itemset-win-rates');
+const setLo = shortDate(setWindow?.window_lo);
+const setHi = shortDate(setWindow?.window_hi);
+const itemWindow = windowOf('hero-item-win-rates');
+const itemLo = shortDate(itemWindow?.window_lo);
+const itemHi = shortDate(itemWindow?.window_hi);
+
+const heroUrl = heroPath(name);
+const canonicalPath = `${heroUrl}build/`;
+const art = heroArt(hero.icon_url);
+const authorOf = (b: ScoredBuild) => b.author_name?.trim() || `Account ${b.author_account_id}`;
+const authorList = [...new Set(builds.map(authorOf))].slice(0, 3).join(', ');
+const description = builds.length
+  ? `The ${name} item sets that actually win in RankLock's match data, with games and win rate for each, plus ${builds.length} community build${builds.length === 1 ? '' : 's'} by ${authorList} scored against those numbers.${statsThrough ? ` Data through ${statsThrough}.` : ''}`
+  : `The ${name} item sets that actually win in RankLock's match data, with games and win rate for each, and the items that carry the highest win rate at your rank.${statsThrough ? ` Data through ${statsThrough}.` : ''}`;
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = breadcrumbJsonLd(origin, [
+  { name: 'Home', path: '/' },
+  { name: 'Heroes', path: '/heroes' },
+  { name, path: heroUrl },
+  { name: 'Build', path: canonicalPath },
+]);
+
+const heroOptions = roster.map((h) => ({ hero_id: h.hero_id, hero_name: h.hero_name }));
+const hasAnything = sets.length > 0 || positions.length > 0 || rankItems.length > 0 || builds.length > 0;
+---
+
+<BaseLayout
+  title={`${name} build — best items by win rate | RankLock Deadlock`}
+  description={description}
+  canonicalPath={canonicalPath}
+  jsonLd={jsonLd}
+  backdropHero={art?.cls}
+>
+  <main class="container">
+    <nav class="kicker" style="margin-bottom:14px;">
+      <a href={heroUrl} style="color:var(--muted);">← {name} stats</a>
+    </nav>
+
+    <div class="entity-head">
+      <GameArt name={name} src={hero.icon_url} wrapClass="entity-art" fontSize={32} eager />
+      <div class="hero-head-text">
+        <div class="kicker">Build · Deadlock</div>
+        <h1 class="h-page">{name} build</h1>
+      </div>
+    </div>
+
+    <p class="page-intro">
+      What RankLock's own match data says wins on {name}, and what the community has published.
+      For win rate, matchups and duo partners see <a href={heroUrl}>{name}'s stats page</a>; to
+      assemble a build of your own, open the <a href="/build-lab/">build lab</a>.
+    </p>
+
+    {hasAnything ? <Narrative sections={sections} /> : null}
+
+    {
+      sets.length > 0 && (
+        <section class="panel panel-pad bp-sec">
+          <h2 class="h-sec">Winning item sets, all ranks</h2>
+          <p class="bp-sub">
+            Six-slot sets our matches measured, ordered by Wilson lower bound, which discounts a rate
+            taken from few games. An entry bought twice in one set shows as x2.
+            {setLo && setHi && ` These sets cover ${setLo} to ${setHi}, a narrower window than the rest of this page.`}
+          </p>
+          <div class="dt-scroll">
+            <table class="dt">
+              <thead>
+                <tr>
+                  <th><span class="th-static">Item set</span></th>
+                  <th class="num"><span class="th-static">Win rate</span></th>
+                  <th class="num"><span class="th-static">Games</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {sets.map((s) => (
+                  <tr>
+                    <td>
+                      <span class="bp-set">
+                        {dedupeSetItems(s.items).map((i) => (
+                          <a class="bp-chip" href={`/items/${i.item_id}/`}>
+                            <GameArt name={itemName(i)} src={i.icon_url} wrapClass="iicon" wrapStyle="width:22px; height:22px;" />
+                            <span>{itemName(i)}</span>
+                            {i.n > 1 && <span class="bp-mult">x{i.n}</span>}
+                          </a>
+                        ))}
+                      </span>
+                    </td>
+                    <td class="num"><WinRate wr={toPct(s.win_rate)} /></td>
+                    <td class="num"><span class="tnum">{count(s.games)}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      positions.length > 0 && (
+        <section class="panel panel-pad bp-sec">
+          <h2 class="h-sec">Buy order</h2>
+          <p class="bp-sub">
+            The highest-confidence buy at each of the {count(positions.length)} measured slots, same Wilson
+            ordering. A count is the matches in which that item was the buy at that slot, so the counts do not
+            simply fall away as the slot number rises.
+          </p>
+          <div class="dt-scroll">
+            <table class="dt">
+              <thead>
+                <tr>
+                  <th class="num"><span class="th-static">Slot</span></th>
+                  <th><span class="th-static">Item</span></th>
+                  <th class="num"><span class="th-static">Win rate</span></th>
+                  <th class="num"><span class="th-static">Games</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {positions.map((p) => {
+                  const r = p.rows[0]!;
+                  return (
+                    <tr>
+                      <td class="num"><span class="tnum">{p.pos}</span></td>
+                      <td>
+                        <a class="flex" href={`/items/${r.item_id}/`} style="align-items:center; gap:10px; text-decoration:none;">
+                          <GameArt name={itemName(r)} src={r.icon_url} wrapClass="iicon" wrapStyle="width:26px; height:26px;" />
+                          <span class="display" style="font-weight:600; color:var(--text);">{itemName(r)}</span>
+                        </a>
+                      </td>
+                      <td class="num"><WinRate wr={toPct(r.win_rate)} /></td>
+                      <td class="num"><span class="tnum">{count(r.games)}</span></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      rankItems.length > 0 && (
+        <section class="panel panel-pad bp-sec">
+          <h2 class="h-sec">Best {name} items at your rank</h2>
+          <p class="bp-sub">
+            Single-item win rates on {name}, filtered by badge tier. Item sets above are all-ranks only;
+            this table is the one place the build splits by rank.
+            {itemLo && itemHi && ` It covers ${itemLo} to ${itemHi}.`}
+          </p>
+          <ItemsTable initialRows={rankItems} heroes={heroOptions} pinnedHero={hero.hero_id} client:load />
+        </section>
+      )
+    }
+
+    {
+      builds.length > 0 && (
+        <section class="panel panel-pad bp-sec">
+          <h2 class="h-sec">Community {name} builds</h2>
+          <p class="bp-sub">
+            Published builds as their authors wrote them, ordered by weekly favorites. The score below each
+            one is the average win rate of its core items in our data, not the win rate of players
+            running the build.
+          </p>
+          <ul class="bp-builds">
+            {builds.map((b) => (
+              <li class="bp-build">
+                <div class="bp-build-head">
+                  <span class="display bp-build-name">{b.name}</span>
+                  <span class="bp-build-by">by {authorOf(b)}</span>
+                </div>
+                <div class="bp-build-meta mono">
+                  {b.num_weekly_favorites != null && <span>{count(b.num_weekly_favorites)} weekly favorites</span>}
+                  <span>Updated {formatUpdated(b.last_updated_timestamp, nowSeconds)}</span>
+                  <span>Version {b.version}</span>
+                </div>
+                {b.score && <div class="bp-build-score">{b.score.label}</div>}
+                {b.categories.length > 0 && (
+                  <div class="bp-build-cats">
+                    {b.categories.map((c) => (
+                      <span class="bp-cat">
+                        {c.name} <span class="bp-cat-n">{c.items.length}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      !hasAnything && (
+        <p class="page-intro">
+          No {name} build data had been folded when this page was built. The hero's win rate, matchups
+          and items are on <a href={heroUrl}>{name}'s stats page</a>.
+        </p>
+      )
+    }
+
+    <section class="panel panel-pad bp-note">
+      <h2 class="h-sec">Where these numbers come from</h2>
+      <p>
+        Item sets and buy order are folded from RankLock's own ranked match data, not from build
+        favorites: a set counts only when it was actually finished in a game we ingested. Win rates
+        are shares of games won. Ordering is by Wilson lower bound, which discounts a high rate
+        measured over few games.
+      </p>
+      <p>
+        Community builds come from the public build list with their authors' names and text as
+        published. RankLock cannot measure how a published build performs, because our match rows do
+        not carry which build a player followed, so the score shown is the average win rate of that
+        build's core items and is labelled that way. The <a href="/methodology/">methodology page</a>
+        defines every number here, and <a href="/tier-list/">the tier list</a> puts {name} against the rest of the roster.
+      </p>
+      <p class="mono bp-window">
+        {setLo && setHi && `Item sets and buy order cover ${setLo} to ${setHi}. `}
+        {itemLo && itemHi && `Per-item win rates cover ${itemLo} to ${itemHi}. `}
+        {statsThrough && `Newest match in the dataset: ${statsThrough}.`}
+      </p>
+    </section>
+  </main>
+</BaseLayout>

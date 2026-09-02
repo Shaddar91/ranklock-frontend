@@ -306,7 +306,10 @@ const sections = hero
           {
             builds.length > 0 && (
               <section class="panel panel-pad" style="margin-bottom:24px;">
-                <h2 class="h-sec" style="margin-bottom:10px;">Community builds</h2>
+                <div class="between" style="margin-bottom:10px; gap:16px; flex-wrap:wrap;">
+                  <h2 class="h-sec" style="margin:0;">Community builds</h2>
+                  <a class="kicker" href={`${canonicalPath}build/`}>{name} build guide →</a>
+                </div>
                 <ul style="list-style:none; margin:0; padding:8px 0;">
                   {builds.map((b) => (
                     <li class="statrow">
@@ -315,6 +318,10 @@ const sections = hero
                     </li>
                   ))}
                 </ul>
+                <p class="muted" style="font-size:13px; margin:8px 0 0;">
+                  Author names, item lists and the measured best sets are on the{' '}
+                  <a href={`${canonicalPath}build/`}>{name} build page</a>.
+                </p>
               </section>
             )
           }

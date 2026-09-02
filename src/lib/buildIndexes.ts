@@ -2,7 +2,7 @@
 //build for the per-bracket rosters and the hero -> item win-rate index.
 import { api } from './apiClient';
 import { buildFetch } from './buildData';
-import type { HeroBracket, HeroItemWinRate, HeroSummary } from '../types/api';
+import type { DataHorizonResponse, HeroBracket, HeroItemWinRate, HeroSummary } from '../types/api';
 
 export interface BracketDef {
   key: HeroBracket;
@@ -25,6 +25,11 @@ function once<T>(key: string, make: () => Promise<T>): Promise<T> {
     memo.set(key, p);
   }
   return p;
+}
+
+/** One /meta/data-horizon fetch per build, shared by every page that prints a fold window. */
+export function dataHorizon(): Promise<DataHorizonResponse | null> {
+  return once('dataHorizon', () => buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null));
 }
 
 export function rosterByBracket(): Promise<Map<HeroBracket, HeroSummary[]>> {

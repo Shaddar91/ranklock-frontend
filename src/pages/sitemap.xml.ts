@@ -85,11 +85,13 @@ export const GET: APIRoute = async () => {
     routes.push({ path: `/blog/${post.id}`, changefreq: 'monthly', priority: '0.6', lastmod: last });
   }
 
-  //Hero roster — bounded curated subset (~22). Build-ahead: empty on a cold API,
-  //so no hero pages are advertised until the stats API serves them.
+  //Hero roster and its build pages — bounded curated families off the same roster.
+  //Build-ahead: empty on a cold API, so neither family is advertised until the
+  //stats API serves the roster.
   const heroes = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'sitemap.xml');
   for (const h of slugRoster(heroes.filter((h) => h.hero_id != null), 'sitemap.xml')) {
     routes.push({ path: `/heroes/${h.slug}`, changefreq: 'weekly', priority: '0.7' });
+    routes.push({ path: `/heroes/${h.slug}/build`, changefreq: 'weekly', priority: '0.6' });
   }
 
   //Item catalog — bounded family; same static source items/[id].astro builds its paths from.

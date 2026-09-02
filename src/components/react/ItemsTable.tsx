@@ -78,10 +78,18 @@ function ItemTooltipContent({ it }: { it: ItemStat }) {
   );
 }
 
-function ItemsTableInner({ initialRows, heroes }: { initialRows: ItemStat[]; heroes: ItemsHeroOption[] }) {
+function ItemsTableInner({
+  initialRows,
+  heroes,
+  pinnedHero,
+}: {
+  initialRows: ItemStat[];
+  heroes: ItemsHeroOption[];
+  pinnedHero?: number;
+}) {
   const { mode } = useGameMode();
   const [bucket, setBucket] = useState<RankBucket['key']>(0);
-  const [hero, setHero] = useState(0);
+  const [hero, setHero] = useState(pinnedHero ?? 0);
 
   const heroOptions = useMemo(
     () => heroes.filter((h) => h.hero_name?.trim()).sort((a, b) => a.hero_name.localeCompare(b.hero_name)),
@@ -92,8 +100,8 @@ function ItemsTableInner({ initialRows, heroes }: { initialRows: ItemStat[]; her
   const { data, isPending, isError, error } = useQuery({
     queryKey: queryKeys.items(itemBracketParam(bucket), mode, itemHeroParam(hero)),
     queryFn: () => api.getItems(itemBracketParam(bucket), mode, itemHeroParam(hero)),
-    //Seed only the default view (all ranks, Normal, all heroes); every other combination fetches.
-    initialData: bucket === 0 && mode === 'Normal' && hero === 0 ? initialRows : undefined,
+    //Seed only the view the rows were baked for (all ranks, Normal, the page's hero scope); every other combination fetches.
+    initialData: bucket === 0 && mode === 'Normal' && hero === (pinnedHero ?? 0) ? initialRows : undefined,
     placeholderData: keepPreviousData,
   });
 
@@ -158,23 +166,32 @@ function ItemsTableInner({ initialRows, heroes }: { initialRows: ItemStat[]; her
       <div className="between" style={{ marginBottom: 14, gap: 16, flexWrap: 'wrap' }}>
         <span className="label-xs">{heroName ? `Win rate on ${heroName} at your rank` : 'Win rate at your rank'}</span>
         <div className="flex" style={{ alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
-            <span className="label-xs">Hero</span>
-            <select
-              className="field"
-              style={{ width: 'auto', padding: '8px 12px' }}
-              value={hero}
-              onChange={(e) => setHero(Number(e.target.value))}
-              aria-label="Rank items on a hero"
-            >
-              <option value={0}>All heroes</option>
-              {heroOptions.map((h) => (
-                <option key={h.hero_id} value={h.hero_id}>
-                  {h.hero_name}
-                </option>
-              ))}
-            </select>
-          </label>
+          {pinnedHero ? (
+            <span className="flex" style={{ alignItems: 'center', gap: 8 }}>
+              <span className="label-xs">Hero</span>
+              <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
+                {heroName ?? `Hero ${pinnedHero}`}
+              </span>
+            </span>
+          ) : (
+            <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
+              <span className="label-xs">Hero</span>
+              <select
+                className="field"
+                style={{ width: 'auto', padding: '8px 12px' }}
+                value={hero}
+                onChange={(e) => setHero(Number(e.target.value))}
+                aria-label="Rank items on a hero"
+              >
+                <option value={0}>All heroes</option>
+                {heroOptions.map((h) => (
+                  <option key={h.hero_id} value={h.hero_id}>
+                    {h.hero_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <BucketFilter buckets={ITEM_BUCKETS} value={bucket} onChange={setBucket} ariaLabel="Item win-rate by rank" />
         </div>
       </div>
@@ -207,10 +224,18 @@ function ItemsTableInner({ initialRows, heroes }: { initialRows: ItemStat[]; her
   );
 }
 
-export default function ItemsTable({ initialRows, heroes = [] }: { initialRows: ItemStat[]; heroes?: ItemsHeroOption[] }) {
+export default function ItemsTable({
+  initialRows,
+  heroes = [],
+  pinnedHero,
+}: {
+  initialRows: ItemStat[];
+  heroes?: ItemsHeroOption[];
+  pinnedHero?: number;
+}) {
   return (
     <QueryProvider>
-      <ItemsTableInner initialRows={initialRows} heroes={heroes} />
+      <ItemsTableInner initialRows={initialRows} heroes={heroes} pinnedHero={pinnedHero} />
     </QueryProvider>
   );
 }
