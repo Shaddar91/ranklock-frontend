@@ -2,6 +2,7 @@
 //item and its slot/tier peers, purchase timing, and which heroes build it.
 import { count, duration, pct } from './format';
 import { joinSegs, link, mean, ordinal, rankDesc, toPct, type Para, type Section, type Seg } from './narrative';
+import { heroPath } from './heroSlugs';
 
 export interface ItemFacts {
   item_id: number;
@@ -40,7 +41,6 @@ export interface ItemNarrativeInput {
   heroes: ItemHeroRow[];
 }
 
-const heroHref = (id: number) => `/heroes/${id}/`;
 const itemHref = (id: number) => `/items/${id}/`;
 
 function performance(input: ItemNarrativeInput): Section | null {
@@ -111,8 +111,8 @@ function builders(input: ItemNarrativeInput): Section | null {
   if (qualified.length < 2) return null;
   const byWr = [...qualified].sort((a, b) => b.wr - a.wr).slice(0, 3);
   const byGames = [...qualified].sort((a, b) => b.games - a.games).slice(0, 3);
-  const seg = (h: { hero_id: number; name: string; wr: number }): Seg[] => [link(h.name, heroHref(h.hero_id)), ` (${pct(h.wr)})`];
-  const segName = (h: { hero_id: number; name: string }): Seg[] => [link(h.name, heroHref(h.hero_id))];
+  const seg = (h: { hero_id: number; name: string; wr: number }): Seg[] => [link(h.name, heroPath(h.name)), ` (${pct(h.wr)})`];
+  const segName = (h: { hero_id: number; name: string }): Seg[] => [link(h.name, heroPath(h.name))];
   const p: Para = [`${input.item.name} wins most often on `, ...joinSegs(byWr.map(seg)), `. `];
   p.push(`The heroes who buy it most are `, ...joinSegs(byGames.map(segName)), `.`);
   const both = byGames.find((h) => byWr.includes(h));

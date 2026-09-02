@@ -50,7 +50,7 @@ commonly face, you can bank the quiet week and keep practicing.
   tells you what your lobbies will feel like next week. The all-brackets move
   tells you what the average lobby feels, and you do not play there.
 - **Cross-check on the hero page.** The per-bracket win-rates on each hero page
-  update with the data window, so a [page like Lash's](/heroes/31/) confirms
+  update with the data window, so a [page like Lash's](/heroes/lash/) confirms
   whether a patch-page delta held once games accumulated.
 - **Check your items too.** The [items page](/items/) tracks win-rate and
   average buy timing per item, and a cost or scaling tweak moves those numbers

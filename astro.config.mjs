@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
+import { HERO_ID_REDIRECTS } from './src/lib/heroSlugs.ts';
 
 //RankLock frontend — static-first Astro build deployed to Cloudflare static
 //assets ($0 baseline). See the architecture doc (frontend-architecture-and-
@@ -78,6 +79,11 @@ export default defineConfig({
     },
     fallback: { ru: 'en', fr: 'en', zh: 'en', sr: 'en', sv: 'en', no: 'en' },
   },
+  //Hero URLs are name slugs; every pre-cutover numeric URL 301s to its slug, apex and per
+  //locale. `build.redirects: false` suppresses Astro's meta-refresh HTML so the adapter's
+  //static-assets _redirects serves the 301 — an emitted page would win over the rule.
+  redirects: HERO_ID_REDIRECTS,
+  build: { redirects: false },
   integrations: [react()],
   vite: {
     build: {

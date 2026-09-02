@@ -3,6 +3,7 @@
 //rank pattern), not only in the numbers.
 import { count, fixed, pct } from './format';
 import { joinSegs, link, mean, ordinal, quarter, rankDesc, toPct, type Para, type Section, type Seg } from './narrative';
+import { heroPath } from './heroSlugs';
 import type { HeroBracket, HeroItemWinRate, HeroSummary, MatchupEntry } from '../types/api';
 
 export interface HeroSynergy {
@@ -31,7 +32,11 @@ export interface HeroNarrativeInput {
   currentPatch: { label: string; since: string } | null;
 }
 
-const heroHref = (id: number) => `/heroes/${id}/`;
+//A hero page exists only for a roster hero, so an off-roster id is named in prose but not linked.
+const heroSeg = (roster: HeroSummary[], id: number, text: string): Seg => {
+  const h = roster.find((r) => r.hero_id === id);
+  return h ? link(text, heroPath(h.hero_name)) : text;
+};
 const itemHref = (id: number) => `/items/${id}/`;
 
 function performance(input: HeroNarrativeInput): Section | null {
@@ -123,7 +128,7 @@ function matchups(input: HeroNarrativeInput): Section | null {
         ? `Its results barely move with the opponent, a ${fixed(spread, 1)} point spread, so it is a safe blind pick.`
         : `The matchup spread is ${fixed(spread, 1)} points: enough to matter in a coordinated draft, not enough to avoid the hero.`;
   const seg = (m: { id: number; wr: number; matches: number }): Seg[] => [
-    link(heroName(m.id), heroHref(m.id)),
+    heroSeg(input.roster, m.id, heroName(m.id)),
     ` (${pct(m.wr)} over ${count(m.matches)} games)`,
   ];
   const p1: Para = [`${name} has a winning record against ${winning} of its ${qualified.length} common opponents. ${spreadText}`];
@@ -146,14 +151,14 @@ function partners(input: HeroNarrativeInput): Section | null {
   const common = [...qualified].sort((a, b) => b.matches - a.matches)[0];
   if (!common) return null;
   const name = input.hero.hero_name;
-  const seg = (s: HeroSynergy): Seg[] => [link(input.heroName(s.partnerId), heroHref(s.partnerId)), ` (${pct(s.winRate)})`];
+  const seg = (s: HeroSynergy): Seg[] => [heroSeg(input.roster, s.partnerId, input.heroName(s.partnerId)), ` (${pct(s.winRate)})`];
   const p: Para = [`On the same team, ${name} wins most often alongside `, ...joinSegs(top.map(seg)), `. `];
   if (top.includes(common)) {
     p.push(`${input.heroName(common.partnerId)} is also its most common partner, at ${count(common.matches)} games together.`);
   } else {
     p.push(
       `Its most common partner is `,
-      link(input.heroName(common.partnerId), heroHref(common.partnerId)),
+      heroSeg(input.roster, common.partnerId, input.heroName(common.partnerId)),
       ` (${count(common.matches)} games together, ${pct(common.winRate)}), a pairing chosen more for comfort than for its results.`,
     );
   }

@@ -40,7 +40,7 @@ lobby gets stronger.
 
 ## Lash is the same pick everywhere
 
-[Lash's bracket breakdown](/heroes/31/) reads 50.8% in the low bracket, 51.1% in
+[Lash's bracket breakdown](/heroes/lash/) reads 50.8% in the low bracket, 51.1% in
 the mid bracket, 50.6% in the high bracket, and 50.3% in the top bracket, as of
 the 2026-08-22 patch. Four measurements, all inside a single point.
 
@@ -56,13 +56,13 @@ swing across brackets, set them next to Lash's and you can see how much
 movement a bracket-dependent hero actually shows.
 
 Bracket-proof is not matchup-proof, though. The same page shows [Lash winning
-45.0% into Seven across 430,906 matches](/heroes/31/), his worst common pairing.
+45.0% into Seven across 430,906 matches](/heroes/lash/), his worst common pairing.
 We cover how to read lines like that in the [matchups
 guide](/blog/hero-matchups-101/).
 
 ## Haze is a different hero at high rank
 
-[Haze](/heroes/13/) carries a strong header line: 52.6% wins across 2,081,083
+[Haze](/heroes/haze/) carries a strong header line: 52.6% wins across 2,081,083
 picks, a 2.80 KDA, and 44,793 average souls over the full window. Over two
 million picks in a single window means the sample behind her numbers is
 enormous, and the all-ranks figure still rewards her players.

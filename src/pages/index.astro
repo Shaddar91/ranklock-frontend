@@ -8,6 +8,7 @@ import { getCollection } from 'astro:content';
 import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { count, shortDate } from '../lib/format';
+import { heroPath } from '../lib/heroSlugs';
 import GameArt from '../components/GameArt.astro';
 import { websiteJsonLd, orgJsonLd, SITE_TAGLINE } from '../lib/seo';
 import { AD_SLOTS } from '../config/artDirection';
@@ -97,7 +98,7 @@ const entries = [
                     <GameArt name={h.hero_name} src={h.icon_url} wrapClass="hav" wrapStyle="width:28px; height:28px;" />
                   )}
                   <a
-                    href={`/heroes/${h.hero_id}/`}
+                    href={heroPath(h.hero_name)}
                     class="display"
                     style="flex:1; font-weight:600; color:var(--text); text-decoration:none;"
                   >
@@ -158,7 +159,7 @@ const entries = [
                 {topHeroes.map((h) => (
                   <tr>
                     <td>
-                      <a href={`/heroes/${h.hero_id}/`} class="flex" style="align-items:center; gap:10px; text-decoration:none;">
+                      <a href={heroPath(h.hero_name)} class="flex" style="align-items:center; gap:10px; text-decoration:none;">
                         {h.icon_url && (
                           <GameArt name={h.hero_name} src={h.icon_url} wrapClass="hav" wrapStyle="width:30px; height:30px;" fontSize={13} />
                         )}

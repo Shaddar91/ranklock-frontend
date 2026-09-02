@@ -11,6 +11,7 @@ import GameArt from '../../components/GameArt.astro';
 import { breadcrumbJsonLd } from '../../lib/seo';
 import { count, pct } from '../../lib/format';
 import { resolveAsset } from '../../lib/assets';
+import { heroPath } from '../../lib/heroSlugs';
 import type { HeroSummary, ItemStat, ItemModifier } from '../../types/api';
 import itemDetail from '../../data/items-detail.json';
 
@@ -241,7 +242,7 @@ const slotLabel = item?.slot ? item.slot.charAt(0).toUpperCase() + item.slot.sli
                     {heroTable.map((h) => (
                       <tr>
                         <td>
-                          <a class="display" style="font-weight:600; color:var(--text);" href={`/heroes/${h.hero_id}/`}>{h.name}</a>
+                          <a class="display" style="font-weight:600; color:var(--text);" href={heroPath(h.name)}>{h.name}</a>
                         </td>
                         <td class="num"><span class="tnum">{count(h.games)}</span></td>
                         <td class="num"><WinRate wr={toPct(h.win_rate)} /></td>

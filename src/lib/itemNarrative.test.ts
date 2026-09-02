@@ -44,7 +44,7 @@ describe('itemNarrative', () => {
     expect(text).toContain('The heroes who buy it most are Haze and Seven.');
     expect(text).toContain('Haze is both a frequent and a winning buyer');
     const hrefs = sections.flatMap((s) => s.paras.flat()).filter((seg) => typeof seg !== 'string').map((seg) => (seg as { href: string }).href);
-    expect(hrefs).toContain('/heroes/13/');
+    expect(hrefs).toContain('/heroes/haze/');
     expect(hrefs).toContain('/items/1/');
   });
   it('reads late/early timing', () => {

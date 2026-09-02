@@ -42,7 +42,7 @@ The computed layer aggregates raw records across the window:
   rate](/heroes/).
 - Hero pages go deeper: per-bracket win-rates, matchup tables with match
   counts, and per-hero item win-rates like [Lash's Magic Carpet at 64.0% across
-  636,736 games](/heroes/31/).
+  636,736 games](/heroes/lash/).
 - [Lane Lab](/lane-lab/) computes the median souls curve, about 6,060 souls at
   9:00 for the median player, and attaches a win probability to each 9-minute
   souls threshold.

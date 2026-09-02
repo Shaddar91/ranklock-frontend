@@ -15,6 +15,7 @@ import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, GameIcon, WinBar, TierPill } from './ui/index';
 import BracketFilter, { type BracketValue } from './ui/BracketFilter';
 import { RANKS } from '../../lib/ranks';
+import { heroPath } from '../../lib/heroSlugs';
 import { DASH, fixed, kda, metaTier, pct, pickShare } from '../../lib/format';
 import type { HeroSummary } from '../../types/api';
 
@@ -39,7 +40,7 @@ function HeroCell({ hero }: { hero: HeroSummary }) {
   return (
     <a
       className="flex"
-      href={`/heroes/${hero.hero_id}/`}
+      href={heroPath(hero.hero_name)}
       style={{ alignItems: 'center', gap: 10, textDecoration: 'none', opacity: rosterOnly ? 0.55 : 1 }}
     >
       <GameIcon kind="hero" name={hero.hero_name} src={hero.icon_url} size={30} />

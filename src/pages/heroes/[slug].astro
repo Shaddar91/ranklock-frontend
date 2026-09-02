@@ -12,6 +12,7 @@ import Narrative from '../../components/Narrative.astro';
 import { heroNarrative } from '../../lib/heroNarrative';
 import { heroArt } from '../../lib/heroArt';
 import { releasedRoster } from '../../lib/heroRoster';
+import { heroPath, slugRoster } from '../../lib/heroSlugs';
 import { HERO_BRACKETS, rosterByBracket } from '../../lib/buildIndexes';
 import type {
   DataHorizonResponse,
@@ -27,11 +28,12 @@ import type {
 //tables are baked at build time. A section with no rows is omitted from the
 //DOM — never an empty-state, never a promise of future data.
 export async function getStaticPaths() {
-  const heroes = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'heroes/[id]');
+  const heroes = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'heroes/[slug]');
   if (heroes.length === 0) {
-    return [{ params: { id: 'example' }, props: { hero: null, roster: [] as HeroSummary[] } }];
+    return [{ params: { slug: 'example' }, props: { hero: null, roster: [] as HeroSummary[] } }];
   }
-  return heroes.map((h) => ({ params: { id: String(h.hero_id) }, props: { hero: h, roster: heroes } }));
+  const slugged = slugRoster(heroes, 'heroes/[slug]');
+  return slugged.map(({ slug, ...hero }) => ({ params: { slug }, props: { hero: hero as HeroSummary, roster: heroes } }));
 }
 
 const { hero, roster } = Astro.props as { hero: HeroSummary | null; roster: HeroSummary[] };
@@ -44,7 +46,7 @@ const title = hero
 const description = hero
   ? `${name} Deadlock stats: win-rate, pick rate, KDA, matchups and community builds.`
   : 'Deadlock hero detail.';
-const canonicalPath = hero ? `/heroes/${hero.hero_id}` : '/heroes';
+const canonicalPath = hero ? heroPath(hero.hero_name) : '/heroes';
 const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
   { name: 'Heroes', path: '/heroes' },

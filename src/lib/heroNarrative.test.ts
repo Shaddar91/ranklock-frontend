@@ -67,7 +67,7 @@ describe('heroNarrative', () => {
     expect(text).toContain('lower-volume buys');
     expect(text).toContain('loses 4.0 points between Obscurus to Archon and Ascendant and Eternus 1 to 5');
     const hrefs = sections.flatMap((s) => s.paras.flat()).filter((seg) => typeof seg !== 'string').map((seg) => (seg as { href: string }).href);
-    expect(hrefs).toContain('/heroes/1/');
+    expect(hrefs).toContain('/heroes/abrams/');
     expect(hrefs).toContain('/items/10/');
     expect(hrefs.every((h) => h.endsWith('/'))).toBe(true);
   });

@@ -15,7 +15,7 @@ overreacting to it.
 
 ## What a matchup number is
 
-Take [Lash's matchup table](/heroes/31/). His worst common pairing is Seven:
+Take [Lash's matchup table](/heroes/lash/). His worst common pairing is Seven:
 Lash wins 45.0% of the 430,906 recorded matches where the two heroes met. His
 best listed pairing is Bebop, at 54.0% across 465,892 matches. Each row is one
 measured quantity: of the matches in the data window where Lash faced that
@@ -66,7 +66,7 @@ once the window fills in.
 Nine points of win-rate separate Lash's two extreme rows, and the only thing
 that changed is which hero stands across the lane.
 
-The same reading applies to item tables. On [Lash's page](/heroes/31/), Magic
+The same reading applies to item tables. On [Lash's page](/heroes/lash/), Magic
 Carpet posts a 64.0% win-rate across the 636,736 games where he bought it, and
 Mystic Reverb posts 60.7% across about 1.8 million. Rate and count, same
 discipline.
