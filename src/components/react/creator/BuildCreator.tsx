@@ -1,6 +1,7 @@
-//Build Creator (statlocker parity, scope a): pick a hero, fill the item board, imbue items onto
-//abilities, flip conditionals, and read the calculated Weapon / Vitality / Spirit panels + souls
-//spend. All math is computeStats'; this component only assembles the BuildInput and renders.
+//Build Creator (statlocker parity, scope a): pick a hero from the portrait grid, fill the item
+//board from the shop grid, imbue items onto abilities, flip conditionals, and read the calculated
+//Weapon / Vitality / Spirit panels + souls spend. All math is computeStats'; this component only
+//assembles the BuildInput and renders.
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
@@ -8,8 +9,9 @@ import { computeStats, type BaseStats } from '../../../lib/computeStats';
 import { readBuildFromHash } from '../../../lib/buildShare';
 import { count } from '../../../lib/format';
 import { EmptyState } from '../ui/index';
-import type { HeroAbility, HeroBaseStats, ItemModifier } from '../../../types/api';
+import type { HeroAbility, HeroBaseStats, HeroSummary, ItemModifier } from '../../../types/api';
 import BuildBoard from './BuildBoard';
+import HeroPicker from './HeroPicker';
 import BuildToolbar from './BuildToolbar';
 import CalculatedPanels from './CalculatedPanels';
 import ItemPicker from './ItemPicker';
@@ -17,35 +19,6 @@ import { imbueAbilities, indexCatalog, layoutBuild, MAX_ITEMS, normalizeCatalog 
 import { useBuildDraft } from './useBuildDraft';
 
 const NO_BASE: BaseStats = {};
-
-function HeroSelect({
-  heroes,
-  heroId,
-  onHero,
-}: {
-  heroes: HeroBaseStats[];
-  heroId: number | null;
-  onHero: (id: number) => void;
-}) {
-  const known = heroes.some((h) => h.hero_id === heroId);
-  return (
-    <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
-      <span className="label-xs">Hero</span>
-      <select
-        className="field"
-        style={{ width: 'auto', padding: '8px 12px' }}
-        value={known && heroId != null ? heroId : ''}
-        onChange={(e) => onHero(Number(e.target.value))}
-        aria-label="Select a hero"
-      >
-        {!known && <option value="" disabled>Select a hero…</option>}
-        {heroes.map((h) => (
-          <option key={h.hero_id} value={h.hero_id}>{h.hero_name}</option>
-        ))}
-      </select>
-    </label>
-  );
-}
 
 export default function BuildCreator() {
   const roster = useQuery<HeroBaseStats[]>({
@@ -56,6 +29,11 @@ export default function BuildCreator() {
     queryKey: queryKeys.itemModifiers(),
     queryFn: () => api.getItemModifiers(),
   });
+  //Portraits live on /heroes, not on the base-stats snapshot; a failed join just leaves monograms.
+  const rosterArt = useQuery<HeroSummary[]>({
+    queryKey: queryKeys.heroes(),
+    queryFn: () => api.getHeroes(),
+  });
 
   const heroes = useMemo(
     () =>
@@ -63,6 +41,10 @@ export default function BuildCreator() {
         .filter((h) => h.hero_name?.trim())
         .sort((a, b) => a.hero_name.localeCompare(b.hero_name)),
     [roster.data],
+  );
+  const iconOf = useMemo(
+    () => new Map((rosterArt.data ?? []).map((h) => [h.hero_id, h.icon_url] as const)),
+    [rosterArt.data],
   );
   const catalog = useMemo(() => normalizeCatalog(catalogQuery.data), [catalogQuery.data]);
   const byId = useMemo(() => indexCatalog(catalog), [catalog]);
@@ -138,13 +120,15 @@ export default function BuildCreator() {
 
   return (
     <div className="grid" style={{ gap: 16 }}>
+      <HeroPicker
+        heroes={heroes}
+        iconOf={iconOf}
+        heroId={heroId}
+        onHero={(id) => selectHero(id, heroes.find((h) => h.hero_id === id)?.patch_id)}
+      />
+
       <div className="between" style={{ gap: 12, flexWrap: 'wrap' }}>
         <div className="flex" style={{ gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <HeroSelect
-            heroes={heroes}
-            heroId={heroId}
-            onHero={(id) => selectHero(id, heroes.find((h) => h.hero_id === id)?.patch_id)}
-          />
           <label
             className="flex"
             style={{ alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--muted)' }}
@@ -182,7 +166,7 @@ export default function BuildCreator() {
         </p>
       )}
 
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))', gap: 16 }}>
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 16 }}>
         <ItemPicker
           catalog={catalog}
           picked={build.items}

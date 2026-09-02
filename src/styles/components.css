@@ -1688,3 +1688,123 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
     opacity: 0;
   }
 }
+
+/* ---------- build creator: hero portrait picker + item shop grid ---------- */
+.heropick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+  gap: 8px;
+}
+.heropick-t {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 4px 6px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  cursor: pointer;
+  transition: var(--t-fast);
+  min-width: 0;
+}
+.heropick-t:hover {
+  border-color: var(--cyan-deep);
+  transform: translateY(-1px);
+}
+.heropick-t.on {
+  border-color: var(--cyan-bright);
+  background: var(--overlay);
+  box-shadow: 0 0 0 1px var(--cyan-bright) inset, 0 0 14px rgba(34, 211, 238, 0.22);
+}
+.heropick-n {
+  font-family: var(--display);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.heropick-t.on .heropick-n {
+  color: var(--cyan-bright);
+}
+/* narrow screens stack the roster ~10 rows deep, which buries the shop — cap and scroll it */
+@media (max-width: 720px) {
+  .heropick {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+}
+
+.shoptier {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 2px 6px;
+  border-bottom: 1px solid var(--border-soft);
+  margin-bottom: 8px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.shopgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+  gap: 7px;
+}
+.shoptile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 5px 7px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  /* the category reads off the top edge, the way the in-game shop colours its columns */
+  border-top: 2px solid var(--cat, var(--border));
+  border-radius: var(--r-card);
+  cursor: pointer;
+  text-align: center;
+  transition: var(--t-fast);
+  min-width: 0;
+}
+.shoptile:hover:not(:disabled) {
+  border-color: var(--cyan-deep);
+  border-top-color: var(--cat, var(--cyan-deep));
+  transform: translateY(-1px);
+}
+.shoptile.on {
+  background: var(--overlay);
+  border-color: var(--cyan-bright);
+  box-shadow: 0 0 0 1px var(--cyan-bright) inset;
+}
+.shoptile:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.shoptile-n {
+  font-family: var(--display);
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.shoptile.on .shoptile-n {
+  color: var(--cyan-bright);
+}
+.cat-weapon {
+  --cat: var(--amber);
+}
+.cat-vitality {
+  --cat: var(--win);
+}
+.cat-spirit {
+  --cat: var(--sapphire-acc);
+}
+.cat-flex {
+  --cat: var(--faint);
+}

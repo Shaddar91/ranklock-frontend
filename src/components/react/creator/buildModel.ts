@@ -3,7 +3,7 @@
 //move (the ability-scoped property set derived from STAT_DEFS). No React, no I/O.
 import { STAT_DEFS, type ItemMods, type ModifierRow } from '../../../lib/computeStats';
 import { itemIcon } from '../../../lib/itemCatalog';
-import { formatModifier, toModifierRows } from '../../../lib/itemOverlay';
+import { toModifierRows } from '../../../lib/itemOverlay';
 import type { HeroAbility, ItemModifier } from '../../../types/api';
 
 export type Bucket = 'weapon' | 'vitality' | 'spirit' | 'flex';
@@ -106,5 +106,3 @@ const ABILITY_SCOPED_PROPS = new Set(
 export function hasAbilityScopedMods(item: CatalogItem | undefined): boolean {
   return item != null && item.modifiers.some((m) => ABILITY_SCOPED_PROPS.has(m.property_type));
 }
-
-export const modifierSummary = formatModifier;

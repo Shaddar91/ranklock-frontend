@@ -1,13 +1,13 @@
-//Catalog browser for the Build Creator: every buildable item from GET /items/modifiers,
-//filtered by slot category / tier / name, click to add or remove. Hover/focus/tap on a row
-//opens the shared item overlay card (full modifier list + upgrade lineage). The default
-//list is the competitive shop only; the Street Brawl set sits behind a labeled toggle as a
-//reference list — brawl items use a placeholder economy, so they can't join a build.
+//Shop-grid catalog browser for the Build Creator: every buildable item from GET /items/modifiers
+//as an icon tile, grouped by tier the way the in-game shop is, filtered by slot category / name.
+//Hover/focus/tap opens the shared item overlay card (full modifier list + upgrade lineage). The
+//default grid is the competitive shop only; the Street Brawl set sits behind a labeled toggle as a
+//reference grid — brawl items use a placeholder economy, so they can't join a build.
 import { useMemo, useState } from 'react';
 import { EmptyState, GameIcon, ItemOverlayCard, Tooltip } from '../ui/index';
 import { count } from '../../../lib/format';
 import { overlayFromCatalog, splitBrawl } from '../../../lib/itemOverlay';
-import { BUCKETS, BUCKET_LABEL, bucketOf, modifierSummary, type Bucket, type CatalogItem } from './buildModel';
+import { BUCKETS, BUCKET_LABEL, bucketOf, type Bucket, type CatalogItem } from './buildModel';
 
 interface ItemPickerProps {
   catalog: CatalogItem[];
@@ -19,26 +19,65 @@ interface ItemPickerProps {
   onRemove: (itemId: number) => void;
 }
 
-//Competitive shop tiers. Tier 5 exists only on Street Brawl placeholder rows, so the
-//competitive tier filter stops at 4 and the brawl view carries no tier filter at all.
-const TIERS = [1, 2, 3, 4];
+interface TierSection {
+  tier: number;
+  cost: number | null;
+  items: CatalogItem[];
+}
 
-function RowBody({ it }: { it: CatalogItem }) {
+function tierSections(rows: CatalogItem[]): TierSection[] {
+  const by = new Map<number, CatalogItem[]>();
+  for (const it of rows) {
+    const tier = it.item_tier ?? 0;
+    const bucket = by.get(tier);
+    if (bucket) bucket.push(it);
+    else by.set(tier, [it]);
+  }
+  return [...by.entries()]
+    .sort((a, b) => a[0] - b[0])
+    //Every item of a tier shares one price upstream, so the first row prices the whole section.
+    .map(([tier, items]) => ({ tier, cost: items[0]?.cost ?? null, items }));
+}
+
+function Tile({
+  item,
+  picked,
+  blocked,
+  onClick,
+}: {
+  item: CatalogItem;
+  picked: boolean;
+  blocked: boolean;
+  onClick?: () => void;
+}) {
+  const name = item.item_name ?? `Item ${item.item_id}`;
+  const cat = bucketOf(item.item_slot_type);
+  const body = (
+    <>
+      <GameIcon kind="item" name={name} src={item.icon} size={44} />
+      <span className="shoptile-n">{name}</span>
+    </>
+  );
+  if (!onClick) {
+    return (
+      <Tooltip asChild content={<ItemOverlayCard data={overlayFromCatalog(item)} />}>
+        <div className={`shoptile cat-${cat}`} tabIndex={0}>{body}</div>
+      </Tooltip>
+    );
+  }
   return (
-    <span className="flex" style={{ alignItems: 'center', gap: 10, minWidth: 0 }}>
-      <GameIcon kind="item" name={it.item_name ?? 'Item'} src={it.icon} size={30} />
-      <span style={{ minWidth: 0 }}>
-        <span
-          className="display"
-          style={{ display: 'block', fontWeight: 600, color: 'var(--text)', fontSize: 13.5 }}
-        >
-          {it.item_name ?? `Item ${it.item_id}`}
-        </span>
-        <span className="faint" style={{ display: 'block', fontSize: 11.5, overflowWrap: 'anywhere' }}>
-          {it.modifiers.slice(0, 2).map(modifierSummary).join(' · ') || 'No listed modifiers'}
-        </span>
-      </span>
-    </span>
+    <Tooltip asChild content={<ItemOverlayCard data={overlayFromCatalog(item)} />}>
+      <button
+        type="button"
+        className={`shoptile cat-${cat}` + (picked ? ' on' : '')}
+        aria-pressed={picked}
+        disabled={blocked}
+        title={blocked ? 'Every slot is filled — remove an item first' : undefined}
+        onClick={onClick}
+      >
+        {body}
+      </button>
+    </Tooltip>
   );
 }
 
@@ -52,7 +91,6 @@ export default function ItemPicker({
   onRemove,
 }: ItemPickerProps) {
   const [bucket, setBucket] = useState<Bucket | 'all'>('all');
-  const [tier, setTier] = useState(0);
   const [term, setTerm] = useState('');
   const [brawlView, setBrawlView] = useState(false);
 
@@ -65,19 +103,16 @@ export default function ItemPicker({
     [source],
   );
 
-  const rows = useMemo(() => {
+  const sections = useMemo(() => {
     const needle = term.trim().toLowerCase();
-    return source
+    const rows = source
       .filter((it) => bucket === 'all' || bucketOf(it.item_slot_type) === bucket)
-      .filter((it) => brawlView || tier === 0 || it.item_tier === tier)
       .filter((it) => needle === '' || (it.item_name ?? '').toLowerCase().includes(needle))
-      .sort(
-        (a, b) =>
-          (a.item_tier ?? 0) - (b.item_tier ?? 0) ||
-          (a.cost ?? 0) - (b.cost ?? 0) ||
-          (a.item_name ?? '').localeCompare(b.item_name ?? ''),
-      );
-  }, [source, brawlView, bucket, tier, term]);
+      .sort((a, b) => (a.cost ?? 0) - (b.cost ?? 0) || (a.item_name ?? '').localeCompare(b.item_name ?? ''));
+    return tierSections(rows);
+  }, [source, bucket, term]);
+
+  const shown = sections.reduce((n, s) => n + s.items.length, 0);
 
   if (isPending) {
     return (
@@ -101,37 +136,18 @@ export default function ItemPicker({
   return (
     <div className="panel panel-pad">
       <div className="between" style={{ gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
-        <span className="label-xs">Items · {count(rows.length)}</span>
-        <div className="flex" style={{ alignItems: 'center', gap: 10 }}>
-          {!brawlView && (
-            <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
-              <span className="label-xs">Tier</span>
-              <select
-                className="field"
-                style={{ width: 'auto', padding: '6px 10px', fontSize: 13 }}
-                value={tier}
-                onChange={(e) => setTier(Number(e.target.value))}
-                aria-label="Filter items by tier"
-              >
-                <option value={0}>All</option>
-                {TIERS.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </label>
-          )}
-          {brawl.length > 0 && (
-            <button
-              type="button"
-              className={'tab' + (brawlView ? ' on' : '')}
-              style={{ padding: '6px 12px', fontSize: 13 }}
-              aria-pressed={brawlView}
-              onClick={() => setBrawlView((v) => !v)}
-            >
-              Street Brawl
-            </button>
-          )}
-        </div>
+        <span className="label-xs">Items · {count(shown)}</span>
+        {brawl.length > 0 && (
+          <button
+            type="button"
+            className={'tab' + (brawlView ? ' on' : '')}
+            style={{ padding: '6px 12px', fontSize: 13 }}
+            aria-pressed={brawlView}
+            onClick={() => setBrawlView((v) => !v)}
+          >
+            Street Brawl
+          </button>
+        )}
       </div>
 
       <div className="flex" style={{ gap: 6, flexWrap: 'wrap', marginBottom: 10 }} role="group" aria-label="Filter items by slot category">
@@ -174,70 +190,40 @@ export default function ItemPicker({
         </p>
       )}
 
-      {rows.length === 0 ? (
-        <EmptyState title="No items match" message="Clear the search or pick another slot / tier." icon="filter" />
+      {sections.length === 0 ? (
+        <EmptyState title="No items match" message="Clear the search or pick another slot category." icon="filter" />
       ) : (
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, maxHeight: 520, overflowY: 'auto' }}>
-          {rows.map((it) => {
-            if (brawlView) {
-              return (
-                <li key={it.item_id}>
-                  <Tooltip asChild content={<ItemOverlayCard data={overlayFromCatalog(it)} />}>
-                    <div
-                      className="statrow"
-                      tabIndex={0}
-                      style={{ borderBottom: '1px solid var(--border-soft)', gap: 10 }}
-                    >
-                      <RowBody it={it} />
-                      <span className="chip" style={{ flex: 'none' }}>Street Brawl</span>
-                    </div>
-                  </Tooltip>
-                </li>
-              );
-            }
-            const isPicked = pickedSet.has(it.item_id);
-            const blocked = !isPicked && boardFull;
-            return (
-              <li key={it.item_id}>
-                <Tooltip asChild content={<ItemOverlayCard data={overlayFromCatalog(it)} />}>
-                  <button
-                    type="button"
-                    className="statrow"
-                    style={{
-                      width: '100%',
-                      background: isPicked ? 'var(--overlay)' : 'transparent',
-                      border: 'none',
-                      borderBottom: '1px solid var(--border-soft)',
-                      textAlign: 'left',
-                      cursor: blocked ? 'not-allowed' : 'pointer',
-                      opacity: blocked ? 0.45 : 1,
-                      gap: 10,
-                    }}
-                    aria-pressed={isPicked}
-                    disabled={blocked}
-                    title={blocked ? 'Every slot is filled — remove an item first' : undefined}
-                    onClick={() => (isPicked ? onRemove(it.item_id) : onAdd(it.item_id))}
-                  >
-                    <RowBody it={it} />
-                    <span className="flex" style={{ alignItems: 'center', gap: 10, flex: 'none' }}>
-                      <span className="chip" style={{ padding: '2px 7px' }}>T{it.item_tier ?? '?'}</span>
-                      <span className="tnum amber-c" style={{ fontSize: 12.5, minWidth: 52, textAlign: 'right' }}>
-                        {count(it.cost)}
-                      </span>
-                      <span aria-hidden="true" className={isPicked ? 'cyan-c' : 'faint'} style={{ fontSize: 15, width: 12 }}>
-                        {isPicked ? '−' : '+'}
-                      </span>
-                    </span>
-                  </button>
-                </Tooltip>
-              </li>
-            );
-          })}
-        </ul>
+        <div style={{ maxHeight: 560, overflowY: 'auto' }}>
+          {sections.map((s) => (
+            <section key={s.tier} style={{ marginBottom: 14 }}>
+              <div className="shoptier">
+                <span className="label-xs">Tier {s.tier}</span>
+                <span className="tnum amber-c" style={{ fontSize: 12 }}>{count(s.cost)}</span>
+                <span className="faint" style={{ fontSize: 11 }}>souls</span>
+              </div>
+              <div className="shopgrid">
+                {s.items.map((it) => {
+                  const isPicked = pickedSet.has(it.item_id);
+                  return (
+                    <Tile
+                      key={it.item_id}
+                      item={it}
+                      picked={isPicked}
+                      blocked={!isPicked && boardFull}
+                      onClick={
+                        brawlView ? undefined : () => (isPicked ? onRemove(it.item_id) : onAdd(it.item_id))
+                      }
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
       )}
       {!brawlView && (
-        <p className="faint" style={{ fontSize: 11.5, margin: '10px 0 0' }}>
-          Costs are souls, from the live item catalog.
+        <p className="faint" style={{ fontSize: 11.5, margin: '4px 0 0' }}>
+          Costs are souls, from the live item catalog. Hover an item for its full modifier list.
         </p>
       )}
     </div>
