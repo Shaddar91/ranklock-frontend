@@ -1433,7 +1433,9 @@ function LaneLabInner() {
     : rankTierA == null
       ? 'empty'
       : rankProbe.isSuccess
-        ? rankProbe.data.points.length > 0
+        //A pre-fold 202 body ({status:'computing'}) is not a curve — non-array points reads as
+        //'empty', never a crash (the 2026-09-02 live TypeError).
+        ? Array.isArray(rankProbe.data.points) && rankProbe.data.points.length > 0
           ? 'rows'
           : 'empty'
         : rankProbe.isError
