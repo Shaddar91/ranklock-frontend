@@ -6,10 +6,11 @@ import { SITE_ORIGIN } from '../lib/seo';
 import { TRANSLATED_LOCALES, hreflangAlternates, pagePath } from '../lib/i18n';
 import { releasedRoster } from '../lib/heroRoster';
 import type { HeroSummary } from '../types/api';
+import itemDetail from '../data/items-detail.json';
 
 //Curated SEO sitemap (C7, requirements §7/§8.2). Lists ONLY the indexable English
-//SEO surface + a BOUNDED curated subset of dynamic pages (the hero roster + the
-//blog guides). It NEVER lists:
+//SEO surface + BOUNDED curated families of dynamic pages (the hero roster, the
+//item catalog and the blog guides). It NEVER lists:
 //  - the millions of /players/:id or 13.8M /matches/:id CSR shells (per-entity
 //    data pages, noindex — listing them would be the explicit anti-goal);
 //  - the noindex/canonical→en localized variants (/ru/…, /fr/… — only the en
@@ -36,6 +37,9 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: '/items', changefreq: 'daily', priority: '0.8' },
   { path: '/leaderboard', changefreq: 'daily', priority: '0.8' },
   { path: '/matches', changefreq: 'hourly', priority: '0.7' },
+  { path: '/patches', changefreq: 'daily', priority: '0.7' },
+  { path: '/build-lab', changefreq: 'weekly', priority: '0.7' },
+  { path: '/lane-lab', changefreq: 'weekly', priority: '0.7' },
   { path: '/blog', changefreq: 'weekly', priority: '0.7' },
   { path: '/faq', changefreq: 'monthly', priority: '0.4' },
   { path: '/methodology', changefreq: 'monthly', priority: '0.4' },
@@ -85,6 +89,15 @@ export const GET: APIRoute = async () => {
   for (const h of heroes) {
     if (h.hero_id == null) continue;
     routes.push({ path: `/heroes/${h.hero_id}`, changefreq: 'weekly', priority: '0.7' });
+  }
+
+  //Item catalog — bounded family; same static source items/[id].astro builds its paths from.
+  const itemIds = Object.keys(itemDetail as Record<string, unknown>)
+    .map(Number)
+    .filter((id) => Number.isFinite(id))
+    .sort((a, b) => a - b);
+  for (const id of itemIds) {
+    routes.push({ path: `/items/${id}`, changefreq: 'weekly', priority: '0.6' });
   }
 
   const xmlnsAlt = USE_ALTERNATES ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"' : '';
