@@ -2,6 +2,9 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import MatchDetailIsland from '../../components/react/MatchDetailIsland';
 import MatchInspectorIsland from '../../components/react/MatchInspectorIsland';
+import { api } from '../../lib/apiClient';
+import { buildFetch } from '../../lib/buildData';
+import { matchPageTitle } from '../../lib/matchTitle';
 
 //Per-match page (C5): an on-demand dynamic SHELL hosting CSR React islands that
 //read the match id from the URL and fetch /matches/:id. The millions of
@@ -10,16 +13,22 @@ import MatchInspectorIsland from '../../components/react/MatchInspectorIsland';
 //in astro.config.mjs), so an arbitrary id is served off the single shell — no
 //getStaticPaths, no page-per-id SSG.
 //noindex: the empty per-match shell carries no SEO content, so it must not be
-//indexed (the SEO surface is the SSG routes in C4).
+//indexed (the SEO surface is the SSG routes in C4). The summary IS fetched
+//server-side, for the per-match <title> the unfurl shows; it never blocks (see
+//buildFetch) and a miss leaves the generic title.
 //
 //The scoreboard (MatchDetailIsland) is client:only and paints first; the HEAVY
 //per-player inspect matrix is a SEPARATE client:visible island so it hydrates
 //only when scrolled into view and never blocks paint (requirements §6.4).
 export const prerender = false;
 const { id } = Astro.params;
+
+const n = Number(id);
+const summary = Number.isInteger(n) && n > 0 ? await buildFetch(api.getMatch(n), null) : null;
+const title = matchPageTitle(summary);
 ---
 
-<BaseLayout title="Match — RankLock" noindex={true} image={`https://og.ranklock.app/og/match/${id}`}>
+<BaseLayout title={title} noindex={true} image={`https://og.ranklock.app/og/match/${id}`}>
   <main class="wrap">
     <MatchDetailIsland client:only="react" />
     <MatchInspectorIsland client:visible />
