@@ -1599,7 +1599,7 @@ function LaneLabInner() {
         <p className="muted faint" style={{ fontSize: 11.5, margin: '6px 0 0', maxWidth: 620, lineHeight: 1.4 }}>
           {cohort === 'player_rank'
             ? 'Player rank compares players at their OWN Valve display rank — no team-average blur. Ranked matches only, since Aug 7, 2026; recent history is still backfilling, so a league may read empty until it does.'
-            : 'Team average compares by the match’s average badge across both teams — every match ever loaded, but a Bronze player in a stacked Gold match reads as Gold here.'}
+            : 'Team average compares by the match’s average badge across both teams — every match ever loaded, but an Emissary player in an Oracle-average match reads as Oracle here.'}
         </p>
       </div>
 
