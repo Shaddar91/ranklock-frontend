@@ -855,3 +855,58 @@ export interface DataHorizonResponse {
   max_match_start_time: string | null;
   datasets: DataHorizonDatasetWindow[];
 }
+
+//---- hero build stats (GET /heroes/:id/build-stats) --------------------------
+
+//E1 of the hero-itemset win-rate pipeline: item sets and per-position buy order
+//computed from OUR matches (PROC match_player_item_sets → analytics
+//hero-itemset-win-rates). `tier` is served only as 0 (all ranks) today — any other
+//value 400s. 501 while the analytics tier is gated off, 202 until the first fold;
+//200 with empty arrays once folded but below the 200-game floor.
+export interface BuildStatsItem {
+  item_id: number;
+  item_name?: string | null;
+  icon_url?: string | null;
+}
+
+export interface BuildStatsItemSet {
+  items: BuildStatsItem[];
+  games: number;
+  wins: number;
+  win_rate: number;
+  wilson_lower: number;
+}
+
+export interface BuildStatsBuyOrderRow extends BuildStatsItem {
+  pos: number;
+  games: number;
+  wins: number;
+  win_rate: number;
+  wilson_lower: number;
+}
+
+export interface HeroBuildStats {
+  hero_id: number;
+  tier: number;
+  match_mode: MatchMode;
+  game_mode: GameMode;
+  item_sets: BuildStatsItemSet[];
+  buy_order: BuildStatsBuyOrderRow[];
+}
+
+//E2 (?scored=1): the same build list in the same upstream order, each element
+//annotated with an author name and a server-composed score. `label` is rendered
+//verbatim — the UI never composes or re-words a score string, and renders no score
+//element at all when `score` is null.
+export interface BuildScore {
+  kind: 'item_set' | 'item_average';
+  win_rate: number;
+  games: number;
+  coverage?: { covered: number; total: number } | null;
+  label: string;
+}
+
+export interface ScoredBuild extends TrimmedBuild {
+  author_name: string | null;
+  score: BuildScore | null;
+}

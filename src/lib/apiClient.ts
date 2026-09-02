@@ -25,6 +25,7 @@ import type {
   HealthResponse,
   HeroAbility,
   HeroBracket,
+  HeroBuildStats,
   HeroCountersResponse,
   HeroItemWinRate,
   HeroBaseStats,
@@ -55,6 +56,7 @@ import type {
   RankBucket,
   ReadinessResponse,
   SearchResult,
+  ScoredBuild,
   SoulsCohortResponse,
   TrimmedBuild,
 } from '../types/api';
@@ -159,7 +161,9 @@ async function fetchFrom<T>(
     throw new ApiError(0, url, `Network request failed: ${String(cause)}`);
   }
 
-  if (!res.ok) {
+  //202 is a 2xx, so `res.ok` is TRUE for it — without this the computing envelope
+  //would be cast to the row type and every `isComputing(error)` branch stays dead.
+  if (!res.ok || res.status === 202) {
     //Read a short body for diagnostics but never assume it's JSON.
     const body = await res.text().catch(() => undefined);
     throw new ApiError(res.status, url, `${res.status} ${res.statusText} for ${path}`, body);
@@ -195,7 +199,7 @@ async function fetchFromWithTotal<T>(
   } catch (cause) {
     throw new ApiError(0, url, `Network request failed: ${String(cause)}`);
   }
-  if (!res.ok) {
+  if (!res.ok || res.status === 202) {
     const body = await res.text().catch(() => undefined);
     throw new ApiError(res.status, url, `${res.status} ${res.statusText} for ${path}`, body);
   }
@@ -245,7 +249,12 @@ export const queryKeys = {
   heroes: (params?: Query) => ['heroes', params ?? {}] as const,
   heroStats: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
     ['hero', id, 'stats', bracket ?? null, game_mode ?? null] as const,
-  heroBuilds: (id: number, sort?: string) => ['hero', id, 'builds', sort ?? 'weekly'] as const,
+  //`scored` keys the E2 annotated list SIDE BY SIDE with the plain one: the two answers
+  //differ in shape, so they must never share a cache entry.
+  heroBuilds: (id: number, sort?: string, scored?: boolean) =>
+    ['hero', id, 'builds', sort ?? 'weekly', scored ?? false] as const,
+  heroBuildStats: (id: number, tier?: number, match_mode?: MatchMode) =>
+    ['hero', id, 'build-stats', tier ?? 0, match_mode ?? 'Ranked'] as const,
   heroAbilities: (id: number) => ['hero', id, 'abilities'] as const,
   heroMatchups: (id: number, bracket?: number, game_mode?: GameMode) =>
     ['hero', id, 'matchups', bracket ?? null, game_mode ?? null] as const,
@@ -337,8 +346,19 @@ export const api = {
     apiFetch<HeroSummary>(`/heroes/${id}/stats`, { query: { bracket, game_mode } }),
   //Meta list for a hero (C1 76e92bb). `sort=weekly` (default) = weekly_favorites × recency (demotes
   //stale-favorites giants); `sort=favorites` = the lifetime-popularity list. Cached per sort server-side.
-  getHeroBuilds: (id: number, sort?: BuildSort) =>
-    apiFetch<TrimmedBuild[]>(`/heroes/${id}/builds`, { query: { sort } }),
+  //`scored` opts into E2: the SAME list in the SAME order, each element carrying
+  //`author_name` and a server-composed `score` (null when the rule declines to score).
+  //Never 202/501 — a cold dataset just means every score is null.
+  getHeroBuilds: <S extends boolean = false>(id: number, sort?: BuildSort, scored?: S) =>
+    apiFetch<S extends true ? ScoredBuild[] : TrimmedBuild[]>(`/heroes/${id}/builds`, {
+      query: { sort, scored: scored ? 1 : undefined },
+    }),
+  //E1: item sets and buy order from our own matches. `tier` is served only as 0 today
+  //(all ranks) — the backend 400s any other value, so the cohort selector stays locked.
+  //202 until the first fold and 501 while the analytics tier is gated off; both surface
+  //as an ApiError the caller classifies with `isComputing` / `isDisabled`.
+  getHeroBuildStats: (id: number, tier: number = 0, match_mode: MatchMode = 'Ranked') =>
+    apiFetch<HeroBuildStats>(`/heroes/${id}/build-stats`, { query: { tier, match_mode } }),
   //The hero's abilities (id/name/icon/slot order) — warmed proxy backing the imbue prompt + ability
   //order rendering. 502 with an empty list when the upstream assets payload is briefly unavailable.
   getHeroAbilities: (id: number) => apiFetch<HeroAbility[]>(`/heroes/${id}/abilities`),
