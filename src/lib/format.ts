@@ -35,13 +35,14 @@ export function kda(
 //Meta tier-list grade derived transparently from win-rate (a presentational
 //grade of the real measured win_rate, not an invented stat — every Deadlock
 //stats site grades the meta this way). Thresholds are relative to the 50% pivot.
-export function metaTier(winRate: number | null | undefined): 'S' | 'A' | 'B' | 'C' | 'D' | null {
+export function metaTier(winRate: number | null | undefined): 'S' | 'A' | 'B' | 'C' | 'D' | 'F' | null {
   if (winRate == null || Number.isNaN(winRate)) return null;
   if (winRate >= 52.5) return 'S';
   if (winRate >= 51) return 'A';
   if (winRate >= 49.5) return 'B';
   if (winRate >= 48) return 'C';
-  return 'D';
+  if (winRate >= 47) return 'D';
+  return 'F';
 }
 
 //Pick share (%) of one hero's pick count within the currently-loaded row set.

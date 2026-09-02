@@ -54,7 +54,9 @@ const path = Astro.url.pathname;
     <DataAgeChip client:load />
     <p class="page-intro">
       Every Deadlock hero ranked by win-rate, with meta tier and pick share. Filter by rank
-      band to see the meta at your level — labelled by rank emblem, not MMR.
+      band to see the meta at your level — labelled by rank emblem, not MMR. For the same
+      roster grouped into S to F grades with the thresholds stated, see the
+      <a href="/tier-list/">Deadlock tier list</a>.
     </p>
     <div style="margin-top:20px;">
       <HeroesTable initialRows={heroes} client:load />

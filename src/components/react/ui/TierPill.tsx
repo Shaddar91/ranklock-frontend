@@ -1,4 +1,4 @@
-//Meta tier-list pill (S / A / B / C / D), colored per the shared TIER_COLOR map.
+//Meta tier-list pill (S through F), colored per the shared TIER_COLOR map.
 import { TIER_COLOR } from '../../../lib/ranks';
 import { cssVars } from '../../../lib/cssVars';
 

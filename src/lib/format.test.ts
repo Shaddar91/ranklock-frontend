@@ -67,9 +67,13 @@ describe('metaTier', () => {
     expect(metaTier(49.4)).toBe('C');
     expect(metaTier(47.9)).toBe('D');
   });
+  it('splits the bottom block at 47.0 so D and F are distinct grades', () => {
+    expect(metaTier(47)).toBe('D');
+    expect(metaTier(46.9)).toBe('F');
+  });
   it('grades the extremes', () => {
     expect(metaTier(100)).toBe('S');
-    expect(metaTier(0)).toBe('D');
+    expect(metaTier(0)).toBe('F');
   });
   it('returns null for null / undefined / NaN', () => {
     expect(metaTier(null)).toBeNull();

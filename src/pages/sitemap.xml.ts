@@ -35,6 +35,7 @@ interface RouteEntry {
 const STATIC_ROUTES: RouteEntry[] = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
   { path: '/heroes', changefreq: 'daily', priority: '0.9' },
+  { path: '/tier-list', changefreq: 'daily', priority: '0.8' },
   { path: '/items', changefreq: 'daily', priority: '0.8' },
   { path: '/leaderboard', changefreq: 'daily', priority: '0.8' },
   { path: '/matches', changefreq: 'hourly', priority: '0.7' },

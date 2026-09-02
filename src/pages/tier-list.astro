@@ -1,0 +1,107 @@
+---
+//SSG Deadlock tier list: the roster grouped into the S-F cuts metaTier() applies,
+//with the thresholds printed. Rows are baked at BUILD time and handed to the
+//island as initialRows, so its server render puts the tiers in static HTML; the
+//rank filter then re-grades client-side. Build-ahead: empty on a cold API.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import DataAgeChip from '../components/react/DataAgeChip';
+import GameModeToggle from '../components/react/ui/GameModeToggle';
+import TierListIsland from '../components/react/TierListIsland';
+import { api } from '../lib/apiClient';
+import { buildFetch } from '../lib/buildData';
+import { breadcrumbJsonLd, itemListJsonLd } from '../lib/seo';
+import { TIER_CUTS, cutLabel, gradedCount, tierBlocks } from '../lib/tierList';
+import { shortDate } from '../lib/format';
+import type { DataHorizonResponse, HeroSummary } from '../types/api';
+
+const [heroes, horizon] = await Promise.all([
+  buildFetch(api.getHeroes({ game_mode: 'Normal' }), [] as HeroSummary[]),
+  buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null),
+]);
+
+const blocks = tierBlocks(heroes);
+const graded = gradedCount(blocks);
+const names = blocks.flatMap((b) => b.heroes.map((h) => h.hero_name));
+
+const baseStats = horizon?.datasets.find((d) => d.dataset === 'hero-base-stats');
+const windowLo = shortDate(baseStats?.window_lo);
+const windowHi = shortDate(baseStats?.window_hi);
+const statsThrough = shortDate(horizon?.max_match_start_time);
+
+const rosterPhrase = graded > 0 ? `All ${graded} Deadlock heroes` : 'Every Deadlock hero';
+const throughPhrase = statsThrough ? ` Updated from RankLock's match data through ${statsThrough}.` : '';
+const description =
+  `${rosterPhrase} graded S to F on measured win rate, with the exact threshold for each tier ` +
+  `and a filter for your own rank.${throughPhrase}`;
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = [
+  breadcrumbJsonLd(origin, [
+    { name: 'Home', path: '/' },
+    { name: 'Tier list', path: '/tier-list' },
+  ]),
+  itemListJsonLd('Deadlock hero tier list', names),
+];
+const path = Astro.url.pathname;
+---
+
+<BaseLayout
+  title="Deadlock tier list — every hero ranked S to F by win rate | RankLock"
+  description={description}
+  canonicalPath="/tier-list"
+  jsonLd={jsonLd}
+>
+  <main class="container">
+    <div class="page-head">
+      <div>
+        <div class="kicker">The meta</div>
+        <h1 class="h-page">Deadlock tier list</h1>
+      </div>
+      <GameModeToggle currentPath={path} client:load />
+    </div>
+    <DataAgeChip client:load />
+    <p class="page-intro">
+      Every hero sorted into a grade by its measured win rate. The cut for each grade is printed
+      below, and picking a rank re-runs those same cuts on that rank's own win rates. For one
+      sortable table of the same numbers, with KDA, see <a href="/heroes/">hero win rates</a>.
+    </p>
+
+    <section class="panel panel-pad tl-thresholds" aria-labelledby="thresholds">
+      <h2 class="h-sec" id="thresholds">Where each grade starts</h2>
+      <ul class="tl-cutlist">
+        {
+          TIER_CUTS.map((cut, i) => (
+            <li>
+              <span class="tl-cut-tier display">{cut.tier}</span>
+              <span class="tl-cut-range mono">{cutLabel(cut, TIER_CUTS[i - 1])}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <TierListIsland initialRows={heroes} client:load />
+
+    <section class="panel panel-pad tl-note" aria-labelledby="how-graded">
+      <h2 class="h-sec" id="how-graded">How this is graded</h2>
+      <p>
+        The grade is a cut of the measured win rate and nothing else. No weighting, no vote, no
+        editorial pick. A hero sits in S from 52.5% up and in F below 47.0%, at the cuts listed above.
+      </p>
+      <p>
+        Choosing a rank refetches that rank band's win rates and applies the same cuts to them, so a
+        hero can hold one grade overall and another at Ascendant. Win rate, pick share and pick counts
+        come from RankLock's own fold of public Deadlock match data. The definitions behind each number
+        are on the <a href="/methodology/">methodology page</a>.
+      </p>
+      {
+        windowLo && windowHi && (
+          <p class="mono tl-window">
+            Win rates cover matches from {windowLo} to {windowHi}.
+            {statsThrough && ` Newest match in the dataset: ${statsThrough}.`}
+          </p>
+        )
+      }
+    </section>
+  </main>
+</BaseLayout>

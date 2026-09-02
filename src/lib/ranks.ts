@@ -67,11 +67,12 @@ export function chasingTier(badge: number | null | undefined): number | null {
   return r ? Math.min(RANKS.length - 1, r.tier + 1) : null;
 }
 
-//Meta tier-list pill colors (S/A/B/C/D).
+//Meta tier-list pill colors (S through F).
 export const TIER_COLOR: Record<string, string> = {
   S: '#fbbf24',
   A: '#a78bfa',
   B: '#60a5fa',
   C: '#34d399',
   D: '#94a3b8',
+  F: '#e2707a',
 };

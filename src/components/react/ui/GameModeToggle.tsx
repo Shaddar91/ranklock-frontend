@@ -1,6 +1,6 @@
 //Global Normal/Brawl game-mode segmented control (migration 022). Mounted next to
-//the table filters on the four mode-separated meta pages — Heroes, Items, Leaderboard
-//and Patches — and flips the shared `?mode=` store via useGameMode so every aggregate
+//the table filters on the mode-separated meta pages — Heroes, Tier list, Items,
+//Leaderboard and Patches — and flips the shared `?mode=` store via useGameMode so every aggregate
 //island re-reads + refetches in lockstep (the store is URL-backed, so an in-page
 //toggle drives the islands exactly as the old header-mounted one did). Styled with the
 //codebase's .brkfilter/.minitog segmented-control vocabulary.
