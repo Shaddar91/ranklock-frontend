@@ -249,8 +249,7 @@ export const queryKeys = {
   heroes: (params?: Query) => ['heroes', params ?? {}] as const,
   heroStats: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
     ['hero', id, 'stats', bracket ?? null, game_mode ?? null] as const,
-  //`scored` keys the E2 annotated list SIDE BY SIDE with the plain one: the two answers
-  //differ in shape, so they must never share a cache entry.
+  //`scored` answers differ in SHAPE from plain ones — they must never share a cache entry.
   heroBuilds: (id: number, sort?: string, scored?: boolean) =>
     ['hero', id, 'builds', sort ?? 'weekly', scored ?? false] as const,
   heroBuildStats: (id: number, tier?: number, match_mode?: MatchMode) =>
@@ -346,17 +345,14 @@ export const api = {
     apiFetch<HeroSummary>(`/heroes/${id}/stats`, { query: { bracket, game_mode } }),
   //Meta list for a hero (C1 76e92bb). `sort=weekly` (default) = weekly_favorites × recency (demotes
   //stale-favorites giants); `sort=favorites` = the lifetime-popularity list. Cached per sort server-side.
-  //`scored` opts into E2: the SAME list in the SAME order, each element carrying
-  //`author_name` and a server-composed `score` (null when the rule declines to score).
-  //Never 202/501 — a cold dataset just means every score is null.
+  //`scored` annotates each element with `author_name` + a server-composed `score`, leaving the
+  //upstream order untouched. Never 202/501: a cold dataset just means every score is null.
   getHeroBuilds: <S extends boolean = false>(id: number, sort?: BuildSort, scored?: S) =>
     apiFetch<S extends true ? ScoredBuild[] : TrimmedBuild[]>(`/heroes/${id}/builds`, {
       query: { sort, scored: scored ? 1 : undefined },
     }),
-  //E1: item sets and buy order from our own matches. `tier` is served only as 0 today
-  //(all ranks) — the backend 400s any other value, so the cohort selector stays locked.
-  //202 until the first fold and 501 while the analytics tier is gated off; both surface
-  //as an ApiError the caller classifies with `isComputing` / `isDisabled`.
+  //Item sets + buy order from our own matches. Only `tier=0` is served (the backend 400s the rest),
+  //and 202/501 arrive as an ApiError the caller classifies with `isComputing` / `isDisabled`.
   getHeroBuildStats: (id: number, tier: number = 0, match_mode: MatchMode = 'Ranked') =>
     apiFetch<HeroBuildStats>(`/heroes/${id}/build-stats`, { query: { tier, match_mode } }),
   //The hero's abilities (id/name/icon/slot order) — warmed proxy backing the imbue prompt + ability

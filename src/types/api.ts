@@ -858,10 +858,8 @@ export interface DataHorizonResponse {
 
 //---- hero build stats (GET /heroes/:id/build-stats) --------------------------
 
-//E1 of the hero-itemset win-rate pipeline: item sets and per-position buy order
-//computed from OUR matches (PROC match_player_item_sets → analytics
-//hero-itemset-win-rates). `tier` is served only as 0 (all ranks) today — any other
-//value 400s. 501 while the analytics tier is gated off, 202 until the first fold;
+//E1: item sets and per-position buy order over our own matches. `tier` is served only as 0
+//(all ranks) today; 501 while the analytics tier is gated off, 202 until the first fold, and
 //200 with empty arrays once folded but below the 200-game floor.
 export interface BuildStatsItem {
   item_id: number;
@@ -894,10 +892,8 @@ export interface HeroBuildStats {
   buy_order: BuildStatsBuyOrderRow[];
 }
 
-//E2 (?scored=1): the same build list in the same upstream order, each element
-//annotated with an author name and a server-composed score. `label` is rendered
-//verbatim — the UI never composes or re-words a score string, and renders no score
-//element at all when `score` is null.
+//E2 (?scored=1): the same list in the same upstream order, annotated. `label` renders VERBATIM —
+//the UI never composes a score string, and renders no score element at all when `score` is null.
 export interface BuildScore {
   kind: 'item_set' | 'item_average';
   win_rate: number;
