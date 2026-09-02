@@ -36,17 +36,42 @@ export interface HeroBackdropArt {
   smallUrl?: string;
 }
 
-//Full-bleed hero background plate for a given hero id. Upstream base => the
-//verified `<id>_bg.webp` twin; our base => the optimized opt/ pair (828 + 1920).
+//Upstream keys 18 plates by display stem, not card class (`seven_bg` for `gigawatt`).
+export const BACKDROP_STEM: Record<string, string> = {
+  archer: 'grey_talon',
+  bookworm: 'patience',
+  bull: 'abrams',
+  chrono: 'paradox',
+  digger: 'krill',
+  engineer: 'mcginnis',
+  frank: 'victor',
+  gigawatt: 'seven',
+  hornet: 'vindicta',
+  inferno: 'infernus',
+  kali: 'vyper',
+  nano: 'calico',
+  punkgoat: 'billy',
+  spectre: 'geist',
+  sumo: 'dynamo',
+  synth: 'pocket',
+  tengu: 'ivy',
+  vampirebat: 'mina',
+};
+
+export const backdropStem = (cls: string): string => `${BACKDROP_STEM[cls] ?? cls}_bg`;
+
+//Full-bleed hero background plate for a hero card class. Upstream base => the
+//verified `<stem>.webp` twin; our base => the optimized opt/ pair (828 + 1920).
 //Routed through rewriteAssetUrl so it follows the swappable asset base.
-export function heroBackdropArt(id: string, base?: string): HeroBackdropArt {
+export function heroBackdropArt(cls: string, base?: string): HeroBackdropArt {
   const b = (base || ASSETS_BASE).replace(/\/+$/, '');
   const plates = `${DEADLOCK_ASSETS_HOST}/assets-api-res/images/heroes/backgrounds`;
+  const stem = backdropStem(cls);
   if (b === DEADLOCK_ASSETS_HOST) {
-    return { url: rewriteAssetUrl(`${plates}/${id}_bg.webp`, b) };
+    return { url: rewriteAssetUrl(`${plates}/${stem}.webp`, b) };
   }
   return {
-    url: rewriteAssetUrl(`${plates}/opt/${id}_bg_1920.webp`, b),
-    smallUrl: rewriteAssetUrl(`${plates}/opt/${id}_bg_828.webp`, b),
+    url: rewriteAssetUrl(`${plates}/opt/${stem}_1920.webp`, b),
+    smallUrl: rewriteAssetUrl(`${plates}/opt/${stem}_828.webp`, b),
   };
 }

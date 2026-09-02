@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { heroArt, heroClass } from './heroArt';
 import { DEADLOCK_ASSETS_HOST } from './assets';
+import upstream from './fixtures/upstream-hero-backgrounds.json';
 
 const OURS = 'https://assets.ranklock.app';
 const UP = `${DEADLOCK_ASSETS_HOST}/assets-api-res/images/heroes`;
@@ -46,6 +47,9 @@ describe('heroArt', () => {
     expect(art?.cardGloat).toBe(`${OURS}/heroes/bebop_card_gloat.webp`);
     expect(art?.background).toBe(`${OURS}/heroes/backgrounds/bebop_bg.webp`);
     expect(art?.minimap).toBe(`${OURS}/heroes/bebop_mm.webp`);
+    //the plate keeps the upstream stem where it differs from the class; the card variants keep the class
+    expect(heroArt(`${UP}/gigawatt_card.png`, OURS)?.background).toBe(`${OURS}/heroes/backgrounds/seven_bg.webp`);
+    expect(heroArt(`${UP}/gigawatt_card.png`, OURS)?.cardGloat).toBe(`${OURS}/heroes/gigawatt_card_gloat.webp`);
     //an already-rewritten card url (our base) derives the same set
     expect(heroArt(`${OURS}/heroes/bebop_card.webp`, OURS)?.vertical).toBe(`${OURS}/heroes/bebop_vertical.webp`);
   });
@@ -55,6 +59,15 @@ describe('heroArt', () => {
     expect(heroArt(`${UP}/digger_card.png`, OURS)?.nameSvg).toBe(`${UP_ICONS}/mo_krill.svg`);
     expect(heroArt(`${UP}/spectre_card.png`)?.nameSvg).toBe(`${UP_ICONS}/lady_geist.svg`);
     expect(heroArt(`${UP}/doorman_card.png`, OURS)?.nameSvg).toBe(`${UP_ICONS}/doorman.svg`);
+  });
+
+  it('keys the background plate by the upstream stem for every released hero', () => {
+    expect(upstream.heroes).toHaveLength(38);
+    for (const h of upstream.heroes) {
+      const card = `${UP}/${h.icon_hero_card}_card.png`;
+      expect(heroArt(card, OURS)?.background, h.name).toBe(`${OURS}/heroes/backgrounds/${h.background_image}.webp`);
+      expect(heroArt(card, DEADLOCK_ASSETS_HOST)?.background, h.name).toBe(`${UP}/backgrounds/${h.background_image}.webp`);
+    }
   });
 
   it('returns null when the url is not a hero card so the monogram fallback still fires', () => {

@@ -1,0 +1,235 @@
+{
+  "source": "https://assets.deadlock-api.com/v2/heroes",
+  "fetched": "2026-09-02",
+  "filter": "disabled == false; icon_hero_card and background_image are the upstream file stems",
+  "heroes": [
+    {
+      "id": 1,
+      "name": "Infernus",
+      "icon_hero_card": "inferno",
+      "background_image": "infernus_bg"
+    },
+    {
+      "id": 2,
+      "name": "Seven",
+      "icon_hero_card": "gigawatt",
+      "background_image": "seven_bg"
+    },
+    {
+      "id": 3,
+      "name": "Vindicta",
+      "icon_hero_card": "hornet",
+      "background_image": "vindicta_bg"
+    },
+    {
+      "id": 4,
+      "name": "Lady Geist",
+      "icon_hero_card": "spectre",
+      "background_image": "geist_bg"
+    },
+    {
+      "id": 6,
+      "name": "Abrams",
+      "icon_hero_card": "bull",
+      "background_image": "abrams_bg"
+    },
+    {
+      "id": 7,
+      "name": "Wraith",
+      "icon_hero_card": "wraith",
+      "background_image": "wraith_bg"
+    },
+    {
+      "id": 8,
+      "name": "McGinnis",
+      "icon_hero_card": "engineer",
+      "background_image": "mcginnis_bg"
+    },
+    {
+      "id": 10,
+      "name": "Paradox",
+      "icon_hero_card": "chrono",
+      "background_image": "paradox_bg"
+    },
+    {
+      "id": 11,
+      "name": "Dynamo",
+      "icon_hero_card": "sumo",
+      "background_image": "dynamo_bg"
+    },
+    {
+      "id": 12,
+      "name": "Kelvin",
+      "icon_hero_card": "kelvin",
+      "background_image": "kelvin_bg"
+    },
+    {
+      "id": 13,
+      "name": "Haze",
+      "icon_hero_card": "haze",
+      "background_image": "haze_bg"
+    },
+    {
+      "id": 14,
+      "name": "Holliday",
+      "icon_hero_card": "astro",
+      "background_image": "astro_bg"
+    },
+    {
+      "id": 15,
+      "name": "Bebop",
+      "icon_hero_card": "bebop",
+      "background_image": "bebop_bg"
+    },
+    {
+      "id": 16,
+      "name": "Calico",
+      "icon_hero_card": "nano",
+      "background_image": "calico_bg"
+    },
+    {
+      "id": 17,
+      "name": "Grey Talon",
+      "icon_hero_card": "archer",
+      "background_image": "grey_talon_bg"
+    },
+    {
+      "id": 18,
+      "name": "Mo & Krill",
+      "icon_hero_card": "digger",
+      "background_image": "krill_bg"
+    },
+    {
+      "id": 19,
+      "name": "Shiv",
+      "icon_hero_card": "shiv",
+      "background_image": "shiv_bg"
+    },
+    {
+      "id": 20,
+      "name": "Ivy",
+      "icon_hero_card": "tengu",
+      "background_image": "ivy_bg"
+    },
+    {
+      "id": 25,
+      "name": "Warden",
+      "icon_hero_card": "warden",
+      "background_image": "warden_bg"
+    },
+    {
+      "id": 27,
+      "name": "Yamato",
+      "icon_hero_card": "yamato",
+      "background_image": "yamato_bg"
+    },
+    {
+      "id": 31,
+      "name": "Lash",
+      "icon_hero_card": "lash",
+      "background_image": "lash_bg"
+    },
+    {
+      "id": 35,
+      "name": "Viscous",
+      "icon_hero_card": "viscous",
+      "background_image": "viscous_bg"
+    },
+    {
+      "id": 50,
+      "name": "Pocket",
+      "icon_hero_card": "synth",
+      "background_image": "pocket_bg"
+    },
+    {
+      "id": 52,
+      "name": "Mirage",
+      "icon_hero_card": "mirage",
+      "background_image": "mirage_bg"
+    },
+    {
+      "id": 58,
+      "name": "Vyper",
+      "icon_hero_card": "kali",
+      "background_image": "vyper_bg"
+    },
+    {
+      "id": 60,
+      "name": "Sinclair",
+      "icon_hero_card": "magician",
+      "background_image": "magician_bg"
+    },
+    {
+      "id": 63,
+      "name": "Mina",
+      "icon_hero_card": "vampirebat",
+      "background_image": "mina_bg"
+    },
+    {
+      "id": 64,
+      "name": "Drifter",
+      "icon_hero_card": "drifter",
+      "background_image": "drifter_bg"
+    },
+    {
+      "id": 65,
+      "name": "Venator",
+      "icon_hero_card": "priest",
+      "background_image": "priest_bg"
+    },
+    {
+      "id": 66,
+      "name": "Victor",
+      "icon_hero_card": "frank",
+      "background_image": "victor_bg"
+    },
+    {
+      "id": 67,
+      "name": "Paige",
+      "icon_hero_card": "bookworm",
+      "background_image": "patience_bg"
+    },
+    {
+      "id": 69,
+      "name": "The Doorman",
+      "icon_hero_card": "doorman",
+      "background_image": "doorman_bg"
+    },
+    {
+      "id": 72,
+      "name": "Billy",
+      "icon_hero_card": "punkgoat",
+      "background_image": "billy_bg"
+    },
+    {
+      "id": 76,
+      "name": "Graves",
+      "icon_hero_card": "necro",
+      "background_image": "necro_bg"
+    },
+    {
+      "id": 77,
+      "name": "Apollo",
+      "icon_hero_card": "fencer",
+      "background_image": "fencer_bg"
+    },
+    {
+      "id": 79,
+      "name": "Rem",
+      "icon_hero_card": "familiar",
+      "background_image": "familiar_bg"
+    },
+    {
+      "id": 80,
+      "name": "Silver",
+      "icon_hero_card": "werewolf",
+      "background_image": "werewolf_bg"
+    },
+    {
+      "id": 81,
+      "name": "Celeste",
+      "icon_hero_card": "unicorn",
+      "background_image": "unicorn_bg"
+    }
+  ]
+}

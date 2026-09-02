@@ -2,6 +2,7 @@
 //and routed through the swappable asset base webp-first; null for anything that is not a
 //hero card so the caller's monogram fallback still fires.
 import { ASSETS_BASE, DEADLOCK_ASSETS_HOST, preferWebp, rewriteAssetUrl } from './assets';
+import { backdropStem } from './heroBackdrop';
 
 export interface HeroArt {
   cls: string;
@@ -60,7 +61,7 @@ export function heroArt(iconUrl: string | null | undefined, base?: string): Hero
     small: art(`${cls}_sm`),
     minimap: art(`${cls}_mm`),
     vertical: art(`${cls}_vertical`),
-    background: art(`backgrounds/${cls}_bg`),
+    background: art(`backgrounds/${backdropStem(cls)}`),
     //wordmarks live outside the mirrored /images/ key space, so they stay on the upstream host.
     nameSvg: `${DEADLOCK_ASSETS_HOST}/assets-api-res/icons/${NAME_SVG_SLUG[cls] ?? cls}.svg`,
   };
