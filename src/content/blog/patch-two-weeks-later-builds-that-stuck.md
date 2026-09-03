@@ -50,7 +50,7 @@ Three tests, in this order, and a row appears only when it passes all three.
 ## Buy orders move before win rates do
 
 A balance edit reaches you through what other players buy long before it reaches
-you through what they win. [Lash's build page](/heroes/lash/build) lists the item
+you through what they win. [Lash's build page](/heroes/lash/build/) lists the item
 sets that cleared the sample floor, the first buys, and the game count behind
 each one. Reading that page against your memory of it a fortnight ago is a
 quicker read on an edit than any percentage, because a buy order changes the day

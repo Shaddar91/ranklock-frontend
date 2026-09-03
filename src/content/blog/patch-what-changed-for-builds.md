@@ -56,7 +56,7 @@ winning for months, which is the best guess available about tomorrow until
 tomorrow has some games in it. Three places to spend the wait:
 
 - **The build page for the hero you play.** [Haze's build
-  page](/heroes/haze/build) prints a win rate and the number of games behind it
+  page](/heroes/haze/build/) prints a win rate and the number of games behind it
   for every set, item and first buy. Read the games column before the
   percentage. The same rate over four hundred games and over ninety thousand
   games are two different claims wearing one number.
