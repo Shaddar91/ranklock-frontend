@@ -2,7 +2,9 @@
 //build for the per-bracket rosters and the hero -> item win-rate index.
 import { api } from './apiClient';
 import { buildFetch } from './buildData';
-import type { DataHorizonResponse, HeroBracket, HeroItemWinRate, HeroSummary } from '../types/api';
+import { rankDesc, toPct } from './narrative';
+import type { ItemBracketRow } from './itemNarrative';
+import type { DataHorizonResponse, HeroBracket, HeroItemWinRate, HeroSummary, ItemStat } from '../types/api';
 
 export interface BracketDef {
   key: HeroBracket;
@@ -68,6 +70,40 @@ export function heroItemIndex(roster: HeroSummary[]): Promise<Map<number, HeroIt
     }
     const covered = perHero.filter((rows) => rows.length > 0).length;
     console.log(`[heroItemIndex] ${covered}/${roster.length} heroes indexed, ${index.size} items`);
+    return index;
+  });
+}
+
+//Items use the integer badge buckets 1-5 (lib/brackets.ts bracket_badge_range); 0 is the
+//all-ranks row the item pages already fetch.
+const ITEM_BADGE_BRACKETS = [1, 2, 3, 4, 5] as const;
+
+/** item_id -> one row per badge tier, with the win-rate rank measured inside that tier. */
+export function itemBracketIndex(): Promise<Map<number, ItemBracketRow[]>> {
+  return once('itemBracketIndex', async () => {
+    const perBracket = await Promise.all(
+      ITEM_BADGE_BRACKETS.map(async (b) => [b, await buildFetch(api.getItems(b), [] as ItemStat[])] as const),
+    );
+    const index = new Map<number, ItemBracketRow[]>();
+    for (const [bracket, rows] of perBracket) {
+      const rated = rows.filter((r) => r.win_rate != null && (r.matches ?? r.picks ?? 0) > 0);
+      const wrs = rated.map((r) => toPct(r.win_rate as number));
+      for (const r of rows) {
+        const matches = r.matches ?? r.picks ?? null;
+        const ranked = r.win_rate != null && (matches ?? 0) > 0;
+        const list = index.get(r.item_id) ?? [];
+        list.push({
+          bracket,
+          win_rate: r.win_rate ?? null,
+          matches,
+          avg_buy_time_s: r.avg_buy_time_s ?? null,
+          rank: ranked ? rankDesc(wrs, toPct(r.win_rate as number)) : null,
+          of: ranked ? rated.length : null,
+        });
+        index.set(r.item_id, list);
+      }
+    }
+    console.log(`[itemBracketIndex] ${index.size} items across ${ITEM_BADGE_BRACKETS.length} badge tiers`);
     return index;
   });
 }

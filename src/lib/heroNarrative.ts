@@ -2,7 +2,7 @@
 //every page reads about that hero: its own kit, its named matchups read across the
 //ladder, its head-to-head stat lines, partners, items and rank pattern.
 import { count, duration, fixed, pct } from './format';
-import { joinSegs, link, mean, ordinal, quarter, rankDesc, toPct, type Para, type Section, type Seg } from './narrative';
+import { BADGE_TIER_LABELS as TIER_LABELS, joinSegs, link, mean, ordinal, quarter, rankDesc, toPct, type Para, type Section, type Seg } from './narrative';
 import { heroPath } from './heroSlugs';
 import type { HeroAbility, HeroBracket, HeroItemWinRate, HeroSummary, MatchupEntry } from '../types/api';
 
@@ -53,15 +53,6 @@ export interface HeroNarrativeInput {
   patchesInWindow: number | null;
   currentPatch: { label: string; since: string } | null;
 }
-
-//analytics.hero_matchup_rates badge buckets 1-5 (deadlock-analytics hero_matchups.rs BRACKET_RANGES).
-const TIER_LABELS: Record<number, string> = {
-  1: 'Initiate to Alchemist',
-  2: 'Arcanist to Ritualist',
-  3: 'Emissary to Archon',
-  4: 'Oracle to Phantom',
-  5: 'Ascendant to Eternus',
-};
 
 //A hero page exists only for a roster hero, so an off-roster id is named in prose but not linked.
 const heroSeg = (roster: HeroSummary[], id: number, text: string): Seg => {

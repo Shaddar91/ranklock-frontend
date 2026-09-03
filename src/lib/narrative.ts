@@ -8,6 +8,16 @@ export interface Section {
 
 export const link = (text: string, href: string): Seg => ({ text, href });
 
+//Badge buckets 1-5 shared by /items/stats?bracket= and analytics.hero_matchup_rates
+//(deadlock-analytics BRACKET_RANGES / bracket_badge_range) — Valve tier names, never MMR.
+export const BADGE_TIER_LABELS: Record<number, string> = {
+  1: 'Initiate to Alchemist',
+  2: 'Arcanist to Ritualist',
+  3: 'Emissary to Archon',
+  4: 'Oracle to Phantom',
+  5: 'Ascendant to Eternus',
+};
+
 export function ordinal(n: number): string {
   const v = n % 100;
   const suffix = v >= 11 && v <= 13 ? 'th' : (['th', 'st', 'nd', 'rd'][n % 10] ?? 'th');

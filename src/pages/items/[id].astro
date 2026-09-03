@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { api } from '../../lib/apiClient';
 import { buildFetch, buildFetchNonEmpty } from '../../lib/buildData';
-import { heroItemIndex } from '../../lib/buildIndexes';
+import { heroItemIndex, itemBracketIndex } from '../../lib/buildIndexes';
 import { itemNarrative, type ItemHeroRow, type ItemPeer } from '../../lib/itemNarrative';
 import { toPct, type Section } from '../../lib/narrative';
 import Narrative from '../../components/Narrative.astro';
@@ -72,6 +72,11 @@ export async function getStaticPaths() {
   const roster = await buildFetch(api.getHeroes(), [] as HeroSummary[]);
   const heroById = new Map(roster.map((h) => [h.hero_id, h]));
   const heroIndex = await heroItemIndex(roster);
+  const bracketIndex = await itemBracketIndex();
+  //Each hero's own game count in the same feed, so a per-hero share is a share of comparable games.
+  const heroFeedGames = new Map<number, number>();
+  for (const rows of heroIndex.values())
+    for (const r of rows) heroFeedGames.set(r.hero_id, Math.max(heroFeedGames.get(r.hero_id) ?? 0, r.games ?? 0));
   const all = stats.map((s) => ({ item_id: s.item_id, win_rate: s.win_rate ?? null, matches: s.matches ?? s.picks ?? null }));
   const catalogRows = entries.map(([id, meta]) => ({ id: Number(id), meta, st: statById.get(id) }));
   return entries.map(([id, meta]) => {
@@ -96,7 +101,14 @@ export async function getStaticPaths() {
     };
     const peers: ItemPeer[] = catalogRows
       .filter((r) => r.meta.slot === meta.slot && r.meta.tier === meta.tier)
-      .map((r) => ({ item_id: r.id, name: r.meta.name, win_rate: r.st?.win_rate ?? null, matches: r.st?.matches ?? r.st?.picks ?? null }));
+      .map((r) => ({
+        item_id: r.id,
+        name: r.meta.name,
+        win_rate: r.st?.win_rate ?? null,
+        matches: r.st?.matches ?? r.st?.picks ?? null,
+        avg_buy_time_s: r.st?.avg_buy_time_s ?? null,
+        active: r.meta.active,
+      }));
     const heroRows: ItemHeroRow[] = (heroIndex.get(item.item_id) ?? [])
       .filter((r) => r.win_rate != null && (r.games ?? 0) > 0)
       .map((r) => ({
@@ -104,8 +116,9 @@ export async function getStaticPaths() {
         name: heroById.get(r.hero_id)?.hero_name ?? `Hero ${r.hero_id}`,
         games: r.games as number,
         win_rate: r.win_rate as number,
+        hero_games: heroFeedGames.get(r.hero_id) ?? null,
       }));
-    const sections = itemNarrative({ item, all, peers, heroes: heroRows });
+    const sections = itemNarrative({ item, all, peers, heroes: heroRows, brackets: bracketIndex.get(item.item_id) ?? [] });
     const heroTable = [...heroRows].sort((a, b) => b.games - a.games).slice(0, 10);
     return { params: { id }, props: { item, modifiers: modifierMap.get(item.item_id) ?? [], sections, heroTable } };
   });
