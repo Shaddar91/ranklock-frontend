@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fail, log, notReady } from './lib/patch-fill-log.mjs';
-import { horizonValues, moversValues, resolvePatch, wave1Values } from './lib/patch-fill-api.mjs';
+import { ITEM_SETS_ENABLED, horizonValues, itemSetValues, moversValues, resolvePatch, wave1Values } from './lib/patch-fill-api.mjs';
 import {
   SENTINEL,
   WAVE1_TOKENS,
@@ -262,7 +262,8 @@ async function wave2FirstPublish(post, original, w1entry, values2, values1, resu
 
 async function wave2(args, record, t0) {
   const patch = await resolvePatch(record.published_at.slice(0, 10));
-  const values2 = await moversValues(patch.patch_id);
+  const movers = await moversValues(patch.patch_id);
+  const values2 = movers.values;
   const released = Date.parse(patch.released_at ?? '');
   if (Number.isNaN(released)) fail(`patch ${patch.patch_id} carries no released_at`);
   const contamination = (Date.parse(t0) - released) / (Date.now() - released);
@@ -273,6 +274,12 @@ async function wave2(args, record, t0) {
   const w1 = readRunRecord(patch.patch_id, 1);
   const posts = resolvePosts(args.posts);
   if (!args.dryRun) gitGuard(posts.rel);
+  if (posts.abs.some((p) => readFileSync(p, 'utf8').includes('{{ITEM_SETS}}'))) {
+    if (!ITEM_SETS_ENABLED) fail('a post carries ITEM_SETS but the item-set flag is off (R4)');
+    const itemSets = await itemSetValues(movers.topGainerId, patch.released_at);
+    if (itemSets === null) notReady('item sets refused — window predates the patch or no clean set');
+    Object.assign(values2, itemSets);
+  }
   let values1 = null;
   const results = [];
   const skips = [];

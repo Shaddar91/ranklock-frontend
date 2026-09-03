@@ -152,5 +152,45 @@ export async function moversValues(patchId) {
   if (spread > 1.02) fail(`movers sample denominator inconsistent (spread ${spread.toFixed(3)})`);
   const sample = Math.round(median(ratios));
   log({ event: 'movers', status: 200, rows: rows.length, sample_n: sample });
-  return { MOVERS_TABLE: renderMovers(rows), SAMPLE_N: sample.toLocaleString('en-US') };
+  return {
+    values: { MOVERS_TABLE: renderMovers(rows), SAMPLE_N: sample.toLocaleString('en-US') },
+    topGainerId: data.gainers?.[0]?.hero_id ?? null,
+  };
+}
+
+//R4 item-set guard, flag-gated off until the duplicate-item defect is diagnosed.
+export const ITEM_SETS_ENABLED = process.env.RANKLOCK_PATCH_ITEM_SETS === '1';
+
+export async function itemSetValues(heroId, releasedAt) {
+  const res = await get(`${API_BASE}/heroes/${heroId}/build-stats`);
+  if (res.status !== 200) fail(`build-stats returned HTTP ${res.status}`);
+  const windowTo = res.headers.get('x-data-window-to');
+  if (windowTo === null || Date.parse(windowTo) < Date.parse(releasedAt)) {
+    log({ event: 'item-sets-refused', hero_id: heroId, window_to: windowTo, reason: 'window older than the patch' });
+    return null;
+  }
+  const data = await res.json().catch(() => fail('build-stats response is not JSON'));
+  const sets = [];
+  for (const set of data.item_sets ?? []) {
+    const seen = new Set();
+    const items = (set.items ?? []).filter((item) => {
+      if (item?.item_id == null || seen.has(item.item_id)) return false;
+      seen.add(item.item_id);
+      return true;
+    });
+    if (items.length < 4) continue;
+    sets.push({ ...set, items });
+  }
+  if (sets.length === 0) {
+    log({ event: 'item-sets-refused', hero_id: heroId, reason: 'no set clears the distinct-item floor' });
+    return null;
+  }
+  const lines = ['| Set | Win rate | Games |', '|---|---|---|'];
+  for (const set of sets.slice(0, 5)) {
+    const names = set.items.map((item) => item.item_name).join(', ');
+    const rate = set.win_rate == null ? NO_GAMES : pct(set.win_rate);
+    const games = typeof set.games === 'number' ? set.games.toLocaleString('en-US') : NO_GAMES;
+    lines.push(`| ${names} | ${rate} | ${games} |`);
+  }
+  return { ITEM_SETS: lines.join('\n') };
 }
