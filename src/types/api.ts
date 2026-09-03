@@ -91,9 +91,15 @@ export interface MatchupEntry {
   win_rate: number;
 }
 
-//GET /heroes/:id/counters passes through an upstream/analytics shape that is not
-//yet frozen — keep loose (the Matchups tab is powered by /heroes/:id/matchups).
-export type HeroCountersResponse = unknown;
+//GET /heroes/:id/counters — the upstream `hero-counter-stats` blob filtered to this hero
+//(handlers/items.rs::get_hero_counters): one totals row per enemy, this hero's aggregates
+//alongside the enemy's. Model the fields the hero prose reads and keep the row extensible.
+export interface HeroCounterRow {
+  enemy_hero_id: number;
+  matches_played: number;
+  [extra: string]: number;
+}
+export type HeroCountersResponse = HeroCounterRow[];
 
 //GET /heroes/:id/synergies — the backend filters the upstream `hero-synergy-stats`
 //rows down to pairs that include this hero (hero_id1 OR hero_id2) and passes them

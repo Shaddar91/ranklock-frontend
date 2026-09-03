@@ -9,13 +9,15 @@ import GameArt from '../../components/GameArt.astro';
 import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
 import Narrative from '../../components/Narrative.astro';
-import { heroNarrative } from '../../lib/heroNarrative';
+import { heroNarrative, type HeroCounter, type HeroTierMatchups } from '../../lib/heroNarrative';
 import { heroArt } from '../../lib/heroArt';
 import { releasedRoster } from '../../lib/heroRoster';
 import { heroPath, slugRoster } from '../../lib/heroSlugs';
 import { HERO_BRACKETS, rosterByBracket } from '../../lib/buildIndexes';
 import type {
   DataHorizonResponse,
+  HeroAbility,
+  HeroCounterRow,
   HeroItemWinRate,
   HeroSummary,
   HeroSynergyRow,
@@ -60,16 +62,48 @@ const heroKda = kda(hero?.avg_kills, hero?.avg_deaths, hero?.avg_assists);
 //Same fetch path as the hero list above (apiClient + buildFetch at build time).
 //A failed or empty endpoint bakes as zero rows and its section is dropped, so a
 //cold origin yields a shorter page, not a broken build.
-const [matchupRows, synergyRows, itemRows, buildRows, horizon, patches] = hero
+//Badge buckets 1-5: the per-band matchup read the ladder sentences need (hero_matchups BRACKET_RANGES).
+const MATCHUP_BUCKETS = [1, 2, 3, 4, 5];
+
+const [matchupRows, synergyRows, itemRows, abilityRows, counterRows, buildRows, horizon, patches, ...bucketPages] = hero
   ? await Promise.all([
       buildFetch(api.getHeroMatchups(hero.hero_id), [] as MatchupEntry[]),
       buildFetch(api.getHeroSynergies(hero.hero_id), [] as HeroSynergyRow[]),
       buildFetch(api.getHeroItemWinRates(hero.hero_id), [] as HeroItemWinRate[]),
+      buildFetch(api.getHeroAbilities(hero.hero_id), [] as HeroAbility[]),
+      buildFetch(api.getHeroCounters(hero.hero_id), [] as HeroCounterRow[]),
       buildFetch(api.getHeroBuilds(hero.hero_id), [] as TrimmedBuild[]),
       buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null),
       buildFetch(api.getPatches(), [] as Patch[]),
+      ...MATCHUP_BUCKETS.map((b) => buildFetch(api.getHeroMatchups(hero.hero_id, b), [] as MatchupEntry[])),
     ])
-  : [[] as MatchupEntry[], [] as HeroSynergyRow[], [] as HeroItemWinRate[], [] as TrimmedBuild[], null, [] as Patch[]];
+  : [
+      [] as MatchupEntry[], [] as HeroSynergyRow[], [] as HeroItemWinRate[], [] as HeroAbility[],
+      [] as HeroCounterRow[], [] as TrimmedBuild[], null, [] as Patch[],
+    ];
+
+const tierMatchups: HeroTierMatchups[] = MATCHUP_BUCKETS.map((tier, i) => ({
+  tier,
+  rows: (bucketPages[i] ?? []) as MatchupEntry[],
+}));
+
+const counters: HeroCounter[] = counterRows
+  .filter((c) => c.matches_played > 0)
+  .map((c) => {
+    const per = (v: number | undefined) => (typeof v === 'number' ? v / c.matches_played : 0);
+    return {
+      enemyId: c.enemy_hero_id,
+      matches: c.matches_played,
+      souls: per(c.networth),
+      deaths: per(c.deaths),
+      kills: per(c.kills),
+      objDamage: per(c.obj_damage),
+      enemySouls: per(c.enemy_networth),
+      enemyDeaths: per(c.enemy_deaths),
+      enemyKills: per(c.enemy_kills),
+      enemyObjDamage: per(c.enemy_obj_damage),
+    };
+  });
 
 const heroById = new Map(roster.map((h) => [h.hero_id, h]));
 
@@ -110,6 +144,9 @@ const sections = hero
       hero,
       roster,
       matchups: matchupRows,
+      tierMatchups,
+      counters,
+      abilities: abilityRows,
       synergies,
       items: itemRows,
       brackets: HERO_BRACKETS.map((b) => ({ key: b.key, label: b.label, roster: bracketRosters?.get(b.key) ?? [] })),

@@ -1,15 +1,34 @@
-//Per-hero prose for the prerendered hero pages, derived from the build-time stats
-//so every page reads differently in substance (named matchups, partners, items,
-//rank pattern), not only in the numbers.
-import { count, fixed, pct } from './format';
+//Per-hero prose for the prerendered hero pages, derived from the build-time stats so
+//every page reads about that hero: its own kit, its named matchups read across the
+//ladder, its head-to-head stat lines, partners, items and rank pattern.
+import { count, duration, fixed, pct } from './format';
 import { joinSegs, link, mean, ordinal, quarter, rankDesc, toPct, type Para, type Section, type Seg } from './narrative';
 import { heroPath } from './heroSlugs';
-import type { HeroBracket, HeroItemWinRate, HeroSummary, MatchupEntry } from '../types/api';
+import type { HeroAbility, HeroBracket, HeroItemWinRate, HeroSummary, MatchupEntry } from '../types/api';
 
 export interface HeroSynergy {
   partnerId: number;
   matches: number;
   winRate: number;
+}
+
+//Per-game stat line against one opponent, averaged by the page from /heroes/:id/counters.
+export interface HeroCounter {
+  enemyId: number;
+  matches: number;
+  souls: number;
+  deaths: number;
+  kills: number;
+  objDamage: number;
+  enemySouls: number;
+  enemyDeaths: number;
+  enemyKills: number;
+  enemyObjDamage: number;
+}
+
+export interface HeroTierMatchups {
+  tier: number;
+  rows: MatchupEntry[];
 }
 
 export interface HeroBracketRoster {
@@ -22,6 +41,9 @@ export interface HeroNarrativeInput {
   hero: HeroSummary;
   roster: HeroSummary[];
   matchups: MatchupEntry[];
+  tierMatchups: HeroTierMatchups[];
+  counters: HeroCounter[];
+  abilities: HeroAbility[];
   synergies: HeroSynergy[];
   items: HeroItemWinRate[];
   brackets: HeroBracketRoster[];
@@ -32,12 +54,52 @@ export interface HeroNarrativeInput {
   currentPatch: { label: string; since: string } | null;
 }
 
+//analytics.hero_matchup_rates badge buckets 1-5 (deadlock-analytics hero_matchups.rs BRACKET_RANGES).
+const TIER_LABELS: Record<number, string> = {
+  1: 'Initiate to Alchemist',
+  2: 'Arcanist to Ritualist',
+  3: 'Emissary to Archon',
+  4: 'Oracle to Phantom',
+  5: 'Ascendant to Eternus',
+};
+
 //A hero page exists only for a roster hero, so an off-roster id is named in prose but not linked.
 const heroSeg = (roster: HeroSummary[], id: number, text: string): Seg => {
   const h = roster.find((r) => r.hero_id === id);
   return h ? link(text, heroPath(h.hero_name)) : text;
 };
 const itemHref = (id: number) => `/items/${id}/`;
+
+const joinNames = (names: string[]): string =>
+  names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+
+interface Opponent {
+  id: number;
+  wr: number;
+  matches: number;
+}
+
+//One qualified-opponent list, shared by every section that names a matchup so the
+//matchup, ladder and head-to-head sentences always talk about the same heroes.
+//The unbracketed read emits one row per match_mode with no field to tell them apart
+//(deadlock-backend analytics.rs MATCHUP_SQL), so rows are merged per opponent first.
+function rankedOpponents(input: HeroNarrativeInput): Opponent[] | null {
+  const merged = new Map<number, { matches: number; wins: number }>();
+  for (const m of input.matchups) {
+    if (m.matches <= 0 || m.hero_b_id === input.hero.hero_id) continue;
+    const acc = merged.get(m.hero_b_id) ?? { matches: 0, wins: 0 };
+    acc.matches += m.matches;
+    acc.wins += m.hero_a_wins;
+    merged.set(m.hero_b_id, acc);
+  }
+  if (merged.size === 0) return null;
+  const min = Math.max(200, 0.02 * Math.max(...[...merged.values()].map((v) => v.matches)));
+  const qualified = [...merged.entries()]
+    .filter(([, v]) => v.matches >= min)
+    .map(([id, v]) => ({ id, wr: (v.wins / v.matches) * 100, matches: v.matches }))
+    .sort((a, b) => b.wr - a.wr);
+  return qualified.length < 2 ? null : qualified;
+}
 
 function performance(input: HeroNarrativeInput): Section | null {
   const { hero, roster } = input;
@@ -96,38 +158,105 @@ function performance(input: HeroNarrativeInput): Section | null {
   if (dr != null && dr <= q) style.push(`It also dies more than most, ${fixed(hero.avg_deaths, 1)} deaths a game (${ordinal(dr)} highest).`);
   if (dr != null && dr > n - q) style.push(`It dies rarely, ${fixed(hero.avg_deaths, 1)} deaths a game (${ordinal(n - dr + 1)} lowest).`);
   if (sr != null && sr > n - q) style.push(`Its ${count(hero.avg_net_worth)} average souls is ${ordinal(n - sr + 1)} lowest, so it does not win by out-farming.`);
-  if (style.length === 0) style.push(`Its kills, deaths, assists and souls all sit in the roster's middle band.`);
+
+  //Match length is flat across the roster, so it only earns a sentence half a minute off the mean.
+  const durations = rated.map((h) => h.avg_duration_s).filter((d): d is number => d != null);
+  const avgDuration = durations.length === n ? (mean(durations) as number) : null;
+  if (avgDuration != null && hero.avg_duration_s != null) {
+    const gap = hero.avg_duration_s - avgDuration;
+    if (gap >= 30) style.push(`Its games run long, ${duration(hero.avg_duration_s)} against the roster's ${duration(avgDuration)}.`);
+    else if (gap <= -30) style.push(`Its games end early, ${duration(hero.avg_duration_s)} against the roster's ${duration(avgDuration)}.`);
+  }
+  if (style.length === 0) {
+    const middle = (n + 1) / 2;
+    const nearest = [
+      { label: 'kills', text: `${fixed(hero.avg_kills, 1)} a game`, rank: kr },
+      { label: 'deaths', text: `${fixed(hero.avg_deaths, 1)} a game`, rank: dr },
+      { label: 'assists', text: `${fixed(hero.avg_assists, 1)} a game`, rank: ar },
+      { label: 'souls', text: `${count(hero.avg_net_worth)} a game`, rank: sr },
+    ]
+      .filter((c): c is { label: string; text: string; rank: number } => c.rank != null)
+      .sort((a, b) => Math.abs(b.rank - middle) - Math.abs(a.rank - middle))[0];
+    style.push(
+      nearest
+        ? `The closest it comes to an outlier is ${nearest.label}, ${nearest.text}, ${ordinal(nearest.rank)} of ${n}.`
+        : `Its kills, deaths, assists and souls all sit in the roster's middle band.`,
+    );
+  }
 
   return { heading: `How ${name} performs`, paras: [p1, [verdict, ' ', style.join(' ')]] };
 }
 
+function kit(input: HeroNarrativeInput): Section | null {
+  const named = input.abilities.filter((a) => a.name != null && a.name.trim() !== '' && !a.name.startsWith('citadel_'));
+  const signatures = named
+    .filter((a) => a.ability_type === 'signature')
+    .sort((a, b) => a.order - b.order)
+    .map((a) => a.name);
+  const ultimate = named.find((a) => a.ability_type === 'ultimate')?.name ?? null;
+  if (signatures.length === 0 && ultimate == null) return null;
+  const name = input.hero.hero_name;
+  let sentence: string;
+  if (signatures.length > 0 && ultimate != null)
+    sentence = `${name} plays through ${joinNames(signatures)}, with ${ultimate} as its ultimate.`;
+  else if (signatures.length > 0) sentence = `${name} plays through ${joinNames(signatures)}.`;
+  else sentence = `${name} plays around its ultimate, ${ultimate}.`;
+  return { heading: `${name}'s kit`, paras: [[sentence]] };
+}
+
+//Whether the named matchup holds across the badge buckets, and how far it moves.
+function ladderLine(input: HeroNarrativeInput, opponent: Opponent): string | null {
+  const perTier = input.tierMatchups
+    .map((t) => {
+      const label = TIER_LABELS[t.tier];
+      const row = t.rows.find((r) => r.hero_b_id === opponent.id && r.matches > 0);
+      return label && row ? { tier: t.tier, label, wr: toPct(row.win_rate) } : null;
+    })
+    .filter((r): r is NonNullable<typeof r> => r != null)
+    .sort((a, b) => a.tier - b.tier);
+  if (perTier.length < 3) return null;
+  const lo = perTier[0] as NonNullable<(typeof perTier)[number]>;
+  const hi = perTier[perTier.length - 1] as NonNullable<(typeof perTier)[number]>;
+  const rates = perTier.map((r) => r.wr);
+  const swing = Math.max(...rates) - Math.min(...rates);
+  const winning = perTier.filter((r) => r.wr > 50);
+  const name = input.heroName(opponent.id);
+  const ends = `${pct(lo.wr)} at ${lo.label} and ${pct(hi.wr)} at ${hi.label}`;
+  let sentence: string;
+  if (winning.length === perTier.length) sentence = `The ${name} matchup holds at every tier, ${ends}.`;
+  else if (winning.length === 0) sentence = `It loses to ${name} at every tier, ${ends}.`;
+  else if (lo.wr <= 50)
+    sentence = `Against ${name} it only turns favourable at ${(winning[0] as NonNullable<(typeof perTier)[number]>).label}, ${ends}.`;
+  else {
+    const firstLoss = perTier.find((r) => r.wr <= 50) as NonNullable<(typeof perTier)[number]>;
+    sentence = `Its edge over ${name} runs out at ${firstLoss.label}, ${ends}.`;
+  }
+  if (swing >= 4) sentence += ` That is a ${fixed(swing, 1)} point swing across the ladder.`;
+  else if (swing < 1) sentence += ` The number moves less than a point across the ladder.`;
+  return sentence;
+}
+
 function matchups(input: HeroNarrativeInput): Section | null {
+  const qualified = rankedOpponents(input);
+  if (!qualified) return null;
   const { hero, heroName } = input;
-  const rows = input.matchups.filter((m) => m.matches > 0);
-  if (rows.length === 0) return null;
-  const maxMatches = Math.max(...rows.map((m) => m.matches));
-  const min = Math.max(200, 0.02 * maxMatches);
-  const qualified = rows
-    .filter((m) => m.matches >= min)
-    .map((m) => ({ id: m.hero_b_id, wr: toPct(m.win_rate), matches: m.matches }))
-    .sort((a, b) => b.wr - a.wr);
-  if (qualified.length < 2) return null;
   const name = hero.hero_name;
   const winning = qualified.filter((m) => m.wr > 50).length;
   const bestN = qualified.length >= 6 ? 3 : Math.max(1, Math.floor(qualified.length / 2));
   const best = qualified.slice(0, bestN);
   const worst = qualified.slice(bestN).slice(-3).reverse();
-  const first = qualified[0];
-  const last = qualified[qualified.length - 1];
-  if (!first || !last) return null;
+  const first = qualified[0] as Opponent;
+  const last = qualified[qualified.length - 1] as Opponent;
   const spread = first.wr - last.wr;
+  const top = heroName(first.id);
+  const bottom = heroName(last.id);
   const spreadText =
     spread >= 10
-      ? `The spread between its best and worst matchup is ${fixed(spread, 1)} points, so the draft matters more for ${name} than for most heroes.`
+      ? `Its results swing ${fixed(spread, 1)} points from ${top} down to ${bottom}, so the draft matters more for ${name} than for most heroes.`
       : spread < 5
-        ? `Its results barely move with the opponent, a ${fixed(spread, 1)} point spread, so it is a safe blind pick.`
-        : `The matchup spread is ${fixed(spread, 1)} points: enough to matter in a coordinated draft, not enough to avoid the hero.`;
-  const seg = (m: { id: number; wr: number; matches: number }): Seg[] => [
+        ? `Its results barely move with the opponent, ${fixed(spread, 1)} points between ${top} and ${bottom}, so it is a safe blind pick.`
+        : `The ${top} to ${bottom} spread is ${fixed(spread, 1)} points: enough to matter in a coordinated draft, not enough to avoid the hero.`;
+  const seg = (m: Opponent): Seg[] => [
     heroSeg(input.roster, m.id, heroName(m.id)),
     ` (${pct(m.wr)} over ${count(m.matches)} games)`,
   ];
@@ -137,7 +266,75 @@ function matchups(input: HeroNarrativeInput): Section | null {
   if (losing.length === worst.length && worst.length > 0) p2.push(` It struggles most against `, ...joinSegs(worst.map(seg)), `.`);
   else if (losing.length > 0) p2.push(` It loses more than it wins against `, ...joinSegs(losing.map(seg)), `.`);
   else if (worst.length > 0) p2.push(` Even its weakest matchups are winning ones: `, ...joinSegs(worst.map(seg)), `.`);
-  return { heading: 'Matchups', paras: [p1, p2] };
+  const paras: Para[] = [p1, p2];
+  const ladder = [first, last]
+    .filter((o, i, arr) => arr.indexOf(o) === i)
+    .map((o) => ladderLine(input, o))
+    .filter((s): s is string => s != null);
+  if (ladder.length > 0) paras.push([ladder.join(' ')]);
+  return { heading: 'Matchups', paras };
+}
+
+//Souls, deaths and objective damage the two named matchups actually end on.
+function counterLine(input: HeroNarrativeInput, opponent: Opponent, row: HeroCounter): string {
+  const name = input.heroName(opponent.id);
+  const souls = row.souls - row.enemySouls;
+  const deaths = row.deaths - row.enemyDeaths;
+  const soulsLevel = Math.abs(souls) < 500;
+  const deathsLevel = Math.abs(deaths) < 0.2;
+  let sentence: string;
+  if (soulsLevel && deathsLevel) sentence = `Against ${name} both souls and deaths come out level.`;
+  else if (soulsLevel)
+    sentence =
+      deaths < 0
+        ? `Souls come out level against ${name}, but it dies ${fixed(-deaths, 1)} fewer times a game.`
+        : `Souls come out level against ${name} while it dies ${fixed(deaths, 1)} more times a game.`;
+  else if (souls > 0)
+    sentence = deathsLevel
+      ? `Against ${name} it ends ${count(souls)} souls up on level deaths.`
+      : deaths < 0
+        ? `Against ${name} it ends ${count(souls)} souls up and dies ${fixed(-deaths, 1)} fewer times a game.`
+        : `Against ${name} it out-farms by ${count(souls)} souls a game and pays for it with ${fixed(deaths, 1)} more deaths.`;
+  else
+    sentence = deathsLevel
+      ? `Against ${name} it finishes ${count(-souls)} souls down on level deaths.`
+      : deaths < 0
+        ? `Against ${name} it finishes ${count(-souls)} souls down and still dies ${fixed(-deaths, 1)} fewer times a game.`
+        : `${name} finishes ${count(-souls)} souls ahead of it and dies ${fixed(deaths, 1)} fewer times a game.`;
+  const obj = row.objDamage - row.enemyObjDamage;
+  if (row.objDamage > 0 && Math.abs(obj) >= 0.05 * row.objDamage) {
+    sentence +=
+      obj > 0
+        ? ` It also puts ${count(obj)} more damage into objectives in that matchup.`
+        : ` It puts ${count(-obj)} less damage into objectives than ${name} does.`;
+  }
+  return sentence;
+}
+
+function headToHead(input: HeroNarrativeInput): Section | null {
+  const qualified = rankedOpponents(input);
+  if (!qualified) return null;
+  const byEnemy = new Map(input.counters.filter((c) => c.matches > 0).map((c) => [c.enemyId, c]));
+  if (byEnemy.size === 0) return null;
+  const first = qualified[0] as Opponent;
+  const last = qualified[qualified.length - 1] as Opponent;
+  const busiest = [...qualified].sort((a, b) => b.matches - a.matches)[0] as Opponent;
+  const lines = [first, last]
+    .filter((o, i, arr) => arr.indexOf(o) === i)
+    .map((o) => {
+      const row = byEnemy.get(o.id);
+      return row ? counterLine(input, o, row) : null;
+    })
+    .filter((s): s is string => s != null);
+  const busiestRow = busiest === first || busiest === last ? null : byEnemy.get(busiest.id);
+  if (busiestRow) {
+    lines.push(
+      `${input.heroName(busiest.id)} is the opponent it meets most, ${count(busiest.matches)} games at ${pct(busiest.wr)}. ` +
+        counterLine(input, busiest, busiestRow),
+    );
+  }
+  if (lines.length === 0) return null;
+  return { heading: 'Head to head', paras: [[lines.join(' ')]] };
 }
 
 function partners(input: HeroNarrativeInput): Section | null {
@@ -160,6 +357,14 @@ function partners(input: HeroNarrativeInput): Section | null {
       `Its most common partner is `,
       heroSeg(input.roster, common.partnerId, input.heroName(common.partnerId)),
       ` (${count(common.matches)} games together, ${pct(common.winRate)}), a pairing chosen more for comfort than for its results.`,
+    );
+  }
+  const weakest = qualified[qualified.length - 1];
+  if (weakest && weakest !== common && !top.includes(weakest) && weakest.winRate < 50) {
+    p.push(
+      ` The duo to avoid is `,
+      heroSeg(input.roster, weakest.partnerId, input.heroName(weakest.partnerId)),
+      `, ${pct(weakest.winRate)} over ${count(weakest.matches)} games together.`,
     );
   }
   return { heading: 'Duo partners', paras: [p] };
@@ -218,11 +423,43 @@ function byRank(input: HeroNarrativeInput): Section | null {
     })
     .filter((r): r is NonNullable<typeof r> => r != null);
   if (rows.length < 2) return null;
-  const p1: Para = [
-    `By rank bracket, ${name} wins ` +
-      rows.map((r) => `${pct(r.wr)} at ${r.label} (${ordinal(r.rank)} of ${r.n}, ${count(r.picks)} games)`).join('; ') +
-      '.',
-  ];
+  const list = rows.map((r) => `${pct(r.wr)} at ${r.label} (${ordinal(r.rank)} of ${r.n}, ${count(r.picks)} games)`).join('; ');
+  const rates = rows.map((r) => r.wr);
+  const peak = rows[rates.indexOf(Math.max(...rates))] as NonNullable<(typeof rows)[number]>;
+  const dip = rows[rates.indexOf(Math.min(...rates))] as NonNullable<(typeof rows)[number]>;
+  const rising = rates.every((v, i) => i === 0 || v >= (rates[i - 1] as number));
+  const falling = rates.every((v, i) => i === 0 || v <= (rates[i - 1] as number));
+  const swing = Math.max(...rates) - Math.min(...rates);
+  let lead: string;
+  //Same 1.5-point threshold the trend sentence below uses, so the two never disagree.
+  if (swing < 1.5) lead = `${name} holds its rate across the ladder`;
+  else if (rising) lead = `${name} wins more the higher the bracket goes`;
+  else if (falling) lead = `${name} wins less the higher the bracket goes`;
+  else if (peak !== rows[0] && peak !== rows[rows.length - 1]) lead = `${name} peaks at ${peak.label}`;
+  else lead = `${name} bottoms out at ${dip.label}`;
+  const p1: Para = [`${lead}: ${list}.`];
+
+  const overall = input.hero.win_rate;
+  if (overall != null) {
+    const best = rows.reduce((a, b) => (b.wr - overall > a.wr - overall ? b : a));
+    const worst = rows.reduce((a, b) => (b.wr - overall < a.wr - overall ? b : a));
+    const up = best.wr - overall;
+    const down = worst.wr - overall;
+    if (Math.max(Math.abs(up), Math.abs(down)) >= 0.5 && best !== worst) {
+      if (up > 0 && down < 0)
+        p1.push(
+          ` Set against its ${pct(overall)} overall, that is ${fixed(up, 1)} points better at ${best.label} and ${fixed(-down, 1)} worse at ${worst.label}.`,
+        );
+      else if (down >= 0)
+        p1.push(
+          ` It clears its ${pct(overall)} overall in every bracket, by ${fixed(up, 1)} points at ${best.label} and ${fixed(down, 1)} at ${worst.label}.`,
+        );
+      else
+        p1.push(
+          ` It sits under its ${pct(overall)} overall in every bracket, ${fixed(-down, 1)} points down at ${worst.label} and ${fixed(-up, 1)} at ${best.label}.`,
+        );
+    }
+  }
   const lo = rows[0];
   const hi = [...rows].reverse().find((r) => r.picks >= 1000) ?? rows[rows.length - 1];
   if (!lo || !hi || lo === hi) return { heading: 'By rank', paras: [p1] };
@@ -263,8 +500,9 @@ function about(input: HeroNarrativeInput): Section {
     }
     p.push('. ');
   }
+  const upstream = input.counters.length > 0 ? 'Duo synergies and the head-to-head stat lines come' : 'Duo synergies come';
   p.push(
-    `Duo synergies come from the upstream deadlock-api.com feed rather than RankLock's database. Win rates are shares of games won, never MMR; the `,
+    `${upstream} from the upstream deadlock-api.com feed rather than RankLock's database. Win rates are shares of games won, never MMR; the `,
     link('methodology', '/methodology/'),
     ` page explains each table.`,
   );
@@ -272,7 +510,14 @@ function about(input: HeroNarrativeInput): Section {
 }
 
 export function heroNarrative(input: HeroNarrativeInput): Section[] {
-  return [performance(input), matchups(input), partners(input), items(input), byRank(input), about(input)].filter(
-    (s): s is Section => s != null,
-  );
+  return [
+    performance(input),
+    kit(input),
+    matchups(input),
+    headToHead(input),
+    partners(input),
+    items(input),
+    byRank(input),
+    about(input),
+  ].filter((s): s is Section => s != null);
 }
