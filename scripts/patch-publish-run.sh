@@ -4,7 +4,9 @@
 set -euo pipefail
 shopt -s nullglob
 
-REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+#$0 is the invocation path, not the resolved target — via the ~/.local/bin
+#symlink that's outside the repo, so the real file path must be resolved first.
+REPO_ROOT="$(git -C "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
 #package.json requires node >=22.12.0; default PATH node is older, so borrow
