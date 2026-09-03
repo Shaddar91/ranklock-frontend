@@ -5,6 +5,7 @@ import {
   SOULS_AT_ZERO,
   THIN_SAMPLE_MIN_MATCHES,
   cohortParamsFor,
+  playerCurveParamsFor,
   defaultCohortFromProbe,
   dropLowSamplePoints,
   guardedPlayerCurvePoints,
@@ -358,6 +359,39 @@ describe('cohortParamsFor (DESIGN §8 param mapping)', () => {
     const team = cohortParamsFor('team_average', 7, 3);
     expect(team).not.toHaveProperty('tier');
     expect(team).not.toHaveProperty('division');
+  });
+});
+
+describe('playerCurveParamsFor (/players/:id/economy-curve param shape, 07-review.md §3.1)', () => {
+  it('team_average sends vs_band — never band, which PlayerCurveQuery drops silently', () => {
+    expect(playerCurveParamsFor('team_average', 7, 3)).toEqual({ vs_band: 7 });
+    expect(playerCurveParamsFor('team_average', 7, 3)).not.toHaveProperty('band');
+    expect(playerCurveParamsFor('team_average', undefined, undefined)).toEqual({ vs_band: undefined });
+  });
+
+  it('player_rank sends {tier, division} — the fields that endpoint already names', () => {
+    expect(playerCurveParamsFor('player_rank', 7, 3)).toEqual({ tier: 7, division: 3 });
+    expect(playerCurveParamsFor('player_rank', 7, undefined)).toEqual({ tier: 7, division: undefined });
+  });
+
+  it('never mixes vs_band with tier/division (the backend 400s that combination)', () => {
+    const rank = playerCurveParamsFor('player_rank', 7, 3);
+    expect(rank).not.toHaveProperty('vs_band');
+    const team = playerCurveParamsFor('team_average', 7, 3);
+    expect(team).not.toHaveProperty('tier');
+    expect(team).not.toHaveProperty('division');
+  });
+
+  it('shares cohortParamsFor null-guard: no valid player-rank tier means no request at all', () => {
+    expect(playerCurveParamsFor('player_rank', undefined, undefined)).toBeNull();
+    expect(playerCurveParamsFor('player_rank', 0, undefined)).toBeNull();
+    expect(cohortParamsFor('player_rank', 0, undefined)).toBeNull();
+  });
+
+  it('carries the same league as the lane endpoints, only under the other name', () => {
+    const lane = cohortParamsFor('team_average', 4, undefined);
+    const curve = playerCurveParamsFor('team_average', 4, undefined);
+    expect(curve?.vs_band).toBe(lane?.band);
   });
 });
 

@@ -258,6 +258,27 @@ export function cohortParamsFor(
   return { tier: tierOrBand, division };
 }
 
+//The SAME cohort selection expressed for /players/:id/economy-curve. That endpoint names the
+//team-average league `vs_band`, not `band` (player_curve.rs PlayerCurveQuery); serde drops an
+//unknown key, so sending `band` there returns the ALL-bands hero cohort under the selected
+//league's caption instead of a 400. Derived from cohortParamsFor so the null-guard and the
+//exactly-one-of rule can never drift between the two endpoints.
+export interface PlayerCurveCohortParams {
+  vs_band?: number;
+  tier?: number;
+  division?: number;
+}
+
+export function playerCurveParamsFor(
+  cohort: RankCohort,
+  tierOrBand: number | undefined,
+  division: number | undefined,
+): PlayerCurveCohortParams | null {
+  const p = cohortParamsFor(cohort, tierOrBand, division);
+  if (p == null) return null;
+  return cohort === 'team_average' ? { vs_band: p.band } : { tier: p.tier, division: p.division };
+}
+
 //Thin per-player-rank cells (DESIGN §9 / Failure cases): a division of a low-population tier
 //(Eternus ≈ 200 rows/division/week) can return real but too-few rows to trust — the UI must not
 //draw them, only name the floor. team_average never gates on this (its samples are large).

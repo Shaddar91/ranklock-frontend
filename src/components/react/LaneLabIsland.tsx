@@ -46,6 +46,7 @@ import { datasetWindowLabel, ECONOMY_CURVE_DATASET } from '../../lib/dataHorizon
 import {
   type CohortParams,
   type CohortProbeState,
+  type PlayerCurveCohortParams,
   type ViewMode,
   cohortParamsFor,
   defaultCohortFromProbe,
@@ -56,6 +57,7 @@ import {
   laneSeriesByMinute,
   mergeEconSeriesByMinute,
   peakPlayerMatches,
+  playerCurveParamsFor,
   playerSeriesByMinute,
   RANK_MIN_SAMPLE,
   THIN_SAMPLE_MIN_MATCHES,
@@ -492,6 +494,10 @@ function CurvePanel({
   //its own honest-empty note instead of querying.
   const paramsA = cohortParamsFor(cohort, leagueA.band, leagueA.division);
   const paramsB = leagueB ? cohortParamsFor(cohort, leagueB.band, leagueB.division) : null;
+  //The same selection under /players/:id/economy-curve's names — that endpoint calls the
+  //team-average league `vs_band` and ignores `band` outright (07-review.md §3.1).
+  const curveParamsA = playerCurveParamsFor(cohort, leagueA.band, leagueA.division);
+  const curveParamsB = leagueB ? playerCurveParamsFor(cohort, leagueB.band, leagueB.division) : null;
   const noTierA = cohort === 'player_rank' && paramsA == null;
   const noTierB = cohort === 'player_rank' && leagueB != null && paramsB == null;
 
@@ -509,10 +515,10 @@ function CurvePanel({
     enabled: leagueA.show && !heroScopedLeagues && paramsA != null,
   });
   const heroCmpA = useQuery({
-    queryKey: queryKeys.playerEconomyCurve(anchorId ?? 0, { metric, ...(paramsA ?? {}), hero: hero?.id }),
-    queryFn: () => api.getPlayerEconomyCurve(anchorId as number, { metric, ...(paramsA as CohortParams), hero: hero?.id }),
+    queryKey: queryKeys.playerEconomyCurve(anchorId ?? 0, { metric, ...(curveParamsA ?? {}), hero: hero?.id }),
+    queryFn: () => api.getPlayerEconomyCurve(anchorId as number, { metric, ...(curveParamsA as PlayerCurveCohortParams), hero: hero?.id }),
     retry: false,
-    enabled: leagueA.show && heroScopedLeagues && paramsA != null,
+    enabled: leagueA.show && heroScopedLeagues && curveParamsA != null,
   });
   const laneB = useQuery({
     queryKey: queryKeyFor({ ...(paramsB ?? {}), metric }),
@@ -521,10 +527,10 @@ function CurvePanel({
     enabled: leagueB != null && leagueB.show && !heroScopedLeagues && paramsB != null,
   });
   const heroCmpB = useQuery({
-    queryKey: queryKeys.playerEconomyCurve(anchorId ?? 0, { metric, ...(paramsB ?? {}), hero: hero?.id }),
-    queryFn: () => api.getPlayerEconomyCurve(anchorId as number, { metric, ...(paramsB as CohortParams), hero: hero?.id }),
+    queryKey: queryKeys.playerEconomyCurve(anchorId ?? 0, { metric, ...(curveParamsB ?? {}), hero: hero?.id }),
+    queryFn: () => api.getPlayerEconomyCurve(anchorId as number, { metric, ...(curveParamsB as PlayerCurveCohortParams), hero: hero?.id }),
     retry: false,
-    enabled: leagueB != null && leagueB.show && heroScopedLeagues && paramsB != null,
+    enabled: leagueB != null && leagueB.show && heroScopedLeagues && curveParamsB != null,
   });
 
   //Metric-echo guard for the hero-scoped league responses (M1/B1(b) spirit): only trust a
