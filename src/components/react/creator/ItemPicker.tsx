@@ -6,6 +6,7 @@
 import { useMemo, useState } from 'react';
 import { EmptyState, GameIcon, ItemOverlayCard, Tooltip } from '../ui/index';
 import { count } from '../../../lib/format';
+import { itemAbility } from '../../../lib/itemDescriptions';
 import { overlayFromCatalog, splitBrawl } from '../../../lib/itemOverlay';
 import { BUCKETS, BUCKET_LABEL, bucketOf, type Bucket, type CatalogItem } from './buildModel';
 
@@ -52,9 +53,14 @@ function Tile({
 }) {
   const name = item.item_name ?? `Item ${item.item_id}`;
   const cat = bucketOf(item.item_slot_type);
+  const ability = itemAbility(item.item_id);
   const body = (
     <>
-      <GameIcon kind="item" name={name} src={item.icon} size={44} />
+      <span className="shoptile-art">
+        <GameIcon kind="item" name={name} src={item.icon} size={44} />
+        {ability?.imbue && <span className="shoptile-b imbue">Imbue</span>}
+        {ability?.active && !ability.imbue && <span className="shoptile-b">Active</span>}
+      </span>
       <span className="shoptile-n">{name}</span>
     </>
   );

@@ -16,11 +16,12 @@
 //     Sources cost / item_tier / item_slot_type / description straight from the same
 //     upstream so the detail page needs no backend endpoint.
 //
-//  3. src/data/item-descriptions.json — a lean { [item_id]: desc } map (only the items
-//     that actually HAVE a description). This one IS client-bundled, but imported ONLY
-//     by the items-table island (src/lib/itemDescriptions.ts) so the item hover tooltip
-//     can show "what it does". It carries just the desc text — not the full
-//     items-detail.json (cost/tier/slot) — and stays out of the everywhere-loaded
+//  3. src/data/item-descriptions.json — a lean { [item_id]: { d, p, a, i } } map: what the
+//     item does (d), its separate passive line when an active item also has one (p), the
+//     activation type when it is not a plain passive (a), and the imbue kind (i). Only items
+//     with at least one of those get an entry. This one IS client-bundled, but only through
+//     src/lib/itemDescriptions.ts, whose importers are the items table and the item overlay
+//     card (so: items table + Build Lab). It stays out of the everywhere-loaded
 //     items-catalog.json, so hero pages never pay for it.
 //
 //Source: the community deadlock-api assets service — the SAME upstream the asset
@@ -145,15 +146,25 @@ for (const e of all) {
   withIcon += 1;
   catalog[e.id] = { name: e.name, icon };
 
-  //Rich detail (build-only file). description is `{ desc: "<html>" }` or `{}`.
-  //Fall back to .passive then .active for class-B items that omit .desc.
+  //Rich detail (build-only file). description is `{ desc: "<html>" }` or `{}`. Items that
+  //omit .desc split it in two: .active is the headline, .passive the rider (Fleetfoot).
   const desc = plainText(
-    e.description && (e.description.desc || e.description.passive || e.description.active),
+    e.description && (e.description.desc || e.description.active || e.description.passive),
   );
-  if (desc) {
-    withDesc += 1;
-    //Lean client map for the hover tooltip — desc text only, and only when present.
-    descriptions[e.id] = desc;
+  //An active item can carry a SECOND, passive line (Fleetfoot: active move speed, passive
+  //no-slow-while-shooting); keep it only when it is not already the line above.
+  const passiveLine = plainText(e.description && e.description.active && e.description.passive);
+  //`passive` is the default and by far the common case, so only a real activation is stored.
+  const activation = e.activation && e.activation !== 'passive' ? e.activation : null;
+  const imbue = e.imbue ?? null;
+  if (desc) withDesc += 1;
+  if (desc || activation || imbue) {
+    const entry = {};
+    if (desc) entry.d = desc;
+    if (passiveLine && passiveLine !== desc) entry.p = passiveLine;
+    if (activation) entry.a = activation;
+    if (imbue) entry.i = imbue;
+    descriptions[e.id] = entry;
   }
   detail[e.id] = {
     name: e.name,

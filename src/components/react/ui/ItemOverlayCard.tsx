@@ -1,5 +1,6 @@
 //The shared item overlay card (rendered inside a Tooltip): name, slot · tier ·
-//souls cost, the FULL modifier list with values, and "Upgrades from" lineage.
+//souls cost, what the item does (with its Active / Imbue badges), the FULL modifier
+//list with values, and "Upgrades from" lineage.
 //One component for every item-row overlay — Build Lab modifiers table + creator
 //catalog. Street Brawl items show a labeled chip instead of the placeholder
 //tier-5 / 9,999-souls economy.
@@ -37,6 +38,22 @@ export default function ItemOverlayCard({ data }: { data: ItemOverlayData }) {
         </div>
         {data.brawl && <Chip>Street Brawl</Chip>}
       </div>
+      {(data.ability?.active || data.ability?.imbue) && (
+        <div className="flex" style={{ gap: 6 }}>
+          {data.ability.active && <Chip tone="gold">Active</Chip>}
+          {data.ability.imbue && <Chip tone="win">Imbue</Chip>}
+        </div>
+      )}
+      {data.ability?.desc != null && (
+        <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, color: 'var(--text-2)' }}>
+          {data.ability.desc}
+        </p>
+      )}
+      {data.ability?.passive != null && (
+        <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, color: 'var(--muted)' }}>
+          <span className="label-xs">Passive</span> {data.ability.passive}
+        </p>
+      )}
       <div style={{ height: 1, background: 'var(--border)' }} />
       {data.modifiers.length === 0 ? (
         <span className="faint" style={{ fontSize: 12 }}>No listed modifiers</span>

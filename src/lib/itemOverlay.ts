@@ -3,6 +3,7 @@
 //Street Brawl split. Brawl detection = shop-art path (images/items/brawl/) — the payload has no flag.
 import upgrades from '../data/item-upgrades.json';
 import { itemMeta } from './itemCatalog';
+import { itemAbility, type ItemAbility } from './itemDescriptions';
 import type { ModifierRow } from './computeStats';
 import type { ItemModifier } from '../types/api';
 
@@ -22,6 +23,8 @@ export interface ItemOverlayData {
   brawl: boolean;
   modifiers: ModifierRow[];
   upgradesFrom: UpgradeRef[];
+  //What the item does in words + its active / imbue flags; null for items the feed describes nowhere.
+  ability: ItemAbility | null;
 }
 
 //Structural twin of buildModel's CatalogItem, so the lib never imports component code.
@@ -87,6 +90,7 @@ export function overlayFromWire(r: ItemModifier, map: UpgradesMap = UPGRADES): I
     brawl: isBrawlAsset(r.shop_image_webp),
     modifiers: toModifierRows(r.modifiers),
     upgradesFrom: upgradesFor(r.item_id, map),
+    ability: itemAbility(r.item_id),
   };
 }
 
@@ -101,6 +105,7 @@ export function overlayFromCatalog(it: OverlayCatalogRow, map: UpgradesMap = UPG
     brawl: isBrawlAsset(it.icon),
     modifiers: it.modifiers,
     upgradesFrom: upgradesFor(it.item_id, map),
+    ability: itemAbility(it.item_id),
   };
 }
 

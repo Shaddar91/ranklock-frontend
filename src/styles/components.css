@@ -1785,6 +1785,30 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
   opacity: 0.4;
   cursor: not-allowed;
 }
+.shoptile-art {
+  position: relative;
+  display: inline-flex;
+}
+/* the in-game shop stamps Active / Imbue across the tile art; same idea, one line tall */
+.shoptile-b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-family: var(--display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ink);
+  background: var(--gold);
+  border-radius: 0 0 5px 5px;
+  padding: 1px 0;
+}
+.shoptile-b.imbue {
+  background: var(--win);
+}
 .shoptile-n {
   font-family: var(--display);
   font-size: 10.5px;
@@ -1793,7 +1817,31 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
   overflow-wrap: anywhere;
   max-width: 100%;
 }
-.shoptile.on .shoptile-n {
+.shoptile.on .shoptile-art {
+  position: relative;
+  display: inline-flex;
+}
+/* the in-game shop stamps Active / Imbue across the tile art; same idea, one line tall */
+.shoptile-b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-family: var(--display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ink);
+  background: var(--gold);
+  border-radius: 0 0 5px 5px;
+  padding: 1px 0;
+}
+.shoptile-b.imbue {
+  background: var(--win);
+}
+.shoptile-n {
   color: var(--cyan-bright);
 }
 .cat-weapon {

@@ -163,3 +163,37 @@ describe('item-upgrades.json — generated lineage invariants', () => {
     }
   });
 });
+
+describe('ability — the active / imbue facts the wire drops', () => {
+  //Fleetfoot is the one shop item whose feed entry splits into an active line and a
+  //passive rider; if the generated map ever loses that, the overlay silently goes quiet.
+  const FLEETFOOT = 3403085434;
+
+  it('carries the active flag, the headline and the passive rider', () => {
+    const card = overlayFromCatalog({
+      item_id: FLEETFOOT,
+      item_name: 'Fleetfoot',
+      item_slot_type: 'weapon',
+      item_tier: 2,
+      cost: 1600,
+      icon: SHOP_ICON,
+      modifiers: [],
+    });
+    expect(card.ability?.active).toBe(true);
+    expect(card.ability?.desc).toMatch(/Move Speed/);
+    expect(card.ability?.passive).toMatch(/while shooting/);
+  });
+
+  it('is null for an item the feed describes nowhere', () => {
+    const card = overlayFromCatalog({
+      item_id: 1,
+      item_name: 'Nothing',
+      item_slot_type: 'weapon',
+      item_tier: 1,
+      cost: 800,
+      icon: SHOP_ICON,
+      modifiers: [],
+    });
+    expect(card.ability).toBeNull();
+  });
+});
