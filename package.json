@@ -14,8 +14,9 @@
     "type-check": "astro check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint . && node scripts/no-slop-check.mjs",
+    "lint": "eslint . && node scripts/no-slop-check.mjs && npm run gate",
     "lint:fix": "eslint . --fix",
+    "gate": "node scripts/staged-post-check.mjs",
     "deploy": "wrangler deploy --config dist/server/wrangler.json",
     "preview:cf": "wrangler dev"
   },
