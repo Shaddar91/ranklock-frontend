@@ -73,6 +73,11 @@ describe('playerSelectionQuery target', () => {
   it('carries a non-default compare target', () => {
     expect(playerSelectionQuery({ target: 'tier:9' })).toBe('?target=tier%3A9');
   });
+
+  it('names a games window ?n for the page and last_games for the card', () => {
+    expect(playerSelectionQuery({ last_games: 10 })).toBe('?n=10');
+    expect(playerSelectionQuery({ last_games: 10 }, 'card')).toBe('?last_games=10');
+  });
 });
 
 describe('resolveFrozenWindow', () => {
@@ -82,8 +87,8 @@ describe('resolveFrozenWindow', () => {
     expect(resolveFrozenWindow('days', 10, now)).toEqual({ from: '2026-08-24', to: '2026-09-03' });
   });
 
-  it('has no absolute equivalent for a games-count window', () => {
-    expect(resolveFrozenWindow('games', 25, now)).toEqual({});
+  it('carries a games-count window as the count itself', () => {
+    expect(resolveFrozenWindow('games', 25, now)).toEqual({ last_games: 25 });
   });
 
   it('has no window at all for the all-time default', () => {

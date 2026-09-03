@@ -4,6 +4,7 @@ import { SITE_ORIGIN } from './seo';
 import { MATCH_MODE_PARAM, matchModeToParam } from './matchMode';
 import { COMPARE_TARGET_PARAM, DEFAULT_COMPARE_TARGET } from './compareTarget';
 import { slugOf } from './heroSlugs';
+import { SCOPE_KIND_PARAM, SCOPE_N_PARAM, scopeKindToParam, scopeNToParam } from './playerScope';
 import type { CurveMetric, SigView } from './curveScope';
 import type { GameMode, MatchMode } from '../types/api';
 
@@ -11,6 +12,7 @@ export interface PlayerShareSelection {
   hero_id?: number;
   from?: string;
   to?: string;
+  last_games?: number;
   metric?: CurveMetric;
   view?: SigView;
   league?: number | null;
@@ -19,9 +21,12 @@ export interface PlayerShareSelection {
   target?: string;
 }
 
+type ShareTarget = 'page' | 'card';
+
 export const PLAYER_HERO_PARAM = 'hero';
 export const PLAYER_FROM_PARAM = 'from';
 export const PLAYER_TO_PARAM = 'to';
+export const PLAYER_LAST_GAMES_PARAM = 'last_games';
 export const PLAYER_METRIC_PARAM = 'metric';
 export const PLAYER_VIEW_PARAM = 'view';
 export const PLAYER_LEAGUE_PARAM = 'league';
@@ -29,13 +34,25 @@ export const PLAYER_MODE_PARAM = 'mode';
 const GAME_MODE_SLUG: Partial<Record<GameMode, string>> = { StreetBrawl: 'brawl' };
 
 //Stable insertion order; an unpinned hero is DROPPED rather than emit an unresolvable slug.
-export function playerSelectionQuery(sel?: PlayerShareSelection): string {
+//A games window is the same selection under two names: the page restores it from ?kind/?n,
+//the card reads it as last_games.
+export function playerSelectionQuery(sel?: PlayerShareSelection, target: ShareTarget = 'page'): string {
   if (!sel) return '';
   const q = new URLSearchParams();
   const slug = sel.hero_id && sel.hero_id > 0 ? slugOf(sel.hero_id) : null;
   if (slug) q.set(PLAYER_HERO_PARAM, slug);
   if (sel.from) q.set(PLAYER_FROM_PARAM, sel.from);
   if (sel.to) q.set(PLAYER_TO_PARAM, sel.to);
+  if (sel.last_games) {
+    if (target === 'card') {
+      q.set(PLAYER_LAST_GAMES_PARAM, String(sel.last_games));
+    } else {
+      const kind = scopeKindToParam('games');
+      if (kind !== null) q.set(SCOPE_KIND_PARAM, kind);
+      const n = scopeNToParam(sel.last_games, 'games');
+      if (n !== null) q.set(SCOPE_N_PARAM, n);
+    }
+  }
   if (sel.metric && sel.metric !== 'souls') q.set(PLAYER_METRIC_PARAM, sel.metric);
   if (sel.view && sel.view !== 'gap') q.set(PLAYER_VIEW_PARAM, sel.view);
   if (sel.league !== undefined) q.set(PLAYER_LEAGUE_PARAM, sel.league === null ? 'all' : String(sel.league));
@@ -61,14 +78,16 @@ export const OG_CARD_ORIGIN = 'https://og.ranklock.app';
 //A selected hero targets /hero/{slug}.png (server.rs og_player_hero) rather than a query param.
 export function playerCardUrl(id: number, sel?: PlayerShareSelection): string {
   const slug = sel?.hero_id && sel.hero_id > 0 ? slugOf(sel.hero_id) : null;
-  if (!slug) return `${OG_CARD_ORIGIN}/og/player/${id}.png${playerSelectionQuery(sel)}`;
-  return `${OG_CARD_ORIGIN}/og/player/${id}/hero/${slug}.png${playerSelectionQuery({ ...sel, hero_id: undefined })}`;
+  if (!slug) return `${OG_CARD_ORIGIN}/og/player/${id}.png${playerSelectionQuery(sel, 'card')}`;
+  return `${OG_CARD_ORIGIN}/og/player/${id}/hero/${slug}.png${playerSelectionQuery({ ...sel, hero_id: undefined }, 'card')}`;
 }
 
-//A relative window would render different data whenever a shared link is reopened, so freeze
-//it to an absolute [from, to]; only "days" has a clean calendar equivalent to freeze.
-export function resolveFrozenWindow(kind: 'games' | 'days', n: number | 'all', now: Date = new Date()): { from?: string; to?: string } {
-  if (kind !== 'days' || n === 'all') return {};
+//A days window freezes to an absolute [from, to] so a reopened link renders the same data. A
+//games count has no calendar equivalent to freeze, so it rides as the count and the card states
+//the coverage it resolved to.
+export function resolveFrozenWindow(kind: 'games' | 'days', n: number | 'all', now: Date = new Date()): { from?: string; to?: string; last_games?: number } {
+  if (n === 'all') return {};
+  if (kind === 'games') return { last_games: n };
   const from = new Date(now.getTime() - n * 86_400_000);
   const iso = (d: Date) => d.toISOString().slice(0, 10);
   return { from: iso(from), to: iso(now) };
