@@ -22,17 +22,18 @@ const jsonLd = breadcrumbJsonLd(origin, [
 ---
 
 <BaseLayout
-  title="Recent Deadlock matches — RankLock"
-  description="The latest Deadlock matches with team rank, game mode, duration and result. Open any match for a full scoreboard and economy breakdown."
+  title="Recent Deadlock matches and scoreboards | RankLock"
+  description="The latest tracked Deadlock matches with team rank, mode, duration and result. Open any match for the full scoreboard and souls breakdown."
   canonicalPath="/matches"
   jsonLd={jsonLd}
 >
   <main class="container">
     <div class="kicker">Recent games</div>
-    <h1 class="h-page">Recent matches</h1>
+    <h1 class="h-page">Recent Deadlock matches</h1>
     <p class="page-intro">
       The latest tracked Deadlock matches with team rank, mode, duration and result. Open a match for the full
-      scoreboard and economy breakdown.
+      scoreboard and the souls breakdown per player. For the aggregate the same matches roll up into, open the
+      <a href="/heroes/">hero win rates</a>.
     </p>
 
     <div style="margin-top:20px;">

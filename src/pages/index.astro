@@ -10,10 +10,10 @@ import { buildFetch } from '../lib/buildData';
 import { count, shortDate } from '../lib/format';
 import { heroPath } from '../lib/heroSlugs';
 import GameArt from '../components/GameArt.astro';
-import { websiteJsonLd, orgJsonLd, SITE_TAGLINE } from '../lib/seo';
+import { websiteJsonLd, orgJsonLd } from '../lib/seo';
 import { AD_SLOTS } from '../config/artDirection';
 import AdSlot from '../components/react/ui/AdSlot';
-import type { HeroSummary, LeaderboardEntry } from '../types/api';
+import type { DataHorizonResponse, HeroSummary, LeaderboardEntry } from '../types/api';
 
 //SSG home (requirements §B.0). Build-time data is fetched with a timeout + empty
 //fallback (build-ahead, §8.1) so a cold API never fails the build — the page
@@ -25,6 +25,8 @@ const topHeroes = [...heroesRaw]
   .sort((a, b) => (b.win_rate ?? 0) - (a.win_rate ?? 0))
   .slice(0, 5);
 const { rows: leaders } = await buildFetch(api.getLeaderboard({ limit: 5 }), { rows: [] as LeaderboardEntry[], total: null });
+const horizon = await buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null);
+const statsThrough = shortDate(horizon?.max_match_start_time);
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
   .slice(0, 2);
@@ -42,7 +44,12 @@ const entries = [
 ] as const;
 ---
 
-<BaseLayout title={`RankLock — ${SITE_TAGLINE}`} canonicalPath="/" jsonLd={jsonLd}>
+<BaseLayout
+  title="Deadlock stats and win rates by rank | RankLock"
+  description="Hero and item win rates by rank tier, patch meta shifts, the ranked leaderboard and per-minute lane coaching, from RankLock's own Deadlock match data."
+  canonicalPath="/"
+  jsonLd={jsonLd}
+>
   <main class="container">
     <div class="fresh-banner">
       <span class="flex" style="align-items:center; gap:8px;">
@@ -55,11 +62,12 @@ const entries = [
       <div>
         <div class="kicker" style="margin-bottom:14px;">Deadlock stats · meta at your rank</div>
         <h1 class="h-hero" style="margin-bottom:18px; max-width:560px;">
-          The meta at <span class="cyan-c">your rank</span>, updated every patch.
+          Deadlock stats at <span class="cyan-c">your rank</span>, updated every patch
         </h1>
         <p style="font-size:16px; color:var(--text-2); max-width:520px; margin-bottom:22px; line-height:1.55;">
-          Per-rank hero & item win-rates, full match scoreboards, and coaching that compares
-          your per-minute economy to the rank you're chasing.
+          RankLock computes Deadlock <a href="/heroes/">hero and item win rates</a> from public
+          ranked matches, split by rank tier from Initiate to Eternus.
+          {statsThrough && ` Every number on the site runs through ${statsThrough}.`}
         </p>
         <div style="margin-bottom:16px;">
           <SearchBox variant="large" client:load />

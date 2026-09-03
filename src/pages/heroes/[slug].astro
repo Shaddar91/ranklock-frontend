@@ -41,10 +41,10 @@ const { hero, roster } = Astro.props as { hero: HeroSummary | null; roster: Hero
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const name = hero?.hero_name ?? 'Hero';
 const title = hero
-  ? `${name} — win rate, builds & matchups | RankLock`
+  ? `${name} Deadlock win rate and matchups | RankLock`
   : 'Hero — RankLock';
 const description = hero
-  ? `${name} Deadlock stats: win-rate, pick rate, KDA, matchups and community builds.`
+  ? `${name} in Deadlock: win rate, pick rate and KDA, its best and worst matchups, the items that win on it, and community builds.`
   : 'Deadlock hero detail.';
 const canonicalPath = hero ? heroPath(hero.hero_name) : '/heroes';
 const jsonLd = breadcrumbJsonLd(origin, [
@@ -161,7 +161,7 @@ const sections = hero
             }
             <div class="hero-head-text">
               <div class="kicker">Hero · Deadlock</div>
-              <h1 class="h-page">{name}</h1>
+              <h1 class="h-page">{name} win rate and matchups</h1>
               {tier && <span class="chip" style="margin-top:6px;">Meta tier {tier}</span>}
             </div>
             {art && <img class="hero-wordmark" src={art.nameSvg} alt="" aria-hidden="true" loading="lazy" onerror="this.remove()" />}

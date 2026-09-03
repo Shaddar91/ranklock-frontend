@@ -3,6 +3,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import DataAgeChip from '../components/react/DataAgeChip';
 import LaneLabIsland from '../components/react/LaneLabIsland';
 import { breadcrumbJsonLd } from '../lib/seo';
+import { api } from '../lib/apiClient';
+import { buildFetch } from '../lib/buildData';
+import { shortDate } from '../lib/format';
+import type { DataHorizonResponse } from '../types/api';
 
 //Lane Lab (brief §7B — the signature economy-curve coaching surface). The static
 //chrome (page-header + intro copy) is SSG for SEO; the data surface is ONE React
@@ -12,6 +16,9 @@ import { breadcrumbJsonLd } from '../lib/seo';
 //the page stays inside the perf budget. The island empty-states (keeping the
 //"coming soon" copy) until RICH_ANALYTICS_ENABLED is on and the lane producers
 //have run — it never white-screens (requirements §8.1).
+const horizon = await buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null);
+const statsThrough = shortDate(horizon?.max_match_start_time);
+
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
@@ -20,19 +27,21 @@ const jsonLd = breadcrumbJsonLd(origin, [
 ---
 
 <BaseLayout
-  title="Deadlock Lane Lab — per-minute economy & soul-curve coaching | RankLock"
-  description="Lane Lab compares your per-minute souls curve against the rank you're chasing, with a 9-minute early-economy win-rate verdict."
+  title="Deadlock laning and souls per minute | RankLock"
+  description="Compare your per-minute souls curve against the rank you are chasing, with a 9-minute early-economy win-rate verdict and where the lane is lost."
   canonicalPath="/lane-lab"
   jsonLd={jsonLd}
 >
   <main class="container">
     <div class="kicker">Coaching</div>
-    <h1 class="h-page">Lane Lab</h1>
+    <h1 class="h-page">Deadlock laning and souls per minute</h1>
     {/* data-age honesty (Component 11): renders nothing until /meta/data-horizon serves a date */}
     <DataAgeChip client:load />
     <p class="page-intro">
-      Per-minute economy and soul-curve coaching — your rank's median souls over match minutes against the
-      rank you're chasing, a 9-minute early-economy win-rate verdict, and where the lane is being lost.
+      Lane Lab plots your per-minute souls against the median for the rank you are chasing, gives a 9-minute
+      early-economy win-rate verdict, and shows which souls source the lane is losing.
+      {statsThrough && ` Curves cover matches through ${statsThrough}.`} For the hero side of the same window,
+      open the <a href="/heroes/">hero win rates</a>.
     </p>
     <div style="margin-top:20px;">
       <LaneLabIsland client:visible />

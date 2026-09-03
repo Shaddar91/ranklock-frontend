@@ -29,8 +29,8 @@ const path = Astro.url.pathname;
 ---
 
 <BaseLayout
-  title="Leaderboard — top Deadlock players | RankLock"
-  description="The global Deadlock ranked ladder — the highest-ranked players by rank and total wins."
+  title="Deadlock leaderboard, top ranked players | RankLock"
+  description="The highest-ranked Deadlock players by rank tier and total wins, with a podium for the top three. Filtered by rank emblem, never by MMR."
   canonicalPath="/leaderboard"
   jsonLd={jsonLd}
 >
@@ -38,13 +38,15 @@ const path = Astro.url.pathname;
     <div class="page-head">
       <div>
         <div class="kicker">Global ranked ladder</div>
-        <h1 class="h-page">Leaderboard</h1>
+        <h1 class="h-page">Deadlock leaderboard</h1>
       </div>
       {/* Mode filter for this page's mode-separated table; GameModeToggle documents why it sits here, not the nav. */}
       <GameModeToggle currentPath={path} client:load />
     </div>
     <p class="page-intro">
-      The highest-ranked Deadlock players, with a podium for the top three. Filter by rank band — emblems, not MMR.
+      The highest-ranked Deadlock players by rank tier and total wins, with a podium for the top three.
+      Filter by rank emblem, from Initiate to Eternus, never by MMR score. To see what the top of the
+      ladder actually picks, open the <a href="/heroes/">hero win rates</a>.
     </p>
     {
       /* In-content sponsor slot above the ladder table (ads plan C5, leaderboard_top),

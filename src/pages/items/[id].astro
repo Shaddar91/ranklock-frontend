@@ -121,11 +121,11 @@ const { item, modifiers, sections, heroTable } = Astro.props;
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const name = item?.name ?? 'Item';
-const title = item ? `${name} — win rate, cost & stats | RankLock` : 'Item — RankLock';
+const title = item ? `${name} Deadlock win rate | RankLock` : 'Item — RankLock';
 const description = item
-  ? item.desc
-    ? `${name}: ${item.desc}`
-    : `${name} Deadlock item stats: win-rate and match volume by rank bracket.`
+  ? item.matches != null
+    ? `${name} in Deadlock: win rate over ${count(item.matches)} ranked games, souls cost, average buy time, and the heroes who build it most.`
+    : `${name} in Deadlock: win rate, souls cost, average buy time, and the heroes who build it most.`
   : 'Deadlock item detail.';
 const canonicalPath = item ? `/items/${item.item_id}` : '/items';
 const jsonLd = breadcrumbJsonLd(origin, [
@@ -154,7 +154,7 @@ const slotLabel = item?.slot ? item.slot.charAt(0).toUpperCase() + item.slot.sli
             <GameArt name={name} src={item.icon} wrapClass="entity-art" fontSize={32} eager />
             <div>
               <div class="kicker">Item · Deadlock{slotLabel ? ` · ${slotLabel}` : ''}</div>
-              <h1 class="h-page">{name}</h1>
+              <h1 class="h-page">{name} win rate and stats</h1>
               <div class="flex" style="gap:6px; margin-top:6px; flex-wrap:wrap;">
                 {showTier && <span class="chip">Tier {item.tier}</span>}
                 {item.active && <span class="chip">Active</span>}

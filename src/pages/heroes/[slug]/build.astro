@@ -98,10 +98,9 @@ const heroUrl = heroPath(name);
 const canonicalPath = `${heroUrl}build/`;
 const art = heroArt(hero.icon_url);
 const authorOf = (b: ScoredBuild) => b.author_name?.trim() || `Account ${b.author_account_id}`;
-const authorList = [...new Set(builds.map(authorOf))].slice(0, 3).join(', ');
 const description = builds.length
-  ? `The ${name} item sets that actually win in RankLock's match data, with games and win rate for each, plus ${builds.length} community build${builds.length === 1 ? '' : 's'} by ${authorList} scored against those numbers.${statsThrough ? ` Data through ${statsThrough}.` : ''}`
-  : `The ${name} item sets that actually win in RankLock's match data, with games and win rate for each, and the items that carry the highest win rate at your rank.${statsThrough ? ` Data through ${statsThrough}.` : ''}`;
+  ? `${name} item sets that win most in RankLock's ranked match data, with games and win rate for each, plus community builds scored on those numbers.`
+  : `${name} item sets that win most in RankLock's ranked match data, with games and win rate for each, and the items with the highest win rate at your rank.`;
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const jsonLd = breadcrumbJsonLd(origin, [
@@ -116,7 +115,7 @@ const hasAnything = sets.length > 0 || positions.length > 0 || rankItems.length 
 ---
 
 <BaseLayout
-  title={`${name} build — best items by win rate | RankLock Deadlock`}
+  title={`${name} build, best items by win rate | RankLock`}
   description={description}
   canonicalPath={canonicalPath}
   jsonLd={jsonLd}

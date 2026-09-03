@@ -29,10 +29,9 @@ const windowHi = shortDate(baseStats?.window_hi);
 const statsThrough = shortDate(horizon?.max_match_start_time);
 
 const rosterPhrase = graded > 0 ? `All ${graded} Deadlock heroes` : 'Every Deadlock hero';
-const throughPhrase = statsThrough ? ` Updated from RankLock's match data through ${statsThrough}.` : '';
 const description =
-  `${rosterPhrase} graded S to F on measured win rate, with the exact threshold for each tier ` +
-  `and a filter for your own rank.${throughPhrase}`;
+  `${rosterPhrase} graded S to F on measured win rate, with the cut for each grade stated ` +
+  'and a filter for your own rank tier.';
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const jsonLd = [
@@ -46,7 +45,7 @@ const path = Astro.url.pathname;
 ---
 
 <BaseLayout
-  title="Deadlock tier list — every hero ranked S to F by win rate | RankLock"
+  title="Deadlock tier list, every hero S to F | RankLock"
   description={description}
   canonicalPath="/tier-list"
   jsonLd={jsonLd}

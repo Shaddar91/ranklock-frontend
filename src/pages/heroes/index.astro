@@ -6,7 +6,8 @@ import GameModeToggle from '../../components/react/ui/GameModeToggle';
 import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
 import { breadcrumbJsonLd, itemListJsonLd } from '../../lib/seo';
-import type { HeroSummary } from '../../types/api';
+import { shortDate } from '../../lib/format';
+import type { DataHorizonResponse, HeroSummary } from '../../types/api';
 
 //SSG heroes meta table (requirements §B.2, the most-visited page). Rows are
 //fetched at BUILD time and handed to the island as initialRows, so the island's
@@ -18,6 +19,8 @@ import type { HeroSummary } from '../../types/api';
 //the no-`?mode` first paint has real rows with no hydration flash; a `?mode=brawl`
 //deep-link re-keys to Brawl and fetches fresh instead of reusing this Normal seed.
 const heroes = await buildFetch(api.getHeroes({ game_mode: 'Normal' }), [] as HeroSummary[]);
+const horizon = await buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null);
+const statsThrough = shortDate(horizon?.max_match_start_time);
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const topNames = [...heroes]
@@ -32,12 +35,15 @@ const jsonLd = [
   ]),
   itemListJsonLd('Deadlock hero meta', topNames),
 ];
+const description =
+  'Every Deadlock hero ranked by win rate, pick share and KDA, filterable by rank tier from Initiate to Eternus.' +
+  (statsThrough ? ` Numbers through ${statsThrough}.` : '');
 const path = Astro.url.pathname;
 ---
 
 <BaseLayout
-  title="Hero meta & win-rates — RankLock"
-  description="Deadlock hero win-rates, meta tier list, pick rates by rank bracket. Find the best heroes at your rank."
+  title="Deadlock hero win rates by rank | RankLock"
+  description={description}
   canonicalPath="/heroes"
   jsonLd={jsonLd}
 >
@@ -45,7 +51,7 @@ const path = Astro.url.pathname;
     <div class="page-head">
       <div>
         <div class="kicker">The meta</div>
-        <h1 class="h-page">Hero win-rates</h1>
+        <h1 class="h-page">Deadlock hero win rates</h1>
       </div>
       {/* Mode filter for this page's mode-separated tables; GameModeToggle documents why it sits here, not the nav. */}
       <GameModeToggle currentPath={path} client:load />
@@ -53,9 +59,10 @@ const path = Astro.url.pathname;
     {/* data-age honesty (Component 11): renders nothing until /meta/data-horizon serves a date */}
     <DataAgeChip client:load />
     <p class="page-intro">
-      Every Deadlock hero ranked by win-rate, with meta tier and pick share. Filter by rank
-      band to see the meta at your level — labelled by rank emblem, not MMR. For the same
-      roster grouped into S to F grades with the thresholds stated, see the
+      Every released Deadlock hero ranked by win rate, pick share and KDA, from ranked
+      matches{statsThrough ? ` through ${statsThrough}` : ''}. Pick a rank tier to see the
+      same table at your own badge, from Initiate to Eternus. For the same roster grouped
+      S to F with the cut for each grade printed, see the
       <a href="/tier-list/">Deadlock tier list</a>.
     </p>
     <div style="margin-top:20px;">

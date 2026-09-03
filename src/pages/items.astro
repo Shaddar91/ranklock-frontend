@@ -6,7 +6,8 @@ import GameModeToggle from '../components/react/ui/GameModeToggle';
 import { api } from '../lib/apiClient';
 import { buildFetch, buildFetchNonEmpty } from '../lib/buildData';
 import { breadcrumbJsonLd } from '../lib/seo';
-import type { HeroSummary, ItemStat } from '../types/api';
+import { shortDate } from '../lib/format';
+import type { DataHorizonResponse, HeroSummary, ItemStat } from '../types/api';
 
 //SSG items win-rate table (requirements §B.5). THE BUG FIX lives in ItemsTable:
 //the rank bracket is labelled by BADGE TIER / rank emblem, never an MMR-score
@@ -21,6 +22,9 @@ const heroes = (await buildFetch(api.getHeroes({ game_mode: 'Normal' }), [] as H
   hero_name: h.hero_name,
 }));
 
+const horizon = await buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null);
+const statsThrough = shortDate(horizon?.max_match_start_time);
+
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
@@ -30,8 +34,8 @@ const path = Astro.url.pathname;
 ---
 
 <BaseLayout
-  title="Item win-rates by rank — RankLock"
-  description="Deadlock item win-rates by badge tier. See which items win at your rank — brackets labelled by rank emblem, not MMR score."
+  title="Deadlock item win rates by rank | RankLock"
+  description="Every Deadlock item ranked by win rate, with average buy time and the ranked games it was bought in, filtered by rank tier."
   canonicalPath="/items"
   jsonLd={jsonLd}
 >
@@ -39,7 +43,7 @@ const path = Astro.url.pathname;
     <div class="page-head">
       <div>
         <div class="kicker">Items</div>
-        <h1 class="h-page">Item win-rates</h1>
+        <h1 class="h-page">Deadlock item win rates</h1>
       </div>
       {/* Mode filter for this page's mode-separated tables; GameModeToggle documents why it sits here, not the nav. */}
       <GameModeToggle currentPath={path} client:load />
@@ -47,9 +51,10 @@ const path = Astro.url.pathname;
     {/* data-age honesty (Component 11): renders nothing until /meta/data-horizon serves a date */}
     <DataAgeChip client:load />
     <p class="page-intro">
-      Item win-rates by rank band. Brackets are labelled by Deadlock <strong>badge tier</strong> (rank emblems),
-      not MMR-score ranges — so "meta at your rank" actually means your rank. Pick a hero to rank items on that
-      hero; the buy-time column shows when players usually pick each item up.
+      Every Deadlock item ranked by win rate, with the average buy time and how many ranked games it was
+      bought in{statsThrough ? `, through ${statsThrough}` : ''}. Brackets are badge tiers, from Initiate to
+      Eternus, never an MMR range. Pick a hero to rank the same items on that hero, or open the
+      <a href="/heroes/">hero win rates</a>.
     </p>
     <div style="margin-top:20px;">
       <ItemsTable initialRows={items} heroes={heroes} client:load />

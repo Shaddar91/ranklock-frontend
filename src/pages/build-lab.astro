@@ -16,18 +16,19 @@ const jsonLd = breadcrumbJsonLd(origin, [
 ---
 
 <BaseLayout
-  title="Deadlock Build Creator & meta builds | RankLock"
-  description="Theorycraft Deadlock builds with a live stat calculator — Weapon, Vitality and Spirit panels, imbues, conditionals and souls cost — then share by link. Plus the trending community meta builds, hero base stats and item modifiers."
+  title="Deadlock build creator and meta builds | RankLock"
+  description="Theorycraft a Deadlock build and read its Weapon, Vitality and Spirit stats live, souls cost included, then share it by link."
   canonicalPath="/build-lab"
   jsonLd={jsonLd}
 >
   <main class="container">
     <div class="kicker">Theorycraft</div>
-    <h1 class="h-page">Build Lab</h1>
+    <h1 class="h-page">Deadlock build creator</h1>
     <p class="page-intro">
-      Build a loadout in the creator and read its calculated Weapon, Vitality and Spirit stats live, imbues and souls
-      cost included — then share it by link. See the trending community meta builds per hero, each hero's base stats by
-      patch, and every buildable item with its modifiers.
+      Build a loadout in the Build Lab creator and read its Weapon, Vitality and Spirit stats as you add items,
+      imbues and souls cost included, then share it by link. It also lists the trending community builds per hero,
+      each hero's base stats by patch, and every buildable item with its modifiers. For which items actually win,
+      open the <a href="/items/">item win rates</a>.
     </p>
     <div style="margin-top:20px;">
       <BuildLabIsland client:load />
