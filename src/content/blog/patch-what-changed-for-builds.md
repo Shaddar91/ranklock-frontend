@@ -1,16 +1,16 @@
 ---
-title: "What the {{PATCH_LABEL}} patch changed for builds"
-description: "The {{PATCH_LABEL}} patch touched {{CHANGED_COUNT}} things. Which of them reach a real build, measured over {{SAMPLE_N}} ranked matches, and which are noise."
-pubDate: 2026-09-25
+title: "What the 2026-08-22 Update patch changed for builds"
+description: "The 2026-08-22 Update patch touched 11 things. Which of them reach a real build, and which are noise."
+pubDate: 2026-09-03
 author: RankLock team
 heroImage: /assets/heroes/haze_card.png
 tags: [patch-notes, builds, meta]
 liveHeroes: []
 liveItems: []
-draft: true
+draft: false
 ---
 
-The {{PATCH_LABEL}} went live at {{PATCH_DATE}}. This post goes up the same day
+The 2026-08-22 Update went live at 2026-08-22 21:40 UTC. This post goes up the same day
 and opens with no win-rate table, because on the first day there is no honest one
 to print. What it has instead is the list of what moved, the reason our numbers
 trail it, and a way to read a build while the games that will answer the question
@@ -18,16 +18,26 @@ are still being played.
 
 ## What changed
 
-{{CHANGED_ENTITIES}}
+- **Radiant Regeneration** — heal on cast 70 → 65
+- **Restorative Locket** — Spirit Resistance 10% → 8%
+- **Celeste** — Dazzling Trick cooldown 32s → 34s
+- **Celeste** — Dazzling Trick T2 barrier "+80 and +0.7 scaling" → "+70 and +0.76"
+- **Celeste** — Dazzling Trick T3 cooldown -18s → -20s
+- **Celeste** — Dazzling Trick T3 +1.5s Silence → +1.25s
+- **Celeste** — Radiant Daggers Spirit Amp per stack +8% → +7%
+- **Celeste** — Radiant Daggers T3 Spirit Amp per stack +3% → +4%
+- **Celeste** — Shining Wonder bounce range 17.5m → 16.5m
+- **Celeste** — Shining Wonder damage 165 → 140
+- **Celeste** — Shining Wonder spirit scaling 0.9 → 0.6
 
-That is {{CHANGED_COUNT}} changes with a number on both sides of them: an entity,
+That is 11 changes with a number on both sides of them: an entity,
 a field, a value before and a value after. Those are the lines you can plan
 around. The rest of a changelog is prose, and prose does not tell you how far
 anything moved.
 
 ## Why the numbers are not here yet
 
-Our match data runs about {{DATA_LAG}} behind live play, and the lag is the
+Our match data runs about 21 hours behind live play, and the lag is the
 smaller half of the problem. The window is the larger half.
 
 Every win rate on the heroes grid, the item tables and the build pages is
@@ -83,13 +93,5 @@ played before release has fallen far enough for the split to mean something. Whe
 it lands, this page gains a movers table and a modified date. If it never lands,
 the games were not there, and a missing table is the correct outcome rather than
 a hole we filled with a guess.
-
-<!-- wave2:start
-## What actually moved
-
-{{MOVERS_TABLE}}
-
-Measured over {{SAMPLE_N}} ranked matches played since the patch went live.
-wave2:end -->
 
 Read the changelog for what changed. Come back for what it did.
