@@ -11,6 +11,11 @@ import { resolveAsset } from '../../../lib/assets';
 import { cssVars } from '../../../lib/cssVars';
 import { count, pct } from '../../../lib/format';
 import { getRank, rankFromBadge, subLabel } from '../../../lib/ranks';
+import { useGameMode } from '../../../lib/useGameMode';
+import { useMatchMode } from '../../../lib/useMatchMode';
+import { useCurveScope } from '../../../lib/useCurveScope';
+import { playerCardUrl, playerShareUrl, resolveFrozenWindow, type PlayerShareSelection } from '../../../lib/playerShare';
+import { usePlayerScope } from './usePlayerScope';
 import type { HeroLedgerRow, PlayerProfileResponse } from '../../../types/api';
 
 interface PlayerHeaderProps {
@@ -37,6 +42,24 @@ export default function PlayerHeader({ player, heroes, formWins, topPercentile, 
   //recent_form is on the wire from GET /players/:id (infallible by contract);
   //surface it as a chip alongside the ordered last-10 form dots (§A.4).
   const form = player.recent_form;
+
+  //The share link mirrors what the card can actually render: the curve's own hero (falling
+  //back to the radar's scope hero), the frozen window, and the curve's metric/view/league.
+  const { mode } = useGameMode();
+  const { matchMode } = useMatchMode();
+  const { scope } = usePlayerScope();
+  const curve = useCurveScope();
+  const selection: PlayerShareSelection = {
+    hero_id: curve.hero ?? (scope.hero_id || undefined),
+    ...resolveFrozenWindow(scope.kind, scope.n),
+    metric: curve.metric,
+    view: curve.view,
+    league: curve.band,
+    game_mode: mode,
+    match_mode: matchMode,
+  };
+  const shareUrl = playerShareUrl(player.account_id, selection);
+  const cardUrl = playerCardUrl(player.account_id, selection);
 
   return (
     <div className="brass-frame" style={{ padding: 0, overflow: 'hidden', marginBottom: 18 }}>
@@ -71,7 +94,7 @@ export default function PlayerHeader({ player, heroes, formWins, topPercentile, 
                   <Icon name="trophy" size={12} /> Top {topPercentile}%
                 </span>
               )}
-              <ShareLinkButton url={`https://ranklock.app/players/${player.account_id}/`} />
+              <ShareLinkButton url={shareUrl} cardUrl={cardUrl} />
             </div>
             <div className="flex" style={{ alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
               {rk && (

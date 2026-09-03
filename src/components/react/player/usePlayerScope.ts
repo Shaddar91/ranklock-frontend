@@ -1,30 +1,79 @@
-//React state for the shared player compare scope (pure model: lib/playerScope.ts).
-//Page-local; Games⇄Days restores that kind's last-used preset (Days starts on 30).
-import { useRef, useState } from 'react';
-import { DEFAULT_SCOPE, type PlayerScope, type PlayerScopeKind } from '../../../lib/playerScope';
+//URL-backed player scope (pure model: lib/playerScope.ts) — useSyncExternalStore over
+//?kind/?n/?hero, mirroring lib/useGameMode.ts, so the radar, the Compare tab and the
+//header's share link all read the ONE store instead of separate useState copies.
+import { useCallback, useSyncExternalStore } from 'react';
+import {
+  DEFAULT_SCOPE,
+  SCOPE_CHANGE_EVENT,
+  SCOPE_HERO_PARAM,
+  SCOPE_KIND_PARAM,
+  SCOPE_N_PARAM,
+  scopeHeroFromParam,
+  scopeHeroToParam,
+  scopeKindFromParam,
+  scopeKindToParam,
+  scopeNFromParam,
+  scopeNToParam,
+  type PlayerScope,
+  type PlayerScopeKind,
+} from '../../../lib/playerScope';
 
-//initialHeroId seeds the hero scope from a shared /compare link (0 = all heroes);
-//it only sets the FIRST render's hero, after which the picker owns the state.
-export function usePlayerScope(initialHeroId = 0) {
-  const [scope, setScope] = useState<PlayerScope>(() =>
-    initialHeroId > 0 ? { ...DEFAULT_SCOPE, hero_id: initialHeroId } : DEFAULT_SCOPE,
-  );
-  const lastN = useRef<{ games: number | 'all'; days: number }>({ games: DEFAULT_SCOPE.n, days: 30 });
-
-  const setKind = (kind: PlayerScopeKind) =>
-    setScope((s) => {
-      if (s.kind === 'games') lastN.current.games = s.n;
-      else if (s.n !== 'all') lastN.current.days = s.n;
-      return { ...s, kind, n: lastN.current[kind] };
-    });
-
-  const setN = (n: number | 'all') => {
-    if (scope.kind === 'games') lastN.current.games = n;
-    else if (n !== 'all') lastN.current.days = n;
-    setScope((s) => ({ ...s, n }));
+function readScope(): PlayerScope {
+  if (typeof window === 'undefined') return DEFAULT_SCOPE;
+  const q = new URLSearchParams(window.location.search);
+  const kind = scopeKindFromParam(q.get(SCOPE_KIND_PARAM));
+  return {
+    kind,
+    n: scopeNFromParam(q.get(SCOPE_N_PARAM), kind),
+    hero_id: scopeHeroFromParam(q.get(SCOPE_HERO_PARAM)),
   };
+}
 
-  const setHero = (hero_id: number) => setScope((s) => ({ ...s, hero_id }));
+function subscribe(onChange: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener(SCOPE_CHANGE_EVENT, onChange);
+  window.addEventListener('popstate', onChange);
+  return () => {
+    window.removeEventListener(SCOPE_CHANGE_EVENT, onChange);
+    window.removeEventListener('popstate', onChange);
+  };
+}
+
+const getServerSnapshot = (): PlayerScope => DEFAULT_SCOPE;
+
+function writeScope(next: PlayerScope): void {
+  const url = new URL(window.location.href);
+  const kindParam = scopeKindToParam(next.kind);
+  if (kindParam === null) url.searchParams.delete(SCOPE_KIND_PARAM);
+  else url.searchParams.set(SCOPE_KIND_PARAM, kindParam);
+  const nParam = scopeNToParam(next.n, next.kind);
+  if (nParam === null) url.searchParams.delete(SCOPE_N_PARAM);
+  else url.searchParams.set(SCOPE_N_PARAM, nParam);
+  const heroParam = scopeHeroToParam(next.hero_id);
+  if (heroParam === null) url.searchParams.delete(SCOPE_HERO_PARAM);
+  else url.searchParams.set(SCOPE_HERO_PARAM, heroParam);
+  window.history.replaceState(window.history.state, '', url.toString());
+  window.dispatchEvent(new Event(SCOPE_CHANGE_EVENT));
+}
+
+//initialHeroId seeds a first render with no `?hero=` yet (CompareIsland, pre-hydration).
+export function usePlayerScope(initialHeroId = 0) {
+  const raw = useSyncExternalStore(subscribe, readScope, getServerSnapshot);
+  const withSeed = useCallback(
+    (s: PlayerScope): PlayerScope => (s.hero_id === 0 && initialHeroId > 0 ? { ...s, hero_id: initialHeroId } : s),
+    [initialHeroId],
+  );
+  const scope = withSeed(raw);
+
+  const setKind = useCallback(
+    (kind: PlayerScopeKind) => {
+      const cur = withSeed(readScope());
+      if (kind !== cur.kind) writeScope({ ...cur, kind, n: kind === 'days' ? 30 : 'all' });
+    },
+    [withSeed],
+  );
+  const setN = useCallback((n: number | 'all') => writeScope({ ...withSeed(readScope()), n }), [withSeed]);
+  const setHero = useCallback((hero_id: number) => writeScope({ ...withSeed(readScope()), hero_id }), [withSeed]);
 
   return { scope, setKind, setN, setHero };
 }

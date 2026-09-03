@@ -629,7 +629,10 @@ export function ComparePanel({ id }: { id: number }) {
   //criterion: derive the hero list from heroes-played, NOT from /matches).
   const heroesPlayed = usePlayerHeroesPlayed(id);
   const heroOptions = [...(heroesPlayed.data ?? [])].sort((a, b) => b.matches_played - a.matches_played);
-  const [hero, setHero] = useState<number | undefined>(undefined);
+  //Shared with the radar and ComparePlayerPicker below (usePlayerScope, URL-backed) — was its
+  //own local copy that could silently disagree with the rest of the page's hero selection.
+  const { scope, setHero } = usePlayerScope();
+  const hero = scope.hero_id;
   //Comparison target: a relative league_offset, or `tier:N` for an absolute tier jump
   //(target_tier overrides league_offset server-side). 'same' = the player's own tier.
   const [target, setTarget] = useState<string>('same');
@@ -646,11 +649,11 @@ export function ComparePanel({ id }: { id: number }) {
       <select
         className="field"
         style={{ width: 'auto', padding: '7px 10px' }}
-        value={hero ?? ''}
-        onChange={(e) => setHero(e.target.value === '' ? undefined : Number(e.target.value))}
+        value={hero}
+        onChange={(e) => setHero(Number(e.target.value))}
         aria-label="Compare a hero"
       >
-        <option value="">Most played</option>
+        <option value={0}>All heroes</option>
         {heroOptions.map((h) => (
           <option key={h.hero_id} value={h.hero_id}>
             {h.hero_name} ({count(h.matches_played)})

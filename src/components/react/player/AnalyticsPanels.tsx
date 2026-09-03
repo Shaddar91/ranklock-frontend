@@ -22,6 +22,7 @@ import { api, isComputing, isDisabled, isNotFound, isUnauthorized, queryKeys } f
 import { useGameMode } from '../../../lib/useGameMode';
 import { useMatchMode } from '../../../lib/useMatchMode';
 import { EmptyState, Icon, RankBadge } from '../ui/index';
+import ShareLinkButton from '../ui/ShareLinkButton';
 import RadarChart from '../charts/RadarChart';
 import SignatureCurve from '../charts/SignatureCurve';
 import SoulsSourceChart from '../charts/SoulsSourceChart';
@@ -41,6 +42,9 @@ import { usePlayerScope } from './usePlayerScope';
 import { PlayerScopeControls } from './PlayerScopeControls';
 import { ShareCompareButton } from './ShareCompareButton';
 import { scopeCaption, scopeParams } from '../../../lib/playerScope';
+import { CURVE_METRICS, SIG_VIEWS, type SigView } from '../../../lib/curveScope';
+import { useCurveScope } from '../../../lib/useCurveScope';
+import { playerCardUrl, playerShareUrl, resolveFrozenWindow, type PlayerShareSelection } from '../../../lib/playerShare';
 import { combatRows, compareRadarVsPlayer, economyRows, efficiencyRows, laningRows, selfShapeAxes } from '../../../lib/playstyle';
 import { mergeSignatureCurve, curveMarker } from '../../../lib/signatureCurve';
 import { buildSoulsSourceSeries, hasCohortSouls, isPlayerSoulsEmpty } from '../../../lib/soulsSources';
@@ -302,22 +306,6 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
 
 //---- signature economy view -------------------------------------------------
 
-//The two metrics the player curve serves (backend PLAYER_CURVE_METRICS). `noun` is the
-//lower-case word for captions/axis; the curve endpoint keys on `key`.
-const CURVE_METRICS = [
-  { key: 'souls', label: 'Souls', noun: 'souls' },
-  { key: 'last_hits', label: 'Last hits', noun: 'last hits' },
-] as const;
-type CurveMetric = (typeof CURVE_METRICS)[number]['key'];
-
-//Signature-curve view: Gap (default — your delta to the cohort median against a zero
-//baseline) or Totals (today's absolute cumulative chart). Two 2-way toggles, not five.
-const SIG_VIEWS = [
-  { key: 'gap', label: 'Gap' },
-  { key: 'totals', label: 'Totals' },
-] as const;
-type SigView = (typeof SIG_VIEWS)[number]['key'];
-
 //THE signature coaching chart (C3): the player's OWN per-minute curve, FIXED, overlaid on a
 //comparison cohort they pick. The LEAGUE selector (rank tier) and the HERO selector move
 //ONLY the comparison line — `you` is invariant. Colours/caption words come from
@@ -325,13 +313,14 @@ type SigView = (typeof SIG_VIEWS)[number]['key'];
 //caption, and the lines can never disagree — in any skin.
 function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number | null }) {
   const sigWords = useSigSeriesWords(); //active skin's series color words
-  const [metric, setMetric] = useState<CurveMetric>('souls');
-  const [view, setView] = useState<SigView>('gap');
   //league: undefined = "auto" (chaseTier — the rank you're chasing, lifted by the parent
   //off the profile badge); null = All ranks (vs_band omitted); number = a rank tier 0..11.
-  const [band, setBand] = useState<number | null | undefined>(undefined);
-  //hero: undefined = all heroes (no hero filter).
-  const [hero, setHero] = useState<number | undefined>(undefined);
+  //hero: undefined = all heroes (no hero filter). All four are URL-backed (useCurveScope)
+  //so the share link and the header's Share button can read them from any island.
+  const { metric, view, band, hero, setMetric, setView, setBand, setHero } = useCurveScope();
+  const { mode } = useGameMode();
+  const { matchMode } = useMatchMode();
+  const { scope } = usePlayerScope();
 
   const heroesPlayed = usePlayerHeroesPlayed(id);
   const effBand = band === undefined ? chaseTier : band; //null => All ranks
@@ -426,6 +415,18 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
     </div>
   );
 
+  //This panel's OWN selection (its hero filter, not the radar's scope.hero_id) is what the
+  //card actually renders — the same builder PlayerHeader's Share button uses.
+  const curveSelection: PlayerShareSelection = {
+    hero_id: hero ?? (scope.hero_id || undefined),
+    ...resolveFrozenWindow(scope.kind, scope.n),
+    metric,
+    view,
+    league: band,
+    game_mode: mode,
+    match_mode: matchMode,
+  };
+
   return (
     <div>
       <div className="between" style={{ marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
@@ -436,6 +437,11 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
         <div className="flex" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           {viewToggle}
           {metricToggle}
+          <ShareLinkButton
+            url={playerShareUrl(id, curveSelection)}
+            cardUrl={playerCardUrl(id, curveSelection)}
+            label={hero != null ? `Share ${heroName ?? 'hero'}` : 'Share'}
+          />
         </div>
       </div>
       {curve.isPending ? (
