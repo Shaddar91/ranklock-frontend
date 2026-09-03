@@ -31,7 +31,8 @@ Our match data runs about {{DATA_LAG}} behind live play, and the lag is the
 smaller half of the problem. The window is the larger half.
 
 Every win rate on the heroes grid, the item tables and the build pages is
-computed over one long span of matches, currently {{DATA_WINDOW}}. Divide a
+computed over one long span of matches, months of ranked play rather than days.
+Divide a
 hero's wins by its games across that span a few hours into a balance change and
 almost every match in the sum was played under the old values. The arithmetic is
 right and the population is wrong. A tenth of a point of movement in a quotient

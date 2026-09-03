@@ -26,9 +26,8 @@ routinely wider than the balance edit that set them off.
 The second reason is arithmetic rather than judgement. A release window opens at
 midnight on the day the build shipped, so its first hours hold games played by
 people who had not downloaded the change yet. Those hours are most of the sample
-on the first evening. By day fourteen they are under seven percent of it,
-whatever time of day the build actually went out. The rows further down are
-measured on a window that has stopped moving underneath them.
+on the first evening. By day fourteen they are about six percent of it. The rows
+further down are measured on a window that has stopped moving underneath them.
 
 ## What counts as stuck
 
@@ -41,8 +40,8 @@ Three tests, in this order, and a row appears only when it passes all three.
   nothing.
 - **The correct window.** Every figure here is counted inside the release's own
   span. That is a different question from the one [the heroes grid](/heroes/) and
-  [the item tables](/items/) answer, which is a rolling one measured over
-  {{DATA_WINDOW}} and the right question for almost everything except this
+  [the item tables](/items/) answer, which is a rolling one measured over the
+  last {{DATA_WINDOW}} and the right question for almost everything except this
   article.
 - **A move bigger than the noise.** Two rates a fraction of a point apart, on
   samples of this size, are the same rate. Only rows that clear that distance
