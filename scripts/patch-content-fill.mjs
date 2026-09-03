@@ -274,7 +274,9 @@ async function wave2(args, record, t0) {
   const w1 = readRunRecord(patch.patch_id, 1);
   const posts = resolvePosts(args.posts);
   if (!args.dryRun) gitGuard(posts.rel);
-  if (posts.abs.some((p) => readFileSync(p, 'utf8').includes('{{ITEM_SETS}}'))) {
+  const itemSetTokenPresent = posts.abs.some((p) => readFileSync(p, 'utf8').includes('{{ITEM_SETS}}'))
+    || (w1 !== null && JSON.stringify(w1).includes('{{ITEM_SETS}}'));
+  if (itemSetTokenPresent) {
     if (!ITEM_SETS_ENABLED) fail('a post carries ITEM_SETS but the item-set flag is off (R4)');
     const itemSets = await itemSetValues(movers.topGainerId, patch.released_at);
     if (itemSets === null) notReady('item sets refused — window predates the patch or no clean set');
