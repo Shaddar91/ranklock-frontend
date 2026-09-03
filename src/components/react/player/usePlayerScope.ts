@@ -18,15 +18,8 @@ import {
   type PlayerScopeKind,
 } from '../../../lib/playerScope';
 
-function readScope(): PlayerScope {
-  if (typeof window === 'undefined') return DEFAULT_SCOPE;
-  const q = new URLSearchParams(window.location.search);
-  const kind = scopeKindFromParam(q.get(SCOPE_KIND_PARAM));
-  return {
-    kind,
-    n: scopeNFromParam(q.get(SCOPE_N_PARAM), kind),
-    hero_id: scopeHeroFromParam(q.get(SCOPE_HERO_PARAM)),
-  };
+function search(): URLSearchParams {
+  return new URLSearchParams(window.location.search);
 }
 
 function subscribe(onChange: () => void): () => void {
@@ -39,7 +32,16 @@ function subscribe(onChange: () => void): () => void {
   };
 }
 
-const getServerSnapshot = (): PlayerScope => DEFAULT_SCOPE;
+//Each field is its own primitive useSyncExternalStore snapshot (mirrors useCurveScope.ts) so Object.is stays stable — a composite {kind,n,hero_id} object literal never does (F2).
+function getKindSnapshot(): PlayerScopeKind {
+  return typeof window === 'undefined' ? DEFAULT_SCOPE.kind : scopeKindFromParam(search().get(SCOPE_KIND_PARAM));
+}
+function getNSnapshot(): number | 'all' {
+  return typeof window === 'undefined' ? DEFAULT_SCOPE.n : scopeNFromParam(search().get(SCOPE_N_PARAM), getKindSnapshot());
+}
+function getHeroSnapshot(): number {
+  return typeof window === 'undefined' ? DEFAULT_SCOPE.hero_id : scopeHeroFromParam(search().get(SCOPE_HERO_PARAM));
+}
 
 function writeScope(next: PlayerScope): void {
   const url = new URL(window.location.href);
@@ -58,22 +60,25 @@ function writeScope(next: PlayerScope): void {
 
 //initialHeroId seeds a first render with no `?hero=` yet (CompareIsland, pre-hydration).
 export function usePlayerScope(initialHeroId = 0) {
-  const raw = useSyncExternalStore(subscribe, readScope, getServerSnapshot);
-  const withSeed = useCallback(
-    (s: PlayerScope): PlayerScope => (s.hero_id === 0 && initialHeroId > 0 ? { ...s, hero_id: initialHeroId } : s),
-    [initialHeroId],
-  );
-  const scope = withSeed(raw);
+  const kind = useSyncExternalStore(subscribe, getKindSnapshot, () => DEFAULT_SCOPE.kind);
+  const n = useSyncExternalStore(subscribe, getNSnapshot, () => DEFAULT_SCOPE.n);
+  const rawHero = useSyncExternalStore(subscribe, getHeroSnapshot, () => DEFAULT_SCOPE.hero_id);
+  const withSeed = useCallback((h: number): number => (h === 0 && initialHeroId > 0 ? initialHeroId : h), [initialHeroId]);
+  const scope: PlayerScope = { kind, n, hero_id: withSeed(rawHero) };
 
+  //Setters re-read fresh (not the closed-over render values) so back-to-back calls in one handler stay correct.
   const setKind = useCallback(
-    (kind: PlayerScopeKind) => {
-      const cur = withSeed(readScope());
-      if (kind !== cur.kind) writeScope({ ...cur, kind, n: kind === 'days' ? 30 : 'all' });
+    (nextKind: PlayerScopeKind) => {
+      const curKind = getKindSnapshot();
+      if (nextKind !== curKind) writeScope({ kind: nextKind, n: nextKind === 'days' ? 30 : DEFAULT_SCOPE.n, hero_id: withSeed(getHeroSnapshot()) });
     },
     [withSeed],
   );
-  const setN = useCallback((n: number | 'all') => writeScope({ ...withSeed(readScope()), n }), [withSeed]);
-  const setHero = useCallback((hero_id: number) => writeScope({ ...withSeed(readScope()), hero_id }), [withSeed]);
+  const setN = useCallback(
+    (nextN: number | 'all') => writeScope({ kind: getKindSnapshot(), n: nextN, hero_id: withSeed(getHeroSnapshot()) }),
+    [withSeed],
+  );
+  const setHero = useCallback((nextHero: number) => writeScope({ kind: getKindSnapshot(), n: getNSnapshot(), hero_id: nextHero }), []);
 
   return { scope, setKind, setN, setHero };
 }

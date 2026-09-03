@@ -16,6 +16,7 @@ import { useMatchMode } from '../../../lib/useMatchMode';
 import { useCurveScope } from '../../../lib/useCurveScope';
 import { playerCardUrl, playerShareUrl, resolveFrozenWindow, type PlayerShareSelection } from '../../../lib/playerShare';
 import { usePlayerScope } from './usePlayerScope';
+import { useCompareTarget } from './useCompareTarget';
 import type { HeroLedgerRow, PlayerProfileResponse } from '../../../types/api';
 
 interface PlayerHeaderProps {
@@ -49,6 +50,7 @@ export default function PlayerHeader({ player, heroes, formWins, topPercentile, 
   const { matchMode } = useMatchMode();
   const { scope } = usePlayerScope();
   const curve = useCurveScope();
+  const { target } = useCompareTarget();
   const selection: PlayerShareSelection = {
     hero_id: curve.hero ?? (scope.hero_id || undefined),
     ...resolveFrozenWindow(scope.kind, scope.n),
@@ -57,6 +59,7 @@ export default function PlayerHeader({ player, heroes, formWins, topPercentile, 
     league: curve.band,
     game_mode: mode,
     match_mode: matchMode,
+    target,
   };
   const shareUrl = playerShareUrl(player.account_id, selection);
   const cardUrl = playerCardUrl(player.account_id, selection);

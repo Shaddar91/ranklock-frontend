@@ -60,7 +60,6 @@ const description = player ? `${player.name} (${player.rank})${selection ? ` —
 //(mirror compare/[a]/[b].astro) so the card renders the same hero/window/league/metric/mode
 //that's on screen; hero/from/to/metric/view/league already share a name with the card.
 const cardQuery = new URLSearchParams();
-if (heroSlug) cardQuery.set('hero', heroSlug);
 if (from) cardQuery.set('from', from);
 if (to) cardQuery.set('to', to);
 const metric = q.get(PLAYER_METRIC_PARAM);
@@ -74,7 +73,10 @@ if (brawl) cardQuery.set('game_mode', 'StreetBrawl');
 const ranked = /^(1|true|ranked)$/i.test((q.get(MATCH_MODE_PARAM) ?? '').trim());
 if (ranked) cardQuery.set('match_mode', 'Ranked');
 const cardQs = cardQuery.toString();
-const image = `https://og.ranklock.app/og/player/${id}.png${cardQs ? `?${cardQs}` : ''}`;
+//A selected hero targets /hero/{slug}.png (mirrors lib/playerShare.ts playerCardUrl), not a query param.
+const image = heroSlug
+  ? `https://og.ranklock.app/og/player/${id}/hero/${heroSlug}.png${cardQs ? `?${cardQs}` : ''}`
+  : `https://og.ranklock.app/og/player/${id}.png${cardQs ? `?${cardQs}` : ''}`;
 ---
 
 <BaseLayout title={title} description={description} noindex={true} image={image}>

@@ -2,6 +2,7 @@
 //hero, league, metric, mode) rides the query so a reopened link and the card both mirror it.
 import { SITE_ORIGIN } from './seo';
 import { MATCH_MODE_PARAM, matchModeToParam } from './matchMode';
+import { COMPARE_TARGET_PARAM, DEFAULT_COMPARE_TARGET } from './compareTarget';
 import { slugOf } from './heroSlugs';
 import type { CurveMetric, SigView } from './curveScope';
 import type { GameMode, MatchMode } from '../types/api';
@@ -15,6 +16,7 @@ export interface PlayerShareSelection {
   league?: number | null;
   game_mode?: GameMode;
   match_mode?: MatchMode;
+  target?: string;
 }
 
 export const PLAYER_HERO_PARAM = 'hero';
@@ -41,6 +43,7 @@ export function playerSelectionQuery(sel?: PlayerShareSelection): string {
   if (modeSlug) q.set(PLAYER_MODE_PARAM, modeSlug);
   const ranked = sel.match_mode ? matchModeToParam(sel.match_mode) : null;
   if (ranked) q.set(MATCH_MODE_PARAM, ranked);
+  if (sel.target && sel.target !== DEFAULT_COMPARE_TARGET) q.set(COMPARE_TARGET_PARAM, sel.target);
   const s = q.toString();
   return s ? `?${s}` : '';
 }
@@ -55,8 +58,11 @@ export function playerShareUrl(id: number, sel?: PlayerShareSelection): string {
 
 export const OG_CARD_ORIGIN = 'https://og.ranklock.app';
 
+//A selected hero targets /hero/{slug}.png (server.rs og_player_hero) rather than a query param.
 export function playerCardUrl(id: number, sel?: PlayerShareSelection): string {
-  return `${OG_CARD_ORIGIN}/og/player/${id}.png${playerSelectionQuery(sel)}`;
+  const slug = sel?.hero_id && sel.hero_id > 0 ? slugOf(sel.hero_id) : null;
+  if (!slug) return `${OG_CARD_ORIGIN}/og/player/${id}.png${playerSelectionQuery(sel)}`;
+  return `${OG_CARD_ORIGIN}/og/player/${id}/hero/${slug}.png${playerSelectionQuery({ ...sel, hero_id: undefined })}`;
 }
 
 //A relative window would render different data whenever a shared link is reopened, so freeze

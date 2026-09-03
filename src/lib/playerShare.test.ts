@@ -48,14 +48,30 @@ describe('playerShareUrl', () => {
 });
 
 describe('playerCardUrl', () => {
-  it('points at the og-card service with the same selection query', () => {
+  it('targets the /hero/{slug}.png route (not a query param) when a hero is selected', () => {
     expect(playerCardUrl(103082711, { hero_id: 35, from: '2026-08-24', to: '2026-09-03' })).toBe(
-      'https://og.ranklock.app/og/player/103082711.png?hero=viscous&from=2026-08-24&to=2026-09-03',
+      'https://og.ranklock.app/og/player/103082711/hero/viscous.png?from=2026-08-24&to=2026-09-03',
     );
   });
 
   it('is the bare card route for a default selection', () => {
     expect(playerCardUrl(1)).toBe('https://og.ranklock.app/og/player/1.png');
+  });
+
+  it('stays on the bare route with a query for an unpinned/unknown hero', () => {
+    expect(playerCardUrl(1, { hero_id: 999999, from: '2026-08-24', to: '2026-09-03' })).toBe(
+      'https://og.ranklock.app/og/player/1.png?from=2026-08-24&to=2026-09-03',
+    );
+  });
+});
+
+describe('playerSelectionQuery target', () => {
+  it('omits the default compare target', () => {
+    expect(playerSelectionQuery({ target: 'same' })).toBe('');
+  });
+
+  it('carries a non-default compare target', () => {
+    expect(playerSelectionQuery({ target: 'tier:9' })).toBe('?target=tier%3A9');
   });
 });
 

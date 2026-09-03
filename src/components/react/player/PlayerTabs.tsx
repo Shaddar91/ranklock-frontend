@@ -16,6 +16,7 @@ import { api, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClie
 import { rankFromBadge } from '../../../lib/ranks';
 import { scopeCaption, scopeParams, type PlayerScope } from '../../../lib/playerScope';
 import { usePlayerScope } from './usePlayerScope';
+import { useCompareTarget } from './useCompareTarget';
 import { PlayerScopeControls } from './PlayerScopeControls';
 import { MIN_PERCENTILE_SAMPLE, percentileOrdinal } from '../../../lib/percentile';
 import { count, DASH, duration, fixed, kda, pct, shortDate } from '../../../lib/format';
@@ -635,7 +636,7 @@ export function ComparePanel({ id }: { id: number }) {
   const hero = scope.hero_id;
   //Comparison target: a relative league_offset, or `tier:N` for an absolute tier jump
   //(target_tier overrides league_offset server-side). 'same' = the player's own tier.
-  const [target, setTarget] = useState<string>('same');
+  const { target, setTarget } = useCompareTarget();
   const absTier = target.startsWith('tier:') ? Number(target.slice(5)) : undefined;
   const { data, isPending, isError, error } = useCompare(id, {
     hero_id: hero,

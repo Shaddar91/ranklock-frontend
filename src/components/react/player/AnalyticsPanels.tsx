@@ -39,6 +39,7 @@ import {
   usePlayerSoulsSources,
 } from './usePlayer';
 import { usePlayerScope } from './usePlayerScope';
+import { useCompareTarget } from './useCompareTarget';
 import { PlayerScopeControls } from './PlayerScopeControls';
 import { ShareCompareButton } from './ShareCompareButton';
 import { scopeCaption, scopeParams } from '../../../lib/playerScope';
@@ -321,6 +322,7 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
   const { mode } = useGameMode();
   const { matchMode } = useMatchMode();
   const { scope } = usePlayerScope();
+  const { target } = useCompareTarget();
 
   const heroesPlayed = usePlayerHeroesPlayed(id);
   const effBand = band === undefined ? chaseTier : band; //null => All ranks
@@ -425,6 +427,7 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
     league: band,
     game_mode: mode,
     match_mode: matchMode,
+    target,
   };
 
   return (
