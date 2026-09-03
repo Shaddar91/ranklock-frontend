@@ -258,11 +258,9 @@ export function cohortParamsFor(
   return { tier: tierOrBand, division };
 }
 
-//The SAME cohort selection expressed for /players/:id/economy-curve. That endpoint names the
-//team-average league `vs_band`, not `band` (player_curve.rs PlayerCurveQuery); serde drops an
-//unknown key, so sending `band` there returns the ALL-bands hero cohort under the selected
-//league's caption instead of a 400. Derived from cohortParamsFor so the null-guard and the
-//exactly-one-of rule can never drift between the two endpoints.
+//The SAME cohort selection under /players/:id/economy-curve's names: that endpoint calls the
+//team-average league `vs_band`, and serde DROPS an unknown `band` rather than 400ing — so the
+//wrong name silently returns the ALL-bands hero cohort under the selected league's caption.
 export interface PlayerCurveCohortParams {
   vs_band?: number;
   tier?: number;
