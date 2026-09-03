@@ -1,6 +1,20 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PlayerProfileIsland from '../../components/react/PlayerProfileIsland';
+import { api } from '../../lib/apiClient';
+import { buildFetch } from '../../lib/buildData';
+import { rankFromBadge, subLabel } from '../../lib/ranks';
+import { HERO_IDENTITY } from '../../lib/heroSlugs';
+import {
+  PLAYER_HERO_PARAM,
+  PLAYER_FROM_PARAM,
+  PLAYER_TO_PARAM,
+  PLAYER_METRIC_PARAM,
+  PLAYER_VIEW_PARAM,
+  PLAYER_LEAGUE_PARAM,
+  PLAYER_MODE_PARAM,
+} from '../../lib/playerShare';
+import { MATCH_MODE_PARAM } from '../../lib/matchMode';
 
 //Per-user page: an on-demand dynamic SHELL hosting a CSR React island that reads
 //the id from the URL and fetches the API (architecture §4 — "Per-user/per-match
@@ -8,11 +22,62 @@ import PlayerProfileIsland from '../../components/react/PlayerProfileIsland';
 //makes this route run on a Cloudflare Worker (adapter wired in astro.config.mjs),
 //so an ARBITRARY id is served off the single shell without SSG-emitting a page per
 //id — no getStaticPaths needed. The shell ships no per-id server HTML; the
-//client:only island does the fetch.
+//client:only island does the fetch. Staying dynamic also lets the unfurl (image/
+//title/description below) read the query string and mirror the on-screen
+//selection — the same reason compare/[a]/[b].astro is dynamic.
 export const prerender = false;
+
+const { id } = Astro.params;
+const q = Astro.url.searchParams;
+
+function posInt(raw: string | null | undefined): number | undefined {
+  const n = Number(raw);
+  return raw != null && Number.isInteger(n) && n > 0 ? n : undefined;
+}
+
+//Name + rank for the unfurl; a failed/absent fetch leaves it null and the generic
+//title/description win — the live view still loads client-side (mirrors compare/[a]/[b]).
+async function nameRank(accountId: number | undefined): Promise<{ name: string; rank: string } | null> {
+  if (!accountId) return null;
+  const p = await buildFetch(api.getPlayer(accountId), null);
+  if (!p) return null;
+  const r = rankFromBadge(p.badge);
+  return { name: p.steam_name, rank: r ? subLabel(r.tier, r.sub) : 'Unranked' };
+}
+const player = await nameRank(posInt(id));
+
+const heroSlug = q.get(PLAYER_HERO_PARAM);
+const heroName = heroSlug ? (HERO_IDENTITY.find((h) => h.slug === heroSlug)?.hero_name ?? null) : null;
+const from = q.get(PLAYER_FROM_PARAM);
+const to = q.get(PLAYER_TO_PARAM);
+const windowLabel = from && to ? `${from} to ${to}` : null;
+const selection = [windowLabel, heroName ? `on ${heroName}` : null].filter(Boolean).join(' ');
+
+const title = player ? `${player.name}${selection ? ` — ${selection}` : ''} | RankLock` : 'Player profile — RankLock';
+const description = player ? `${player.name} (${player.rank})${selection ? ` — ${selection}` : ''} on RankLock` : undefined;
+
+//Translate the site's selection params -> the OG card's PlayerSelection query names
+//(mirror compare/[a]/[b].astro) so the card renders the same hero/window/league/metric/mode
+//that's on screen; hero/from/to/metric/view/league already share a name with the card.
+const cardQuery = new URLSearchParams();
+if (heroSlug) cardQuery.set('hero', heroSlug);
+if (from) cardQuery.set('from', from);
+if (to) cardQuery.set('to', to);
+const metric = q.get(PLAYER_METRIC_PARAM);
+if (metric) cardQuery.set('metric', metric);
+const view = q.get(PLAYER_VIEW_PARAM);
+if (view) cardQuery.set('view', view);
+const league = q.get(PLAYER_LEAGUE_PARAM);
+if (league) cardQuery.set('league', league);
+const brawl = (q.get(PLAYER_MODE_PARAM) ?? '').trim().toLowerCase() === 'brawl';
+if (brawl) cardQuery.set('game_mode', 'StreetBrawl');
+const ranked = /^(1|true|ranked)$/i.test((q.get(MATCH_MODE_PARAM) ?? '').trim());
+if (ranked) cardQuery.set('match_mode', 'Ranked');
+const cardQs = cardQuery.toString();
+const image = `https://og.ranklock.app/og/player/${id}.png${cardQs ? `?${cardQs}` : ''}`;
 ---
 
-<BaseLayout title="Player profile — RankLock" noindex={true}>
+<BaseLayout title={title} description={description} noindex={true} image={image}>
   <main class="wrap">
     <!--
       client:only="react": the shell ships NO server HTML for this island; the
