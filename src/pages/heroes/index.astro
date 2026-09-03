@@ -63,7 +63,8 @@ const path = Astro.url.pathname;
       matches{statsThrough ? ` through ${statsThrough}` : ''}. Pick a rank tier to see the
       same table at your own badge, from Initiate to Eternus. For the same roster grouped
       S to F with the cut for each grade printed, see the
-      <a href="/tier-list/">Deadlock tier list</a>.
+      <a href="/tier-list/">Deadlock tier list</a>, or see how the ranked population itself splits
+      by tier on the <a href="/rank-distribution/">rank distribution</a> page.
     </p>
     <div style="margin-top:20px;">
       <HeroesTable initialRows={heroes} client:load />

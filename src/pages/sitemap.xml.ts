@@ -40,6 +40,7 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: '/leaderboard', changefreq: 'daily', priority: '0.8' },
   { path: '/matches', changefreq: 'hourly', priority: '0.7' },
   { path: '/patches', changefreq: 'daily', priority: '0.7' },
+  { path: '/rank-distribution', changefreq: 'weekly', priority: '0.6' },
   { path: '/build-lab', changefreq: 'weekly', priority: '0.7' },
   { path: '/lane-lab', changefreq: 'weekly', priority: '0.7' },
   { path: '/blog', changefreq: 'weekly', priority: '0.7' },

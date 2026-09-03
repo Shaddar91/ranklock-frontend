@@ -555,11 +555,19 @@ export interface ImproveResponse {
 
 //---- stats ------------------------------------------------------------------
 
-//GET /stats/rank-distribution   (analytics::RankBucket[]). NOTE: data-broken
-//today (job reads players.badge which is all-NULL) → may return []. Empty-state it.
-export interface RankBucket {
-  badge: number;
+//GET /stats/rank-distribution → RankPopulationRow[] (analytics.rank_population,
+//migration 057). Ranked player-games per Valve rank at the busiest 180s bucket;
+//share_pct sums to 100 within each (game_mode, match_mode) pair.
+export interface RankPopulationRow {
+  rank: number;
+  tier: number;
+  division: number;
   player_count: number;
+  share_pct: number;
+  computed_at: string;
+  game_mode: string;
+  match_mode: string;
+  reference_minute: number;
 }
 
 //---- patches (GET /patches*, fully built backend; wired in C9) ---------------

@@ -1,0 +1,179 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import DataAgeChip from '../components/react/DataAgeChip';
+import { api } from '../lib/apiClient';
+import { buildFetch } from '../lib/buildData';
+import { breadcrumbJsonLd } from '../lib/seo';
+import { shortDate, count, pct } from '../lib/format';
+import { getRank, subLabel } from '../lib/ranks';
+import type { DataHorizonResponse, RankPopulationRow } from '../types/api';
+
+//SSG rank population page (seo-rank-distribution-execution C7). Rows + the
+//rank-metric-histograms horizon window come from build-time fetches; no React
+//island — table and bars are static HTML so the content sits in the
+//prerendered document (plan constraint).
+const rows = await buildFetch(api.getRankDistribution(), [] as RankPopulationRow[]);
+const horizon = await buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null);
+
+const rankWindow = horizon?.datasets.find((d) => d.dataset === 'rank-metric-histograms');
+const windowLo = shortDate(rankWindow?.window_lo);
+const windowHi = shortDate(rankWindow?.window_hi);
+
+const referenceMinute = rows[0]?.reference_minute ?? null;
+const total = rows.reduce((a, r) => a + r.player_count, 0);
+
+const tierMap = new Map<number, { tier: number; player_count: number; share_pct: number }>();
+for (const r of rows) {
+  const cur = tierMap.get(r.tier) ?? { tier: r.tier, player_count: 0, share_pct: 0 };
+  cur.player_count += r.player_count;
+  cur.share_pct += r.share_pct;
+  tierMap.set(r.tier, cur);
+}
+const tiers = [...tierMap.values()].sort((a, b) => a.tier - b.tier);
+
+const maxTierShare = Math.max(0, ...tiers.map((t) => t.share_pct));
+const maxRowShare = Math.max(0, ...rows.map((r) => r.share_pct));
+const barWidth = (share: number, max: number): string => (max > 0 ? `${((share / max) * 100).toFixed(1)}%` : '0%');
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = breadcrumbJsonLd(origin, [
+  { name: 'Home', path: '/' },
+  { name: 'Rank distribution', path: '/rank-distribution' },
+]);
+---
+
+<BaseLayout
+  title="Deadlock rank distribution by tier and division | RankLock"
+  description="How Deadlock ranked players split across every tier and division, from Initiate to Eternus, counted at the three-minute mark of ranked matches."
+  canonicalPath="/rank-distribution"
+  jsonLd={jsonLd}
+>
+  <main class="container">
+    <div class="page-head">
+      <div>
+        <div class="kicker">Ranked population</div>
+        <h1 class="h-page">Deadlock rank distribution</h1>
+      </div>
+    </div>
+    <DataAgeChip client:load />
+    {
+      rows.length === 0 ? (
+        <p class="page-intro">
+          Rank distribution is being recomputed. This page fills in from RankLock's own ranked-match
+          ingestion as soon as the next fold completes.
+        </p>
+      ) : (
+        <Fragment>
+          <p class="page-intro">
+            Every ranked Deadlock match in the {windowLo} to {windowHi} window, counted at the {referenceMinute}-minute
+            mark: {count(total)} ranked player-games across {rows.length} ranks. Numbers come from RankLock's own
+            match ingestion, not a survey or a sample.
+          </p>
+          <p class="page-intro">
+            These are player-games, not players. A player who finished twenty ranked matches in this window is
+            counted twenty times, once per match, at the rank they entered that match with. Nobody publishes
+            Deadlock's true account-level rank counts, and this page does not pretend to.
+          </p>
+
+          <section class="panel panel-pad rd-section" aria-labelledby="rd-tiers">
+            <h2 class="h-sec" id="rd-tiers">Player-games by tier</h2>
+            <div class="dt-wrap">
+              <table class="dt">
+                <thead>
+                  <tr>
+                    <th>Tier</th>
+                    <th class="num">Player-games</th>
+                    <th class="num">Share</th>
+                    <th aria-hidden="true" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {tiers.map((t) => (
+                    <tr>
+                      <td>{getRank(t.tier).name}</td>
+                      <td class="num mono">{count(t.player_count)}</td>
+                      <td class="num mono">{pct(t.share_pct)}</td>
+                      <td class="rd-bar-cell">
+                        <div class="rd-bar-track" aria-hidden="true">
+                          <div class="rd-bar-fill" style={`width:${barWidth(t.share_pct, maxTierShare)}`} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel panel-pad rd-section" aria-labelledby="rd-divisions">
+            <h2 class="h-sec" id="rd-divisions">Player-games by rank</h2>
+            <div class="dt-wrap">
+              <table class="dt">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th class="num">Badge</th>
+                    <th class="num">Player-games</th>
+                    <th class="num">Share</th>
+                    <th aria-hidden="true" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr>
+                      <td>{subLabel(r.tier, r.division)}</td>
+                      <td class="num mono">{r.rank}</td>
+                      <td class="num mono">{count(r.player_count)}</td>
+                      <td class="num mono">{pct(r.share_pct)}</td>
+                      <td class="rd-bar-cell">
+                        <div class="rd-bar-track" aria-hidden="true">
+                          <div class="rd-bar-fill" style={`width:${barWidth(r.share_pct, maxRowShare)}`} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="rd-section">
+            <h2 class="h-sec">What this measures</h2>
+            <p>
+              Each row is the Valve display rank a player held when they entered that match, not a team average.
+            </p>
+            <p>
+              The count is taken at one moment of match time, the {referenceMinute}-minute mark, so a long match
+              counts once at that rank, not once per minute it ran.
+            </p>
+            <p>Division VI is the largest division in every tier that has one. The data shows this; it does not explain why.</p>
+          </section>
+
+          <p class="page-intro">
+            See the full ladder on the <a href="/leaderboard/">leaderboard</a>, hero win rates by rank on the
+            <a href="/heroes/">hero win rates</a> page, or the graded roster on the <a href="/tier-list/">tier list</a>.
+          </p>
+        </Fragment>
+      )
+    }
+  </main>
+</BaseLayout>
+
+<style>
+  .rd-section {
+    margin-top: 24px;
+  }
+  .rd-bar-cell {
+    width: 140px;
+  }
+  .rd-bar-track {
+    background: var(--border);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .rd-bar-fill {
+    background: var(--brass-1);
+    height: 100%;
+  }
+</style>

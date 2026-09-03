@@ -57,8 +57,8 @@ const faqs = [
     a: `A route whose dataset has never been computed answers "computing" rather than inventing a number. Data that is older than its freshness threshold — twelve hours for matchup stats, 48 hours for daily and lane datasets — is flagged with an <code>X-Data-Stale: true</code> response header instead of being passed off as fresh.`,
   },
   {
-    q: 'Why is the rank-distribution chart empty?',
-    a: `The endpoint is live, but the player-badge field it counts has not been backfilled across all players yet, so it currently returns an empty set. When the backfill lands, the chart will show an exact histogram of every account with at least one competitive match, bucketed by latest-match badge.`,
+    q: 'What does the rank distribution page count?',
+    a: `<a href="/rank-distribution/">Rank distribution</a> counts ranked player-games, not distinct players, at one fixed point in match time (the three-minute mark), grouped by the Valve rank each player held when they entered that match. A player who finished twenty ranked matches in the window is counted twenty times, once per match.`,
   },
   {
     q: 'Where do item stats, counters and synergies come from?',

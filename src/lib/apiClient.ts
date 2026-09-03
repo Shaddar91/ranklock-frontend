@@ -53,7 +53,7 @@ import type {
   PlayerMatchRow,
   PlayerProfileResponse,
   PlayerSoulsResponse,
-  RankBucket,
+  RankPopulationRow,
   ReadinessResponse,
   SearchResult,
   ScoredBuild,
@@ -549,11 +549,11 @@ export const api = {
   //(unknown ⇒ all six). RICH_ANALYTICS-gated (501 off, 202 until the first fold); `match_mode` per 047.
   getLaneSoulsSources: (params?: { band?: number; metric_group?: string; match_mode?: MatchMode }) =>
     laneLabFetch<SoulsCohortResponse>('/lane-lab/souls-sources', { query: params }),
-  //stats + session. rank_distribution is mode-AGNOSTIC (per-player badge histogram —
-  //product decision, 022); the param is accepted for symmetry but the backend ignores
-  //it (no game_mode dimension on the table).
+  //Ranked player-games per Valve rank at the busiest 180s bucket (migration 057,
+  //analytics.rank_population). `game_mode` is accepted for forward-compat; the
+  //view returns one group today ('Normal','Ranked') and the client filters it.
   getRankDistribution: (game_mode?: GameMode) =>
-    apiFetch<RankBucket[]>('/stats/rank-distribution', { query: { game_mode } }),
+    apiFetch<RankPopulationRow[]>('/stats/rank-distribution', { query: { game_mode } }),
   //Freshness metadata (backend meta.rs, ungated + fail-open server-side). Consumers must
   //treat ANY failure — including a 404 from an API that predates the route — as "unknown"
   //and render nothing: no fake date, no error state (Component 11 data-age honesty).
