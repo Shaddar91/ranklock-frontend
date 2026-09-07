@@ -61,19 +61,23 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config dist/server/wrangler.json
       - name: Probe deployed site (gate for the purge)
+        env:
+          PROBE_BASE_URL: ${{ secrets.PROBE_BASE_URL }}
         run: |
           #A broken deploy must not evict the last-good edge copies, so the purge
           #below only runs after the NEW deploy provably serves. Probes hit the
-          #worker's own workers.dev hostname: the zone apex (ranklock.app) sits
-          #behind a Cloudflare managed challenge that 403s every non-browser
-          #client (cf-mitigated: challenge, any UA — verified 2026-07-10), so an
-          #unauthenticated probe there can never pass, while workers.dev serves
-          #the exact version this run just deployed, outside the zone WAF. The
-          #unique query param is cache-busting insurance; /items/ keeps its
-          #trailing slash (the assets router 307s /items -> /items/).
+          #worker's own hostname (PROBE_BASE_URL secret, masked in this log): the
+          #zone apex (ranklock.app) sits behind a Cloudflare managed challenge
+          #that 403s every non-browser client (cf-mitigated: challenge, any UA —
+          #verified 2026-07-10), so an unauthenticated probe there can never
+          #pass, while the worker origin serves the exact version this run just
+          #deployed, outside the zone WAF. The unique query param is
+          #cache-busting insurance; /items/ keeps its trailing slash (the assets
+          #router 307s /items -> /items/).
+          [ -n "$PROBE_BASE_URL" ] || { echo "PROBE FAIL — PROBE_BASE_URL secret unset"; exit 1; }
           bust="probe=${{ github.run_id }}-${{ github.run_attempt }}"
           for path in / /items/; do
-            url="https://ranklock-frontend.shaddar45.workers.dev${path}?${bust}"
+            url="${PROBE_BASE_URL}${path}?${bust}"
             code=$(curl -sS -o /tmp/probe-body -w '%{http_code}' --max-time 30 \
               --retry 5 --retry-delay 4 --retry-all-errors "$url") \
               || { echo "PROBE FAIL $url — curl error"; exit 1; }
