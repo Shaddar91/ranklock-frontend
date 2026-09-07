@@ -4,6 +4,7 @@ import {
   buyOrderByPos,
   dedupeSetItems,
   itemTotals,
+  rankedItemWinRates,
   rankedSets,
   setLabel,
   sumMatchupBrackets,
@@ -235,5 +236,25 @@ describe('spread multiplier', () => {
     expect(plainText(buildNarrative(input()))).toContain('a 29.6x spread');
     const eight = [SETS[0] as BuildStatsItemSet, set([[10, 'Fixation'], [11, 'Swift Striker'], [12, 'Extra Spirit'], [13, 'Smoke Bomb'], [14, 'Sleep Dagger'], [15, 'Headshot Booster']], 5400, 0.52, 0.505)];
     expect(plainText(buildNarrative(input({ itemSets: eight })))).toContain('an 8.0x spread');
+  });
+});
+
+describe('buildNarrative — item win-rate substitute ordering', () => {
+  it('orders by Wilson lower bound and drops rows that cannot carry one', () => {
+    const rows = [
+      { item_id: 1, games: 100, win_rate: 0.9, wilson_lower: 0.4 },
+      { item_id: 2, games: 900, win_rate: 0.6, wilson_lower: 0.58 },
+      { item_id: 3, games: 0, win_rate: 0.99, wilson_lower: 0.99 },
+      { item_id: 4, games: 500, win_rate: 0.7, wilson_lower: null },
+    ];
+    expect(rankedItemWinRates(rows).map((r) => r.item_id)).toEqual([2, 1]);
+  });
+  it('does not mutate the caller\u2019s array', () => {
+    const rows = [
+      { item_id: 1, games: 10, win_rate: 0.5, wilson_lower: 0.1 },
+      { item_id: 2, games: 10, win_rate: 0.5, wilson_lower: 0.9 },
+    ];
+    rankedItemWinRates(rows);
+    expect(rows.map((r) => r.item_id)).toEqual([1, 2]);
   });
 });

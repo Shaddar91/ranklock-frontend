@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isUpdatedThisPatch, formatUpdated, abilityOrderSequence, sortLabel } from './buildMeta';
+import { isUpdatedThisPatch, formatUpdated, abilityOrderSequence, sortLabel, authorLabel, favoriteCounts } from './buildMeta';
 
 const PATCH = '2026-08-22';
 const patchStart = Math.floor(Date.parse('2026-08-22T00:00:00Z') / 1000);
@@ -51,5 +51,33 @@ describe('buildMeta — sort labels', () => {
   it('names the two honest sorts', () => {
     expect(sortLabel('weekly')).toBe('Trending');
     expect(sortLabel('favorites')).toBe('All-time');
+  });
+});
+
+describe('buildMeta — build attribution', () => {
+  it('prints the resolved name, else the account id, never an invented name', () => {
+    expect(authorLabel({ author_name: 'back3p\u2122', author_account_id: 1183614423 })).toBe('back3p\u2122');
+    expect(authorLabel({ author_name: null, author_account_id: 1183614423 })).toBe('Steam account 1183614423');
+    expect(authorLabel({ author_name: '   ', author_account_id: 7 })).toBe('Steam account 7');
+    expect(authorLabel({ author_account_id: 7 })).toBe('Steam account 7');
+  });
+});
+
+describe('buildMeta — favorite counts', () => {
+  it('shows both counts weekly-first and omits the ones upstream withheld', () => {
+    expect(favoriteCounts({ num_weekly_favorites: 14841, num_favorites: 90210 })).toEqual([
+      { label: 'weekly favorites', value: 14841 },
+      { label: 'all-time favorites', value: 90210 },
+    ]);
+    expect(favoriteCounts({ num_weekly_favorites: 14841, num_favorites: null })).toEqual([
+      { label: 'weekly favorites', value: 14841 },
+    ]);
+    expect(favoriteCounts({ num_weekly_favorites: null, num_favorites: 5 })).toEqual([
+      { label: 'all-time favorites', value: 5 },
+    ]);
+    expect(favoriteCounts({})).toEqual([]);
+  });
+  it('keeps a real zero', () => {
+    expect(favoriteCounts({ num_weekly_favorites: 0 })).toEqual([{ label: 'weekly favorites', value: 0 }]);
   });
 });

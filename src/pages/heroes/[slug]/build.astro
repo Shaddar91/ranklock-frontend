@@ -13,7 +13,7 @@ import { buildFetch } from '../../../lib/buildData';
 import { dataHorizon } from '../../../lib/buildIndexes';
 import { breadcrumbJsonLd } from '../../../lib/seo';
 import { count, shortDate } from '../../../lib/format';
-import { formatUpdated } from '../../../lib/buildMeta';
+import { authorLabel, favoriteCounts, formatUpdated } from '../../../lib/buildMeta';
 import { heroArt } from '../../../lib/heroArt';
 import { heroPath, slugRoster } from '../../../lib/heroSlugs';
 import { releasedRoster } from '../../../lib/heroRoster';
@@ -22,6 +22,7 @@ import {
   buyOrderByPos,
   dedupeSetItems,
   itemName,
+  rankedItemWinRates,
   rankedSets,
   sumMatchupBrackets,
 } from '../../../lib/buildNarrative';
@@ -74,6 +75,11 @@ const sets = rankedSets(stats.item_sets);
 const positions = buyOrderByPos(stats.buy_order);
 const nowSeconds = Math.floor(Date.now() / 1000);
 
+//E1 cold (202/501, or folded with nothing over the games floor) hides the set + buy-order sections;
+//single-item win rates are the only honest substitute, and only for the sets — buy order has none.
+const FALLBACK_ITEMS = 20;
+const fallbackItems = sets.length === 0 ? rankedItemWinRates(itemWinRates).slice(0, FALLBACK_ITEMS) : [];
+
 const sections = buildNarrative({
   hero,
   roster,
@@ -97,7 +103,6 @@ const itemHi = shortDate(itemWindow?.window_hi);
 const heroUrl = heroPath(name);
 const canonicalPath = `${heroUrl}build/`;
 const art = heroArt(hero.icon_url);
-const authorOf = (b: ScoredBuild) => b.author_name?.trim() || `Account ${b.author_account_id}`;
 const description = builds.length
   ? `${name} item sets that win most in RankLock's ranked match data, with games and win rate for each, plus community builds scored on those numbers.`
   : `${name} item sets that win most in RankLock's ranked match data, with games and win rate for each, and the items with the highest win rate at your rank.`;
@@ -111,7 +116,8 @@ const jsonLd = breadcrumbJsonLd(origin, [
 ]);
 
 const heroOptions = roster.map((h) => ({ hero_id: h.hero_id, hero_name: h.hero_name }));
-const hasAnything = sets.length > 0 || positions.length > 0 || rankItems.length > 0 || builds.length > 0;
+const hasAnything =
+  sets.length > 0 || positions.length > 0 || rankItems.length > 0 || builds.length > 0 || fallbackItems.length > 0;
 ---
 
 <BaseLayout
@@ -145,12 +151,22 @@ const hasAnything = sets.length > 0 || positions.length > 0 || rankItems.length 
     {
       sets.length > 0 && (
         <section class="panel panel-pad bp-sec">
-          <h2 class="h-sec">Winning item sets, all ranks</h2>
+          <h2 class="h-sec">Winning item sets</h2>
           <p class="bp-sub">
             Six-slot sets our matches measured, ordered by Wilson lower bound, which discounts a rate
             taken from few games. An entry bought twice in one set shows as x2.
             {setLo && setHi && ` These sets cover ${setLo} to ${setHi}, a narrower window than the rest of this page.`}
           </p>
+          <div class="bp-tier">
+            <label class="bp-tier-label" for="set-tier">Rank cohort</label>
+            <select id="set-tier" class="bp-tier-select" disabled>
+              <option value="0" selected>All ranks</option>
+            </select>
+            <span class="bp-tier-note">
+              Only the all-ranks cohort is folded, so no per-rank option is offered here. Rank-scoped
+              single-item win rates are in the table below.
+            </span>
+          </div>
           <div class="dt-scroll">
             <table class="dt">
               <thead>
@@ -176,6 +192,45 @@ const hasAnything = sets.length > 0 || positions.length > 0 || rankItems.length 
                     </td>
                     <td class="num"><WinRate wr={toPct(s.win_rate)} /></td>
                     <td class="num"><span class="tnum">{count(s.games)}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      fallbackItems.length > 0 && (
+        <section class="panel panel-pad bp-sec">
+          <h2 class="h-sec">Highest win rate {name} items</h2>
+          <p class="bp-sub">
+            No {name} item set has been folded from our matches yet, so there is no set table and no buy
+            order to show — a buy order has no substitute and is left out rather than guessed. These are
+            the single items with the highest win rate on {name}, all ranks, in the same Wilson order.
+            {itemLo && itemHi && ` They cover ${itemLo} to ${itemHi}.`}
+          </p>
+          <div class="dt-scroll">
+            <table class="dt">
+              <thead>
+                <tr>
+                  <th><span class="th-static">Item</span></th>
+                  <th class="num"><span class="th-static">Win rate</span></th>
+                  <th class="num"><span class="th-static">Games</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {fallbackItems.map((r) => (
+                  <tr>
+                    <td>
+                      <a class="flex" href={`/items/${r.item_id}/`} style="align-items:center; gap:10px; text-decoration:none;">
+                        <GameArt name={itemName(r)} src={r.icon_url} wrapClass="iicon" wrapStyle="width:26px; height:26px;" />
+                        <span class="display" style="font-weight:600; color:var(--text);">{itemName(r)}</span>
+                      </a>
+                    </td>
+                    <td class="num"><WinRate wr={toPct(r.win_rate ?? 0)} /></td>
+                    <td class="num"><span class="tnum">{count(r.games)}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -247,19 +302,25 @@ const hasAnything = sets.length > 0 || positions.length > 0 || rankItems.length 
         <section class="panel panel-pad bp-sec">
           <h2 class="h-sec">Community {name} builds</h2>
           <p class="bp-sub">
-            Published builds as their authors wrote them, ordered by weekly favorites. The score below each
-            one is the average win rate of its core items in our data, not the win rate of players
-            running the build.
+            Published builds as their authors wrote them, ordered by weekly favorites and never by score.
+            A score line states which of our numbers it is: the win rate of that exact core item set when
+            our matches measured it, otherwise the average win rate of the core items. Neither is the win
+            rate of players running the build, and a build we cannot score shows no score at all. The list
+            comes from the public{' '}
+            <a href="https://deadlock-api.com" target="_blank" rel="noopener noreferrer">deadlock-api</a>
+            {' '}builds feed.
           </p>
           <ul class="bp-builds">
             {builds.map((b) => (
               <li class="bp-build">
                 <div class="bp-build-head">
                   <span class="display bp-build-name">{b.name}</span>
-                  <span class="bp-build-by">by {authorOf(b)}</span>
+                  <span class="bp-build-by">by {authorLabel(b)}</span>
                 </div>
                 <div class="bp-build-meta mono">
-                  {b.num_weekly_favorites != null && <span>{count(b.num_weekly_favorites)} weekly favorites</span>}
+                  {favoriteCounts(b).map((f) => (
+                    <span>{count(f.value)} {f.label}</span>
+                  ))}
                   <span>Updated {formatUpdated(b.last_updated_timestamp, nowSeconds)}</span>
                   <span>Version {b.version}</span>
                 </div>
@@ -305,7 +366,7 @@ const hasAnything = sets.length > 0 || positions.length > 0 || rankItems.length 
         defines every number here, and <a href="/tier-list/">the tier list</a> puts {name} against the rest of the roster.
       </p>
       <p class="mono bp-window">
-        {setLo && setHi && `Item sets and buy order cover ${setLo} to ${setHi}. `}
+        {sets.length > 0 && setLo && setHi && `Item sets and buy order cover ${setLo} to ${setHi}. `}
         {itemLo && itemHi && `Per-item win rates cover ${itemLo} to ${itemHi}. `}
         {statsThrough && `Newest match in the dataset: ${statsThrough}.`}
       </p>

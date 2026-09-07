@@ -54,3 +54,19 @@ export function abilityOrderSequence(abilityOrder: unknown): number[] {
   }
   return seq;
 }
+
+/** Attribution label. A missing name prints the account id verbatim — a name is never invented. */
+export function authorLabel(b: { author_name?: string | null; author_account_id: number }): string {
+  return b.author_name?.trim() || `Steam account ${b.author_account_id}`;
+}
+
+/** The favorite counts a build actually carries, weekly first; upstream omits either one on its own. */
+export function favoriteCounts(b: {
+  num_weekly_favorites?: number | null;
+  num_favorites?: number | null;
+}): { label: string; value: number }[] {
+  const out: { label: string; value: number }[] = [];
+  if (b.num_weekly_favorites != null) out.push({ label: 'weekly favorites', value: b.num_weekly_favorites });
+  if (b.num_favorites != null) out.push({ label: 'all-time favorites', value: b.num_favorites });
+  return out;
+}

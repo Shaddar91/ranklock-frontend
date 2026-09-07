@@ -58,6 +58,12 @@ export const setLabel = (items: BuildStatsItem[]): string =>
 export const rankedSets = (sets: BuildStatsItemSet[]): BuildStatsItemSet[] =>
   [...sets].filter((s) => s.games > 0).sort((a, b) => b.wilson_lower - a.wilson_lower);
 
+/** Single-item rows in the same Wilson order — the substitute list shown when no item set is folded. */
+export const rankedItemWinRates = (rows: HeroItemWinRate[]): HeroItemWinRate[] =>
+  rows
+    .filter((r) => (r.games ?? 0) > 0 && r.wilson_lower != null)
+    .sort((a, b) => (b.wilson_lower ?? 0) - (a.wilson_lower ?? 0));
+
 //"an 8.1x" / "an 11.3x" / "a 29.6x" — the leading digit decides, not the letter.
 const article = (n: string): string => (/^(8|11|18)/.test(n) ? 'an' : 'a');
 
