@@ -6,10 +6,7 @@ on:
   workflow_dispatch: {}
   repository_dispatch:
     types: [data_version]
-  #Weekly rebake (M6): stats are baked into the static pages at BUILD time, and
-  #deploys otherwise happen only on code push / data_version dispatch — without
-  #this, a quiet repo means unboundedly stale baked stats. Monday 04:47 UTC,
-  #offset from the Rust repos' Monday 05:17 oracle lane.
+  #Stats are baked into the pages at build time, so without a weekly rebuild a quiet repo keeps serving unboundedly stale stats.
   schedule:
     - cron: '47 4 * * 1'
 
@@ -30,26 +27,15 @@ jobs:
       - run: npm run lint
       - run: npm run type-check
       - run: npm test
-      #R19: fail if the committed item catalog (src/data/items-*.json) has drifted
-      #from the upstream assets feed — runs the real regen path into a temp dir and
-      #diffs. Drift = red (regen + commit to fix); upstream outage = loud warning +
-      #skip (see scripts/gen-item-catalog.mjs).
       - name: Item catalog drift check
         run: node scripts/gen-item-catalog.mjs --check
-      #M17/R25: the build FAILS if the /items/stats bake returns 0 rows (bake-empty
-      #guard in src/lib/buildData.ts) — a cold backend must not silently ship ~229
-      #empty prerendered item pages. Escape hatch for an intentional empty-stats
-      #build: add ALLOW_EMPTY_STATS_BUILD: '1' below.
+      #The bake-empty guard fails this build when the /items/stats bake returns 0 rows; escape hatch for an intentional empty-stats build is ALLOW_EMPTY_STATS_BUILD: '1' in the env below.
       - run: npm run build
         env:
           PUBLIC_ADSENSE_CLIENT: ${{ secrets.PUBLIC_ADSENSE_CLIENT }}
           PUBLIC_ADSENSE_SLOT_BANNER: ${{ secrets.PUBLIC_ADSENSE_SLOT_BANNER }}
           PUBLIC_ADSENSE_SLOT_RECT: ${{ secrets.PUBLIC_ADSENSE_SLOT_RECT }}
           PUBLIC_API_BASE_URL: ${{ secrets.PUBLIC_API_BASE_URL }}
-          #Asset-CDN cutover knob. Unset secret => empty => code falls back to the
-          #deadlock-api CDN (v1 default). The one-flip cutover is: set the
-          #PUBLIC_ASSETS_BASE repo secret to https://assets.ranklock.app — no code
-          #change, no workflow edit. Safe to keep wired while the secret is unset.
           PUBLIC_ASSETS_BASE: ${{ secrets.PUBLIC_ASSETS_BASE }}
           PUBLIC_DONATION_ADDRESS: ${{ secrets.PUBLIC_DONATION_ADDRESS }}
           PUBLIC_MATOMO_SITE_ID: ${{ secrets.PUBLIC_MATOMO_SITE_ID }}
@@ -64,16 +50,7 @@ jobs:
         env:
           PROBE_BASE_URL: ${{ secrets.PROBE_BASE_URL }}
         run: |
-          #A broken deploy must not evict the last-good edge copies, so the purge
-          #below only runs after the NEW deploy provably serves. Probes hit the
-          #worker's own hostname (PROBE_BASE_URL secret, masked in this log): the
-          #zone apex (ranklock.app) sits behind a Cloudflare managed challenge
-          #that 403s every non-browser client (cf-mitigated: challenge, any UA —
-          #verified 2026-07-10), so an unauthenticated probe there can never
-          #pass, while the worker origin serves the exact version this run just
-          #deployed, outside the zone WAF. The unique query param is
-          #cache-busting insurance; /items/ keeps its trailing slash (the assets
-          #router 307s /items -> /items/).
+          #PROBE_BASE_URL is the worker origin, which bypasses the zone WAF; the zone apex 403s every non-browser client, so a probe there could never pass.
           [ -n "$PROBE_BASE_URL" ] || { echo "PROBE FAIL — PROBE_BASE_URL secret unset"; exit 1; }
           bust="probe=${{ github.run_id }}-${{ github.run_attempt }}"
           for path in / /items/; do
