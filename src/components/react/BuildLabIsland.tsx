@@ -27,9 +27,11 @@ type Tab = 'creator' | 'builds' | 'heroes' | 'items';
 //The released hero roster, handed down from build-lab.astro. The lab's own roster is
 ///heroes/base-stats, which is never run through releasedRoster()/slugRoster(), so a hero
 //there may have no page — this is the guard that keeps a "how to play" link off a 404.
+//hasGuide narrows it again: /heroes/<slug>/guide/ exists only where a guide file does.
 export interface RosterSlug {
   hero_id: number;
   slug: string;
+  hasGuide: boolean;
 }
 
 //snake_case stat key → "Title Case" label. The raw starting_stats keys are an
@@ -101,10 +103,10 @@ function HeroSelect({
 }
 
 function HowToPlayLink({ hero, roster }: { hero: HeroBaseStats | null; roster: RosterSlug[] }) {
-  const slug = hero ? roster.find((r) => r.hero_id === hero.hero_id)?.slug : undefined;
-  if (!hero || !slug) return null;
+  const row = hero ? roster.find((r) => r.hero_id === hero.hero_id) : undefined;
+  if (!hero || !row?.hasGuide) return null;
   return (
-    <a className="kicker" href={`/heroes/${slug}/guide/`}>
+    <a className="kicker" href={`/heroes/${row.slug}/guide/`}>
       How to play {hero.hero_name} →
     </a>
   );

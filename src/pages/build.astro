@@ -5,6 +5,7 @@ import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { releasedRoster } from '../lib/heroRoster';
 import { slugRoster } from '../lib/heroSlugs';
+import { publishedGuideSlugs } from '../lib/guideRoutes';
 import type { HeroSummary } from '../types/api';
 
 //Shared-build landing SHELL: a noindex surface for `#b1:<payload>` share links, kept
@@ -14,10 +15,11 @@ import type { HeroSummary } from '../types/api';
 //Same released-roster guard /build-lab hands the island — its "how to play" links are
 //keyed on it, not on the /heroes/base-stats roster it fetches itself.
 const released = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'build');
+const guideSlugs = await publishedGuideSlugs();
 const roster = slugRoster(
   released.filter((h) => h.hero_id != null),
   'build',
-).map((h) => ({ hero_id: h.hero_id, slug: h.slug }));
+).map((h) => ({ hero_id: h.hero_id, slug: h.slug, hasGuide: guideSlugs.has(h.slug) }));
 ---
 
 <BaseLayout

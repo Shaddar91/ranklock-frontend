@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DataAgeChip from '../../components/react/DataAgeChip';
 import HeroesTable from '../../components/react/HeroesTable';
+import { publishedGuideSlugs } from '../../lib/guideRoutes';
 import GameModeToggle from '../../components/react/ui/GameModeToggle';
 import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
@@ -67,7 +68,7 @@ const path = Astro.url.pathname;
       by tier on the <a href="/rank-distribution/">rank distribution</a> page.
     </p>
     <div style="margin-top:20px;">
-      <HeroesTable initialRows={heroes} client:load />
+      <HeroesTable initialRows={heroes} guideSlugs={[...(await publishedGuideSlugs())]} client:load />
     </div>
   </main>
 </BaseLayout>

@@ -15,6 +15,7 @@ import { breadcrumbJsonLd } from '../../../lib/seo';
 import { count, shortDate } from '../../../lib/format';
 import { authorLabel, favoriteCounts, formatUpdated } from '../../../lib/buildMeta';
 import { heroArt } from '../../../lib/heroArt';
+import { publishedGuideSlugs } from '../../../lib/guideRoutes';
 import { heroPath, slugRoster } from '../../../lib/heroSlugs';
 import { releasedRoster } from '../../../lib/heroRoster';
 import {
@@ -102,6 +103,9 @@ const itemHi = shortDate(itemWindow?.window_hi);
 
 const heroUrl = heroPath(name);
 const canonicalPath = `${heroUrl}build/`;
+
+//Guide-gated route: the sentence naming it is dropped for a hero with no guide file.
+const hasGuide = (await publishedGuideSlugs()).has(Astro.params.slug as string);
 const art = heroArt(hero.icon_url);
 const description = builds.length
   ? `${name} item sets that win most in RankLock's ranked match data, with games and win rate for each, plus community builds scored on those numbers.`
@@ -142,9 +146,11 @@ const hasAnything =
 
     <p class="page-intro">
       What RankLock's own match data says wins on {name}, and what the community has published.
-      For win rate, matchups and duo partners see <a href={heroUrl}>{name}'s stats page</a>; for
-      the abilities, levelling order and counters, read <a href={`${heroUrl}guide/`}>how to play {name}</a>; to
-      assemble a build of your own, open the <a href="/build-lab/">build lab</a>.
+      For win rate, matchups and duo partners see <a href={heroUrl}>{name}'s stats page</a>;{
+        hasGuide && (
+          <Fragment> for the abilities, levelling order and counters, read <a href={`${heroUrl}guide/`}>how to play {name}</a>;</Fragment>
+        )
+      } to assemble a build of your own, open the <a href="/build-lab/">build lab</a>.
     </p>
 
     {hasAnything ? <Narrative sections={sections} /> : null}

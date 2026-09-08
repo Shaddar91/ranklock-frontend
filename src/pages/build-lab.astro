@@ -6,6 +6,7 @@ import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { releasedRoster } from '../lib/heroRoster';
 import { slugRoster } from '../lib/heroSlugs';
+import { publishedGuideSlugs } from '../lib/guideRoutes';
 import type { HeroSummary } from '../types/api';
 
 //Build Lab (requirements §A.4) — wires /heroes/base-stats + /items/modifiers,
@@ -22,10 +23,11 @@ const jsonLd = breadcrumbJsonLd(origin, [
 //The island's own roster comes from /heroes/base-stats, which can name a hero with no page;
 //this released roster is what its "how to play" links are keyed on.
 const released = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'build-lab');
+const guideSlugs = await publishedGuideSlugs();
 const roster = slugRoster(
   released.filter((h) => h.hero_id != null),
   'build-lab',
-).map((h) => ({ hero_id: h.hero_id, slug: h.slug }));
+).map((h) => ({ hero_id: h.hero_id, slug: h.slug, hasGuide: guideSlugs.has(h.slug) }));
 ---
 
 <BaseLayout

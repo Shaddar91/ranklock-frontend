@@ -15,7 +15,7 @@ import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, GameIcon, WinBar, TierPill } from './ui/index';
 import BracketFilter, { type BracketValue } from './ui/BracketFilter';
 import { RANKS } from '../../lib/ranks';
-import { heroPath } from '../../lib/heroSlugs';
+import { heroPath, heroSlug } from '../../lib/heroSlugs';
 import { DASH, fixed, kda, metaTier, pct, pickShare } from '../../lib/format';
 import type { HeroSummary } from '../../types/api';
 
@@ -56,7 +56,7 @@ function HeroCell({ hero }: { hero: HeroSummary }) {
   );
 }
 
-function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
+function HeroesTableInner({ initialRows, guideSlugs }: { initialRows: HeroSummary[]; guideSlugs: string[] }) {
   const { mode } = useGameMode();
   const [band, setBand] = useState<BracketValue>('all');
 
@@ -72,8 +72,9 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
   const rows = data ?? [];
   const totalPicks = useMemo(() => rows.reduce((sum, h) => sum + (h.picks ?? 0), 0), [rows]);
 
-  const columns = useMemo<DataTableColumn<HeroSummary>[]>(
-    () => [
+  const guides = useMemo(() => new Set(guideSlugs), [guideSlugs]);
+  const columns = useMemo<DataTableColumn<HeroSummary>[]>(() => {
+    const cols: DataTableColumn<HeroSummary>[] = [
       { key: 'hero', header: 'Hero', sortValue: (h) => h.hero_name, render: (h) => <HeroCell hero={h} /> },
       {
         key: 'tier',
@@ -119,16 +120,18 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
       {
         key: 'play',
         header: '',
-        //Every row's link text is identical, so the hero name rides in the label.
-        render: (h) => (
-          <a className="kicker" href={`${heroPath(h.hero_name)}guide/`} aria-label={`How to play ${h.hero_name}`}>
-            How to play
-          </a>
-        ),
+        //Guide-gated route: a hero with no guide file gets an empty cell, never a link to a 404.
+        //Every linked row's text is identical, so the hero name rides in the label.
+        render: (h) =>
+          guides.has(heroSlug(h.hero_name)) ? (
+            <a className="kicker" href={`${heroPath(h.hero_name)}guide/`} aria-label={`How to play ${h.hero_name}`}>
+              How to play
+            </a>
+          ) : null,
       },
-    ],
-    [totalPicks],
-  );
+    ];
+    return guides.size > 0 ? cols : cols.filter((c) => c.key !== 'play');
+  }, [totalPicks, guides]);
 
   return (
     <div>
@@ -160,10 +163,10 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
   );
 }
 
-export default function HeroesTable({ initialRows }: { initialRows: HeroSummary[] }) {
+export default function HeroesTable({ initialRows, guideSlugs }: { initialRows: HeroSummary[]; guideSlugs: string[] }) {
   return (
     <QueryProvider>
-      <HeroesTableInner initialRows={initialRows} />
+      <HeroesTableInner initialRows={initialRows} guideSlugs={guideSlugs} />
     </QueryProvider>
   );
 }
