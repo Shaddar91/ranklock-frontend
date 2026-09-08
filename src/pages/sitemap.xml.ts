@@ -6,12 +6,13 @@ import { SITE_ORIGIN } from '../lib/seo';
 import { TRANSLATED_LOCALES, hreflangAlternates, pagePath } from '../lib/i18n';
 import { releasedRoster } from '../lib/heroRoster';
 import { slugRoster } from '../lib/heroSlugs';
-import type { HeroSummary } from '../types/api';
+import { mintablePatches } from '../lib/patchRoutes';
+import type { HeroSummary, Patch } from '../types/api';
 import itemDetail from '../data/items-detail.json';
 
 //Curated SEO sitemap (C7, requirements §7/§8.2). Lists ONLY the indexable English
 //SEO surface + BOUNDED curated families of dynamic pages (the hero roster, the
-//item catalog and the blog guides). It NEVER lists:
+//item catalog, the minted patch family and the blog guides). It NEVER lists:
 //  - the millions of /players/:id or 13.8M /matches/:id CSR shells (per-entity
 //    data pages, noindex — listing them would be the explicit anti-goal);
 //  - the noindex/canonical→en localized variants (/ru/…, /fr/… — only the en
@@ -103,6 +104,19 @@ export const GET: APIRoute = async () => {
     .sort((a, b) => a - b);
   for (const id of itemIds) {
     routes.push({ path: `/items/${id}`, changefreq: 'weekly', priority: '0.6' });
+  }
+
+  //Per-patch pages — bounded by the same predicate patches/[patch_id].astro mints
+  //from, so the sitemap can never advertise a URL that has no page. lastmod is the
+  //release date: a patch's changelog is fixed once it ships.
+  const patches = await buildFetch(api.getPatches(), [] as Patch[]);
+  for (const p of mintablePatches(patches)) {
+    routes.push({
+      path: `/patches/${p.patch_id}`,
+      changefreq: 'monthly',
+      priority: '0.6',
+      lastmod: p.released_at.slice(0, 10),
+    });
   }
 
   const xmlnsAlt = USE_ALTERNATES ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"' : '';

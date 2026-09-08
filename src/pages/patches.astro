@@ -7,6 +7,7 @@ import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { breadcrumbJsonLd } from '../lib/seo';
 import { shortDate } from '../lib/format';
+import { mintablePatches } from '../lib/patchRoutes';
 import type { DataHorizonResponse, Patch } from '../types/api';
 
 //SSG patch tracker (requirements §A.4 — the largest backend-ahead block, zero FE
@@ -15,6 +16,9 @@ import type { DataHorizonResponse, Patch } from '../types/api';
 //render; the per-patch detail + movers fetch client-side. Build-ahead: empty on
 //a cold patch table (no rows ingested yet).
 const patches = await buildFetch(api.getPatches(), [] as Patch[]);
+//Server-rendered so the per-patch family is crawlable: a link the island paints
+//after hydration is not a link Google follows.
+const minted = mintablePatches(patches);
 const horizon = await buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null);
 const statsThrough = shortDate(horizon?.max_match_start_time);
 
@@ -49,6 +53,24 @@ const path = Astro.url.pathname;
       changed{statsThrough ? `, through ${statsThrough}` : ''}. For the current picture across every hero
       at once, open the <a href="/heroes/">hero win rates</a>.
     </p>
+    {
+      minted.length > 0 && (
+        <section class="panel panel-pad" style="margin-top:20px;">
+          <h2 class="h-sec" style="margin-bottom:4px;">Patch notes, line by line</h2>
+          <p class="muted" style="font-size:13px; margin:0 0 12px;">
+            The full changelog for each patch, with every hero and item it names linked to what our matches measure for it.
+          </p>
+          <div class="flex" style="gap:8px; flex-wrap:wrap;">
+            {minted.map((p) => (
+              <a class="chip" href={`/patches/${p.patch_id}/`} style="text-decoration:none;">
+                {p.version_label}
+              </a>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
     <div style="margin-top:20px;">
       <PatchTrackerIsland initialPatches={patches} client:load />
     </div>
