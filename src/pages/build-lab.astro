@@ -2,6 +2,11 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import BuildLabIsland from '../components/react/BuildLabIsland';
 import { breadcrumbJsonLd } from '../lib/seo';
+import { api } from '../lib/apiClient';
+import { buildFetch } from '../lib/buildData';
+import { releasedRoster } from '../lib/heroRoster';
+import { slugRoster } from '../lib/heroSlugs';
+import type { HeroSummary } from '../types/api';
 
 //Build Lab (requirements §A.4) — wires /heroes/base-stats + /items/modifiers,
 //warmed backends with no prior consumer. CSR-only (no build-time seed): the
@@ -13,6 +18,14 @@ const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
   { name: 'Build Lab', path: '/build-lab' },
 ]);
+
+//The island's own roster comes from /heroes/base-stats, which can name a hero with no page;
+//this released roster is what its "how to play" links are keyed on.
+const released = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'build-lab');
+const roster = slugRoster(
+  released.filter((h) => h.hero_id != null),
+  'build-lab',
+).map((h) => ({ hero_id: h.hero_id, slug: h.slug }));
 ---
 
 <BaseLayout
@@ -31,7 +44,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
       open the <a href="/items/">item win rates</a>.
     </p>
     <div style="margin-top:20px;">
-      <BuildLabIsland client:load />
+      <BuildLabIsland client:load roster={roster} />
     </div>
   </main>
 </BaseLayout>

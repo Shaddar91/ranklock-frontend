@@ -116,6 +116,16 @@ function HeroesTableInner({ initialRows }: { initialRows: HeroSummary[] }) {
         sortValue: (h) => kda(h.avg_kills, h.avg_deaths, h.avg_assists),
         render: (h) => <span className="tnum">{fixed(kda(h.avg_kills, h.avg_deaths, h.avg_assists))}</span>,
       },
+      {
+        key: 'play',
+        header: '',
+        //Every row's link text is identical, so the hero name rides in the label.
+        render: (h) => (
+          <a className="kicker" href={`${heroPath(h.hero_name)}guide/`} aria-label={`How to play ${h.hero_name}`}>
+            How to play
+          </a>
+        ),
+      },
     ],
     [totalPicks],
   );

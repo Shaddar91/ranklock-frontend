@@ -24,6 +24,14 @@ import type { HeroAbility, HeroBaseStats, ItemModifier, TrimmedBuild } from '../
 
 type Tab = 'creator' | 'builds' | 'heroes' | 'items';
 
+//The released hero roster, handed down from build-lab.astro. The lab's own roster is
+///heroes/base-stats, which is never run through releasedRoster()/slugRoster(), so a hero
+//there may have no page — this is the guard that keeps a "how to play" link off a 404.
+export interface RosterSlug {
+  hero_id: number;
+  slug: string;
+}
+
 //snake_case stat key → "Title Case" label. The raw starting_stats keys are an
 //upstream concern; this is a presentational humanization, not invented data.
 function humanize(key: string): string {
@@ -92,9 +100,27 @@ function HeroSelect({
   );
 }
 
+function HowToPlayLink({ hero, roster }: { hero: HeroBaseStats | null; roster: RosterSlug[] }) {
+  const slug = hero ? roster.find((r) => r.hero_id === hero.hero_id)?.slug : undefined;
+  if (!hero || !slug) return null;
+  return (
+    <a className="kicker" href={`/heroes/${slug}/guide/`}>
+      How to play {hero.hero_name} →
+    </a>
+  );
+}
+
 //---- hero base stats --------------------------------------------------------
 
-function HeroBaseStatsTab({ heroId, onHero }: { heroId: number | null; onHero: (id: number) => void }) {
+function HeroBaseStatsTab({
+  heroId,
+  onHero,
+  roster,
+}: {
+  heroId: number | null;
+  onHero: (id: number) => void;
+  roster: RosterSlug[];
+}) {
   const { heroes, isPending, isError } = useHeroRoster();
   const active = heroes.find((h) => h.hero_id === heroId) ?? heroes[0] ?? null;
 
@@ -133,7 +159,10 @@ function HeroBaseStatsTab({ heroId, onHero }: { heroId: number | null; onHero: (
   return (
     <div>
       <div className="between" style={{ gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-        <HeroSelect heroes={heroes} activeId={active.hero_id} onHero={onHero} />
+        <div className="flex" style={{ alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <HeroSelect heroes={heroes} activeId={active.hero_id} onHero={onHero} />
+          <HowToPlayLink hero={active} roster={roster} />
+        </div>
         <span className="mono faint" style={{ fontSize: 12 }}>
           patch {active.patch_id} · {active.source}
         </span>
@@ -187,7 +216,15 @@ function AbilityOrderRow({ build, abilities }: { build: TrimmedBuild; abilities:
   );
 }
 
-function HeroBuildsTab({ heroId, onHero }: { heroId: number | null; onHero: (id: number) => void }) {
+function HeroBuildsTab({
+  heroId,
+  onHero,
+  roster,
+}: {
+  heroId: number | null;
+  onHero: (id: number) => void;
+  roster: RosterSlug[];
+}) {
   const { heroes, isPending: rosterPending, isError: rosterError } = useHeroRoster();
   const active = heroes.find((h) => h.hero_id === heroId) ?? heroes[0] ?? null;
   const [sort, setSort] = useState<BuildSort>('weekly');
@@ -227,7 +264,10 @@ function HeroBuildsTab({ heroId, onHero }: { heroId: number | null; onHero: (id:
   return (
     <div>
       <div className="between" style={{ gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-        <HeroSelect heroes={heroes} activeId={active.hero_id} onHero={onHero} />
+        <div className="flex" style={{ alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <HeroSelect heroes={heroes} activeId={active.hero_id} onHero={onHero} />
+          <HowToPlayLink hero={active} roster={roster} />
+        </div>
         <div className="tabs" role="tablist" aria-label="Sort builds">
           {SORT_MODES.map((m) => (
             <button
@@ -432,7 +472,7 @@ const TABS: { value: Tab; label: string }[] = [
   { value: 'items', label: 'Item modifiers' },
 ];
 
-function BuildLabInner() {
+function BuildLabInner({ roster }: { roster: RosterSlug[] }) {
   //Default to the creator so a shared `#b1:` link lands on it (the creator reads the fragment
   //itself). Fixed for server + client render — no hydration mismatch.
   const [tab, setTab] = useState<Tab>('creator');
@@ -457,18 +497,18 @@ function BuildLabInner() {
       </div>
       <div style={{ paddingTop: 12 }}>
         {tab === 'creator' && <BuildCreator />}
-        {tab === 'builds' && <HeroBuildsTab heroId={heroId} onHero={setHeroId} />}
-        {tab === 'heroes' && <HeroBaseStatsTab heroId={heroId} onHero={setHeroId} />}
+        {tab === 'builds' && <HeroBuildsTab heroId={heroId} onHero={setHeroId} roster={roster} />}
+        {tab === 'heroes' && <HeroBaseStatsTab heroId={heroId} onHero={setHeroId} roster={roster} />}
         {tab === 'items' && <ItemModifiersTab />}
       </div>
     </div>
   );
 }
 
-export default function BuildLabIsland() {
+export default function BuildLabIsland({ roster }: { roster: RosterSlug[] }) {
   return (
     <QueryProvider>
-      <BuildLabInner />
+      <BuildLabInner roster={roster} />
     </QueryProvider>
   );
 }

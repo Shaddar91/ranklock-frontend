@@ -1,10 +1,23 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import BuildLabIsland from '../components/react/BuildLabIsland';
+import { api } from '../lib/apiClient';
+import { buildFetch } from '../lib/buildData';
+import { releasedRoster } from '../lib/heroRoster';
+import { slugRoster } from '../lib/heroSlugs';
+import type { HeroSummary } from '../types/api';
 
 //Shared-build landing SHELL: a noindex surface for `#b1:<payload>` share links, kept
 //off the indexable /build-lab meta page. The per-build OG card is deferred, so og:image
 //stays the generic default; the island reads the fragment and names the hero in the tab.
+
+//Same released-roster guard /build-lab hands the island — its "how to play" links are
+//keyed on it, not on the /heroes/base-stats roster it fetches itself.
+const released = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'build');
+const roster = slugRoster(
+  released.filter((h) => h.hero_id != null),
+  'build',
+).map((h) => ({ hero_id: h.hero_id, slug: h.slug }));
 ---
 
 <BaseLayout
@@ -20,7 +33,7 @@ import BuildLabIsland from '../components/react/BuildLabIsland';
       souls cost, then open the full <a href="/build-lab/">Build Lab</a> to theorycraft your own.
     </p>
     <div style="margin-top:20px;">
-      <BuildLabIsland client:load />
+      <BuildLabIsland client:load roster={roster} />
     </div>
   </main>
 </BaseLayout>
