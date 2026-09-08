@@ -1,0 +1,278 @@
+---
+//SSG per-patch page: the registry row, the raw changelog fetched from its
+//attributed source, and the per-patch meta shift when the pipeline has computed
+//one. Every number here comes from a payload read at build time.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import WinRate from '../../components/WinRate.astro';
+import { api } from '../../lib/apiClient';
+import { buildFetch } from '../../lib/buildData';
+import { breadcrumbJsonLd } from '../../lib/seo';
+import { count, pct, shortDate } from '../../lib/format';
+import { HERO_IDENTITY, slugOf } from '../../lib/heroSlugs';
+import { toPct } from '../../lib/narrative';
+import { mintablePatches } from '../../lib/patchRoutes';
+import { parsePatchNotes, type PatchNotes } from '../../lib/patchNotes';
+import type { Patch, PatchDetail } from '../../types/api';
+import itemDetail from '../../data/items-detail.json';
+
+export async function getStaticPaths() {
+  //Raw text on a third-party host, not a RankLock endpoint: a source outage must
+  //degrade the page, never fail the build. Declared here because Astro bundles
+  //getStaticPaths without the rest of the frontmatter.
+  const changelogText = async (url: string | null): Promise<string | null> => {
+    if (!url) return null;
+    try {
+      const res = await fetch(url);
+      return res.ok ? await res.text() : null;
+    } catch {
+      return null;
+    }
+  };
+  const patches = await buildFetch(api.getPatches(), [] as Patch[]);
+  const mintable = mintablePatches(patches);
+  const loaded = await Promise.all(
+    mintable.map(async (patch) => ({
+      patch,
+      changelog: await changelogText(patch.notes_url),
+      detail: await buildFetch(api.getPatch(patch.patch_id), null as PatchDetail | null),
+    })),
+  );
+  return loaded.map((row, i) => ({
+    params: { patch_id: row.patch.patch_id },
+    props: { ...row, newer: mintable[i - 1] ?? null, older: mintable[i + 1] ?? null },
+  }));
+}
+
+const { patch, changelog, detail, newer, older } = Astro.props as {
+  patch: Patch;
+  changelog: string | null;
+  detail: PatchDetail | null;
+  newer: Patch | null;
+  older: Patch | null;
+};
+
+const items = Object.entries(itemDetail as Record<string, { name: string }>).map(([id, m]) => ({
+  item_id: Number(id),
+  name: m.name,
+}));
+const notes: PatchNotes = parsePatchNotes(changelog, { heroes: HERO_IDENTITY, items });
+const touched = notes.heroes.length + notes.items.length;
+const noun = (n: number, one: string, many: string) => `${count(n)} ${n === 1 ? one : many}`;
+
+//Movers first; delta_pick_rate is null on a patch with no predecessor to diff.
+const heroStats = (detail?.hero_stats ?? [])
+  .slice()
+  .sort((a, b) => Math.abs(b.delta_pick_rate ?? 0) - Math.abs(a.delta_pick_rate ?? 0));
+const patchMatches = heroStats.reduce((sum, h) => sum + h.matches, 0);
+
+const touchedPhrase = [
+  notes.heroes.length > 0 ? noun(notes.heroes.length, 'hero', 'heroes') : null,
+  notes.items.length > 0 ? noun(notes.items.length, 'item', 'items') : null,
+]
+  .filter(Boolean)
+  .join(' and ');
+const description = notes.bullets
+  ? touchedPhrase
+    ? `Deadlock ${patch.version_label} patch notes: ${noun(notes.bullets, 'change', 'changes')} touching ${touchedPhrase}, each linked to its stats page.`
+    : `Deadlock ${patch.version_label} patch notes: ${noun(notes.bullets, 'change', 'changes')} to the game's systems, line by line from the official changelog.`
+  : (patch.notes_summary ?? `Patch notes and meta shift for the Deadlock ${patch.version_label}.`);
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = breadcrumbJsonLd(origin, [
+  { name: 'Home', path: '/' },
+  { name: 'Patches', path: '/patches' },
+  { name: patch.version_label, path: `/patches/${patch.patch_id}` },
+]);
+const patchWindow = patch.ended_at
+  ? `${shortDate(patch.released_at)} → ${shortDate(patch.ended_at)}`
+  : `${shortDate(patch.released_at)} → now`;
+---
+
+<BaseLayout
+  title={`Deadlock ${patch.version_label} patch notes | RankLock`}
+  description={description}
+  canonicalPath={`/patches/${patch.patch_id}`}
+  publishedTime={patch.released_at}
+  jsonLd={jsonLd}
+>
+  <main class="container">
+    <nav style="margin-bottom:14px; font-size:13px;">
+      <a href="/patches/" style="color:var(--muted);">← All patches</a>
+    </nav>
+
+    <div class="page-head">
+      <div>
+        <div class="kicker">Patch · Deadlock · {patchWindow}</div>
+        <h1 class="h-page">{patch.version_label} patch notes</h1>
+        <div class="flex" style="gap:6px; margin-top:6px; flex-wrap:wrap;">
+          {patch.is_current && <span class="chip">Current patch</span>}
+          {notes.bullets > 0 && <span class="chip">{noun(notes.bullets, 'change', 'changes')}</span>}
+        </div>
+      </div>
+    </div>
+
+    <p class="page-intro">
+      {
+        notes.bullets > 0
+          ? `Every line of the ${patch.version_label} changelog, with each hero and item linked to what our matches measure for it.`
+          : `The ${patch.version_label} registry entry. The changelog for this patch was not reachable when this page was built.`
+      }{' '}
+      Compare the whole roster on the <a href="/heroes/">hero win rates</a>.
+    </p>
+
+    {
+      touched > 0 && (
+        <section class="panel panel-pad" style="margin-bottom:24px;">
+          <h2 class="h-sec" style="margin-bottom:10px;">What this patch touched</h2>
+          {notes.heroes.length > 0 && (
+            <div style="margin-bottom:10px;">
+              <div class="label-xs" style="margin-bottom:6px;">Heroes ({count(notes.heroes.length)})</div>
+              <div class="flex" style="gap:6px; flex-wrap:wrap;">
+                {notes.heroes.map((h) => (
+                  <a class="chip" href={h.href} style="text-decoration:none;">
+                    {h.name} <span class="faint tnum">{h.lines}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          {notes.items.length > 0 && (
+            <div>
+              <div class="label-xs" style="margin-bottom:6px;">Items ({count(notes.items.length)})</div>
+              <div class="flex" style="gap:6px; flex-wrap:wrap;">
+                {notes.items.map((i) => (
+                  <a class="chip" href={i.href} style="text-decoration:none;">
+                    {i.name} <span class="faint tnum">{i.lines}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          <p class="faint" style="font-size:12px; margin:10px 0 0;">
+            The number after each name is how many changelog lines name it. Lines naming no hero or item stay unlinked.
+          </p>
+        </section>
+      )
+    }
+
+    <section class="panel panel-pad" style="margin-bottom:24px;">
+      <h2 class="h-sec" style="margin-bottom:10px;">Hero meta shift</h2>
+      {
+        heroStats.length > 0 ? (
+          <>
+            <p class="muted" style="font-size:13px; margin:0 0 10px;">
+              Measured over {count(patchMatches)} matches played in this patch window.
+              {detail?.prev_patch_id && ' Deltas are against the previous patch.'}
+            </p>
+            <div class="dt-scroll">
+              <table class="dt">
+                <thead>
+                  <tr>
+                    <th><span class="th-static">Hero</span></th>
+                    <th class="num"><span class="th-static">Matches</span></th>
+                    <th class="num"><span class="th-static">Pick rate</span></th>
+                    <th class="num"><span class="th-static">Δ pick</span></th>
+                    <th class="num"><span class="th-static">Win rate</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {heroStats.map((h) => (
+                    <tr>
+                      <td>
+                        {slugOf(h.hero_id) ? (
+                          <a class="display" style="font-weight:600; color:var(--text);" href={`/heroes/${slugOf(h.hero_id)}/`}>
+                            {h.hero_name}
+                          </a>
+                        ) : (
+                          <span class="display" style="font-weight:600;">{h.hero_name}</span>
+                        )}
+                      </td>
+                      <td class="num"><span class="tnum">{count(h.matches)}</span></td>
+                      <td class="num"><span class="tnum">{pct(toPct(h.pick_rate))}</span></td>
+                      <td class="num">
+                        <span
+                          class="tnum"
+                          style={h.delta_pick_rate == null ? '' : `color:${h.delta_pick_rate >= 0 ? 'var(--win)' : 'var(--loss)'};`}
+                        >
+                          {h.delta_pick_rate == null
+                            ? '—'
+                            : `${h.delta_pick_rate >= 0 ? '+' : ''}${pct(toPct(h.delta_pick_rate), 2)}`}
+                        </span>
+                      </td>
+                      <td class="num"><WinRate wr={h.win_rate == null ? null : toPct(h.win_rate)} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : (
+          <p class="muted" style="font-size:13px; margin:0;">
+            The per-hero pick-rate and win-rate lines for this patch window have not finished computing yet, so there is
+            nothing measured to show. They appear here once they do — nothing on this page is estimated in the meantime.
+            The <a href="/patches/">patch tracker</a> reads the same source.
+          </p>
+        )
+      }
+    </section>
+
+    <section class="panel panel-pad" style="margin-bottom:24px;">
+      <div
+        class="flex"
+        style="justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:10px;"
+      >
+        <h2 class="h-sec" style="margin:0;">Changelog</h2>
+        {patch.notes_url && (
+          <a
+            class="mono"
+            style="font-size:12px; color:var(--cyan);"
+            href={patch.notes_url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Source: deadlock-wiki/deadlock-data ↗
+          </a>
+        )}
+      </div>
+      {
+        notes.lines.length > 0 ? (
+          <ul style="list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px;">
+            {notes.lines.map((line) =>
+              line.kind === 'heading' ? (
+                <li class="label-xs" style="margin-top:10px;">{line.text}</li>
+              ) : (
+                <li
+                  class={line.kind === 'text' ? 'muted' : undefined}
+                  style={`font-size:13.5px; line-height:1.55;${line.kind === 'bullet' ? ' padding-left:14px; text-indent:-14px;' : ''}`}
+                >{line.kind === 'bullet' ? <span class="faint">·&#32;</span> : null}{line.entity ? <a href={line.entity.href} style="font-weight:600; color:var(--text);">{line.label}</a> : null}{line.text}</li>
+              ),
+            )}
+          </ul>
+        ) : (
+          <p class="muted" style="font-size:13px; margin:0;">
+            The changelog for this patch was not reachable when this page was built. Read it at the{' '}
+            <a href={patch.notes_url ?? '/patches/'}>source</a>.
+          </p>
+        )
+      }
+      {patch.notes_summary && <p class="faint" style="font-size:12px; margin:12px 0 0;">{patch.notes_summary}</p>}
+    </section>
+
+    <nav class="flex" style="justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:13px;">
+      {
+        older ? (
+          <a href={`/patches/${older.patch_id}/`}>← {older.version_label}</a>
+        ) : (
+          <span class="faint">Oldest tracked patch</span>
+        )
+      }
+      {
+        newer ? (
+          <a href={`/patches/${newer.patch_id}/`}>{newer.version_label} →</a>
+        ) : (
+          <span class="faint">Newest tracked patch</span>
+        )
+      }
+    </nav>
+  </main>
+</BaseLayout>
