@@ -32,6 +32,7 @@ import {
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_POSTS = [
   'src/content/blog/patch-what-changed-for-builds.md',
+  'src/content/blog/patch-day-one-sizing-the-changes.md',
   'src/content/blog/patch-two-weeks-later-builds-that-stuck.md',
 ];
 const CONTAMINATION_LIMIT = 0.25;
