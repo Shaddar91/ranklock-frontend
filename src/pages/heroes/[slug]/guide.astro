@@ -258,11 +258,14 @@ const jsonLd = breadcrumbJsonLd(origin, [
 
     {
       play.roleNav.length > 0 && (
-        <nav class="tabs gp-nav" aria-label="Choose how to play">
-          {play.roleNav.map((r) => (
-            <a class="tab" href={`#${r.anchor}`}>{r.label}</a>
-          ))}
-        </nav>
+        <div class="gp-choose">
+          <div class="label-xs" style="margin-bottom:6px;">Choose how to play</div>
+          <nav class="tabs" aria-label="Choose how to play">
+            {play.roleNav.map((r) => (
+              <a class="tab" href={`#${r.anchor}`}>{r.label}</a>
+            ))}
+          </nav>
+        </div>
       )
     }
 
@@ -462,10 +465,10 @@ const jsonLd = breadcrumbJsonLd(origin, [
 
 <style>
   /* Anchor targets sit under the sticky site header; the nav itself is plain links, no JS. */
-  .gp-nav {
+  .gp-choose {
     margin-bottom: 24px;
   }
-  .gp-nav .tab {
+  .gp-choose .tab {
     text-decoration: none;
   }
   .gp-body :global(h2) {
