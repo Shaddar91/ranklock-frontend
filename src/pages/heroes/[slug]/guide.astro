@@ -1,0 +1,474 @@
+---
+//SSG "how to play" page, one per released hero: the served spine (builds, every ability with
+//its text and levelling order, hard counters, items) plus — only when a guide exists — its whole
+//body and a zero-JS anchor nav over the role H2s it declares. A guide is optional everywhere.
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GameArt from '../../../components/GameArt.astro';
+import Narrative from '../../../components/Narrative.astro';
+import WinRate from '../../../components/WinRate.astro';
+import GuideLiveStats from '../../../components/react/GuideLiveStats';
+import { getEntry, render } from 'astro:content';
+import { api } from '../../../lib/apiClient';
+import { buildFetch } from '../../../lib/buildData';
+import { breadcrumbJsonLd } from '../../../lib/seo';
+import { count, shortDate } from '../../../lib/format';
+import { abilityOrderSequence, favoriteCounts, formatUpdated } from '../../../lib/buildMeta';
+import { isPublicItem, itemMeta } from '../../../lib/itemCatalog';
+import { heroArt } from '../../../lib/heroArt';
+import { heroPath, slugRoster } from '../../../lib/heroSlugs';
+import { releasedRoster } from '../../../lib/heroRoster';
+import { about } from '../../../lib/heroNarrative';
+import { pagePath } from '../../../lib/i18n';
+import {
+  buildHeroPlay,
+  roleHeadingText,
+  ROLE_LABEL,
+  type AbilityDescription,
+  type GuideMeta,
+  type HeroRole,
+} from '../../../lib/heroPlay';
+import type {
+  DataHorizonResponse,
+  HeroAbility,
+  HeroCounterRow,
+  HeroItemWinRate,
+  HeroSummary,
+  HeroSynergyRow,
+  MatchupEntry,
+  Patch,
+  ScoredBuild,
+} from '../../../types/api';
+
+//Every released hero gets a page; a guide entry is optional, so a cold roster means zero
+//pages rather than a placeholder URL that exists for no hero (build.astro:41).
+export async function getStaticPaths() {
+  const heroes = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'heroes/[slug]/guide');
+  if (heroes.length === 0) return [];
+  return slugRoster(heroes, 'heroes/[slug]/guide').map(({ slug, ...hero }) => ({
+    params: { slug },
+    props: { hero: hero as HeroSummary, roster: heroes },
+  }));
+}
+
+const { hero, roster } = Astro.props as { hero: HeroSummary; roster: HeroSummary[] };
+const name = hero.hero_name;
+const slug = Astro.params.slug as string;
+
+const found = await getEntry('guides', slug);
+const entry = found && !found.data.draft ? found : undefined;
+const rendered = entry ? await render(entry) : null;
+const Content = rendered?.Content ?? null;
+const headings = rendered?.headings ?? [];
+
+const norm = (s: string): string => s.trim().toLowerCase();
+const ROLE_TOKENS: readonly HeroRole[] = ['support', 'damage', 'tank', 'offensive', 'jungle'];
+
+if (entry) {
+  const where = `src/content/guides/${entry.id}.md`;
+  if (entry.data.heroSlug !== entry.id) {
+    throw new Error(`[guide-slug guard] ${where}: heroSlug "${entry.data.heroSlug}" is not the file id "${entry.id}".`);
+  }
+  const h2 = headings.filter((h) => h.depth === 2).map((h) => norm(h.text));
+  for (const token of entry.data.roles) {
+    const want = roleHeadingText(entry.data.hero, token);
+    if (!h2.includes(norm(want))) {
+      throw new Error(`[guide-role guard] ${where}: declares "${token}" but carries no H2 "${want}".`);
+    }
+  }
+  const declared = new Set<string>(entry.data.roles);
+  for (const token of ROLE_TOKENS) {
+    if (!declared.has(token) && h2.includes(norm(roleHeadingText(entry.data.hero, token)))) {
+      console.warn(`[guide-role guard] ${where}: carries the H2 for "${token}", which its front matter does not declare.`);
+    }
+  }
+  //The roster is a build-time fetch that falls back to [] on timeout, so an unguarded subset
+  //check would fail every guide on a cold build — turning a degraded build into a broken one.
+  if (roster.length > 0) {
+    const rosterNames = new Set(roster.map((h) => norm(h.hero_name)));
+    for (const opponent of entry.data.counters) {
+      if (!rosterNames.has(norm(opponent))) {
+        throw new Error(`[guide-counters guard] ${where}: counters names "${opponent}", which is not on the released roster.`);
+      }
+    }
+  }
+}
+
+const [abilityRows, buildRows, matchupRows, counterRows, synergyRows, itemRows, horizon, patches] = await Promise.all([
+  buildFetch(api.getHeroAbilities(hero.hero_id), [] as HeroAbility[]),
+  buildFetch(api.getHeroBuilds(hero.hero_id, 'weekly', true), [] as ScoredBuild[]),
+  buildFetch(api.getHeroMatchups(hero.hero_id), [] as MatchupEntry[]),
+  buildFetch(api.getHeroCounters(hero.hero_id), [] as HeroCounterRow[]),
+  buildFetch(api.getHeroSynergies(hero.hero_id), [] as HeroSynergyRow[]),
+  buildFetch(api.getHeroItemWinRates(hero.hero_id), [] as HeroItemWinRate[]),
+  buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null),
+  buildFetch(api.getPatches(), [] as Patch[]),
+]);
+
+const currentPatch = patches.find((p) => p.is_current) ?? null;
+const guide: GuideMeta | null = entry
+  ? {
+      hero: entry.data.hero,
+      roles: entry.data.roles,
+      counters: entry.data.counters,
+      synergyItems: entry.data.synergyItems,
+      buildIds: entry.data.buildIds,
+      patchLabel: entry.data.patchLabel,
+      sources: entry.data.sources,
+      draft: entry.data.draft,
+      pubDate: entry.data.pubDate,
+      updatedDate: entry.data.updatedDate ?? null,
+    }
+  : null;
+
+const play = buildHeroPlay({
+  hero,
+  abilities: abilityRows,
+  builds: buildRows,
+  matchups: matchupRows,
+  counters: counterRows,
+  synergies: synergyRows,
+  items: itemRows,
+  horizon,
+  currentPatch,
+  guide,
+  headings,
+});
+
+//Ability text arrives as upstream HTML — inline <svg>/<img>/<span class="highlight">/<br>.
+//It is rendered as text, so the markup is stripped rather than trusted into the document.
+const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', '#39': "'" };
+const plain = (html: string | null | undefined): string =>
+  (html ?? '')
+    .replace(/<svg[\s\S]*?<\/svg>/gi, '')
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&(#?\w+);/g, (m, e: string) => ENTITIES[e.toLowerCase()] ?? m)
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const UPGRADE_KEYS: readonly [keyof AbilityDescription, string][] = [
+  ['t1_desc', 'Upgrade 1'],
+  ['t2_desc', 'Upgrade 2'],
+  ['t3_desc', 'Upgrade 3'],
+];
+
+const abilities = play.abilities.map((a) => ({
+  ...a,
+  body: plain(a.description?.desc),
+  upgrades: UPGRADE_KEYS.map(([key, label]) => ({ label, text: plain(a.description?.[key]) })).filter((u) => u.text !== ''),
+}));
+
+const abilityName = new Map(play.abilities.map((a) => [a.id, a.name]));
+const levelling = abilityOrderSequence(play.builds[0]?.build.ability_order)
+  .map((id) => abilityName.get(id))
+  .filter((n): n is string => n != null);
+
+const nowSeconds = Math.floor(Date.now() / 1000);
+const builds = play.builds.map(({ build, author, cited }) => ({
+  name: build.name,
+  author,
+  cited,
+  updated: formatUpdated(build.last_updated_timestamp, nowSeconds),
+  favorites: favoriteCounts(build),
+  categories: build.categories.map((c) => ({
+    label: c.name,
+    items: c.items.flatMap((i) => {
+      const meta = isPublicItem(i.item_id) ? itemMeta(i.item_id) : undefined;
+      return meta ? [{ id: i.item_id as number, name: meta.name, icon: meta.icon }] : [];
+    }),
+  })),
+}));
+
+const heroById = new Map(roster.map((h) => [h.hero_id, h]));
+const counters = play.hardCounters.map((c) => ({ ...c, opponent: heroById.get(c.enemy) ?? null }));
+
+const windowOf = (ds: string) => horizon?.datasets.find((d) => d.dataset === ds);
+const windowLo = windowOf('hero-matchups')?.window_lo ?? windowOf('hero-item-win-rates')?.window_lo ?? null;
+const windowHi = windowOf('hero-matchups')?.window_hi ?? windowOf('hero-item-win-rates')?.window_hi ?? null;
+const statsThrough = shortDate(horizon?.max_match_start_time);
+const provenance = {
+  ...about({
+    hero,
+    counters: counterRows,
+    statsThrough,
+    window: windowLo && windowHi ? { lo: shortDate(windowLo), hi: shortDate(windowHi) } : null,
+    patchesInWindow:
+      windowLo && windowHi ? patches.filter((p) => p.released_at >= windowLo && p.released_at <= windowHi).length : null,
+    currentPatch: currentPatch ? { label: currentPatch.version_label, since: shortDate(currentPatch.released_at) } : null,
+  }),
+  heading: 'Where these numbers come from',
+};
+
+const hasServed = builds.length > 0 || abilities.length > 0 || counters.length > 0 || play.items.length > 0;
+const hasLive = (entry?.data.liveHeroes.length ?? 0) > 0 || (entry?.data.liveItems.length ?? 0) > 0;
+
+const heroUrl = heroPath(name);
+const buildUrl = `${heroUrl}build/`;
+const canonicalPath = pagePath(`${heroUrl}guide`);
+const art = heroArt(hero.icon_url);
+const title = `How to play ${name}: abilities, builds, counters and items`;
+const description =
+  entry?.data.description ??
+  `${name} in Deadlock: every ability with its text and levelling order, the builds players run, the hardest counters and the items with the best win rate${statsThrough ? `, through ${statsThrough}` : ''}.`;
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = breadcrumbJsonLd(origin, [
+  { name: 'Home', path: '/' },
+  { name: 'Heroes', path: '/heroes' },
+  { name, path: heroUrl },
+  { name: 'How to play', path: canonicalPath },
+]);
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath={canonicalPath}
+  jsonLd={jsonLd}
+  backdropHero={art?.cls}
+>
+  <main class="container">
+    <nav class="kicker" style="margin-bottom:14px; display:flex; gap:12px; flex-wrap:wrap;">
+      <a href="/heroes/" style="color:var(--muted);">← All heroes</a>
+      <a href={heroUrl} style="color:var(--muted);">{name} stats</a>
+      <a href={buildUrl} style="color:var(--muted);">{name} build</a>
+    </nav>
+
+    <div class="entity-head">
+      <GameArt name={name} src={hero.icon_url} wrapClass="entity-art" fontSize={32} eager />
+      <div class="hero-head-text">
+        <div class="kicker">How to play · Deadlock</div>
+        <h1 class="h-page">How to play {name}</h1>
+        {
+          entry && (
+            <div class="flex" style="gap:6px; flex-wrap:wrap; margin-top:6px;">
+              {entry.data.roles.map((token) => (
+                <span class="chip">{ROLE_LABEL[token]}</span>
+              ))}
+            </div>
+          )
+        }
+      </div>
+    </div>
+
+    <p class="page-intro">
+      {play.window}
+      {entry && <><br />Written for the {entry.data.patchLabel} patch.</>}
+    </p>
+
+    {
+      play.roleNav.length > 0 && (
+        <nav class="tabs gp-nav" aria-label="Choose how to play">
+          {play.roleNav.map((r) => (
+            <a class="tab" href={`#${r.anchor}`}>{r.label}</a>
+          ))}
+        </nav>
+      )
+    }
+
+    {
+      Content && (
+        <section class="panel panel-pad gp-body" style="margin-bottom:24px;">
+          <div class="prose">
+            <Content />
+          </div>
+        </section>
+      )
+    }
+
+    {
+      hasLive && (
+        <div class="panel panel-pad" style="margin-bottom:24px;">
+          <div class="label-xs" style="margin-bottom:10px;">Live stats in this guide</div>
+          <GuideLiveStats heroes={entry?.data.liveHeroes} items={entry?.data.liveItems} client:visible />
+        </div>
+      )
+    }
+
+    {
+      builds.length > 0 && (
+        <section class="panel panel-pad" style="margin-bottom:24px;">
+          <div class="between" style="margin-bottom:10px; gap:16px; flex-wrap:wrap;">
+            <h2 class="h-sec" style="margin:0;">The build</h2>
+            <a class="kicker" href={buildUrl}>All {name} builds and item sets →</a>
+          </div>
+          <ul style="list-style:none; margin:0; padding:0; display:grid; gap:16px;">
+            {builds.map((b) => (
+              <li>
+                <div class="between" style="gap:12px; flex-wrap:wrap;">
+                  <span class="display" style="font-weight:600; color:var(--text);">{b.name}</span>
+                  <span class="mono" style="font-size:12px; color:var(--muted);">by {b.author}</span>
+                </div>
+                <div class="mono" style="font-size:12px; color:var(--muted); margin-top:4px;">
+                  {b.favorites.map((f) => <span style="margin-right:10px;">{count(f.value)} {f.label}</span>)}
+                  <span>Updated {b.updated}</span>
+                  {b.cited && <span style="margin-left:10px; color:var(--gold);">Cited in this guide</span>}
+                </div>
+                {b.categories.map((c) => (
+                  c.items.length > 0 && (
+                    <div style="margin-top:8px;">
+                      <span class="label-xs">{c.label}</span>
+                      <span class="bp-set" style="margin-top:4px;">
+                        {c.items.map((i) => (
+                          <a class="bp-chip" href={`/items/${i.id}/`}>
+                            <GameArt name={i.name} src={i.icon} wrapClass="iicon" wrapStyle="width:22px; height:22px;" />
+                            <span>{i.name}</span>
+                          </a>
+                        ))}
+                      </span>
+                    </div>
+                  )
+                ))}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      abilities.length > 0 && (
+        <section class="panel panel-pad" style="margin-bottom:24px;">
+          <h2 class="h-sec" style="margin-bottom:10px;">Abilities and levelling order</h2>
+          <ul style="list-style:none; margin:0; padding:0; display:grid; gap:16px;">
+            {abilities.map((a) => (
+              <li>
+                <div class="flex" style="align-items:center; gap:10px;">
+                  <GameArt name={a.name} src={a.iconUrl} wrapClass="iicon" wrapStyle="width:32px; height:32px;" />
+                  <span class="display" style="font-weight:600; color:var(--text);">{a.name}</span>
+                  <span class="label-xs">{a.slot}</span>
+                </div>
+                {a.body !== '' && (
+                  <p class="muted" style="font-size:14px; line-height:1.65; margin:6px 0 0;">{a.body}</p>
+                )}
+                {a.upgrades.length > 0 && (
+                  <ul style="list-style:none; margin:6px 0 0; padding:0; display:grid; gap:4px;">
+                    {a.upgrades.map((u) => (
+                      <li class="muted" style="font-size:13px; line-height:1.55;">
+                        <span class="label-xs" style="margin-right:6px;">{u.label}</span>{u.text}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+          {
+            levelling.length > 0 && (
+              <p class="muted" style="font-size:14px; line-height:1.65; margin:14px 0 0;">
+                Levelling order in the most-favourited build: {levelling.join(' → ')}.
+              </p>
+            )
+          }
+        </section>
+      )
+    }
+
+    {
+      counters.length > 0 && (
+        <section class="panel panel-pad" style="margin-bottom:24px;">
+          <h2 class="h-sec" style="margin-bottom:10px;">Counters by win rate</h2>
+          <div class="dt-scroll">
+            <table class="dt">
+              <thead>
+                <tr>
+                  <th><span class="th-static">Opponent</span></th>
+                  <th class="num"><span class="th-static">{name} win rate</span></th>
+                  <th class="num"><span class="th-static">Matches</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {counters.map((c) => (
+                  <tr>
+                    <td>
+                      <span class="flex" style="align-items:center; gap:10px;">
+                        <GameArt
+                          name={c.opponent?.hero_name ?? `Hero ${c.enemy}`}
+                          src={c.opponent?.icon_url}
+                          wrapClass="hav"
+                          wrapStyle="width:28px; height:28px;"
+                        />
+                        {c.opponent ? (
+                          <a href={heroPath(c.opponent.hero_name)} class="display" style="font-weight:600;">
+                            vs {c.opponent.hero_name}
+                          </a>
+                        ) : (
+                          <span class="display" style="font-weight:600; color:var(--text);">vs Hero {c.enemy}</span>
+                        )}
+                      </span>
+                    </td>
+                    <td class="num"><WinRate wr={c.winRate} /></td>
+                    <td class="num"><span class="tnum">{count(c.matches)}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="muted" style="font-size:13px; margin:8px 0 0;">
+            The worst matchups RankLock's own matches measured, over a minimum-sample floor. Every
+            opponent is on <a href={heroUrl}>{name}'s stats page</a>.
+          </p>
+        </section>
+      )
+    }
+
+    {
+      play.items.length > 0 && (
+        <section class="panel panel-pad" style="margin-bottom:24px;">
+          <div class="between" style="margin-bottom:10px; gap:16px; flex-wrap:wrap;">
+            <h2 class="h-sec" style="margin:0;">Items by win rate</h2>
+            <a class="kicker" href={buildUrl}>Every {name} item →</a>
+          </div>
+          <div class="dt-scroll">
+            <table class="dt">
+              <thead>
+                <tr>
+                  <th><span class="th-static">Item</span></th>
+                  <th class="num"><span class="th-static">Win rate</span></th>
+                  <th class="num"><span class="th-static">Games</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {play.items.map((i) => (
+                  <tr>
+                    <td>
+                      <a class="flex" href={`/items/${i.id}/`} style="align-items:center; gap:10px; text-decoration:none;">
+                        <GameArt name={i.name} src={i.iconUrl} wrapClass="iicon" wrapStyle="width:26px; height:26px;" />
+                        <span class="display" style="font-weight:600; color:var(--text);">{i.name}</span>
+                        {i.cited && <span class="chip">In this guide</span>}
+                      </a>
+                    </td>
+                    <td class="num"><WinRate wr={i.winRate} /></td>
+                    <td class="num"><span class="tnum">{count(i.games)}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )
+    }
+
+    {!hasServed && <p class="page-intro">No play data was available for {name} when this page was built.</p>}
+
+    <Narrative sections={[provenance]} />
+
+    <p class="page-intro">
+      For win rate, matchups and duo partners see <a href={heroUrl}>{name}'s stats page</a>; for the
+      measured item sets and buy order see <a href={buildUrl}>{name}'s build page</a>.
+    </p>
+  </main>
+</BaseLayout>
+
+<style>
+  /* Anchor targets sit under the sticky site header; the nav itself is plain links, no JS. */
+  .gp-nav {
+    margin-bottom: 24px;
+  }
+  .gp-nav .tab {
+    text-decoration: none;
+  }
+  .gp-body :global(h2) {
+    scroll-margin-top: 84px;
+  }
+</style>

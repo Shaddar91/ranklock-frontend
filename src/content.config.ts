@@ -29,4 +29,28 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { blog };
+const guides = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/guides' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    hero: z.string(),
+    heroSlug: z.string(),
+    heroId: z.number().int(),
+    patchLabel: z.string(),
+    pubDate: z.coerce.date(),
+    updatedDate: z.coerce.date().optional(),
+    author: z.string().default('RankLock team'),
+    roles: z.array(z.enum(['support', 'damage', 'tank', 'offensive', 'jungle'])).min(1),
+    counters: z.array(z.string()).default([]),
+    synergyItems: z.array(z.string()).default([]),
+    buildIds: z.array(z.number().int()).default([]),
+    sources: z.array(z.string().url()).default([]),
+    heroImage: z.string().optional(),
+    liveHeroes: z.array(z.string()).default([]),
+    liveItems: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { blog, guides };

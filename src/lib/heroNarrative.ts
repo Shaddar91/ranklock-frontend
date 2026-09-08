@@ -468,7 +468,14 @@ function byRank(input: HeroNarrativeInput): Section | null {
   return { heading: 'By rank', paras: [p1, [trend]] };
 }
 
-function about(input: HeroNarrativeInput): Section {
+//The provenance section, reused verbatim by /heroes/<slug>/guide/. It reads only these
+//fields, and of `counters` only whether the upstream head-to-head feed returned rows.
+export type AboutInput = Pick<
+  HeroNarrativeInput,
+  'hero' | 'statsThrough' | 'window' | 'patchesInWindow' | 'currentPatch'
+> & { counters: readonly unknown[] };
+
+export function about(input: AboutInput): Section {
   const { hero, window, patchesInWindow, currentPatch, statsThrough } = input;
   const name = hero.hero_name;
   if (hero.win_rate == null || hero.picks <= 0) {

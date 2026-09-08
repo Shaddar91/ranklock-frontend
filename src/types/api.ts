@@ -155,6 +155,14 @@ export interface HeroAbility {
   name: string;
   icon_url?: string | null;
   ability_type?: string | null;
+  //Upstream ability text carried through by the backend. Every key is sparse and every
+  //value is HTML (inline <svg>/<img>/<span>), never plain text — strip before rendering.
+  description?: {
+    desc?: string | null;
+    t1_desc?: string | null;
+    t2_desc?: string | null;
+    t3_desc?: string | null;
+  };
 }
 
 //---- items (GET /items/stats) -----------------------------------------------

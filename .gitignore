@@ -189,6 +189,8 @@ Thumbs.db
 !/src/content/
 !/src/content/blog/
 !/src/content/blog/**
+!/src/content/guides/
+!/src/content/guides/**
 
 #Local-only Wrangler config. The REAL deploy uses the build-generated
 #dist/server/wrangler.json (@astrojs/cloudflare, has main:entry.mjs for the
