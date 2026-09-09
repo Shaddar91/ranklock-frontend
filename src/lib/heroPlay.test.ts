@@ -9,6 +9,8 @@ import {
   itemFloor,
   itemsThatGoWell,
   orderBuilds,
+  printableAbilityName,
+  printableBuildName,
   roleHeadingText,
   roleNav,
   type GuideHeading,
@@ -179,4 +181,25 @@ it('falls back to the served slot order when ability_order is empty or absent', 
   expect(abilityTrack(ABILITIES, undefined).map((a) => a.id)).toEqual([70, 71, 72, 73]);
   expect(abilityTrack(ABILITIES, levelUps([])).map((a) => a.id)).toEqual([70, 71, 72, 73]);
   expect(abilityTrack([], undefined)).toEqual([]);
+});
+
+it('drops abilities served nameless or as a raw citadel_ token', () => {
+  const rows = [...ABILITIES, ability(74, '', 5), ability(75, 'citadel_ability_slide', 6)];
+  expect(abilityTrack(rows, undefined).map((a) => a.id)).toEqual([70, 71, 72, 73]);
+  expect(printableAbilityName('citadel_ability_zipline_boost')).toBe(false);
+  expect(printableAbilityName('   ')).toBe(false);
+  const play = buildHeroPlay(input({ abilities: rows }));
+  expect(play.abilities.map((a) => a.name)).toEqual(['Sleep Dagger', 'Smoke Bomb', 'Fixation', 'Bullet Dance']);
+});
+
+it('suppresses a build name carrying a handle or profanity, keeps a plain one verbatim (§1.7)', () => {
+  expect(printableBuildName('NEW META HAZE gun build')).toBe(true);
+  expect(printableBuildName("NEW META'S HAZE t.tv/qtarsis")).toBe(false);
+  expect(printableBuildName('LadyBombX2 twitch.tv/benderjke')).toBe(false);
+  expect(printableBuildName('zxc | арбузный ебака (t.tv/qtarsis)')).toBe(false);
+  expect(printableBuildName('Инферно Через Выжигание жопки от Шаурмяу')).toBe(false);
+  expect(printableBuildName('  ')).toBe(false);
+  const ordered = orderBuilds([build(501), { ...build(502), name: 'HAZE t.tv/qtarsis' }], null);
+  expect(ordered.map((b) => b.name)).toEqual(['Build 501', null]);
+  expect(ordered[1]?.build.name).toBe('HAZE t.tv/qtarsis');
 });

@@ -88,6 +88,8 @@ export type PlayBuildRow = TrimmedBuild & { author_name?: string | null };
 
 export interface PlayBuild {
   build: PlayBuildRow;
+  /** The published name when §1.7 allows printing it, else null. */
+  name: string | null;
   author: string;
   cited: boolean;
 }
@@ -246,11 +248,23 @@ export function itemsThatGoWell(
   return [...qualified.filter((i) => i.cited), ...qualified.filter((i) => !i.cited)];
 }
 
+//§1.7 build-name gate: a streaming handle, a URL or an obscenity suppresses the name.
+const BUILD_NAME_HANDLE = /\b[\w-]+\.(?:tv|gg|com)\b|\bttv\b|https?:\/\/|www\./i;
+const BUILD_NAME_OBSCENE =
+  /\b(?:fuck\w*|shit\w*|bitch\w*|cunt\w*|whore\w*|slut\w*|pussy\w*|nigg\w*|fag\w*|porn\w*|hentai\w*)\b|ебак|жоп|хуй|ху[ёе]|пизд|бляд|блят|мудак|сука/i;
+
+/** True when a player-authored build name is plain enough to print on a page under ad review. */
+export function printableBuildName(name: string): boolean {
+  const n = name.trim();
+  return n !== '' && !BUILD_NAME_HANDLE.test(n) && !BUILD_NAME_OBSCENE.test(n);
+}
+
 /** Served builds in weekly order, the ones the guide cites by hero_build_id hoisted first. */
 export function orderBuilds(builds: PlayBuildRow[], guide: GuideMeta | null | undefined): PlayBuild[] {
   const cited = new Set(guide?.buildIds ?? []);
   const rows = builds.map((build) => ({
     build,
+    name: printableBuildName(build.name) ? build.name : null,
     author: authorLabel(build),
     cited: cited.has(build.hero_build_id),
   }));
@@ -262,11 +276,18 @@ const abilityDescription = (a: HeroAbility): AbilityDescription | null => {
   return d != null && typeof d === 'object' ? (d as AbilityDescription) : null;
 };
 
+/** A served ability name that prints: non-empty and not a raw citadel_ engine token. */
+export function printableAbilityName(name: string): boolean {
+  const n = name.trim();
+  return n !== '' && !n.startsWith('citadel_');
+}
+
 /** Every served ability, the levelled ones in learn order first, the rest in served slot order. */
 export function abilityTrack(abilities: HeroAbility[], abilityOrder: unknown): PlayAbility[] {
   const rank = new Map(abilityOrderSequence(abilityOrder).map((id, i) => [id, i]));
   const at = (a: HeroAbility): number => rank.get(a.ability_id) ?? Number.MAX_SAFE_INTEGER;
   return [...abilities]
+    .filter((a) => printableAbilityName(a.name))
     .sort((a, b) => at(a) - at(b) || a.order - b.order)
     .map((a) => ({
       id: a.ability_id,

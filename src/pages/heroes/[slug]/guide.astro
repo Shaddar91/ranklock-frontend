@@ -166,8 +166,14 @@ const levelling = abilityOrderSequence(play.builds[0]?.build.ability_order)
   .filter((n): n is string => n != null);
 
 const nowSeconds = Math.floor(Date.now() / 1000);
-const builds = play.builds.map(({ build, author, cited }) => ({
-  name: build.name,
+const topWeeklyFav = Math.max(0, ...buildRows.map((b) => b.num_weekly_favorites ?? 0));
+//§1.7 fallback for a suppressed name: cite the build by its standing, its author and its favorites.
+const builds = play.builds.map(({ build, author, cited, name: printName }) => ({
+  name:
+    printName ??
+    ((build.num_weekly_favorites ?? 0) > 0 && (build.num_weekly_favorites ?? 0) >= topWeeklyFav
+      ? `The most favorited published ${name} build`
+      : `A published ${name} build`),
   author,
   cited,
   updated: formatUpdated(build.last_updated_timestamp, nowSeconds),

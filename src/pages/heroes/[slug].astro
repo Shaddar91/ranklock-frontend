@@ -11,7 +11,6 @@ import AdSlot from '../../components/react/ui/AdSlot';
 import Narrative from '../../components/Narrative.astro';
 import { heroNarrative, type HeroCounter, type HeroTierMatchups } from '../../lib/heroNarrative';
 import { heroArt } from '../../lib/heroArt';
-import { publishedGuideSlugs } from '../../lib/guideRoutes';
 import { releasedRoster } from '../../lib/heroRoster';
 import { heroPath, slugRoster } from '../../lib/heroSlugs';
 import { HERO_BRACKETS, rosterByBracket } from '../../lib/buildIndexes';
@@ -51,9 +50,6 @@ const description = hero
   : 'Deadlock hero detail.';
 const canonicalPath = hero ? heroPath(hero.hero_name) : '/heroes';
 
-//The chip follows the published `guides` entries, the same set /heroes/<slug>/guide/ mints its
-//paths from: linking unconditionally would promise the page for every hero without a guide.
-const hasGuide = (await publishedGuideSlugs()).has(Astro.params.slug as string);
 const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
   { name: 'Heroes', path: '/heroes' },
@@ -205,13 +201,9 @@ const sections = hero
               <div class="kicker">Hero · Deadlock</div>
               <h1 class="h-page">{name} win rate and matchups</h1>
               {tier && <span class="chip" style="margin-top:6px;">Meta tier {tier}</span>}
-              {
-                hasGuide && (
-                  <a class="chip" href={`${canonicalPath}guide/`} style="margin-top:6px; margin-left:2px;">
-                    How to play {name}
-                  </a>
-                )
-              }
+              <a class="chip" href={`${canonicalPath}guide/`} style="margin-top:6px; margin-left:2px;">
+                How to play {name}
+              </a>
             </div>
             {art && <img class="hero-wordmark" src={art.nameSvg} alt="" aria-hidden="true" loading="lazy" onerror="this.remove()" />}
           </div>
