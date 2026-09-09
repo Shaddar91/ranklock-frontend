@@ -1,6 +1,6 @@
 ---
 title: "Two weeks after the {{PATCH_LABEL}} patch: the builds that stuck"
-description: "Fourteen days of games, one closed window and a sample that has stopped moving. What the {{PATCH_LABEL}} changes did to real builds, across {{SAMPLE_N}} ranked matches."
+description: "Fourteen days of games, one closed window and a sample that has stopped moving. What the {{PATCH_LABEL}} changes did to real builds, across {{SAMPLE_N}} matches."
 pubDate: 2026-10-09
 author: RankLock team
 heroImage: /assets/heroes/lash_card.png
@@ -10,10 +10,11 @@ liveItems: []
 draft: true
 ---
 
-Fourteen days ago the {{PATCH_LABEL}} went live at {{PATCH_DATE}}. Nearly
-everything written about it that night has already been overwritten. This is the
-slow answer: which of those changes are still visible in what people build and
-win with, now that there are two weeks of games to divide by.
+Rebuild your hero pool from this page, not from anything written on release
+night. The {{PATCH_LABEL}} went live at {{PATCH_DATE}} fourteen days ago, and
+nearly everything written about it that night has already been overwritten. This
+is the slow answer: which of those changes are still visible in what people
+build and win with, now that there are two weeks of games to divide by.
 
 ## Why the wait was the point
 
@@ -75,7 +76,7 @@ because the window this article measures closes the moment that release lands.
 
 {{MOVERS_TABLE}}
 
-Every row above is counted over {{SAMPLE_N}} ranked matches played since the
+Every row above is counted over {{SAMPLE_N}} matches played since the
 patch, inside that release's own window and no other.
 wave2:end -->
 

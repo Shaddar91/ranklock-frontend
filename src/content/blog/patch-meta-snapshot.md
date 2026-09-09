@@ -2,21 +2,21 @@
 title: "Patch meta snapshot: who's rising, who's falling, and what to watch"
 description: "A reading of the current patch's win-rate movers — the heroes trending up, the items falling off, and what to pick before the meta settles."
 pubDate: 2026-06-20
-updatedDate: 2026-06-20
+updatedDate: 2026-09-09
 author: RankLock
 tags: [meta, patch-notes, picks]
 ---
 
-Every patch resets a little of what you knew. Numbers that were gospel last week
-drift, and the players who adjust first bank free win-rate while everyone else
-runs last patch's plan. This snapshot is a reading of where the meta is heading —
-use it as a starting point, then let the live chips on each guide confirm whether
-the trend held at your bracket.
+Move your practice hours onto the movers while the rates are still moving,
+and check the move at your own bracket before you commit to it. The players
+who adjust first bank free win-rate while everyone else runs last patch's
+plan. Use this snapshot as a starting point, then let the live chips on each
+guide confirm whether the trend held at your bracket.
 
 ## Read movement, not snapshots
 
 A single win-rate is a photo; the *direction* it is moving is the story. A hero
-sitting at 51% and climbing is a better pick than one sitting at 53% and sliding,
+whose rate is still climbing is a better pick than a higher one already sliding,
 because you are buying into momentum instead of a peak that is already deflating.
 
 When you scan the meta, sort by change-over-patch, not by raw rate. The picks

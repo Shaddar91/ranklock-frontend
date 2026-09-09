@@ -2,7 +2,7 @@
 title: "What the 2026-08-22 Update patch changed for builds"
 description: "Eleven lines moved, nine of them on one hero. How to tell in a minute whether any of them reaches your build, and what to do until the win rates arrive."
 pubDate: 2026-09-03
-updatedDate: 2026-09-08
+updatedDate: 2026-09-09
 author: RankLock team
 heroImage: /assets/heroes/haze_card.png
 tags: [patch-notes, builds, meta]
@@ -21,17 +21,22 @@ that answer is worth having tonight rather than in a fortnight.
 
 ## What changed
 
-- **Radiant Regeneration** heal on cast 70 to 65
-- **Restorative Locket** Spirit Resistance 10% to 8%
-- **Celeste** Dazzling Trick cooldown 32s to 34s
-- **Celeste** Dazzling Trick T2 barrier "+80 and +0.7 scaling" to "+70 and +0.76"
-- **Celeste** Dazzling Trick T3 cooldown -18s to -20s
-- **Celeste** Dazzling Trick T3 +1.5s Silence to +1.25s
-- **Celeste** Radiant Daggers Spirit Amp per stack +8% to +7%
-- **Celeste** Radiant Daggers T3 Spirit Amp per stack +3% to +4%
-- **Celeste** Shining Wonder bounce range 17.5m to 16.5m
-- **Celeste** Shining Wonder damage 165 to 140
-- **Celeste** Shining Wonder spirit scaling 0.9 to 0.6
+Two item lines:
+
+- **Radiant Regeneration** heal on cast, 70 down to 65
+- **Restorative Locket** Spirit Resistance, 10% down to 8%
+
+Nine Celeste lines:
+
+- **Dazzling Trick** base cooldown 32s up to 34s
+- **Dazzling Trick T2** barrier "+80 and +0.7 scaling" becomes "+70 and +0.76"
+- **Dazzling Trick T3** cooldown -18s to -20s
+- **Dazzling Trick T3** Silence +1.5s cut to +1.25s
+- **Radiant Daggers** Spirit Amp per stack +8% down to +7%
+- **Radiant Daggers T3** per-stack Spirit Amp +3% up to +4%
+- **Shining Wonder** bounce range 17.5m down to 16.5m
+- **Shining Wonder** damage 165 down to 140
+- **Shining Wonder** spirit scaling 0.9 down to 0.6
 
 Those are the lines you can plan around, because each one names an entity, the
 field that moved, the value it left and the value it arrived at. The release
@@ -76,8 +81,9 @@ current ones.
 
 ## Ignore any win rate published tonight, including ours
 
-Our match data runs about 21 hours behind live play, and the lag is the
-smaller half of the problem. The window is the larger half.
+Read every win rate published tonight as a measurement of the old game. Our
+match data runs about 21 hours behind live play, and the lag is the smaller
+half of the problem. The window is the larger half.
 
 Every win rate on the heroes grid, the item tables and the build pages is
 computed over one long span of matches, months of play rather than days.
