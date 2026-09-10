@@ -2,15 +2,17 @@
 title: "What RankLock computes and what it does not"
 description: "Match pages expose raw scoreboards; tiers, matchup tables, lane curves and buy timings are computed on top within a stated window. No MMR anywhere."
 pubDate: 2026-08-26
+updatedDate: 2026-09-10
 author: RankLock team
 tags: [meta, data]
 ---
 
-Every number on RankLock sits in one of two layers. The raw layer is the match
-record itself, what both teams did, game by game. The computed layer is
-everything the site derives from those records: tiers, matchup tables, lane
-curves, buy timings. Knowing which layer you are reading tells you how much to
-trust a number and how to check it.
+Before a number on this site changes what you pick or buy, check which of the
+two layers it came from. The raw layer is the match record itself, what both
+teams did, game by game. The computed layer is everything the site derives
+from those records: tiers, matchup tables, lane curves, buy timings. Knowing
+which layer you are reading tells you how much to trust a number and how to
+check it.
 
 ## The raw layer
 

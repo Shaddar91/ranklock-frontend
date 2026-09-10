@@ -2,15 +2,17 @@
 title: "How to read the patch tracker after a meta shift"
 description: "RankLock has tracked 123 patches. Each patch page lists pick-rate gainers, losers and win-rate deltas by bracket — read them in this order."
 pubDate: 2026-08-26
+updatedDate: 2026-09-10
 author: RankLock team
 tags: [meta, patch-notes]
 ---
 
-RankLock's [patch tracker](/patches/) has logged 123 patches. Each one turns a
-few of last month's certainties into guesses, and the tracker is how you catch
-up without reading forums for three hours. This guide gives you a reading order
-for patch week, plus two habits that keep you from trusting numbers that have
-already gone stale.
+Re-read your pool the week a patch lands, because a few of last
+month's certainties just turned into guesses. RankLock's [patch
+tracker](/patches/) has logged 123 patches, and it is how you catch up
+without reading forums for three hours. This guide gives you a reading
+order for patch week, plus two habits that keep you from trusting
+numbers that have already gone stale.
 
 ## What a patch page contains
 

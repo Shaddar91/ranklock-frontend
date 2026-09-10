@@ -2,16 +2,18 @@
 title: "Hero matchups 101: how RankLock computes them and how to use them"
 description: "A matchup line is a win-rate over a counted sample. Lash beats Bebop at 54.0% across 465,892 matches. Check the match count first, then the rate."
 pubDate: 2026-08-26
+updatedDate: 2026-09-10
 author: RankLock team
 tags: [fundamentals, matchups]
 liveHeroes: [Lash, Seven, Bebop]
 ---
 
-Every hero page on RankLock carries a matchup table: one row per enemy hero, a
-win-rate, and a match count. Used well, it is the fastest preparation a draft
-gets. Used badly, it sends you dodging games you should play. This guide covers
-what the number is, where it comes from, and how to read it without
-overreacting to it.
+Scout the pairing before you lock in, and know what the number can and cannot
+tell you before you let it move your pick. Every hero page on RankLock carries
+the table built for that call: one row per enemy hero, a win-rate, and a match
+count. Used well, it is the fastest preparation a draft gets. Used badly, it
+sends you dodging games you should play. This guide covers what the number is,
+where it comes from, and how to read it without overreacting to it.
 
 ## What a matchup number is
 

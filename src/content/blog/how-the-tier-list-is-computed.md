@@ -2,18 +2,20 @@
 title: "How RankLock grades the Deadlock tier list, S through F"
 description: "S starts at 52.5% and F is anything below 47.0%. Seven holds seven heroes, Haze sits on the cut, and picking a rank re-grades every hero on its own data."
 pubDate: 2026-09-03
+updatedDate: 2026-09-10
 author: RankLock team
 tags: [meta, tier-list, method]
 liveHeroes: [Seven, Haze, Bebop, Sinclair]
 liveItems: []
 ---
 
-RankLock grades every hero on one number: the measured win rate over the
-current data window, 2026-05-01 to 2026-09-03. Six cuts turn that figure into
-a letter. S starts at 52.5%, A at 51.0%, B at 49.5%, C at 48.0%, D at 47.0%,
-and anything under 47.0% is F. Pick rate, KDA, and popularity never enter the
-grade, only the win rate itself, and the same six thresholds apply to every
-hero on the roster without exception. See the cuts applied live on the
+Pick by the letter only after you know what the letter grades. Every hero
+earns it from one number, the measured win rate over the current data window,
+2026-05-01 to 2026-09-03, and six cuts turn that figure into the letter. S
+starts at 52.5%, A at 51.0%, B at 49.5%, C at 48.0%, D at 47.0%, and anything
+under 47.0% is F. Pick rate, KDA, and popularity never enter the grade, only
+the win rate itself, and the same six thresholds apply to every hero on the
+roster without exception. See the cuts applied live on the
 [tier list](/tier-list/).
 
 ## How the roster falls into them today

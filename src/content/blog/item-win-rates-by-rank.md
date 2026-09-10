@@ -2,20 +2,22 @@
 title: "Deadlock item win rates by rank, and how to read them correctly"
 description: "Glass Cannon reads 56.38% over 476,959 matches at all ranks and 64.52% over 217 at Ascendant-Eternus. The top bracket holds 0.26% of the buy records."
 pubDate: 2026-09-03
+updatedDate: 2026-09-10
 author: RankLock team
 tags: [items, method, ranks]
 liveHeroes: [Haze]
 liveItems: [Glass Cannon, Metal Skin, Improved Spirit, Juggernaut]
 ---
 
-Item win rates on RankLock split into five brackets, and the split lives in
-two places: the [items page](/items/) itself, and the "Best items at your
-rank" table on every build page. The winning item sets shown higher up a
-build page stay all-ranks only; the rank-sliced numbers live in that one
-table. The five brackets read All ranks, Initiate-Alchemist,
-Arcanist-Ritualist, Emissary-Archon, Oracle-Phantom, and Ascendant-Eternus.
-See it filtered on [Haze's build page](/heroes/haze/build/), where clicking
-a different bracket button rebuilds the whole table in place.
+Check an item's win rate at your own bracket before you let the all-ranks
+figure talk you into a buy. The rank split lives in two places: the [items
+page](/items/) itself, and the "Best items at your rank" table on every build
+page. The winning item sets shown higher up a build page stay all-ranks only;
+the rank-sliced numbers live in that one table. The five brackets read All
+ranks, Initiate-Alchemist, Arcanist-Ritualist, Emissary-Archon, Oracle-Phantom,
+and Ascendant-Eternus. See it filtered on [Haze's build
+page](/heroes/haze/build/), where clicking a different bracket button rebuilds
+the whole table in place.
 
 ## The top bracket is a sliver of the data
 

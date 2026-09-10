@@ -2,17 +2,19 @@
 title: "Reading your rank band: what Initiate through Eternus means for hero choice"
 description: "The all-ranks win-rate hides bracket swings: Haze drops 2.6 points at high rank. Filter the heroes grid to your band before you pick."
 pubDate: 2026-08-26
+updatedDate: 2026-09-10
 author: RankLock team
 tags: [fundamentals, ranks, picks]
 liveHeroes: [Lash, Haze]
 ---
 
-Open any hero page on RankLock and the first number you meet is the all-ranks
-win-rate, one figure measured across every bracket in the data window. It is
-the number most players check first, and for pick decisions it is the one most
-likely to mislead you. The [heroes grid](/heroes/) carries a rank-band filter,
-and that filter changes real answers. Two heroes from the current window show
-how large the difference can get.
+Pick for your own bracket, not the average lobby's. The first number you meet
+on any hero page is the all-ranks win-rate, one figure measured across every
+bracket in the data window. It is the number most players check first, and for
+pick decisions it is the one most likely to mislead you. The [heroes
+grid](/heroes/) carries a rank-band filter, and that filter changes real
+answers. Two heroes from the current window show how large the difference can
+get.
 
 ## The ladder you are filtering
 
