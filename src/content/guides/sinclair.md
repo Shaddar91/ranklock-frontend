@@ -7,7 +7,7 @@ heroId: 60
 patchLabel: 2026-08-22 Update
 pubDate: 2026-09-08
 author: RankLock team
-roles: [damage, offensive]
+roles: [offensive]
 counters: [Seven, Victor, Graves, McGinnis, Ivy]
 synergyItems: [Mystic Reverb, Diviner's Kevlar, Magic Carpet, Spirit Burn, Cheat Death]
 buildIds: [612084, 363949, 575803, 280256, 377100]
@@ -27,7 +27,7 @@ Draft Sinclair when your team can afford to lose the opening exchanges, and play
 
 Nothing about his body forgives a mistake. On 730 HP at 7.2 m/s with 3 stamina he is the frailest hero here, and his kit answers that with distance and misdirection rather than with resistance. Read the whole hero as a bet on reaching the late game with souls in hand.
 
-## How to play Sinclair as a Damage carry
+## How to play Sinclair as an Offensive bruiser
 
 Farm at range with Vexing Bolt and treat every cast as two decisions. The bolt grows in damage the further it travels, so the opening angle matters more than the aim, and the recast redirects it, which means a bolt sent down an empty corridor is still a bolt that can turn onto whoever steps out.
 
