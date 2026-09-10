@@ -1,25 +1,11 @@
 //Pure per-minute transforms for the Lane Lab economy chart — kept out of the island component so
 //the chart AND the unit tests transform a curve the SAME way. The backend serves cumulative
-//p25/p50/p75 buckets 180s apart (grid-resampled: one value per surviving player-match per bucket);
-//the 'rate' view derives the per-minute amount gained across each bucket. No I/O — safe at build
-//time and in tests.
 import type { PlayerCurvePoint, PlayerEconomyCurveResponse, RankCohort } from '../types/api';
 
 export type ViewMode = 'rate' | 'total';
 
-//Tail guard: a bucket resting on fewer than this fraction of the curve's peak sample count is a
-//handful of very long games, not the cohort — drop it so a 24-sample 165-minute bucket never draws
-//next to a 50M-sample one, and no 'rate' delta is ever taken against it. The producers resample
-//every player-match onto the grid, so no in-game bucket is starved any more; this only trims the
-//far tail. Exported + tunable.
 export const MIN_SAMPLE_FRACTION = 0.05;
 
-//Drop the low-confidence straggler points (C5): keep only points whose sample count is at
-//least MIN_SAMPLE_FRACTION of the curve's peak sample count. `sampleOf` reads the per-series
-//sample field — lane/rank rows carry `sample_players`, the player's own line carries `matches`
-//(how many of their games reached that minute). A peak of 0 (empty, or all-zero samples) keeps
-//every point: nothing is below 0, so there is no division and no accidental wipe of a
-//thin-but-uniformly-sampled curve. Pure and side-effect-free — returns a new array.
 export function dropLowSamplePoints<T>(pts: readonly T[], sampleOf: (p: T) => number): T[] {
   let peak = 0;
   for (const p of pts) {
@@ -70,10 +56,6 @@ function ratePoints<P>(
   return out;
 }
 
-//The structural shape of a percentile league curve — BOTH the lane endpoints'
-//LaneCurveResponse AND the player-curve endpoint's `comparison` side (PlayerCurveComparison)
-//satisfy it, so one transform serves the fast Gold league curves (bucket units — pass the
-//metric's bucket scale) and the hero-scoped league curves (already real units — pass scale 1).
 export interface PercentileCurveLike {
   points: ReadonlyArray<{
     t_seconds: number;
@@ -85,9 +67,6 @@ export interface PercentileCurveLike {
 }
 
 //Convert a lane curve's p50 series into {game-minute → value}, honoring the view mode.
-//'total' passes the cumulative p50 through (×scale). 'rate' returns the per-minute amount GAINED
-//across each 180s bucket (ratePoints — the 3:00 bucket anchors on the metric's 0:00 origin).
-//Keyed by rounded game minute — the SAME grid playerSeriesByMinute uses, so the series overlay.
 export function laneSeriesByMinute(
   curve: PercentileCurveLike | null | undefined,
   scale: number,
@@ -126,12 +105,6 @@ export function laneBandByMinute(
   return out;
 }
 
-//M1/B1(b): the metric-echo mismatch guard. The player-curve payload echoes which metric it
-//actually carries (`metric`); a payload whose echo ≠ the metric the UI requested is a
-//WRONG-UNIT line (e.g. souls plotted on the kills tab) and must be unrenderable regardless
-//of backend version. Mismatch — or a missing/absent echo, which is unverifiable — yields the
-//empty array, the same shape as "no timeline loaded", so callers fall into the existing
-//honest empty-state instead of plotting a mislabeled line. Pure; safe in tests.
 export function guardedPlayerCurvePoints(
   resp: Pick<PlayerEconomyCurveResponse, 'metric' | 'you'> | undefined,
   requestedMetric: string,
@@ -140,9 +113,6 @@ export function guardedPlayerCurvePoints(
   return resp.you ?? [];
 }
 
-//Sample-size disclosure for the player lines (Component 11 / B6): a player line is drawn
-//from as few as 1 of their games while the rank band behind it aggregates millions, so the
-//caption must carry the line's own n and a thin line must LOOK thin.
 
 //Below this many games at the line's best-sampled minute, the line is rendered faint with a
 //"thin sample" note — a 1–4-game curve is an anecdote, not a trend.
@@ -155,7 +125,6 @@ export function peakPlayerMatches(pts: readonly PlayerCurvePoint[] | undefined):
   return (pts ?? []).reduce((m, p) => Math.max(m, p.matches ?? 0), 0);
 }
 
-//The thin-sample predicate: fewer than THIN_SAMPLE_MIN_MATCHES games at peak.
 export function isThinPlayerSample(peak: number): boolean {
   return peak < THIN_SAMPLE_MIN_MATCHES;
 }
@@ -180,13 +149,6 @@ export interface MergedEconPoint {
   cohortBand?: [number, number];
 }
 
-//Merge any subset of per-minute series onto ONE union minute grid — one point per game
-//minute present in ANY provided series. A series with no sample at a minute gets NaN there
-//(Recharts renders a gap, never a fabricated point). Pass null/undefined (or an empty map)
-//to omit a series entirely — its key never appears, so the chart draws no line for it.
-//Unlike the old fixed you-grid merge, no series is the "base": unchecking the League A chip
-//must not collapse the grid the other series render on. Bands attach to minutes the grid
-//already has — they never add a minute of their own.
 export function mergeEconSeriesByMinute(
   series: Partial<Record<EconSeriesKey, Map<number, number> | null>>,
   bands?: Partial<Record<EconBandKey, Map<number, [number, number]> | null>>,
@@ -233,21 +195,12 @@ export function playerSeriesByMinute(
 }
 
 //---- per-player rank cohort selection (DESIGN §8, migration 052) ------------
-//One league slot's resolved query params for the active cohort. EXACTLY one of {band} /
-//{tier[,division]} is ever returned — curves.rs 400s a request carrying both — so this is the
-//single place that decides which, shared by the lane-Gold fetch and the hero-scoped comparison
-//fetch (both take the same three params).
 export interface CohortParams {
   band?: number;
   tier?: number;
   division?: number;
 }
 
-//null = no valid selection to query (player-rank mode with the league selector sitting on
-//Obscurus or "All" — neither has a per-player-rank cohort). Callers must gate their query's
-//`enabled` on a non-null result instead of sending an empty request, which the backend would
-//silently resolve to the ALL-BANDS team-average cohort (DESIGN's "never blend the two cohort
-//definitions" rule).
 export function cohortParamsFor(
   cohort: RankCohort,
   tierOrBand: number | undefined,
@@ -277,18 +230,11 @@ export function playerCurveParamsFor(
   return cohort === 'team_average' ? { vs_band: p.band } : { tier: p.tier, division: p.division };
 }
 
-//Thin per-player-rank cells (DESIGN §9 / Failure cases): a division of a low-population tier
-//(Eternus ≈ 200 rows/division/week) can return real but too-few rows to trust — the UI must not
-//draw them, only name the floor. team_average never gates on this (its samples are large).
 export const RANK_MIN_SAMPLE = 500;
 export function isThinRankSample(cohort: RankCohort, peakSamplePlayers: number): boolean {
   return cohort === 'player_rank' && peakSamplePlayers > 0 && peakSamplePlayers < RANK_MIN_SAMPLE;
 }
 
-//The cohort switch's smart default (DESIGN §9): "player rank" when a probe query against the
-//current league actually has rows, else "team average" — captioned either way once resolved.
-//'pending' keeps whatever the switch already shows; the caller applies this only until the user
-//touches the switch themselves, after which their explicit pick stands.
 export type CohortProbeState = 'pending' | 'rows' | 'empty' | 'error';
 export function defaultCohortFromProbe(state: CohortProbeState): RankCohort | null {
   if (state === 'rows') return 'player_rank';

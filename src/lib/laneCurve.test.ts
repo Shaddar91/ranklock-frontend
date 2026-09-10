@@ -210,6 +210,14 @@ describe('tail guard (low-sample-point filter)', () => {
     expect(laneSeriesByMinute(uniform, 1, 'total', 'last_hits').size).toBe(3);
   });
 
+  it('peak-0 guard: an empty or all-zero-samples curve keeps every point', () => {
+    //floor = 5% of 0 = 0, so nothing falls below it — the filter never eats the whole curve
+    expect(dropLowSamplePoints([], (p: LaneCurvePoint) => p.sample_players)).toEqual([]);
+    const zeros = laneCurve([lanePt(180, 1, 0), lanePt(360, 3, 0), lanePt(540, 6, 0)]);
+    expect(dropLowSamplePoints(zeros.points, (p) => p.sample_players)).toHaveLength(3);
+    expect(laneSeriesByMinute(zeros, 1, 'total', 'last_hits').size).toBe(3);
+  });
+
   it('applies the same filter to the player line, keyed on its match count', () => {
     //The player's own line carries `matches`, not `sample_players`; a minute reached by far
     //fewer of their games is the personal-curve analog of a straggler and is dropped too.

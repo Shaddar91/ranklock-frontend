@@ -1,20 +1,4 @@
-//============================================================================
 //RankLock API contract — TypeScript types for the Rust/Axum JSON API.
-//
-//   TODO: replace with ts-rs output
-//
-//These types are HAND-WRITTEN against the documented route list + the backend
-//response structs (deadlock-backend/src/main.rs + src/handlers/*.rs) as of
-//2026-06-19. The backend DTOs do NOT yet derive `ts_rs::TS`, so there is no
-//generated source of truth. When the Rust side adds `#[derive(TS)]` +
-//`#[ts(export)]` to its response structs, regenerate this file in CI
-//(architecture §7.3 / requirements §A.2) and delete the hand-written bodies
-//below. Until then, keep these in sync with the structs by hand.
-//
-//Conventions: Rust `Option<T>` → `T | null` (or `field?:` where the field is
-//`skip_serializing_if = "Option::is_none"`); `DateTime<Utc>`/`NaiveDate` →
-//ISO-8601 `string`; `i64/i32/f64` → `number`; `serde_json::Value` → `unknown`.
-//============================================================================
 
 //---- shared scalars ---------------------------------------------------------
 
@@ -24,19 +8,8 @@ export type Badge = number | null;
 /** Hero bracket filter accepted by `?bracket=` on hero endpoints. */
 export type HeroBracket = 'low' | 'mid' | 'high' | 'top';
 
-/**
- * The competitive game modes RankLock separates stats by (migration 022 —
- * game-mode separation). The backend `?game_mode=` param parses exactly these two
- * canonical names (case-insensitive), defaulting to `Normal`. Non-competitive
- * modes (CoopBot/PrivateLobby/Tutorial/ExploreNYC) are excluded from ALL stats and
- * are NEVER offered as a value. `StreetBrawl` is the API name for "Brawl".
- */
 export type GameMode = 'Normal' | 'StreetBrawl';
 
-//ranked-axis (migration 047): the competitive match_mode is a served dimension alongside
-//game_mode. `Unranked` is the default (byte-identical to pre-047 numbers); `Ranked` opts
-//into the separate ranked competitive track. Non-competitive match_modes (CoopBot/
-//PrivateLobby/…) are excluded from stats and are NEVER offered as a value.
 export type MatchMode = 'Unranked' | 'Ranked';
 
 //---- leaderboard / search ---------------------------------------------------
@@ -101,10 +74,6 @@ export interface HeroCounterRow {
 }
 export type HeroCountersResponse = HeroCounterRow[];
 
-//GET /heroes/:id/synergies — the backend filters the upstream `hero-synergy-stats`
-//rows down to pairs that include this hero (hero_id1 OR hero_id2) and passes them
-//through verbatim (main.rs::get_hero_synergies). Model the fields the matrix needs
-//and keep the row extensible (the upstream blob carries more we don't render).
 export interface HeroSynergyRow {
   hero_id1: number;
   hero_id2: number;
@@ -233,11 +202,6 @@ export interface MatchDetail {
 }
 
 //---- match inspect (GET /matches/:id/inspect) -------------------------------
-//Rolling-window per-match DETAIL tier (migration 051 window; C3 backend): items in
-//buy order + a per-sample net-worth ("souls") timeline, powering the Economy chart
-//and the who-bought-what inspector. A match outside the N-day window (or an unknown
-//id) comes back in_window:false / players:[] with window_days echoed — never a 404 —
-//so the UI empty-states with the real N. SOULS is the net worth, never "gold".
 
 //One purchased item in a player's build. Array order = BUY order.
 export interface MatchInspectItem {
@@ -496,13 +460,6 @@ export interface CompareResponse {
   efficiency: CompareEfficiency;
 }
 
-//GET /players/:id/compare-player?vs=&hero_id=  — you vs a SPECIFIC other player.
-//Mirrors CompareResponse, but the comparison term is another PLAYER ("them") rather
-//than a rank cohort; `them` reuses the per-player CompareYou shape (identical metric
-//set, plus the other player's tier/name for labeling). Hero scope is explicit only:
-//absent/0 hero_id = ALL heroes (hero_name "All heroes", shared_hero:false); a non-zero
-//hero_id scopes BOTH sides to that hero. A 404 means an account has no games at all in
-//the mode; a 0-game side under a window/hero scope is a 200 with null metrics.
 export interface ComparePlayerResponse {
   account_id: number;
   vs_account_id: number;
@@ -649,16 +606,7 @@ export interface ItemModifier {
 }
 
 //---- Lane Lab (rich-analytics tier, RICH_ANALYTICS_ENABLED gate) -------------
-//Modeled on deadlock-backend/src/handlers/lane_lab.rs. Cohort curves are
-//reconstructed at READ time from the additive counting histograms, so 501
-//(feature off) / 202 (producers haven't run) are the expected pre-data states —
-//handle via isDisabled/isComputing, never as a hard error.
 
-//GET /lane-lab/economy-curve?band=&metric=  and  /lane-lab/farm-curve (CurveResponse).
-//One point per 180s grid index. p25/p50/p75 are VALUE-BUCKET indices, not raw
-//units — the per-metric encoding (souls = net_worth/1000; last_hits/kills/… = raw
-//count) means real souls = p50 * 1000. p* are null when a minute has no samples.
-//`band` = rank tier (badge/10, 0..11); null when all bands were aggregated.
 export interface LaneCurvePoint {
   minute_bucket: number;
   //wall-clock seconds at this point (= minute_bucket * 180).
@@ -668,10 +616,6 @@ export interface LaneCurvePoint {
   p50: number | null;
   p75: number | null;
 }
-//Per-player rank cohort (migration 052, DESIGN §8): 'player_rank' selects the exact display
-//rank (`rank`) or a whole league level (`tier`, `division` null); 'team_average' is the
-//pre-052 badge-band path (`band`) and always carries rank/tier/division null. A curve is
-//NEVER both — the backend 400s a request that mixes band with rank/tier/division.
 export type RankCohort = 'player_rank' | 'team_average';
 export interface LaneCurveResponse {
   band: number | null;
@@ -698,13 +642,6 @@ export interface EarlyEconVerdictResponse {
   buckets: EarlyEconVerdictBucket[];
 }
 
-//GET /players/:account_id/economy  — a public per-player economy AGGREGATE (backend
-//C5), ranked-only and suppression-honored, used to overlay a picked player on the
-//Lane Lab tier curves. This is an aggregate across the player's matches, NOT a
-//per-minute curve: a true personal soul curve needs the match_player_timeline detail
-//tier (~1.9% loaded), which is out of scope. matches === 0 (or null rates) means the
-//player has no ranked economy data yet → the UI empty-states it. A suppressed/unknown
-//account returns 404.
 export interface PlayerEconomy {
   account_id: number;
   matches: number;
@@ -724,16 +661,6 @@ export interface PlayerEconomy {
   avg_player_damage: number | null;
 }
 
-//GET /players/:account_id/economy-curve?metric=&vs_band=&hero=&match=  — THE signature
-//coaching curve (lane_lab::player_economy_curve). Two overlayable per-minute series, both
-//in REAL units (souls = net_worth, NOT /1000):
-//  • `you` / `points` — the player's OWN per-minute curve, averaged across their loaded
-//    Normal/Unranked matches. FIXED: independent of vs_band/hero — picking a league/hero
-//    moves only the comparison. `points` is a byte-identical alias of `you` (the plan's
-//    CURVE_OK gate reads `points`); the UI reads `you`.
-//  • `comparison` — the league (+optional hero) cohort you are measured against, or null
-//    when RICH_ANALYTICS is off / the Gold has never produced / an on-demand hero scan
-//    timed out. The player line is always present regardless.
 export interface PlayerCurvePoint {
   minute_bucket: number;
   //wall-clock seconds at this point (= minute_bucket * 180).
@@ -779,15 +706,6 @@ export interface PlayerEconomyCurveResponse {
   player_hero_games?: number;
 }
 
-//GET /lane-lab/souls-sources?band=&metric_group=&match_mode=  and
-//GET /players/:account_id/souls-sources?hero=&match_mode=  (migration 048). Per-3-min
-//souls-by-source curves for the "you vs tier" stack. `souls_avg` is ALREADY real souls
-//(Σ souls_x1000 / denom / 1000) — no client scaling. Six groups arrive in a FIXED order
-//(lane_creeps, neutrals, heroes, objectives, denies, losses); a bucket with no sample omits its
-//point. Both routes are Normal-only server-side and ride the Unranked/Ranked axis via
-//?match_mode=. The cohort is RICH_ANALYTICS-gated (501 off / 202 until the first fold); the
-//per-player route is ungated + suppression-404'd. The upstream gold_* columns stay PROC-only —
-//"souls" is the only wording on the wire (owner 2026-08-31).
 export interface SoulsCohortPoint {
   minute_bucket: number;
   //wall-clock seconds at this point (= minute_bucket * 180).
@@ -825,12 +743,6 @@ export interface PlayerSoulsResponse {
   player_hero_games?: number;
 }
 
-//GET /heroes/:id/item-win-rates?band=  — best items by win rate for a hero, scoped
-//to a rank band (rich-analytics tier, served by the MAIN API under /heroes/*). `band`
-//is the numeric rank tier (badge/10, 0..11); omit to aggregate. Payload fields are the
-//backend's ItemWinRate JSON (item_id/games/wins/win_rate/wilson_lower); item_name and
-//icon_url arrive null and are filled by the item catalog (itemCatalog.ts). 202/501 are
-//the expected pre-data states.
 export interface HeroItemWinRate {
   item_id: number;
   item_name?: string | null;
@@ -860,13 +772,6 @@ export interface HealthResponse {
 
 //---- freshness metadata ------------------------------------------------------
 
-//GET /meta/data-horizon (deadlock-backend handlers/meta.rs, pinned wire shape —
-//the backend test `horizon_serializes_pinned_shape` locks these exact keys).
-//`max_match_start_time` = max(matches.start_time), the global ingestion horizon;
-//`datasets` = per-dataset lineage window stamps (dataset "economy-curve" today).
-//Every field nullable: pre-data everything is null / []. Always 200 — but the
-//UI must ALSO tolerate the route being absent entirely (404 on a pre-C8 API)
-//and render nothing rather than a fake date.
 export interface DataHorizonDatasetWindow {
   dataset: string;
   window_lo: string | null;

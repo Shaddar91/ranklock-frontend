@@ -1,37 +1,8 @@
-//============================================================================
 //Lane Lab island — the signature per-minute economy / soul-curve coaching
 //surface (brief §7B). ONE hydration root mounted on /lane-lab.
 //
-//The chart is a COMPOSABLE COMPARISON SET (comparison redesign, 2026-07): the
-//user assembles up to four entities and every series is labeled by what it IS —
-//never by a fixed role:
-//  • League A — the primary league selector (BracketFilter, full ladder)
-//  • League B — a second, independent league selector (defaults to one league
-//    above League A so the old default experience is preserved, but ANY league
-//    can be compared against any other)
-//  • Player 1 / Player 2 — searched players, each with an optional per-player
-//    hero scope (defaulting to the global Hero selector)
-//  • a global Hero selector — scopes the players' own lines AND (through a
-//    picked player's request) the league curves themselves
-//Each entity has a toggle chip: unchecked = out of the chart, its setup kept.
-//
-//Data sources:
-//  • GET /lane-lab/economy-curve?band=&metric= and /lane-lab/farm-curve — the
-//    fast Gold league curves (all-hero medians per rank band).
-//  • GET /players/:id/economy-curve?metric=&vs_band=&hero= — each player's own
-//    per-minute line (`you`), the `player_hero_games` no-games guard, and — when
-//    a hero is selected — the hero-scoped league percentiles (band x hero Gold) via the
-//    response's `comparison` side (anchored on the first picked player).
-//  • GET /lane-lab/early-econ-verdict?band= — the 9-minute early-econ → win-rate
-//    verdict for League A.
-//
 //`band` is a rank tier (badge/10, 0..11 — exactly lib/ranks RANKS index).
 //band omitted ('All') aggregates every band.
-//
-//Build-ahead contract (requirements §8.1): the lane endpoints 501 (RICH_ANALYTICS
-//disabled) / 202 (lane producers haven't run) before the data is live. Every
-//branch EMPTY-STATES with the "coming soon" copy — it never white-screens.
-//============================================================================
 import { useEffect, useId, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, isComputing, isDisabled, isNotFound, isUnauthorized, queryKeys } from '../../lib/apiClient';
@@ -76,11 +47,6 @@ interface MetricOption {
   label: string;
 }
 
-//Metrics the /lane-lab/economy-curve histogram serves (HISTOGRAM_METRICS). souls is
-//the headline; the rest let a reader pivot the curve to last-hits, kills, etc.
-//NOTE: denies is deliberately ABSENT — per-minute denies does not exist upstream
-//(match_player_timeline has no denies column; Component 1 verdict), and a curve must
-//never be invented from the match-aggregate avg_denies.
 const ECON_METRICS: readonly MetricOption[] = [
   { key: 'souls', label: 'Souls' },
   { key: 'last_hits', label: 'Last hits' },
@@ -120,10 +86,6 @@ const COHORT_OPTIONS: readonly MetricOption[] = [
 const cohortCaption = (c: RankCohort): string =>
   c === 'player_rank' ? 'Player rank · ranked matches since Aug 7, 2026' : 'Team average · all matches';
 
-//Player-rank cohort tiers (DESIGN §8): 1..11 — Valve's own display-rank ladder has no
-//Obscurus (badge tier 0) equivalent, unlike the team-average badge ladder every other
-//selector here uses. Numerically the SAME tier index as the badge ladder from Initiate up
-//(Eternus = 11 in both), so `getRank`/`subLabel` name them identically.
 const RANK_TIERS: number[] = RANKS.filter((r) => r.tier >= 1).map((r) => r.tier);
 //Division select options (DESIGN §9: "All, I–VI"). undefined = the whole league (every
 //division); 1..6 narrows to one exact display rank (tier*10+division).
@@ -133,15 +95,6 @@ const DIVISION_OPTIONS: readonly { value: number | undefined; label: string }[] 
 ];
 
 //---- curve view mode --------------------------------------------------------
-//The league p50 / player `value` series are CUMULATIVE (souls = net worth to date). Two ways
-//to read them, toggled per panel:
-//  • 'rate'  — souls GAINED each minute: (value[i] − value[i−1]) / minutesElapsed. This is
-//              the honest "per minute" view and it KEEPS ADJACENT LEAGUES APART — a stronger
-//              league out-earns per minute the whole game, whereas the cumulative curves
-//              converge to ~2% late-game and read as one line (plan C2).
-//  • 'total' — the raw cumulative curve (net worth climbing over the match).
-//Default is 'rate'; the cumulative total is exactly what hid the league gap.
-//(ViewMode itself now lives in ../../lib/laneCurve alongside the transforms.)
 
 const VIEW_MODES: readonly MetricOption[] = [
   { key: 'rate', label: 'Per minute' },
@@ -149,10 +102,6 @@ const VIEW_MODES: readonly MetricOption[] = [
 ];
 
 //---- curve x-window ---------------------------------------------------------
-//The economy curve DEFAULTS to the early game (0–12 min), the laning phase where the league
-//gap is real; late game the cumulative curves converge and read as one line (findings.md
-//C5/S2). 'Full game' zooms the axis back out — no data is dropped, only the visible window
-//changes (EconomyCurve clips via XAxis domain + allowDataOverflow).
 type XWindow = 'early' | 'full';
 const X_WINDOWS: readonly MetricOption[] = [
   { key: 'early', label: 'Early game' },
@@ -161,13 +110,6 @@ const X_WINDOWS: readonly MetricOption[] = [
 //Upper bound of the early-game window, in game minutes (the laning phase where leagues diverge).
 const EARLY_GAME_MAX_MIN = 12;
 
-//value_bucket encoding (012 migration COMMENT): souls = net_worth/1000 AND
-//damage = player_damage/1000, so their p50 buckets map back to real units by ×1000.
-//Every OTHER histogram metric (last_hits/kills/deaths/assists) is a raw count, so its
-//bucket is the real value (×1). Missing the ×1000 on damage renders the damage curve
-//1000× too small — and would push the player marker off-chart. Applies ONLY to the
-//lane-Gold league curves; the player-curve endpoint (own lines + hero-scoped league
-//comparisons) already serves REAL units and never takes this scale.
 const PER_THOUSAND_BUCKET = 1000;
 const bucketScale = (metric: string): number =>
   metric === 'souls' || metric === 'damage' ? PER_THOUSAND_BUCKET : 1;
@@ -195,10 +137,6 @@ function laneAheadMessage(error: unknown): string {
 }
 
 //---- the comparison-set entity model ----------------------------------------
-//ONE selection object, computed in LaneLabInner and threaded into both curve panels,
-//so the chips, the chart legends, and the captions all read the SAME entities. Every
-//user-visible series name comes from here — the chart's you/cohort/player/player2
-//dataKeys are internal slot names only ("where's who" requirement).
 
 //A selected hero: id + display name (from the shared /heroes catalog).
 interface HeroPick {
@@ -265,11 +203,6 @@ function peakSamples(points: ReadonlyArray<{ sample_players: number }> | undefin
 }
 
 //---- the picked-player / my-account economy overlay -------------------------
-//The public per-player aggregate (PlayerEconomy) collapses to ONE shape (PlayerOverlay) that
-//feeds the OverlaySummary stat-line — the SCALAR per-game averages. The chart's player LINES
-//come from getPlayerEconomyCurve (`you`, the promoted per-player summary). "Use my account"
-//resolves the signed-in viewer's linked deadlock account and becomes an ordinary player source
-//(isMe only relabels it "You"), so it gets the same line, hero scope and verdict marker.
 
 //What's currently overlaid: a searched player, or (isMe) the signed-in caller's own account.
 type OverlaySource = { kind: 'player'; player: SearchResult; isMe?: boolean };
@@ -359,11 +292,6 @@ function MetricToggle({
 }
 
 //---- the comparison-set chip row ---------------------------------------------
-//The "where's who" control: one chip per entity, dot-colored in the SAME series color
-//its curve renders in, labeled with the SAME text its legend entry shows. Checked =
-//drawn; unchecked = removed from both charts WITHOUT losing the entity's setup
-//(league pick, player pick, hero scope all survive). A player whose no-games guard
-//tripped carries the inline "no games on <hero>" notice right on the chip.
 function ComparisonSetChips({
   selection,
   onToggle,
@@ -437,11 +365,6 @@ function ComparisonSetChips({
 }
 
 //---- a reusable league-vs-league curve panel (economy or farm) ---------------
-//Draws the composed comparison set for one metric family: League A (cyan area),
-//League B (violet dashed), and each picked player's own line (amber / coral).
-//Parameterized by the lane endpoint method + its query-key factory so the economy
-//and farm panels share ALL of the fetch / empty-state / merge logic and differ only
-//in their metric set + copy.
 
 function CurvePanel({
   selection,
@@ -460,10 +383,6 @@ function CurvePanel({
   metrics: readonly MetricOption[];
   defaultMetric: string;
   kicker: string;
-  //The economy-curve Gold's match-start sample window ("Apr 1, 2026 – Jun 1, 2026") from
-  ///meta/data-horizon, or null when unknown — the league caption then shows no window rather
-  //than a hardcoded date (Component 11 data-age honesty). Team-average only — the rank cohort
-  //(a different dataset) has no stamped lineage entry here, so the caption omits it there.
   sampleWindow?: string | null;
 }) {
   const [metric, setMetric] = useState<string>(defaultMetric);
@@ -476,22 +395,13 @@ function CurvePanel({
   //The active skin's series color words — re-renders the caption when the skin flips,
   //keeping the words in lockstep with the CSS-var line colors that re-skin live.
   const econWords = useEconSeriesWords();
-  //Default to the per-minute RATE view — the cumulative 'total' is what made adjacent
-  //leagues converge into one line late-game (plan C2). Per-panel, like the metric toggle.
   const [viewMode, setViewMode] = useState<ViewMode>('rate');
-  //Default the visible window to early game (0–12 min) where the league gap lives (C5/S2);
-  //'full' zooms the axis out to the whole match. Data is never dropped — only the window.
   const [xWindow, setXWindow] = useState<XWindow>('early');
   const xDomain: [number, number] | undefined =
     xWindow === 'early' ? [0, EARLY_GAME_MAX_MIN] : undefined;
 
   const { cohort, leagueA, leagueB, hero, heroScopedLeagues, anchorId, p1, p2 } = selection;
 
-  //DESIGN §8: EXACTLY one of {band} / {tier[,division]} goes out per league — never both
-  //(curves.rs 400s that combination) — and never neither while in player-rank mode (an empty
-  //request would silently resolve server-side to the all-bands team-average cohort). null =
-  //this league has no valid player-rank tier picked (Obscurus / "All"); the panel then shows
-  //its own honest-empty note instead of querying.
   const paramsA = cohortParamsFor(cohort, leagueA.band, leagueA.division);
   const paramsB = leagueB ? cohortParamsFor(cohort, leagueB.band, leagueB.division) : null;
   //The same selection under /players/:id/economy-curve's names — that endpoint calls the
@@ -502,12 +412,6 @@ function CurvePanel({
   const noTierB = cohort === 'player_rank' && leagueB != null && paramsB == null;
 
   //---- League A / League B series — two sources, chosen by the hero scope ----
-  //No hero (or no anchor): the fast lane-Gold endpoints, one call per league (bucket
-  //units — scaled below). Hero + anchor: the player-curve endpoint's `comparison` side,
-  //one call per league with the SAME resolved cohort params + hero= — the band/rank x hero
-  //Gold reconstruction (REAL units, scale 1). The anchor's own `you` series in those
-  //responses is unused here; when the anchor IS Player 1 on the global hero and League B,
-  //TanStack dedupes the key and one request serves both the league and the player line.
   const laneA = useQuery({
     queryKey: queryKeyFor({ ...(paramsA ?? {}), metric }),
     queryFn: () => fetcher({ ...(paramsA as CohortParams), metric }),
@@ -539,16 +443,10 @@ function CurvePanel({
   const cmpA = heroCmpA.data?.metric === metric ? heroCmpA.data.comparison : null;
   const cmpB = heroCmpB.data?.metric === metric ? heroCmpB.data.comparison : null;
 
-  //DESIGN §9 / Failure cases: a per-player-rank division can be real but too thin to trust
-  //(Eternus ≈ 200 rows/division/week) — never drawn, only named. team_average never gates here.
   const nA = peakSamples(heroScopedLeagues ? cmpA?.points : laneA.data?.points);
   const nB = peakSamples(heroScopedLeagues ? cmpB?.points : laneB.data?.points);
   const thinA = isThinRankSample(cohort, nA);
   const thinB = isThinRankSample(cohort, nB);
-  //Whether League A/B is ACTUALLY drawable right now — checked, has a valid cohort selection,
-  //and (in player-rank mode) clears the sample floor. Every caption/legend/series decision
-  //below reads these, never the raw `.show` chip, so a thin or tierless league never silently
-  //renders as if it had a real curve.
   const effA = leagueA.show && !noTierA && !thinA;
   const effB = (leagueB?.show ?? false) && !noTierB && !thinB;
 
@@ -573,12 +471,6 @@ function CurvePanel({
   );
 
   //---- the two players' own per-minute lines ----------------------------------
-  //Each picked player fetches their OWN curve for the active metric, hero-scoped to their
-  //effective hero and carrying vs_band=<League B> (so the hero-scoped League B comparison
-  //and the player line share one request when the player anchors it). The payload passes
-  //the metric-echo guard FIRST; then the NO-GAMES GUARD: a response with
-  //player_hero_games === 0 means the player never played that hero here — their series is
-  //NEVER drawn (the backend also serves `you` empty; "don't compare the wrong thing").
   const p1Id = p1?.id ?? null;
   const p1Curve = useQuery({
     queryKey: queryKeys.playerEconomyCurve(p1Id ?? 0, { metric, vs_band: leagueB?.band, hero: p1?.hero?.id }),
@@ -617,10 +509,6 @@ function CurvePanel({
   const p2Thin = hasP2Curve && isThinPlayerSample(p2PeakN);
 
   //---- merge onto ONE union minute grid ---------------------------------------
-  //Checked/unchecked = in/out: an unchecked entity contributes nothing (its fetch is
-  //disabled and its slot passes null). No series is the "base" grid — hiding League A
-  //must not collapse the minutes the other series render on. Gated on effA/effB (not the raw
-  //chip) so a too-thin or tierless league contributes nothing to draw, ever.
   const points = useMemo(
     () =>
       mergeEconSeriesByMinute(
@@ -684,10 +572,6 @@ function CurvePanel({
           </h2>
         </div>
         {nA > 0 && (
-          //League A's n plus, for the lane-Gold source, the match window it was computed
-          //from (/meta/data-horizon lineage stamp) — never a hardcoded date; the hero-scoped
-          //source shares that window and says it is hero-scoped. Below the 500-floor (player
-          //rank only) the caption names the floor instead of the window (DESIGN §9).
           <span className="mono faint" style={{ fontSize: 12 }}>
             {thinA ? (
               <>n = {count(nA)} players sampled — below the {RANK_MIN_SAMPLE} floor for a per-rank curve</>
@@ -708,8 +592,6 @@ function CurvePanel({
           onChange={(m) => setViewMode(m as ViewMode)}
           ariaLabel="Curve view — per-minute rate or cumulative total"
         />
-        {/* Window toggle — defaults to early game (0–12 min) where the league gap is real
-            (C5/S2); 'Full game' zooms the axis out without dropping any data. */}
         <MetricToggle
           metrics={X_WINDOWS}
           value={xWindow}
@@ -744,12 +626,6 @@ function CurvePanel({
             player2Faint={p2Thin}
             bands={!isRate}
           />
-          {/* Caption color words are driven by useEconSeriesWords/econSeriesColor —
-              the SAME skin-keyed source of truth the chart lines use — so the words
-              can never describe a color the line doesn't actually render, in any
-              skin. Only ACTUALLY-DRAWN series are described ("where's who": the caption is
-              the legend, spelled out) — effA/effB, never the raw show chip, so a too-thin
-              or tierless league is never claimed to have a line here. */}
           {(effA || effB) && (
             <p className="muted" style={{ fontSize: 12, margin: '10px 0 0', lineHeight: 1.45 }}>
               {effA && (
@@ -1039,13 +915,6 @@ function VerdictPanel({
 }
 
 //---- the player-overlay picker ----------------------------------------------
-//A debounced typeahead over the SAME /players/search endpoint the nav SearchBox uses
-//(cache shared via the `search` query key), plus a "Use my account" shortcut when a
-//session exists. Picking a player / the caller sets the overlay; the parent fetches the
-//economy aggregate and threads it into the curve + verdict. Each picker also carries the
-//player's HERO SCOPE (defaults to following the global Hero selector) and surfaces the
-//no-games guard notice. Loading / no-data / summary states render here so the panels
-//below stay clean.
 
 //The right empty-state copy for a no-data or errored overlay, by source + error kind.
 function overlayEmptyMessage(source: OverlaySource, error: unknown): string {
@@ -1060,10 +929,6 @@ function overlayEmptyMessage(source: OverlaySource, error: unknown): string {
   return `No economy data for ${source.player.steam_name} yet.`;
 }
 
-//The active-overlay stat-line: the player's rank badge + label + their FULL per-metric
-//aggregate — every average the economy endpoint serves, not just souls (the dictation's
-//core ask). Anchored to a rank via `badge`. Missing values (e.g. the kills/deaths a "You"
-//overlay doesn't serve) show an em-dash, never a fabricated 0.
 function OverlaySummary({
   data,
   accent = 'player',
@@ -1157,10 +1022,6 @@ function PlayerOverlayPicker({
   //Which econ series this picker maps to (amber 'player' / coral 'player2'), threaded into
   //the summary + intro so their color words match the line this picker's player draws in.
   accent?: 'player' | 'player2';
-  //This player's hero scope + the shared hero catalog for the selector. `globalHero` names
-  //what "follow the Hero selector" currently resolves to; `noGamesHero` carries the hero
-  //name when the no-games guard tripped (player_hero_games === 0) so the notice renders
-  //right where the scope is chosen.
   heroScope: HeroScope;
   onHeroScope: (s: HeroScope) => void;
   heroOptions: readonly HeroSummary[];
@@ -1173,7 +1034,6 @@ function PlayerOverlayPicker({
   const [open, setOpen] = useState(false);
   const listId = useId();
 
-  //debounce the query the API sees (250ms) — mirrors SearchBox / ComparePlayerPicker.
   useEffect(() => {
     const t = setTimeout(() => setQ(raw.trim()), 250);
     return () => clearTimeout(t);
@@ -1369,10 +1229,6 @@ function LaneLabInner() {
   //Checked/unchecked = in/out of the chart. Config survives an uncheck.
   const [show, setShow] = useState({ a: true, b: true, p1: true, p2: true });
   //---- the cohort switch (DESIGN §9) ------------------------------------------
-  //Starts on 'player_rank' optimistically; the probe effect below flips it to
-  //'team_average' the first time it learns the current league has no rows there (or the
-  //endpoint errors/is gated off) — but only until the reader touches the switch themselves,
-  //after which their explicit pick stands (cohortTouched latches on the first onChange).
   const [cohort, setCohort] = useState<RankCohort>('player_rank');
   const [cohortTouched, setCohortTouched] = useState(false);
   //Player-rank divisions (DESIGN §9: "All, I–VI" per league selector); undefined = the whole
@@ -1394,10 +1250,6 @@ function LaneLabInner() {
     id == null ? null : { id, name: heroCatalog.find((h) => h.hero_id === id)?.hero_name ?? `Hero ${id}` };
   const globalHero = heroPick(heroId);
 
-  //DESIGN §8: the player-rank tier scale is numerically the SAME index as the badge tier from
-  //Initiate up (Eternus = 11 in both) but has no Obscurus (0) — `band === 0 | 'all'` has no
-  //player-rank equivalent, named "All ranks" here for the label only; cohortParamsFor/noTierA
-  //are what actually gate the query on that case, not this string.
   const leagueAName =
     cohort === 'player_rank'
       ? typeof band === 'number' && band >= 1
@@ -1420,13 +1272,6 @@ function LaneLabInner() {
         : getRank(effBandB).name;
 
   //---- the cohort switch's smart default (DESIGN §9) --------------------------
-  //Probe League A's player-rank cohort at the whole-league level (no division — the level
-  //most likely to have SOME rows if any division does), souls only. Only ever read for its
-  //row-count while cohortTouched is false; once resolved (or the reader flips the switch
-  //themselves) this query keeps running but its result is ignored below.
-  //Deliberately the SAME query key the economy panel's League-A/souls fetch will use once
-  //the cohort resolves to player_rank (division omitted = whole league, matching a fresh
-  //divisionA default of undefined) — TanStack dedupes them into one request, not two.
   const rankTierA = typeof band === 'number' && band >= 1 ? band : undefined;
   const rankProbe = useQuery({
     queryKey: queryKeys.laneEconomyCurve({ tier: rankTierA, division: undefined, metric: 'souls' }),
@@ -1477,7 +1322,6 @@ function LaneLabInner() {
     retry: false,
   });
 
-  //Normalize whichever source is active into the shared overlay shape.
   const playerOverlay = useMemo<PlayerOverlay | null>(
     () => (overlay && playerEcon.data ? overlayFromPlayer(overlay.player.steam_name, playerEcon.data) : null),
     [overlay, playerEcon.data],
@@ -1521,14 +1365,6 @@ function LaneLabInner() {
   const heroScopedLeagues = globalHero != null && anchorId != null;
 
   //---- the no-games guard for the chips (player_hero_games) -------------------
-  //One souls-keyed probe per hero-scoped player — deliberately the SAME query key the
-  //economy panel uses on its default metric, so this is usually a cache hit, never a
-  //second request. player_hero_games === 0 ⇒ that player never played their hero here:
-  //the chip carries the inline notice and every panel excludes the series. Intentionally
-  //ALWAYS vs_band (never rank/tier/division) regardless of the active cohort: this probe only
-  //reads `player_hero_games`, which the backend computes from account+hero+match_mode alone —
-  //the cohort choice is irrelevant to it, and sending both vs_band and tier/division on one
-  //call is the exact combination curves.rs 400s.
   const guard1 = useQuery({
     queryKey: queryKeys.playerEconomyCurve(pickedId ?? 0, { metric: 'souls', vs_band: effBandB ?? undefined, hero: hero1?.id }),
     queryFn: () => api.getPlayerEconomyCurve(pickedId as number, { metric: 'souls', vs_band: effBandB ?? undefined, hero: hero1?.id }),
