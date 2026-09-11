@@ -1,6 +1,7 @@
 //Pure per-minute transforms for the Lane Lab economy chart — kept out of the island component so
 //the chart AND the unit tests transform a curve the SAME way. The backend serves cumulative
 import type { PlayerCurvePoint, PlayerEconomyCurveResponse, RankCohort } from '../types/api';
+import { count } from './format';
 
 export type ViewMode = 'rate' | 'total';
 
@@ -236,8 +237,30 @@ export function isThinRankSample(cohort: RankCohort, peakSamplePlayers: number):
 }
 
 export type CohortProbeState = 'pending' | 'rows' | 'empty' | 'error';
+//Only an EMPTY answer downgrades: an error is a transient failure, not "no cohort".
 export function defaultCohortFromProbe(state: CohortProbeState): RankCohort | null {
   if (state === 'rows') return 'player_rank';
-  if (state === 'empty' || state === 'error') return 'team_average';
+  if (state === 'empty') return 'team_average';
   return null;
+}
+
+//---- league sample-size caption ----------------------------------------------
+export interface LeagueSampleLine {
+  name: string;
+  n: number;
+}
+
+//The "n = …" line over a league chart: every shown league's peak sample; the team-average
+//cohort is named the lobby-average league, with the lobby clause instead of a bare "players".
+export function leagueSampleCaption(
+  cohort: RankCohort,
+  leagues: ReadonlyArray<LeagueSampleLine | null>,
+): string {
+  const live = leagues.filter((l): l is LeagueSampleLine => l != null && l.n > 0);
+  if (live.length === 0) return '';
+  if (cohort === 'team_average') {
+    const parts = live.map((l) => `${count(l.n)} players in lobbies whose average rank is ${l.name}`);
+    return `n = ${parts.join(' · ')} — lobby-average league${live.length > 1 ? 's' : ''}`;
+  }
+  return `n = ${live.map((l) => `${count(l.n)} ${l.name}`).join(' · ')} players`;
 }

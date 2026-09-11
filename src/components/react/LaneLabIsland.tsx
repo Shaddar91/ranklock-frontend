@@ -26,6 +26,7 @@ import {
   isThinRankSample,
   laneBandByMinute,
   laneSeriesByMinute,
+  leagueSampleCaption,
   mergeEconSeriesByMinute,
   peakPlayerMatches,
   playerCurveParamsFor,
@@ -537,6 +538,14 @@ function CurvePanel({
   //DESIGN §9: the sample window is a team-average lineage stamp only — the rank cohort is a
   //different dataset with no stamped entry here, so its caption never claims one.
   const showSampleWindow = cohort === 'team_average' && !heroScopedLeagues;
+  //The SERVED cohort drives the caption — never the switch alone.
+  const servedCohort: RankCohort = heroScopedLeagues
+    ? (cmpA?.cohort ?? cmpB?.cohort ?? cohort)
+    : (laneA.data?.cohort ?? laneB.data?.cohort ?? cohort);
+  const sampleCaption = leagueSampleCaption(servedCohort, [
+    effA && nA > 0 ? { name: leagueA.name, n: nA } : null,
+    leagueB != null && effB && nB > 0 ? { name: leagueB.name, n: nB } : null,
+  ]);
 
   //Loading/empty gates. isLoading (not isPending) so a DISABLED query — an unchecked
   //chip — never reads as "loading". 501/202 on the League A source keeps the existing
@@ -571,15 +580,17 @@ function CurvePanel({
             {metricLabel} {isRate ? 'per minute' : 'over the game'}
           </h2>
         </div>
-        {nA > 0 && (
+        {(nA > 0 || nB > 0) && (
           <span className="mono faint" style={{ fontSize: 12 }}>
             {thinA ? (
               <>n = {count(nA)} players sampled — below the {RANK_MIN_SAMPLE} floor for a per-rank curve</>
-            ) : heroScopedLeagues ? (
-              <>n = {count(nA)} players sampled · hero-scoped{showSampleWindow && sampleWindow ? <> · {sampleWindow} sample</> : null}</>
-            ) : (
-              <>n = {count(nA)} players sampled{showSampleWindow && sampleWindow ? <> · {sampleWindow} sample</> : null}</>
-            )}
+            ) : sampleCaption ? (
+              <>
+                {sampleCaption}
+                {heroScopedLeagues ? <> · hero-scoped</> : null}
+                {showSampleWindow && sampleWindow ? <> · {sampleWindow} sample</> : null}
+              </>
+            ) : null}
           </span>
         )}
       </div>
@@ -1276,7 +1287,7 @@ function LaneLabInner() {
   const rankProbe = useQuery({
     queryKey: queryKeys.laneEconomyCurve({ tier: rankTierA, division: undefined, metric: 'souls' }),
     queryFn: () => api.getLaneEconomyCurve({ tier: rankTierA, metric: 'souls' }),
-    retry: false,
+    retry: 2,
     enabled: !cohortTouched && rankTierA != null,
   });
   const probeState: CohortProbeState = cohortTouched
@@ -1443,7 +1454,7 @@ function LaneLabInner() {
         <p className="muted faint" style={{ fontSize: 11.5, margin: '6px 0 0', maxWidth: 620, lineHeight: 1.4 }}>
           {cohort === 'player_rank'
             ? 'Player rank compares players at their OWN Valve display rank — no team-average blur. Ranked matches only, since Aug 7, 2026; recent history is still backfilling, so a league may read empty until it does.'
-            : 'Team average compares by the match’s average badge across both teams — every match ever loaded, but an Emissary player in an Oracle-average match reads as Oracle here.'}
+            : 'Team average is the lobby-average league — it compares by the match’s average badge across both teams: every match ever loaded, but an Emissary player in an Oracle-average match reads as Oracle here.'}
         </p>
       </div>
 

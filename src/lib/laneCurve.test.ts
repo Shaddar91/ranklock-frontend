@@ -13,6 +13,7 @@ import {
   isThinRankSample,
   laneBandByMinute,
   laneSeriesByMinute,
+  leagueSampleCaption,
   mergeEconSeriesByMinute,
   originValue,
   peakPlayerMatches,
@@ -430,12 +431,55 @@ describe('defaultCohortFromProbe (the cohort switch smart default, DESIGN §9)',
     expect(defaultCohortFromProbe('rows')).toBe('player_rank');
   });
 
-  it('falls back to team_average when the probe is empty or errors', () => {
+  it('falls back to team_average ONLY on an empty answer', () => {
     expect(defaultCohortFromProbe('empty')).toBe('team_average');
-    expect(defaultCohortFromProbe('error')).toBe('team_average');
+  });
+
+  it('a probe error is a transient failure, not "no cohort" — no downgrade latch', () => {
+    expect(defaultCohortFromProbe('error')).toBeNull();
   });
 
   it('resolves nothing while the probe is pending — caller keeps the current default', () => {
     expect(defaultCohortFromProbe('pending')).toBeNull();
+  });
+});
+
+describe('leagueSampleCaption (both sample sizes + the lobby-average naming)', () => {
+  it('prints the peak counts of both leagues in one line', () => {
+    expect(
+      leagueSampleCaption('player_rank', [
+        { name: 'Ritualist', n: 369986 },
+        { name: 'Ascendant', n: 17010 },
+      ]),
+    ).toBe('n = 369,986 Ritualist · 17,010 Ascendant players');
+  });
+
+  it('a single shown league prints alone; null and zero-n entries drop out', () => {
+    expect(leagueSampleCaption('player_rank', [{ name: 'Ritualist', n: 369986 }, null])).toBe(
+      'n = 369,986 Ritualist players',
+    );
+    expect(
+      leagueSampleCaption('player_rank', [
+        { name: 'Ascendant', n: 0 },
+        { name: 'Ritualist', n: 10 },
+      ]),
+    ).toBe('n = 10 Ritualist players');
+  });
+
+  it('team_average names the lobby-average league and says whose lobbies they are', () => {
+    const one = leagueSampleCaption('team_average', [{ name: 'Ritualist', n: 662990 }]);
+    expect(one).toBe('n = 662,990 players in lobbies whose average rank is Ritualist — lobby-average league');
+    const two = leagueSampleCaption('team_average', [
+      { name: 'Ritualist', n: 662990 },
+      { name: 'Ascendant', n: 17010 },
+    ]);
+    expect(two).toBe(
+      'n = 662,990 players in lobbies whose average rank is Ritualist · 17,010 players in lobbies whose average rank is Ascendant — lobby-average leagues',
+    );
+  });
+
+  it('no shown league with a sample yields no caption', () => {
+    expect(leagueSampleCaption('player_rank', [null, { name: 'Ritualist', n: 0 }])).toBe('');
+    expect(leagueSampleCaption('team_average', [])).toBe('');
   });
 });
