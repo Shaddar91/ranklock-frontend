@@ -154,7 +154,10 @@ const UPGRADE_KEYS: readonly [keyof AbilityDescription, string][] = [
   ['t3_desc', 'Upgrade 3'],
 ];
 
-const abilities = play.abilities.map((a) => ({
+//The four signature abilities; a hero whose feed names none keeps the full track (buildModel's
+//imbueAbilities fallback), never an empty section.
+const signature = play.abilities.filter((a) => a.slot.startsWith('signature'));
+const abilities = (signature.length > 0 ? signature : play.abilities).map((a) => ({
   ...a,
   body: plain(a.description?.desc),
   upgrades: UPGRADE_KEYS.map(([key, label]) => ({ label, text: plain(a.description?.[key]) })).filter((u) => u.text !== ''),

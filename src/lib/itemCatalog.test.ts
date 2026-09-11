@@ -13,12 +13,34 @@ describe('isPublicItem — internal-item catalog filter', () => {
 
   it('keeps real shoppable items', () => {
     expect(isPublicItem(968099481)).toBe(true); //Extra Spirit (live /items)
-    expect(isPublicItem(3535785353)).toBe(true); //upgrade_clip_size_fixed — shipped sibling, has icon
+    //upgrade_clip_size_fixed — a codename phantom on the wire, but a bare id carries no
+    //name/image to judge, so only the denylist applies.
+    expect(isPublicItem(3535785353)).toBe(true);
   });
 
   it('treats a null/absent id as public (never filters an unknown row)', () => {
     expect(isPublicItem(null)).toBe(true);
     expect(isPublicItem(undefined)).toBe(true);
+  });
+
+  it('drops a phantom row: `upgrade_` codename, and a named row no source can draw a tile for', () => {
+    const phantom = { item_id: 1544322593, item_name: 'upgrade_stabilizer', shop_image_webp: null };
+    expect(isPublicItem(phantom)).toBe(false);
+    //Endless Magazine — named upstream but carries only ability art; not in the catalog or glyphs.
+    expect(isPublicItem({ item_id: 3346798998, item_name: 'Endless Magazine', shop_image_webp: null })).toBe(false);
+  });
+
+  it('keeps a live row: wire shop tile, and a glyph-only shop item with no wire image', () => {
+    const live = {
+      item_id: 968099481,
+      item_name: 'Extra Spirit',
+      shop_image_webp: 'https://assets-bucket.deadlock-api.com/assets-api-res/images/items/spirit/extra_spirit.webp',
+    };
+    expect(isPublicItem(live)).toBe(true);
+    //Toughness — in the shop, but upstream ships no shop tile; the glyph map draws it.
+    expect(isPublicItem({ item_id: 2858617477, item_name: 'Toughness', shop_image_webp: null })).toBe(true);
+    //The denylist wins even over a row that otherwise looks shoppable.
+    expect(isPublicItem({ ...live, item_id: 4284855775 })).toBe(false);
   });
 });
 

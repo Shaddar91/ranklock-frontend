@@ -393,7 +393,7 @@ export const api = {
   getHeroBaseStatsOne: (id: number, patch_id?: string) =>
     apiFetch<HeroBaseStats>(`/heroes/${id}/base-stats`, { query: { patch_id } }),
   getItemModifiers: (params?: { slot?: string; tier?: number }) =>
-    apiFetch<ItemModifier[]>('/items/modifiers', { query: params }).then((rows) => rows.filter((r) => isPublicItem(r.item_id))),
+    apiFetch<ItemModifier[]>('/items/modifiers', { query: params }).then((rows) => rows.filter(isPublicItem)),
 
   getLaneEconomyCurve: (params?: {
     band?: number;

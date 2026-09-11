@@ -6,8 +6,20 @@ import { resolveAsset } from './assets';
 
 //upgrade_clip_size_2 / _3 / _fixed_t3: internal tuning entries Valve never ships in the shop.
 export const INTERNAL_ITEM_IDS = new Set<number>([4284855775, 3449296332, 2861048274]);
-export function isPublicItem(id: number | null | undefined): boolean {
-  return id == null || !INTERNAL_ITEM_IDS.has(id);
+
+type PublicItemRow = { item_id?: number | null; item_name?: string | null; shop_image_webp?: string | null };
+
+//Shop-item predicate for the /items/modifiers feed: denylist, then `upgrade_` codenames, then
+//any row no source can draw a shop tile for (wire image, catalog, glyphs). A bare id carries no
+//name/image to judge, so it is checked against the denylist only.
+export function isPublicItem(row: number | PublicItemRow | null | undefined): boolean {
+  if (row == null) return true;
+  const id = typeof row === 'number' ? row : row.item_id;
+  if (id == null) return true;
+  if (INTERNAL_ITEM_IDS.has(id)) return false;
+  if (typeof row !== 'object') return true;
+  if (row.item_name?.startsWith('upgrade_')) return false;
+  return isImageUrl(row.shop_image_webp) || itemMeta(id)?.icon != null || GLYPHS[String(id)]?.icon != null;
 }
 
 export interface ItemMeta {
