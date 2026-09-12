@@ -8,8 +8,8 @@ import QueryProvider from './QueryProvider';
 import { EmptyState, GameIcon } from './ui/index';
 import { count, DASH } from '../../lib/format';
 import { abilityOrderSequence, formatUpdated, isUpdatedThisPatch, SORT_MODES, type BuildSort } from '../../lib/buildMeta';
-import BuildCreator from './creator/BuildCreator';
 import AnalyzeTab from './lab/AnalyzeTab';
+import CreateTab from './lab/CreateTab';
 import { HeroSelect, HowToPlayLink, useHeroRoster, type RosterSlug } from './lab/HeroBar';
 import type { BuildInput } from '../../lib/computeStats';
 import type { HeroAbility, TrimmedBuild } from '../../types/api';
@@ -162,7 +162,7 @@ function BuildLabInner({ roster }: { roster: RosterSlug[] }) {
   const [heroId, setHeroId] = useState<number | null>(null);
   const [handover, setHandover] = useState<BuildInput | null>(null);
   //A shared `#b1:` link carries a board — hand it to Create. Read AFTER hydration: server and
-  //client must render the same first tab, and BuildCreator reads the fragment itself once mounted.
+  //client must render the same first tab, and the creator reads the fragment itself once mounted.
   useEffect(() => {
     if (window.location.hash.startsWith('#b1:')) setTab('create');
   }, []);
@@ -194,7 +194,7 @@ function BuildLabInner({ roster }: { roster: RosterSlug[] }) {
             }}
           />
         )}
-        {tab === 'create' && <BuildCreator initial={handover} />}
+        {tab === 'create' && <CreateTab initial={handover} />}
         {tab === 'community' && <CommunityBuildsTab heroId={heroId} onHero={setHeroId} roster={roster} />}
       </div>
     </div>

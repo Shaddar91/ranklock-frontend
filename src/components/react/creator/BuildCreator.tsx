@@ -15,11 +15,19 @@ import BuildToolbar from './BuildToolbar';
 import CalculatedPanels from './CalculatedPanels';
 import ItemPicker from './ItemPicker';
 import { imbueAbilities, indexCatalog, layoutBuild, normalizeCatalog, TOTAL_SLOTS } from './buildModel';
-import { useBuildDraft } from './useBuildDraft';
+import { useBuildDraft, type BuildDraft } from './useBuildDraft';
 
 const NO_BASE: BaseStats = {};
 
-export default function BuildCreator({ initial }: { initial?: BuildInput | null } = {}) {
+interface BuildCreatorProps {
+  initial?: BuildInput | null;
+  //a host tab (Build Lab Create) owns the draft so its own panels read the same board.
+  draft?: BuildDraft;
+  //rendered in place of the portrait grid when the host already offers a hero control.
+  heroControl?: React.ReactNode;
+}
+
+export default function BuildCreator({ initial, draft: hostDraft, heroControl }: BuildCreatorProps = {}) {
   const roster = useQuery<HeroBaseStats[]>({
     queryKey: queryKeys.heroBaseStats(),
     queryFn: () => api.getHeroBaseStats(),
@@ -48,6 +56,7 @@ export default function BuildCreator({ initial }: { initial?: BuildInput | null 
   const catalog = useMemo(() => normalizeCatalog(catalogQuery.data), [catalogQuery.data]);
   const byId = useMemo(() => indexCatalog(catalog), [catalog]);
 
+  const ownDraft = useBuildDraft();
   const {
     heroId,
     build,
@@ -60,7 +69,7 @@ export default function BuildCreator({ initial }: { initial?: BuildInput | null 
     setConditionalsEnabled,
     loadBuild,
     clearItems,
-  } = useBuildDraft();
+  } = hostDraft ?? ownDraft;
 
   const abilityQuery = useQuery<HeroAbility[]>({
     queryKey: queryKeys.heroAbilities(heroId ?? -1),
@@ -124,12 +133,14 @@ export default function BuildCreator({ initial }: { initial?: BuildInput | null 
 
   return (
     <div className="grid" style={{ gap: 16 }}>
-      <HeroPicker
-        heroes={heroes}
-        iconOf={iconOf}
-        heroId={heroId}
-        onHero={(id) => selectHero(id, heroes.find((h) => h.hero_id === id)?.patch_id)}
-      />
+      {heroControl ?? (
+        <HeroPicker
+          heroes={heroes}
+          iconOf={iconOf}
+          heroId={heroId}
+          onHero={(id) => selectHero(id, heroes.find((h) => h.hero_id === id)?.patch_id)}
+        />
+      )}
 
       <div className="between" style={{ gap: 12, flexWrap: 'wrap' }}>
         <div className="flex" style={{ gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>

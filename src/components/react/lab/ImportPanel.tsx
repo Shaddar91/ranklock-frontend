@@ -5,13 +5,7 @@ import { useState } from 'react';
 import { EmptyState, StatTile } from '../ui/index';
 import { count, DASH, pct } from '../../../lib/format';
 import { IMPORT_CODE_NOTE, IMPORT_PLACEHOLDER, parseImport, type ImportRef } from './analyzeModel';
-
-export interface StartFromPreset {
-  key: string;
-  label: string;
-  hint: string;
-  itemIds: number[];
-}
+import type { StartFromPreset } from './createModel';
 
 export interface ImportedHeader {
   heroName: string | null;

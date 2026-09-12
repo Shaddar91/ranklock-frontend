@@ -239,18 +239,26 @@ export interface OrderMatch {
   prefix: number | null;
 }
 
-/** Exact match first; then a served order that equals the build's opening run (served lengths vary 14–16). */
-export function matchServedOrder(
-  steps: readonly AbilityStep[],
+/** Exact match first; then a served order that equals the sequence's opening run (served lengths vary 14–16). */
+export function matchOrderSequence(
+  seq: readonly number[],
   orders: readonly AbilityOrder[] | undefined,
 ): OrderMatch | null {
-  const seq = steps.map((s) => s.abilityId);
   if (seq.length === 0) return null;
   const same = (a: readonly number[], b: readonly number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
   const exact = (orders ?? []).find((o) => same(o.abilities, seq));
   if (exact) return { order: exact, prefix: null };
-  const partial = (orders ?? []).find((o) => o.abilities.length > 0 && o.abilities.length < seq.length && same(o.abilities, seq.slice(0, o.abilities.length)));
+  const partial = (orders ?? []).find(
+    (o) => o.abilities.length > 0 && o.abilities.length < seq.length && same(o.abilities, seq.slice(0, o.abilities.length)),
+  );
   return partial ? { order: partial, prefix: partial.abilities.length } : null;
+}
+
+export function matchServedOrder(
+  steps: readonly AbilityStep[],
+  orders: readonly AbilityOrder[] | undefined,
+): OrderMatch | null {
+  return matchOrderSequence(steps.map((s) => s.abilityId), orders);
 }
 
 //---- §6 ability baselines at a tier -------------------------------------------

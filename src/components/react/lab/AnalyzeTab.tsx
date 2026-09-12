@@ -6,15 +6,26 @@ import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { computeStats, type BaseStats, type BuildInput } from '../../../lib/computeStats';
 import { affordableWindow, type AffordableAt } from '../../../lib/labCalc';
+import { useViewer } from '../player/usePlayer';
 import { authorLabel, formatUpdated, isUpdatedThisPatch } from '../../../lib/buildMeta';
 import { statLabel } from '../../../lib/statLabel';
 import { EmptyState } from '../ui/index';
 import { indexCatalog, normalizeCatalog } from '../creator/buildModel';
 import { HeroSelect, HowToPlayLink, useHeroRoster, type RosterSlug } from './HeroBar';
-import ImportPanel, { type ImportedHeader, type StartFromPreset } from './ImportPanel';
+import ImportPanel, { type ImportedHeader } from './ImportPanel';
 import PurchaseOrder from './PurchaseOrder';
 import AbilityProgression from './AbilityProgression';
 import AnalyzeRail from './AnalyzeRail';
+import SoulsTimeline from './SoulsTimeline';
+import {
+  cohortCurvePoints,
+  ownCurvePoints,
+  startFromPresets,
+  timelineRows,
+  PRESET_SOURCE_NOTE,
+  type StartFromPreset,
+  type TimelinePace,
+} from './createModel';
 import {
   abilitySteps,
   abilitySummaries,
@@ -36,6 +47,7 @@ import type {
   HeroBuildStats,
   ItemModifier,
   LaneCurveResponse,
+  PlayerEconomyCurveResponse,
   TrimmedBuild,
 } from '../../../types/api';
 
@@ -50,13 +62,13 @@ type Pace = (typeof PACES)[number]['key'];
 
 type BaseStatValue = { value: number; display_stat_name?: string };
 
+const CURVE_WINDOW = 'RankLock public matches · souls curve, all heroes, all ranks · lobby-average cohort';
+
 interface AnalyzeTabProps {
   heroId: number | null;
   onHero: (id: number) => void;
   roster: RosterSlug[];
   onEditCopy: (build: BuildInput) => void;
-  //Design §14 mounts here on Analyze; the timeline component itself is C26's.
-  soulsTimeline?: React.ReactNode;
 }
 
 const minute = (at: AffordableAt | null): string => (at == null ? '—' : `${Math.round(at.tSeconds / 60)}′`);
@@ -65,7 +77,7 @@ function catalogEntries(ids: readonly number[], category: string): BuildEntry[] 
   return ids.map((itemId) => ({ itemId, category }));
 }
 
-export default function AnalyzeTab({ heroId, onHero, roster, onEditCopy, soulsTimeline }: AnalyzeTabProps) {
+export default function AnalyzeTab({ heroId, onHero, roster, onEditCopy }: AnalyzeTabProps) {
   const { heroes, isPending: rosterPending, isError: rosterError } = useHeroRoster();
   const active = heroes.find((h) => h.hero_id === heroId) ?? heroes[0] ?? null;
   const hero = active?.hero_id ?? null;
@@ -75,7 +87,12 @@ export default function AnalyzeTab({ heroId, onHero, roster, onEditCopy, soulsTi
   const [importError, setImportError] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [pace, setPace] = useState<Pace>('median');
+  const [timelinePace, setTimelinePace] = useState<TimelinePace>('p50');
   const [tier, setTier] = useState(1);
+
+  //The signed-in viewer's own souls curve backs the timeline's "You" pace; signed out, it is absent.
+  const { viewer } = useViewer();
+  const accountId = viewer?.deadlock_account_id ?? null;
 
   const catalogQuery = useQuery<ItemModifier[]>({
     queryKey: queryKeys.itemModifiers(),
@@ -122,6 +139,13 @@ export default function AnalyzeTab({ heroId, onHero, roster, onEditCopy, soulsTi
     enabled: buildId != null,
     retry: false,
   });
+  const ownCurveQuery = useQuery<PlayerEconomyCurveResponse>({
+    queryKey: queryKeys.playerEconomyCurve(accountId ?? -1, { metric: 'souls' }),
+    queryFn: () => api.getPlayerEconomyCurve(accountId!, { metric: 'souls' }),
+    enabled: accountId != null && accountId > 0,
+    retry: false,
+    staleTime: DAY_MS,
+  });
 
   const catalog = useMemo(() => normalizeCatalog(catalogQuery.data), [catalogQuery.data]);
   const byId = useMemo(() => indexCatalog(catalog), [catalog]);
@@ -129,11 +153,7 @@ export default function AnalyzeTab({ heroId, onHero, roster, onEditCopy, soulsTi
     () => (curveQuery.data?.points ?? []).filter((p) => p.p50 != null && p.t_seconds <= 3600),
     [curveQuery.data],
   );
-  //The farm curve serves THOUSANDS of souls; C24's affordable-at compares against item costs.
-  const soulsCurve = useMemo(
-    () => curve.map((p) => ({ t_seconds: p.t_seconds, p50: (p.p50 as number) * 1000 })),
-    [curve],
-  );
+  const soulsCurve = useMemo(() => cohortCurvePoints(curve), [curve]);
 
   const imported = importQuery.data ?? null;
 
@@ -145,38 +165,10 @@ export default function AnalyzeTab({ heroId, onHero, roster, onEditCopy, soulsTi
     if (importQuery.isError) setImportError('No build with that id — check the number and try again.');
   }, [importQuery.isError]);
 
-  const presets = useMemo<StartFromPreset[]>(() => {
-    const shop = (ids: number[]) => [...new Set(ids)].filter((id) => byId.has(id)).slice(0, 12);
-    const buyOrder = buildStatsQuery.data?.buy_order ?? [];
-    const sets = [...(buildStatsQuery.data?.item_sets ?? [])].sort((a, b) => b.wilson_lower - a.wilson_lower);
-    const community = communityQuery.data?.[0];
-    return [
-      {
-        key: 'most-bought',
-        label: 'Most bought',
-        hint: 'The items bought most often on this hero — RankLock public matches',
-        itemIds: shop([...buyOrder].sort((a, b) => b.games - a.games).map((r) => r.item_id)),
-      },
-      {
-        key: 'best-wr',
-        label: 'Best-WR items',
-        hint: 'Highest Wilson-lower win rate among the same buys — RankLock public matches',
-        itemIds: shop([...buyOrder].sort((a, b) => b.wilson_lower - a.wilson_lower).map((r) => r.item_id)),
-      },
-      {
-        key: 'winning-set',
-        label: 'Winning set #1',
-        hint: 'The best-scoring served item set for this hero',
-        itemIds: shop((sets[0]?.items ?? []).map((i) => i.item_id)),
-      },
-      {
-        key: 'community',
-        label: 'Community build',
-        hint: community ? `Trending published build: ${community.name}` : 'No published build served yet',
-        itemIds: shop(community ? buildContents(community).entries.map((e) => e.itemId) : []),
-      },
-    ];
-  }, [buildStatsQuery.data, communityQuery.data, byId]);
+  const presets = useMemo<StartFromPreset[]>(
+    () => startFromPresets(buildStatsQuery.data, communityQuery.data?.[0], byId),
+    [buildStatsQuery.data, communityQuery.data, byId],
+  );
 
   const contents = useMemo(() => (imported ? buildContents(imported) : null), [imported]);
   const entries = contents?.entries ?? board?.entries ?? [];
@@ -212,6 +204,16 @@ export default function AnalyzeTab({ heroId, onHero, roster, onEditCopy, soulsTi
         .map(([key, v]) => ({ key, value: v.value, label: statLabel(key, v.display_stat_name) })),
     [active],
   );
+
+  const ownCurve = useMemo(() => ownCurvePoints(ownCurveQuery.data?.you ?? []), [ownCurveQuery.data]);
+  const ownCurveAvailable = accountId != null && ownCurve.length > 0;
+  const timeline = useMemo(
+    () => timelineRows(rows, soulsCurve, timelinePace, ownCurve),
+    [rows, soulsCurve, timelinePace, ownCurve],
+  );
+  useEffect(() => {
+    if (timelinePace === 'you' && !ownCurveAvailable) setTimelinePace('p50');
+  }, [timelinePace, ownCurveAvailable]);
 
   const afford = useMemo(() => affordableWindow(soulsCurve, total, 'p50'), [soulsCurve, total]);
   const affordAt = pace === 'slow' ? afford.slow : pace === 'fast' ? afford.fast : afford.mid;
@@ -344,6 +346,7 @@ export default function AnalyzeTab({ heroId, onHero, roster, onEditCopy, soulsTi
         }
         paceSwitch={paceSwitch}
       />
+      <p className="faint" style={{ fontSize: 11.5, margin: '-8px 0 0' }}>{PRESET_SOURCE_NOTE}</p>
 
       <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 2fr) minmax(300px, 1fr)', gap: 22 }}>
         <div className="grid" style={{ gap: 22, alignContent: 'start' }}>
@@ -356,7 +359,13 @@ export default function AnalyzeTab({ heroId, onHero, roster, onEditCopy, soulsTi
               band="all ranks"
             />
           )}
-          {soulsTimeline}
+          <SoulsTimeline
+            rows={timeline}
+            pace={timelinePace}
+            onPace={setTimelinePace}
+            ownCurveAvailable={ownCurveAvailable}
+            window={CURVE_WINDOW}
+          />
           {imported && (
             <AbilityProgression
               steps={steps}
