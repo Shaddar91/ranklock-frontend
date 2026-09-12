@@ -3,13 +3,14 @@
 //the sticky rank filter; the community table carries its own bracket selector because the
 //upstream build aggregate splits four ways, not twelve.
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import GameArt from '../../../components/GameArt.astro';
 import HeroBand from '../../../components/hero/HeroBand.astro';
 import SectionHeader from '../../../components/react/ui/SectionHeader';
 import EmptyState from '../../../components/react/ui/EmptyState';
 import HeroFilterBar from '../../../components/react/hero/HeroFilterBar';
 import BuildPhases from '../../../components/react/hero/BuildPhases';
 import CommunityBuilds from '../../../components/react/hero/CommunityBuilds';
+import WinningSets from '../../../components/react/hero/WinningSets';
+import SituationalPicks from '../../../components/react/hero/SituationalPicks';
 import { api } from '../../../lib/apiClient';
 import { buildFetch } from '../../../lib/buildData';
 import { dataHorizon, soulsCurve } from '../../../lib/buildIndexes';
@@ -70,18 +71,19 @@ const [assets, itemStats, modifiers, stats, itemWinRates, builds, abilityRows, a
   ]);
 
 const catalog = catalogIndex(modifiers);
-//Tile props resolve here: an ability entry has no item page to link to, so it renders as a
-//plain tile with the ability marker rather than a dead link.
-const sets = winningSets(stats.item_sets, catalog).map((s) => ({
-  ...s,
-  tiles: s.entries.map((e) => ({
-    ...e,
-    cls: e.shopItem ? 'bp-tile' : 'bp-tile bp-tile-ability',
-    href: e.shopItem ? `/items/${e.itemId}/` : undefined,
-    title: e.shopItem ? e.name : `${e.name} - ability upgrade`,
-  })),
-}));
+const sets = winningSets(stats.item_sets, catalog);
 const situational = situationalGroups(modifiers, itemWinRates);
+//Only the rows §3 renders travel to its islands; the hover card fetches the rest on demand.
+const tileIds = new Set<number>([
+  ...sets.flatMap((s) => s.entries.map((e) => e.itemId)),
+  ...situational.flatMap((g) => g.picks.map((p) => p.itemId)),
+]);
+const tileCatalog = Object.fromEntries(
+  [...tileIds].flatMap((id) => {
+    const row = catalog.get(id);
+    return row ? [[String(id), { name: row.name, icon: row.icon, slot: row.slot, tier: row.tier, cost: row.cost }]] : [];
+  }),
+);
 
 //§5: the two orders the Overview legend explains, recapped here without the legend and
 //without a cold gate (design 01 §Build §5).
@@ -179,37 +181,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
           title="Winning six-purchase sets"
           note={setsNote}
         />
-        {
-          sets.length === 0 ? (
-            <EmptyState title="Computing" message="No purchase set has been folded for this hero yet. This block refreshes hourly." />
-          ) : (
-            <div class="panel bp-table">
-              <div class="bp-srow bp-bhead">
-                <span class="label-xs">Set</span>
-                <span class="label-xs num">Games</span>
-                <span class="label-xs num">WR</span>
-                <span class="label-xs num">Wilson</span>
-              </div>
-              {sets.map((s) => (
-                <div class="bp-srow">
-                  <span class="bp-set">
-                    {s.tiles.map((e) => (
-                      <a class={e.cls} href={e.href} title={e.title}>
-                        <GameArt name={e.name} src={e.iconUrl} wrapClass="iicon" wrapStyle="width:30px; height:30px;" />
-                        {e.count > 1 && <span class="bp-mult">x{e.count}</span>}
-                      </a>
-                    ))}
-                  </span>
-                  <span class="mono tnum num muted">{count(s.games)}</span>
-                  <span class="mono tnum num" style={`color:${s.winRate >= 50 ? 'var(--win)' : 'var(--loss)'}`}>
-                    {s.winRate.toFixed(1)}%
-                  </span>
-                  <span class="mono tnum num muted">{s.wilson.toFixed(1)}%</span>
-                </div>
-              ))}
-            </div>
-          )
-        }
+        <WinningSets client:visible sets={sets} catalog={tileCatalog} />
       </div>
 
       <div>
@@ -218,36 +190,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
           title="Situational picks"
           note={situationalNote}
         />
-        {
-          situational.length === 0 ? (
-            <EmptyState title="Computing" message="No item in these families has a measured win rate on this hero yet." />
-          ) : (
-            <div class="bp-sit">
-              {situational.map((g) => (
-                <div class="panel panel-pad bp-sit-row">
-                  <div>
-                    <div class="display bp-sit-label">{g.label}</div>
-                    <div class="bp-sit-effect">{g.effect}</div>
-                  </div>
-                  <div class="bp-sit-picks">
-                    {g.picks.map((p) => (
-                      <a class="bp-chip" href={`/items/${p.itemId}/`}>
-                        <GameArt name={p.name} src={p.iconUrl} wrapClass="iicon" wrapStyle="width:24px; height:24px;" />
-                        <span class="bp-chip-text">
-                          <span class="display">{p.name}</span>
-                          <span class="bp-chip-mod mono">{p.modifier}</span>
-                        </span>
-                        <span class="mono tnum" style={`color:${p.winRate >= 50 ? 'var(--win)' : 'var(--loss)'}`}>
-                          {p.winRate.toFixed(1)}%
-                        </span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
-        }
+        <SituationalPicks client:visible groups={situational} catalog={tileCatalog} />
       </div>
     </section>
 

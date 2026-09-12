@@ -6,6 +6,8 @@ import { MAX_LEVEL, clampLevel } from './computeStats';
 export const THEORETICAL_NOTE =
   'Theoretical: no ability resists, no damage falloff, no missed shots; weapon DPS at 0–25 m.';
 
+export const CURVE_WINDOW = 'RankLock public matches · souls curve, all heroes, all ranks · lobby-average cohort';
+
 export type AssumptionKey =
   | 'spirit-scaling'
   | 'spirit-scaling-missing'

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { computeStats, type BaseStats, type BuildInput } from '../../../lib/computeStats';
+import { CURVE_WINDOW } from '../../../lib/labCalc';
 import { indexCatalog, normalizeCatalog } from '../creator/buildModel';
 import { useBuildDraft } from '../creator/useBuildDraft';
 import BuildCreator from '../creator/BuildCreator';
@@ -43,7 +44,6 @@ import type {
 const NO_BASE: BaseStats = {};
 const DAY_MS = 24 * 60 * 60_000;
 const DEFAULT_LEVEL = 20;
-const CURVE_WINDOW = 'RankLock public matches · souls curve, all heroes, all ranks · lobby-average cohort';
 
 export default function CreateTab({ initial }: { initial?: BuildInput | null }) {
   const draft = useBuildDraft();

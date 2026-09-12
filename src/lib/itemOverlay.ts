@@ -101,6 +101,33 @@ export function overlayFromWire(r: ItemModifier, map: UpgradesMap = UPGRADES): I
   };
 }
 
+export interface OverlayMeta {
+  name?: string | null;
+  icon?: string | null;
+  slot?: string | null;
+  tier?: number | null;
+  cost?: number | null;
+}
+
+/** Card model for a tile whose page carries only catalog meta; ItemHoverCard's lazy detail
+ *  fetch fills the modifier list and the lineage parents. */
+export function overlayFromMeta(id: number, meta: OverlayMeta | null | undefined, map: UpgradesMap = UPGRADES): ItemOverlayData {
+  return {
+    id,
+    name: meta?.name ?? `Item ${id}`,
+    icon: meta?.icon ?? null,
+    slot: meta?.slot ?? null,
+    tier: meta?.tier ?? null,
+    cost: meta?.cost ?? null,
+    brawl: isBrawlAsset(meta?.icon),
+    modifiers: [],
+    upgradesFrom: upgradesFor(id, map),
+    upgradesInto: [],
+    cooldown: null,
+    ability: itemAbility(id),
+  };
+}
+
 export function overlayFromCatalog(it: OverlayCatalogRow, map: UpgradesMap = UPGRADES): ItemOverlayData {
   return {
     id: it.item_id,

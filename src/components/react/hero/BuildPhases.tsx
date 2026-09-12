@@ -7,11 +7,13 @@ import { useGameMode } from '../../../lib/useGameMode';
 import { bracketBucket, servedBandLabel, useHeroBracket } from '../../../lib/heroBracket';
 import { bracketLabel } from '../ui/FilterBar';
 import { buildByPhase, buyOrderTrack, type CatalogEntry } from '../../../lib/heroBuild';
+import { overlayFromMeta } from '../../../lib/itemOverlay';
 import { count } from '../../../lib/format';
 import QueryProvider from '../QueryProvider';
 import GameIcon from '../ui/GameIcon';
 import SectionHeader from '../ui/SectionHeader';
 import EmptyState from '../ui/EmptyState';
+import ItemHoverCard from '../ui/ItemHoverCard';
 import type { ItemStat, LaneCurvePoint } from '../../../types/api';
 
 export interface BuildPhasesProps {
@@ -59,6 +61,7 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
   const points = bracket === 'all' ? curve : (banded?.points ?? curve);
   const phases = useMemo(() => buildByPhase(itemStats, index), [itemStats, index]);
   const track = useMemo(() => buyOrderTrack(itemStats, index, points, slots), [itemStats, index, points, slots]);
+  const overlay = (itemId: number) => overlayFromMeta(itemId, index.get(itemId));
   const band = servedBandLabel(bracket);
   const paceLabel = bracket === 'all' ? 'all ranks' : `${bracketLabel(bracket)} lobbies`;
 
@@ -92,23 +95,25 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
                   <p className="muted phase-empty">No item clears this band yet.</p>
                 ) : (
                   p.items.map((it) => (
-                    <a className="phase-row bp-phase-row" href={`/items/${it.itemId}/`} key={it.itemId}>
-                      <GameIcon kind="item" name={it.name} src={it.iconUrl} size={32} />
-                      <span className="phase-item">
-                        <span className="bp-phase-title">
-                          <span className="display phase-name">{it.name}</span>
-                          <span className={it.core ? 'bp-pill bp-pill-core' : 'bp-pill'}>
-                            {it.core ? 'Core' : 'Situational'}
+                    <ItemHoverCard data={overlay(it.itemId)} asChild key={it.itemId}>
+                      <a className="phase-row bp-phase-row" href={`/items/${it.itemId}/`}>
+                        <GameIcon kind="item" name={it.name} src={it.iconUrl} size={32} />
+                        <span className="phase-item">
+                          <span className="bp-phase-title">
+                            <span className="display phase-name">{it.name}</span>
+                            <span className={it.core ? 'bp-pill bp-pill-core' : 'bp-pill'}>
+                              {it.core ? 'Core' : 'Situational'}
+                            </span>
                           </span>
+                          <span className="phase-sub">{it.slotTier}</span>
                         </span>
-                        <span className="phase-sub">{it.slotTier}</span>
-                      </span>
-                      <span className="mono tnum phase-min">{minute(it.minute)}</span>
-                      <span className="mono tnum" style={wrColor(it.winRate)}>
-                        {it.winRate.toFixed(1)}%
-                      </span>
-                      <span className="mono tnum muted bp-phase-games">{count(it.games)}</span>
-                    </a>
+                        <span className="mono tnum phase-min">{minute(it.minute)}</span>
+                        <span className="mono tnum" style={wrColor(it.winRate)}>
+                          {it.winRate.toFixed(1)}%
+                        </span>
+                        <span className="mono tnum muted bp-phase-games">{count(it.games)}</span>
+                      </a>
+                    </ItemHoverCard>
                   ))
                 )}
               </div>
@@ -128,17 +133,19 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
         ) : (
           <div className="bp-track">
             {track.map((s) => (
-              <a className="panel bp-slot" href={`/items/${s.itemId}/`} key={s.itemId}>
-                <span className="mono bp-slot-n">SLOT {s.pos}</span>
-                <GameIcon kind="item" name={s.name} src={s.iconUrl} size={38} />
-                <span className="display bp-slot-name">{s.name}</span>
-                <span className="mono tnum bp-slot-min">bought {minute(s.minute)}</span>
-                <span className="mono tnum bp-slot-souls">{count(s.cumulative)} souls</span>
-                <span className="mono tnum bp-slot-afford">affordable {minute(s.affordMinute)}</span>
-                <span className="mono tnum" style={wrColor(s.winRate)}>
-                  {s.winRate.toFixed(1)}%
-                </span>
-              </a>
+              <ItemHoverCard data={overlay(s.itemId)} asChild key={s.itemId}>
+                <a className="panel bp-slot" href={`/items/${s.itemId}/`}>
+                  <span className="mono bp-slot-n">SLOT {s.pos}</span>
+                  <GameIcon kind="item" name={s.name} src={s.iconUrl} size={38} />
+                  <span className="display bp-slot-name">{s.name}</span>
+                  <span className="mono tnum bp-slot-min">bought {minute(s.minute)}</span>
+                  <span className="mono tnum bp-slot-souls">{count(s.cumulative)} souls</span>
+                  <span className="mono tnum bp-slot-afford">affordable {minute(s.affordMinute)}</span>
+                  <span className="mono tnum" style={wrColor(s.winRate)}>
+                    {s.winRate.toFixed(1)}%
+                  </span>
+                </a>
+              </ItemHoverCard>
             ))}
           </div>
         )}

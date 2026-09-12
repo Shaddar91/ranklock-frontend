@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { computeStats, type BaseStats, type BuildInput } from '../../../lib/computeStats';
-import { affordableWindow, type AffordableAt } from '../../../lib/labCalc';
+import { affordableWindow, CURVE_WINDOW, type AffordableAt } from '../../../lib/labCalc';
 import { useViewer } from '../player/usePlayer';
 import { authorLabel, formatUpdated, isUpdatedThisPatch } from '../../../lib/buildMeta';
 import { statLabel } from '../../../lib/statLabel';
@@ -61,8 +61,6 @@ const PACES = [
 type Pace = (typeof PACES)[number]['key'];
 
 type BaseStatValue = { value: number; display_stat_name?: string };
-
-const CURVE_WINDOW = 'RankLock public matches · souls curve, all heroes, all ranks · lobby-average cohort';
 
 interface AnalyzeTabProps {
   heroId: number | null;

@@ -8,10 +8,10 @@ import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
 import EmptyState from '../../components/react/ui/EmptyState';
 import SectionHeader from '../../components/react/ui/SectionHeader';
-import GameArt from '../../components/GameArt.astro';
 import HeroBand from '../../components/hero/HeroBand.astro';
 import HeroFilterBar from '../../components/react/hero/HeroFilterBar';
 import HeroMetaIsland from '../../components/react/hero/HeroMetaIsland';
+import PhaseGrid from '../../components/react/hero/PhaseGrid';
 import { heroArt } from '../../lib/heroArt';
 import { publishedGuideSlugs } from '../../lib/guideRoutes';
 import { releasedRoster } from '../../lib/heroRoster';
@@ -398,37 +398,7 @@ const tabs = [
                 Full build, alternatives and community builds →
               </a>
             </SectionHeader>
-            {phases.every((p) => p.items.length === 0) ? (
-              <EmptyState title="Computing" message="Item buy times are still folding. This block refreshes hourly." />
-            ) : (
-              <div class="phase-grid">
-                {phases.map((p) => (
-                  <div class="panel panel-pad phase-card">
-                    <div class="phase-head">
-                      <span class="display">{p.name}</span>
-                      <span class="mono muted">{p.range}</span>
-                    </div>
-                    {p.items.length === 0 ? (
-                      <p class="muted phase-empty">No item clears this band yet.</p>
-                    ) : (
-                      p.items.map((it) => (
-                        <a class="phase-row" href={`/items/${it.itemId}/`}>
-                          <GameArt name={it.name} src={it.iconUrl} wrapClass="iicon" wrapStyle="width:32px; height:32px;" />
-                          <span class="phase-item">
-                            <span class="display phase-name">{it.name}</span>
-                            <span class="phase-sub">{it.slotTier}</span>
-                          </span>
-                          <span class="mono tnum phase-min">{Math.round(it.minute)}′</span>
-                          <span class="mono tnum" style={`color:${it.winRate >= 50 ? 'var(--win)' : 'var(--loss)'}`}>
-                            {it.winRate.toFixed(1)}%
-                          </span>
-                        </a>
-                      ))
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <PhaseGrid client:visible phases={phases} catalog={catalog} />
           </section>
 
           <HeroMetaIsland
