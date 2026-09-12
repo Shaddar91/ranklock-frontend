@@ -1,11 +1,13 @@
 //Win-rate readout: tabular % + an inline bar scaled across the meaningful 30–70%
 //band (so a 52% vs 48% difference is visible). Green at/above 50, red below.
+//`flex` lets the bar take the rest of its grid cell, the way the design's tables draw it.
 interface WinBarProps {
   wr: number;
   width?: number;
+  flex?: boolean;
 }
 
-export default function WinBar({ wr, width = 64 }: WinBarProps) {
+export default function WinBar({ wr, width = 64, flex = false }: WinBarProps) {
   const good = wr >= 50;
   const fill = Math.max(0, Math.min(100, ((wr - 30) / 40) * 100));
   return (
@@ -16,7 +18,7 @@ export default function WinBar({ wr, width = 64 }: WinBarProps) {
       >
         {wr.toFixed(1)}%
       </span>
-      <div className="wbar" style={{ width }}>
+      <div className={flex ? 'wbar wbar-flex' : 'wbar'} style={flex ? undefined : { width }}>
         <i
           style={{
             width: fill + '%',

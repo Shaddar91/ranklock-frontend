@@ -1,10 +1,11 @@
-//Item detail §4 "When it is bought" — the 11-band purchase histogram with its quartile
-//caption beside the win rate of the six coarser buy windows.
+//Item detail "When it is bought" — one card holding the 11-band purchase histogram with
+//its quartile caption beside the win rate of the six coarser buy windows, as the design
+//draws it.
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import QueryProvider from '../QueryProvider';
 import { api, queryKeys } from '../../../lib/apiClient';
-import { BUY_HISTOGRAM, BUY_WR_BANDS, foldTiming } from '../../../lib/itemDetail';
+import { BUY_HISTOGRAM, BUY_WR_BANDS, foldTiming, quartileClock } from '../../../lib/itemDetail';
 import { count, DASH } from '../../../lib/format';
 import SectionHeader from '../ui/SectionHeader';
 import EmptyState from '../ui/EmptyState';
@@ -14,6 +15,9 @@ import WinBar from '../ui/WinBar';
 export interface ItemTimingProps {
   itemId: number;
 }
+
+//The design's tallest bar is 64px inside a 96px plot; every other bar scales against it.
+const PEAK_BAR_PX = 64;
 
 function TimingBlock({ itemId }: ItemTimingProps) {
   const { data, isPending, isError } = useQuery({
@@ -29,9 +33,9 @@ function TimingBlock({ itemId }: ItemTimingProps) {
 
   const quartiles = data
     ? [
-        data.p50 == null ? null : `median minute ${data.p50}`,
-        data.p25 == null ? null : `p25 ${data.p25}`,
-        data.p75 == null ? null : `p75 ${data.p75}`,
+        data.p50 == null ? null : `median ${quartileClock(buckets, data.p50)}`,
+        data.p25 == null ? null : `p25 ${quartileClock(buckets, data.p25)}`,
+        data.p75 == null ? null : `p75 ${quartileClock(buckets, data.p75)}`,
       ].filter(Boolean)
     : [];
 
@@ -40,53 +44,53 @@ function TimingBlock({ itemId }: ItemTimingProps) {
       <SectionHeader
         kicker="When to buy"
         title="When it is bought"
-        note={
-          data
-            ? `Share of purchases by game minute · win rate = games where it was bought in that window · ${data.window} · ${data.source}`
-            : 'Share of purchases by game minute · win rate = games where it was bought in that window'
-        }
+        note="Share of purchases by game minute · WR = games where it was bought in that window"
       />
       {isPending ? (
         <Skeleton height={220} />
       ) : isError || buckets.length === 0 ? (
         <EmptyState
+          tone="cold"
           title="Computing"
           message="Purchase timing for this item has not been folded yet. This block refreshes hourly."
         />
       ) : (
-        <div className="itemd-when">
-          <div className="panel panel-pad">
+        <div className="itemd-card itemd-pad itemd-when">
+          <div>
             <div className="itemd-hist">
               {bars.map((b) => (
                 <div className="itemd-bar" key={b.label}>
                   <span className="mono itemd-bar-share">{b.share >= 0.5 ? `${Math.round(b.share)}%` : ''}</span>
-                  <div className="itemd-bar-track">
-                    <i
-                      className={b.share === peak ? 'itemd-bar-fill itemd-bar-peak' : 'itemd-bar-fill'}
-                      style={{ height: `${peak > 0 ? (b.share / peak) * 100 : 0}%` }}
-                    />
-                  </div>
-                  <span className="mono itemd-bar-label">{b.label}</span>
+                  <i
+                    className={b.share === peak ? 'itemd-bar-fill itemd-bar-peak' : 'itemd-bar-fill'}
+                    style={{ height: `${peak > 0 ? Math.round((b.share / peak) * PEAK_BAR_PX) : 0}px` }}
+                  />
                 </div>
               ))}
             </div>
+            <div className="itemd-hist-axis">
+              {bars.map((b) => (
+                <span className="mono itemd-bar-label" key={b.label}>
+                  {b.label}
+                </span>
+              ))}
+            </div>
             <p className="itemd-hist-cap">
-              Minute of purchase{quartiles.length > 0 ? ` · ${quartiles.join(' · ')}` : ''} ·{' '}
-              {count(data.total_matches)} purchases
+              minute of purchase{quartiles.length > 0 ? ` · ${quartiles.join(' · ')}` : ''}
             </p>
           </div>
 
-          <div className="panel itemd-wrwin">
+          <div>
             <div className="itemd-wrrow itemd-wrhead">
-              <span className="label-xs">Bought at</span>
-              <span className="label-xs num">Win rate</span>
-              <span className="label-xs num">Games</span>
+              <span>Bought at</span>
+              <span>Win rate</span>
+              <span>Games</span>
             </div>
             {rows.map((r) => (
               <div className="itemd-wrrow" key={r.label}>
-                <span className="itemd-wrband">{r.label}</span>
-                <span className="num">{r.winRate == null ? DASH : <WinBar wr={r.winRate} />}</span>
-                <span className="tnum num muted">{r.matches === 0 ? DASH : count(r.matches)}</span>
+                <span className="mono itemd-wrband">{r.label}</span>
+                <span>{r.winRate == null ? DASH : <WinBar wr={r.winRate} flex />}</span>
+                <span className="mono tnum muted">{r.matches === 0 ? DASH : count(r.matches)}</span>
               </div>
             ))}
           </div>

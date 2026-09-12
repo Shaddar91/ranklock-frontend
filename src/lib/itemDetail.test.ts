@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   BUY_HISTOGRAM,
   BUY_WR_BANDS,
+  catClass,
   foldTiming,
   itemTags,
+  modifierSummary,
+  quartileClock,
   mergeItemDetail,
   patchesNamingItem,
   plainItemText,
@@ -58,6 +61,48 @@ describe('foldTiming', () => {
     expect(windows).toHaveLength(6);
     expect(windows.reduce((n, w) => n + w.matches, 0)).toBe(120);
   });
+
+  it('keeps every purchase before the design\u2019s first window in the <14 band', () => {
+    const windows = foldTiming([bucket(1, 9, 4), bucket(13, 5, 3), bucket(31, 2, 1)], BUY_WR_BANDS);
+    expect(windows[0]).toMatchObject({ label: '<14', matches: 14 });
+    expect(windows[5]).toMatchObject({ label: '30+', matches: 2 });
+  });
+});
+
+describe('quartileClock', () => {
+  it('reads the m:ss off the served average buy time of the quartile minute', () => {
+    expect(quartileClock([bucket(27, 100, 50)], 27)).toBe('27:00');
+    expect(quartileClock([{ ...bucket(27, 100, 50), avg_buy_time_s: 1650 }], 27)).toBe('27:30');
+  });
+
+  it('falls back to the flat minute when that bucket is absent, and dashes a null quartile', () => {
+    expect(quartileClock([bucket(20, 5, 2)], 27)).toBe('27:00');
+    expect(quartileClock([], null)).toBe('\u2014');
+  });
+});
+
+describe('modifierSummary', () => {
+  it('joins the served modifiers the way an upgrade-path node sub-line reads', () => {
+    expect(
+      modifierSummary([
+        { property_type: 'MODIFIER_VALUE_STATUS_RESISTANCE', value: 20, is_percent: true, label: 'Debuff Resist' },
+        { property_type: 'MODIFIER_VALUE_HEALTH_MAX', value: 90, is_percent: false, label: 'Bonus Health' },
+      ]),
+    ).toBe('+20% Debuff Resist \u00b7 +90 Bonus Health');
+  });
+
+  it('is empty for an item the catalog gives no modifiers', () => {
+    expect(modifierSummary(null)).toBe('');
+    expect(modifierSummary([])).toBe('');
+  });
+});
+
+describe('catClass', () => {
+  it('names the tint class for each served slot and nothing for a slotless item', () => {
+    expect(catClass('weapon')).toBe('cat-weapon');
+    expect(catClass('Spirit')).toBe('cat-spirit');
+    expect(catClass(null)).toBe('');
+  });
 });
 
 describe('itemTags', () => {
@@ -98,6 +143,7 @@ describe('rankPeers', () => {
     itemId,
     name,
     icon: null,
+    slot: 'vitality',
     winRate,
     matches: 100,
   });

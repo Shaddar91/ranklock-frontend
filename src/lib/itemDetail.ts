@@ -1,7 +1,8 @@
 //Item detail (design 01 §Item) pure logic: purchase-minute folding, catalog-derived
 //tags, the assumed upgrade discount, peer ranking and the patch-note name match.
+import { DASH, duration, minuteClock } from './format';
 import { MODIFIER_FAMILIES } from './heroBuild';
-import { toModifierRows, type ItemOverlayData, type UpgradeRef } from './itemOverlay';
+import { formatModifier, toModifierRows, type ItemOverlayData, type UpgradeRef } from './itemOverlay';
 import { itemTierNumeral } from './itemTiers';
 import type { ItemDetailResponse, ItemEdge, ItemTimingBucket, Patch } from '../types/api';
 
@@ -33,6 +34,18 @@ export function slotTierLabel(slot: string | null | undefined, tier: number | nu
   return [slotName(slot), itemTierNumeral(tier)].filter(Boolean).join(' · ');
 }
 
+/** The `.cat-*` class that tints an item tile with its category, as the design's `tint()` does. */
+export function catClass(slot: string | null | undefined): string {
+  return slot ? `cat-${slot.toLowerCase()}` : '';
+}
+
+/** "+20% Debuff Resist · +8% Spirit Resist" — the design's sub-line on an upgrade-path node. */
+export function modifierSummary(modifiers: readonly unknown[] | null | undefined): string {
+  return toModifierRows(modifiers as unknown[] | null | undefined)
+    .map(formatModifier)
+    .join(' · ');
+}
+
 export interface TimingBand {
   label: string;
   from: number;
@@ -55,12 +68,12 @@ export const BUY_HISTOGRAM: readonly TimingBand[] = [
 ];
 
 export const BUY_WR_BANDS: readonly TimingBand[] = [
-  { label: 'Before 12', from: 0, to: 12 },
-  { label: '12 to 15', from: 12, to: 16 },
-  { label: '16 to 19', from: 16, to: 20 },
-  { label: '20 to 23', from: 20, to: 24 },
-  { label: '24 to 29', from: 24, to: 30 },
-  { label: '30 and later', from: 30, to: Infinity },
+  { label: '<14', from: 0, to: 14 },
+  { label: '14\u201318', from: 14, to: 18 },
+  { label: '18\u201322', from: 18, to: 22 },
+  { label: '22\u201326', from: 22, to: 26 },
+  { label: '26\u201330', from: 26, to: 30 },
+  { label: '30+', from: 30, to: Infinity },
 ];
 
 export interface TimingWindow {
@@ -97,6 +110,16 @@ export function foldTiming(
   });
 }
 
+/** m:ss for a quartile: the route serves whole minutes, the seconds come from that minute's own served average. */
+export function quartileClock(
+  buckets: readonly ItemTimingBucket[],
+  minute: number | null | undefined,
+): string {
+  if (minute == null) return DASH;
+  const hit = buckets.find((b) => b.bucket === minute);
+  return hit == null ? minuteClock(minute) : duration(hit.avg_buy_time_s);
+}
+
 /** The catalog families this item's modifiers put it in — the only tag source the feed carries. */
 export function itemTags(modifiers: readonly unknown[] | null | undefined): string[] {
   const rows = toModifierRows(modifiers as unknown[] | null | undefined);
@@ -119,6 +142,7 @@ export interface PeerRow {
   itemId: number;
   name: string;
   icon: string | null;
+  slot: string | null;
   winRate: number | null;
   matches: number | null;
 }

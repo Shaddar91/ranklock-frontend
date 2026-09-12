@@ -1,12 +1,11 @@
 ---
-//SSG item detail — design 01 §Item §1-§8. One prerendered page per catalog item id; the
-//page is generic over [id] and hardcodes no item. Catalog row, /items/stats join, component
-//edges, peers and the patch match bake at build time; timing, pairs and per-rank rows are
-//client queries because their upstream pages are per-item and large.
+//SSG item detail — the design's `item` page. One prerendered page per catalog item id;
+//the page is generic over [id] and hardcodes no item. Catalog row, /items/stats join,
+//component edges, peers and the patch match bake at build time; timing, pairs and
+//per-rank rows are client queries because their upstream pages are per-item and large.
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import GameArt from '../../components/GameArt.astro';
 import SectionHeader from '../../components/react/ui/SectionHeader';
-import EmptyState from '../../components/react/ui/EmptyState';
 import StatTile from '../../components/react/ui/StatTile';
 import ItemTiming from '../../components/react/item/ItemTiming';
 import ItemHeroes from '../../components/react/item/ItemHeroes';
@@ -16,12 +15,13 @@ import { api } from '../../lib/apiClient';
 import { buildFetch, buildFetchNonEmpty } from '../../lib/buildData';
 import { heroItemIndex, itemDetailIndex } from '../../lib/buildIndexes';
 import {
+  catClass,
   itemTags,
+  modifierSummary,
   patchesNamingItem,
   plainItemText,
   rankPeers,
   slotName,
-  slotTierLabel,
   upgradeDiscount,
   type PeerRow,
 } from '../../lib/itemDetail';
@@ -91,7 +91,10 @@ export async function getStaticPaths() {
       tier: mod?.item_tier ?? meta.tier ?? null,
     };
   });
-  const edgeView = (edge: { item_id: number; item_name: string; icon_url: string | null }): EdgeView => {
+  const edgeView = (
+    edge: { item_id: number; item_name: string; icon_url: string | null },
+    role: EdgeView['role'],
+  ): EdgeView => {
     const meta = catalog[String(edge.item_id)];
     const mod = modifierById.get(edge.item_id);
     return {
@@ -99,7 +102,9 @@ export async function getStaticPaths() {
       name: edge.item_name,
       icon: resolveAsset(edge.icon_url ?? meta?.icon ?? null),
       cost: mod?.cost ?? meta?.cost ?? null,
-      slotTier: slotTierLabel(mod?.item_slot_type ?? meta?.slot ?? null, mod?.item_tier ?? meta?.tier ?? null),
+      slot: mod?.item_slot_type ?? meta?.slot ?? null,
+      mods: modifierSummary(mod?.modifiers ?? null),
+      role,
     };
   };
 
@@ -137,6 +142,7 @@ export async function getStaticPaths() {
           itemId: r.id,
           name: r.meta.name,
           icon: resolveAsset(r.stat?.icon_url ?? r.meta.icon ?? null),
+          slot: r.slot,
           winRate: r.stat?.win_rate ?? null,
           matches: r.stat?.matches ?? r.stat?.picks ?? null,
         })),
@@ -156,7 +162,7 @@ export async function getStaticPaths() {
         winRate: (r.win_rate as number) * 100,
       }));
 
-    const components = (detail?.components ?? []).map(edgeView);
+    const components = (detail?.components ?? []).map((e) => edgeView(e, 'Component'));
     return {
       params: { id },
       props: {
@@ -164,7 +170,7 @@ export async function getStaticPaths() {
         detail,
         modifiers: (mod?.modifiers ?? detail?.modifiers ?? []) as unknown[],
         components,
-        buildsInto: (detail?.builds_into ?? []).map(edgeView),
+        buildsInto: (detail?.builds_into ?? []).map((e) => edgeView(e, 'Builds into')),
         discount: upgradeDiscount(cost, components.map((c) => c.cost)),
         peers,
         heroFallback,
@@ -208,7 +214,6 @@ const name = item.name;
 const slotLabel = slotName(item.slot);
 const tierLabel = itemTierLabel(item.tier);
 const crumb = [slotLabel, tierLabel].filter(Boolean).join(' · ');
-const slotTier = slotTierLabel(item.slot, item.tier);
 const peerTitle = [slotLabel, itemTierNumeral(item.tier)].filter(Boolean).join(' ');
 const modRows = toModifierRows(modifiers);
 const tags = itemTags(modifiers);
@@ -216,6 +221,7 @@ const passiveText = plainItemText(detail?.text?.passive ?? detail?.text?.desc ??
 const activeText = plainItemText(detail?.text?.active);
 const cooldown = detail?.cooldown ?? null;
 const showCost = item.cost != null && item.cost > 0;
+const selfMods = [modifierSummary(modifiers), detail?.is_active_item ? 'Active' : null].filter(Boolean).join(' · ');
 const buySub =
   item.avg_sell_time_s == null
     ? 'minute of purchase'
@@ -234,48 +240,56 @@ const jsonLd = breadcrumbJsonLd(origin, [
   { name, path: canonicalPath },
 ]);
 
-const heroFallbackNote =
-  'Games and win rate: deadlock-api.com per-hero item aggregates, trailing 30 days. The share-of-games bar ' +
-  'appears with the RankLock item-hero fold — the upstream feed carries no comparable per-hero denominator.';
+const heroNote = 'Share = of that hero’s matches · WR = that hero with the item';
 ---
 
-<BaseLayout title={title} description={description} canonicalPath={canonicalPath} jsonLd={jsonLd}>
+<BaseLayout title={title} description={description} canonicalPath={canonicalPath} jsonLd={jsonLd} backdrop={false}>
   <main class="container itemd-main">
-    <nav class="kicker itemd-crumb" aria-label="Breadcrumb">
+    <nav class="display itemd-crumb" aria-label="Breadcrumb">
       <a href="/items/">Items</a>
       {crumb && <span class="itemd-crumb-sep">/</span>}
-      {crumb && <span class="muted">{crumb}</span>}
+      {crumb && <span>{crumb}</span>}
     </nav>
 
-    <header class="itemd-head">
-      <GameArt name={name} src={item.icon} wrapClass="itemd-art" fontSize={30} eager />
-      <div>
-        <div class="kicker">Item{slotLabel ? ` · ${slotLabel}` : ''}{tierLabel ? ` · ${tierLabel}` : ''}</div>
-        <h1 class="h-page">{name}</h1>
-        <div class="itemd-chips">
-          {showCost && <span class="chip gold">{count(item.cost)} souls</span>}
-          {detail?.is_active_item && (
-            <span class="chip">Active{cooldown != null ? ` · ${cooldown}s cooldown` : ''}</span>
-          )}
-          {tags.map((t) => <span class="chip">{t}</span>)}
+    <section class="itemd-headcard">
+      <span class="corner tl"></span>
+      <span class="corner br"></span>
+      <div class="itemd-headrow">
+        <div class="itemd-ident">
+          <GameArt name={name} src={item.icon} wrapClass={`itemd-art ${catClass(item.slot)}`} fontSize={24} eager />
+          <div class="itemd-identtext">
+            <div class="kicker">
+              Item{slotLabel ? ` · ${slotLabel}` : ''}{tierLabel ? ` · ${tierLabel}` : ''}
+            </div>
+            <h1 class="h-page">{name}</h1>
+            <div class="itemd-chips">
+              {showCost && <span class="chip gold"><span class="mono tnum">{count(item.cost)}</span> souls</span>}
+              {
+                detail?.is_active_item && (
+                  <span class="chip">Active{cooldown != null ? ` · ${cooldown}s cooldown` : ''}</span>
+                )
+              }
+              {tags.map((t) => <span class="chip">{t}</span>)}
+            </div>
+          </div>
+        </div>
+
+        <div class="itemd-tiles">
+          <StatTile variant="band" label="Win rate" value={pct(item.win_rate)}>
+            <Fragment slot="sub">all heroes · 30 days</Fragment>
+          </StatTile>
+          <StatTile variant="band" label="Matches" value={count(item.matches)}>
+            <Fragment slot="sub">bought in</Fragment>
+          </StatTile>
+          <StatTile variant="band" label="Players" value={count(item.players)}>
+            <Fragment slot="sub">bought it at least once</Fragment>
+          </StatTile>
+          <StatTile variant="band" label="Avg buy" value={duration(item.avg_buy_time_s)}>
+            <Fragment slot="sub">{buySub}</Fragment>
+          </StatTile>
         </div>
       </div>
-    </header>
-
-    <div class="stat-grid itemd-stats">
-      <StatTile label="Win rate" value={pct(item.win_rate)} color="var(--win)">
-        <span slot="sub" class="faint itemd-tilesub">all heroes · 30 days</span>
-      </StatTile>
-      <StatTile label="Matches" value={count(item.matches)}>
-        <span slot="sub" class="faint itemd-tilesub">bought in</span>
-      </StatTile>
-      <StatTile label="Players" value={count(item.players)}>
-        <span slot="sub" class="faint itemd-tilesub">bought it at least once</span>
-      </StatTile>
-      <StatTile label="Avg buy" value={duration(item.avg_buy_time_s)}>
-        <span slot="sub" class="faint itemd-tilesub">{buySub}</span>
-      </StatTile>
-    </div>
+    </section>
 
     <div class="itemd-grid">
       <div class="itemd-body">
@@ -283,39 +297,41 @@ const heroFallbackNote =
           <SectionHeader
             kicker="What am I buying"
             title="What it does"
-            note={`Modifiers from the item catalog${detail ? ` · ${detail.source}` : ''} · item text © Valve`}
+            note="Modifiers from the item catalog · text © Valve"
           />
           <div class="itemd-cards">
-            <div class="panel panel-pad">
-              <div class="label-xs">Passive</div>
-              {passiveText ? (
-                <p class="itemd-text">{passiveText}</p>
-              ) : (
-                <p class="itemd-text muted">The catalog carries no passive text for this item.</p>
-              )}
-              {modRows.length > 0 && (
-                <ul class="itemd-mods">
-                  {modRows.map((m) => (
-                    <li>
-                      <span class="muted">{m.label ?? m.property_type}</span>
-                      <span class="tnum itemd-modval">
-                        {`${m.value > 0 ? '+' : ''}${Number.isInteger(m.value) ? m.value : m.value.toFixed(1)}${m.is_percent ? '%' : ''}`}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+            <div class="itemd-card itemd-pad">
+              <div class="display itemd-cardtitle">Passive</div>
+              {
+                modRows.map((m) => (
+                  <div class="itemd-mod">
+                    <span>{m.label ?? m.property_type}</span>
+                    <span class="mono tnum itemd-modval">
+                      {`${m.value > 0 ? '+' : ''}${Number.isInteger(m.value) ? m.value : m.value.toFixed(1)}${m.is_percent ? '%' : ''}`}
+                    </span>
+                  </div>
+                ))
+              }
+              {passiveText && <p class="itemd-text">{passiveText}</p>}
+              {
+                modRows.length === 0 && !passiveText && (
+                  <p class="itemd-text muted">The catalog carries no passive modifier or text for this item.</p>
+                )
+              }
             </div>
-            {detail?.is_active_item && (
-              <div class="panel panel-pad">
-                <div class="label-xs">Active{cooldown != null ? ` · ${cooldown}s cooldown` : ''}</div>
-                {activeText ? (
-                  <p class="itemd-text">{activeText}</p>
-                ) : (
-                  <p class="itemd-text muted">The catalog flags an active but carries no text for it.</p>
-                )}
-              </div>
-            )}
+            {
+              detail?.is_active_item && (
+                <div class="itemd-card itemd-pad">
+                  <div class="itemd-cardhead">
+                    <span class="display itemd-cardtitle">Active</span>
+                    {cooldown != null && <span class="mono itemd-cardnote">{cooldown}s cooldown</span>}
+                  </div>
+                  <p class="itemd-text">
+                    {activeText ?? 'The catalog flags an active but carries no text for it.'}
+                  </p>
+                </div>
+              )
+            }
           </div>
         </section>
 
@@ -325,15 +341,11 @@ const heroFallbackNote =
           client:visible
           itemId={item.item_id}
           fallback={heroFallback}
-          fallbackNote={heroFallbackNote}
+          note={heroNote}
           heroes={heroes}
         />
 
         <ItemPatchNotes client:visible itemName={name} initialMatches={itemPatches} />
-
-        {item.win_rate == null && (
-          <EmptyState title="Computing" message="No win-rate row was available for this item when the page was built." />
-        )}
       </div>
 
       <ItemRail
@@ -341,7 +353,8 @@ const heroFallbackNote =
         itemId={item.item_id}
         itemName={name}
         itemIcon={item.icon}
-        itemSlotTier={slotTier}
+        itemSlot={item.slot ?? null}
+        itemMods={selfMods}
         cost={item.cost}
         components={components}
         buildsInto={buildsInto}

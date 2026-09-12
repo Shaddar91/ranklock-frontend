@@ -410,6 +410,10 @@ textarea {
   overflow: hidden;
   min-width: 60px;
 }
+.wbar-flex {
+  flex: 1;
+  min-width: 0;
+}
 .wbar > i {
   position: absolute;
   left: 0;

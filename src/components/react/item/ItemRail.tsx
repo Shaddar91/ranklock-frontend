@@ -1,4 +1,4 @@
-//Item detail §7 rail: upgrade path, the editorial "Buy it against" block, pairs-with,
+//Item detail rail: upgrade path, the editorial "Buy it against" block, pairs-with,
 //win rate by rank and same-slot peers. Pairs and per-rank rows arrive client-side; the
 //other three are baked by the page. Every item tile carries the shared hover card.
 import { useMemo } from 'react';
@@ -7,14 +7,12 @@ import QueryProvider from '../QueryProvider';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { itemMeta } from '../../../lib/itemCatalog';
 import { itemAbility } from '../../../lib/itemDescriptions';
+import { catClass, slotTierLabel, type PeerRow } from '../../../lib/itemDetail';
 import { overlayFromWire, upgradesFor, type ItemOverlayData } from '../../../lib/itemOverlay';
-import { itemTierNumeral } from '../../../lib/itemTiers';
 import { rankImg } from '../../../lib/ranks';
 import { count, DASH } from '../../../lib/format';
 import type { CounterNote } from '../../../lib/itemEditorial';
-import type { PeerRow } from '../../../lib/itemDetail';
 import GameIcon from '../ui/GameIcon';
-import Chip from '../ui/Chip';
 import EmptyState from '../ui/EmptyState';
 import Skeleton from '../ui/Skeleton';
 import ItemHoverCard from '../ui/ItemHoverCard';
@@ -24,14 +22,17 @@ export interface EdgeView {
   name: string;
   icon: string | null;
   cost: number | null;
-  slotTier: string;
+  slot: string | null;
+  mods: string;
+  role: 'Component' | 'Builds into';
 }
 
 export interface ItemRailProps {
   itemId: number;
   itemName: string;
   itemIcon: string | null;
-  itemSlotTier: string;
+  itemSlot: string | null;
+  itemMods: string;
   cost: number | null;
   components: EdgeView[];
   buildsInto: EdgeView[];
@@ -41,13 +42,19 @@ export interface ItemRailProps {
   against: readonly CounterNote[];
 }
 
-function RailHead({ title, note, flag }: { title: string; note?: string; flag?: string }) {
+//The design scales every win-rate bar across the meaningful 30–70% band.
+const barWidth = (wr: number) => `${Math.max(2, Math.min(100, ((wr - 30) / 40) * 100))}%`;
+const barColor = (wr: number) => (wr >= 50 ? 'var(--win)' : 'var(--loss)');
+const monogram = (name: string) => {
+  const words = name.replace(/&/g, '').split(/\s+/).filter(Boolean);
+  const two = words.length > 1 ? `${words[0]![0]}${words[1]![0]}` : name.slice(0, 2);
+  return two.toUpperCase();
+};
+
+function RailHead({ title, note }: { title: string; note?: string }) {
   return (
     <div className="itemd-railhead">
-      <span className="itemd-railtop">
-        <span className="display itemd-railtitle">{title}</span>
-        {flag && <Chip>{flag}</Chip>}
-      </span>
+      <span className="kicker">{title}</span>
       {note && <span className="itemd-railnote">{note}</span>}
     </div>
   );
@@ -57,7 +64,8 @@ function RailBlocks({
   itemId,
   itemName,
   itemIcon,
-  itemSlotTier,
+  itemSlot,
+  itemMods,
   cost,
   components,
   buildsInto,
@@ -86,21 +94,6 @@ function RailBlocks({
     () => new Map((modifiers ?? []).map((r) => [r.item_id, overlayFromWire(r)] as const)),
     [modifiers],
   );
-  const slotTiers = useMemo(
-    () =>
-      new Map(
-        (modifiers ?? []).map(
-          (r) =>
-            [
-              r.item_id,
-              [r.item_slot_type && r.item_slot_type.charAt(0).toUpperCase() + r.item_slot_type.slice(1), itemTierNumeral(r.item_tier)]
-                .filter(Boolean)
-                .join(' · '),
-            ] as const,
-        ),
-      ),
-    [modifiers],
-  );
 
   const overlayFor = (id: number, name: string, icon: string | null): ItemOverlayData =>
     overlays.get(id) ?? {
@@ -118,10 +111,24 @@ function RailBlocks({
       ability: itemAbility(id),
     };
 
-  const ItemTile = ({ id, name, icon, sub }: { id: number; name: string; icon: string | null; sub?: string }) => (
+  const ItemTile = ({
+    id,
+    name,
+    icon,
+    slot,
+    sub,
+    size = 28,
+  }: {
+    id: number;
+    name: string;
+    icon: string | null;
+    slot: string | null;
+    sub?: string;
+    size?: number;
+  }) => (
     <ItemHoverCard data={overlayFor(id, name, icon)} asChild>
-      <a className="itemd-tile" href={`/items/${id}/`}>
-        <GameIcon kind="item" name={name} src={icon} size={26} />
+      <a className={`itemd-tile ${catClass(slot)}`} href={`/items/${id}/`}>
+        <GameIcon kind="item" name={name} src={icon} size={size} />
         <span className="itemd-tile-text">
           <span className="display itemd-tile-name">{name}</span>
           {sub && <span className="itemd-tile-sub">{sub}</span>}
@@ -130,93 +137,93 @@ function RailBlocks({
     </ItemHoverCard>
   );
 
-  const pairRows = (pairs?.pairs ?? []).map((p) => ({
-    ...p,
-    name: overlays.get(p.item_id)?.name ?? itemMeta(p.item_id)?.name ?? `Item ${p.item_id}`,
-    icon: overlays.get(p.item_id)?.icon ?? itemMeta(p.item_id)?.icon ?? null,
-    slotTier: slotTiers.get(p.item_id) ?? '',
-  }));
+  const pairRows = (pairs?.pairs ?? []).map((p) => {
+    const o = overlays.get(p.item_id);
+    return {
+      ...p,
+      name: o?.name ?? itemMeta(p.item_id)?.name ?? `Item ${p.item_id}`,
+      icon: o?.icon ?? itemMeta(p.item_id)?.icon ?? null,
+      slot: o?.slot ?? null,
+      slotTier: slotTierLabel(o?.slot, o?.tier),
+    };
+  });
+
+  //The design draws one node list: the components, this item, then what it upgrades into.
+  const pathNodes = [
+    ...components,
+    { itemId, name: itemName, icon: itemIcon, cost, slot: itemSlot, mods: itemMods, role: 'This item' as const },
+    ...buildsInto,
+  ];
 
   return (
     <aside className="itemd-rail">
-      <section className="panel panel-pad">
-        <RailHead title="Upgrade path" note={components.length > 0 ? 'What it is built from' : 'Where it leads'} />
+      <section className="itemd-card itemd-pad">
+        <RailHead title="Upgrade path" />
         <div className="itemd-path">
-          {components.map((c) => (
-            <div className="itemd-pathnode" key={c.itemId}>
-              <ItemTile id={c.itemId} name={c.name} icon={c.icon} sub={c.slotTier} />
-              <span className="itemd-pathrole">
-                Component{c.cost == null ? '' : ` · ${count(c.cost)} souls`}
+          {pathNodes.map((n) => (
+            <div className={n.role === 'This item' ? 'itemd-pathnode itemd-pathself' : 'itemd-pathnode'} key={n.itemId}>
+              <span className={`iicon itemd-pathart ${catClass(n.slot)}`}>
+                {n.icon ? <img src={n.icon} alt="" loading="lazy" /> : <span className="icon-mono">{monogram(n.name)}</span>}
               </span>
+              <span className="itemd-pathtext">
+                <span className="itemd-pathname">
+                  <a className="display itemd-tile-name" href={`/items/${n.itemId}/`}>
+                    {n.name}
+                  </a>
+                  <span className="itemd-pathrole">{n.role}</span>
+                </span>
+                {n.mods && <span className="itemd-tile-sub">{n.mods}</span>}
+              </span>
+              <span className="mono tnum itemd-pathcost">{n.cost == null ? '' : count(n.cost)}</span>
             </div>
           ))}
-          <div className="itemd-pathnode itemd-pathself">
-            <span className="itemd-tile">
-              <GameIcon kind="item" name={itemName} src={itemIcon} size={26} />
-              <span className="itemd-tile-text">
-                <span className="display itemd-tile-name">{itemName}</span>
-                <span className="itemd-tile-sub">{itemSlotTier}</span>
-              </span>
-            </span>
-            <span className="itemd-pathrole">This item{cost == null ? '' : ` · ${count(cost)} souls`}</span>
-          </div>
         </div>
-        {buildsInto.length > 0 && (
-          <div className="itemd-into">
-            <span className="label-xs">Builds into</span>
-            {buildsInto.map((b) => (
-              <ItemTile key={b.itemId} id={b.itemId} name={b.name} icon={b.icon} sub={b.slotTier} />
-            ))}
-          </div>
-        )}
         <p className="itemd-railfoot">
           {discount == null
             ? 'This item has no components in the catalog, so there is no upgrade discount to state.'
-            : `Owning the component is assumed to discount the upgrade to ${count(discount)} souls. `}
-          {discount != null && <Chip>assumed</Chip>}
-          {discount != null && ' The shop’s pay-the-difference arithmetic is in no patch note or asset field.'}
-          {buildsInto.length === 0 && ' Nothing builds from it.'}
+            : `Owning the component is assumed to discount the upgrade to ${count(discount)} souls — the shop’s pay-the-difference arithmetic is in no patch note or asset field.`}
+          {buildsInto.length === 0 && ` Nothing builds from ${itemName}.`}
         </p>
       </section>
 
       {against.length > 0 && (
-        <section className="panel panel-pad">
-          <RailHead title="Buy it against" note="Written by the content program, not derived" flag="Editorial" />
-          <ul className="itemd-against">
+        <section className="itemd-card itemd-pad">
+          <RailHead title="Buy it against" note="Editorial" />
+          <div className="itemd-against">
             {against.map((a) => (
-              <li key={a.hero}>
-                <span className="display itemd-against-hero">{a.hero}</span>
-                <span className="itemd-against-why">{a.why}</span>
-              </li>
+              <div className="itemd-againstrow" key={a.hero}>
+                <span className="itemd-mono-av">{monogram(a.hero)}</span>
+                <span className="itemd-againsttext">
+                  <span className="display itemd-against-hero">{a.hero}</span>{' '}
+                  <span className="itemd-against-why">{a.why}</span>
+                </span>
+              </div>
             ))}
-          </ul>
+          </div>
         </section>
       )}
 
-      <section className="panel panel-pad">
-        <RailHead
-          title="Pairs with"
-          note={pairs ? `Δ win rate when both are on the board · ${pairs.window}` : 'Δ win rate when both are on the board'}
-        />
+      <section className="itemd-card itemd-pad">
+        <RailHead title="Pairs with" note="Δ WR when both are on the board" />
         {pairsPending ? (
           <Skeleton height={140} />
         ) : pairRows.length === 0 ? (
-          <EmptyState title="Computing" message="No partner clears the sample floor yet." />
+          <EmptyState tone="cold" title="Computing" message="No partner clears the sample floor yet." />
         ) : (
           <>
             <div className="itemd-pairs">
               {pairRows.map((p) => (
                 <div className="itemd-pair" key={p.item_id}>
-                  <ItemTile id={p.item_id} name={p.name} icon={p.icon} sub={p.slotTier} />
+                  <ItemTile id={p.item_id} name={p.name} icon={p.icon} slot={p.slot} sub={p.slotTier} />
                   <span
-                    className="tnum num itemd-pair-lift"
+                    className="mono tnum itemd-pair-lift"
                     style={{ color: (p.win_rate_delta ?? 0) >= 0 ? 'var(--win)' : 'var(--loss)' }}
                   >
                     {p.win_rate_delta == null
                       ? DASH
-                      : `${p.win_rate_delta >= 0 ? '▲' : '▼'} ${Math.abs(p.win_rate_delta * 100).toFixed(1)}`}
+                      : `${p.win_rate_delta >= 0 ? '▲ +' : '▼ −'}${Math.abs(p.win_rate_delta * 100).toFixed(1)}`}
                   </span>
-                  <span className="tnum num muted">{count(p.matches)}</span>
+                  <span className="mono tnum muted">{count(p.matches)}</span>
                 </div>
               ))}
             </div>
@@ -230,64 +237,59 @@ function RailBlocks({
         )}
       </section>
 
-      <section className="panel panel-pad">
-        <RailHead title="Win rate by rank" note={byRank ? `Badge tier of the match · ${byRank.window}` : 'Badge tier of the match'} />
+      <section className="itemd-card itemd-pad">
+        <RailHead title="Win rate by rank" note="badge tier of the match" />
         {rankPending ? (
           <Skeleton height={200} />
         ) : !byRank || byRank.tiers.length === 0 ? (
-          <EmptyState title="Computing" message="Per-rank rows for this item are still folding." />
+          <EmptyState tone="cold" title="Computing" message="Per-rank rows for this item are still folding." />
         ) : (
           <>
             <div className="itemd-ranks">
               {byRank.tiers.map((t) => (
                 <div className="itemd-rank" key={t.tier}>
                   <img className="itemd-rank-emblem" src={rankImg(t.tier)} alt="" width="20" height="20" loading="lazy" />
-                  <span className="itemd-rank-name">{t.name}</span>
-                  <span className="itemd-rank-bar">
-                    <i
-                      style={{
-                        width: `${Math.max(0, Math.min(100, (((t.win_rate ?? 0) * 100 - 40) / 20) * 100))}%`,
-                        background: (t.win_rate ?? 0) >= 0.5 ? 'var(--win)' : 'var(--loss)',
-                      }}
-                    />
+                  <span className="display itemd-rank-name">{t.name}</span>
+                  <span className="itemd-rank-wr">
+                    <span className="mono tnum itemd-rank-val" style={{ color: barColor((t.win_rate ?? 0) * 100) }}>
+                      {t.win_rate == null ? DASH : `${(t.win_rate * 100).toFixed(1)}%`}
+                    </span>
+                    <span className="wbar wbar-flex itemd-rank-bar">
+                      <i
+                        style={{
+                          width: barWidth((t.win_rate ?? 0) * 100),
+                          background: barColor((t.win_rate ?? 0) * 100),
+                        }}
+                      />
+                    </span>
                   </span>
                   <span
-                    className="tnum num"
-                    style={{ color: (t.win_rate ?? 0) >= 0.5 ? 'var(--win)' : 'var(--loss)' }}
+                    className="mono tnum muted"
+                    title={t.thin ? `Under ${count(byRank.thin_below)} matches — noise, not a reading` : undefined}
                   >
-                    {t.win_rate == null ? DASH : `${(t.win_rate * 100).toFixed(1)}%`}
-                  </span>
-                  <span className="tnum num muted itemd-rank-games">
                     {count(t.matches)}
-                    {t.thin && <span className="itemd-thin" title={`Under ${count(byRank.thin_below)} matches`}>thin</span>}
                   </span>
                 </div>
               ))}
             </div>
-            <p className="itemd-railfoot">
-              Tiers under {count(byRank.thin_below)} matches are marked thin and their rate is noise, not a reading.{' '}
-              {byRank.source}
-            </p>
+            <p className="itemd-railfoot">A tier under {count(byRank.thin_below)} matches is noise, not a reading.</p>
           </>
         )}
       </section>
 
-      <section className="panel panel-pad">
-        <RailHead title={`Peers · ${peerTitle}`} note="Same slot, same tier" />
+      <section className="itemd-card itemd-pad">
+        <RailHead title={`Peers · ${peerTitle}`} note="same slot, same tier" />
         {peers.length === 0 ? (
-          <EmptyState title="No peers" message="No other catalog item shares this slot and tier." />
+          <EmptyState tone="cold" title="No peers" message="No other catalog item shares this slot and tier." />
         ) : (
           <div className="itemd-peers">
             {peers.map((p) => (
               <div className="itemd-peer" key={p.itemId}>
-                <ItemTile id={p.itemId} name={p.name} icon={p.icon} />
-                <span
-                  className="tnum num"
-                  style={{ color: (p.winRate ?? 0) >= 50 ? 'var(--win)' : 'var(--loss)' }}
-                >
+                <ItemTile id={p.itemId} name={p.name} icon={p.icon} slot={p.slot} />
+                <span className="mono tnum" style={{ color: barColor(p.winRate ?? 0) }}>
                   {p.winRate == null ? DASH : `${p.winRate.toFixed(1)}%`}
                 </span>
-                <span className="tnum num muted">{p.matches == null ? DASH : count(p.matches)}</span>
+                <span className="mono tnum muted">{p.matches == null ? DASH : count(p.matches)}</span>
               </div>
             ))}
           </div>
