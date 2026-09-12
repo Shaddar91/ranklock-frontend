@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
-import { computeStats, type BaseStats } from '../../../lib/computeStats';
+import { computeStats, type BaseStats, type BuildInput } from '../../../lib/computeStats';
 import { readBuildFromHash } from '../../../lib/buildShare';
 import { EmptyState } from '../ui/index';
 import type { HeroAbility, HeroBaseStats, HeroSummary, ItemModifier } from '../../../types/api';
@@ -19,7 +19,7 @@ import { useBuildDraft } from './useBuildDraft';
 
 const NO_BASE: BaseStats = {};
 
-export default function BuildCreator() {
+export default function BuildCreator({ initial }: { initial?: BuildInput | null } = {}) {
   const roster = useQuery<HeroBaseStats[]>({
     queryKey: queryKeys.heroBaseStats(),
     queryFn: () => api.getHeroBaseStats(),
@@ -79,6 +79,11 @@ export default function BuildCreator() {
       setSharedLoaded(true);
     }
   }, [loadBuild]);
+
+  //"Edit a copy" on Analyze hands the board over; it wins over the empty draft, never over a link.
+  useEffect(() => {
+    if (initial && !sharedLoaded) loadBuild(initial);
+  }, [initial, sharedLoaded, loadBuild]);
 
   useEffect(() => {
     if (heroId != null) return;

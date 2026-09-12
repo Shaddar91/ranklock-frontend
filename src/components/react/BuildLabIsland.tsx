@@ -6,165 +6,17 @@ import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
 import { EmptyState, GameIcon } from './ui/index';
-import { count, DASH, fixed } from '../../lib/format';
-import { statLabel } from '../../lib/statLabel';
-import { groupBaseStats, statUnit } from '../../lib/baseStatGroups';
+import { count, DASH } from '../../lib/format';
 import { abilityOrderSequence, formatUpdated, isUpdatedThisPatch, SORT_MODES, type BuildSort } from '../../lib/buildMeta';
 import BuildCreator from './creator/BuildCreator';
-import type { HeroAbility, HeroBaseStats, TrimmedBuild } from '../../types/api';
+import AnalyzeTab from './lab/AnalyzeTab';
+import { HeroSelect, HowToPlayLink, useHeroRoster, type RosterSlug } from './lab/HeroBar';
+import type { BuildInput } from '../../lib/computeStats';
+import type { HeroAbility, TrimmedBuild } from '../../types/api';
 
 type Tab = 'analyze' | 'create' | 'community';
 
-//The lab's own roster is /heroes/base-stats, which never runs through releasedRoster(), so a
-//hero there may have no page — this roster is the guard that keeps a "how to play" link off a 404.
-export interface RosterSlug {
-  hero_id: number;
-  slug: string;
-  hasGuide: boolean;
-}
-
-function fmtStat(v: number): string {
-  return Number.isInteger(v) ? count(v) : fixed(v);
-}
-
-//A base-stats entry is a nested object carrying a numeric `value`, NOT a bare number; the
-//shared `stats: Record<string, unknown>` masks that, so narrow it at the point of consumption.
-type BaseStatValue = { value: number; display_stat_name?: string };
-
-//Drop any row whose hero_name is empty BEFORE sort/map, so the <select> can never render a
-//blank <option> if base-stats regresses. react-query dedupes the one fetch across both tabs.
-function useHeroRoster() {
-  const q = useQuery<HeroBaseStats[]>({
-    queryKey: queryKeys.heroBaseStats(),
-    queryFn: () => api.getHeroBaseStats(),
-  });
-  const heroes = useMemo(
-    () =>
-      [...(q.data ?? [])]
-        .filter((h) => h.hero_name?.trim())
-        .sort((a, b) => a.hero_name.localeCompare(b.hero_name)),
-    [q.data],
-  );
-  return { heroes, isPending: q.isPending, isError: q.isError };
-}
-
-function HeroSelect({
-  heroes,
-  activeId,
-  onHero,
-}: {
-  heroes: HeroBaseStats[];
-  activeId: number;
-  onHero: (id: number) => void;
-}) {
-  return (
-    <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
-      <span className="label-xs">Hero</span>
-      <select
-        className="field"
-        style={{ width: 'auto', padding: '8px 12px' }}
-        value={activeId}
-        onChange={(e) => onHero(Number(e.target.value))}
-        aria-label="Select a hero"
-      >
-        {heroes.map((h) => (
-          <option key={h.hero_id} value={h.hero_id}>{h.hero_name}</option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function HowToPlayLink({ hero, roster }: { hero: HeroBaseStats | null; roster: RosterSlug[] }) {
-  const row = hero ? roster.find((r) => r.hero_id === hero.hero_id) : undefined;
-  if (!hero || !row?.hasGuide) return null;
-  return (
-    <a className="kicker" href={`/heroes/${row.slug}/guide/`}>
-      How to play {hero.hero_name} →
-    </a>
-  );
-}
-
-//---- Analyze (design Lab §6 rail: the hero's served stats) -------------------
-
-function AnalyzeTab({
-  heroId,
-  onHero,
-  roster,
-}: {
-  heroId: number | null;
-  onHero: (id: number) => void;
-  roster: RosterSlug[];
-}) {
-  const { heroes, isPending, isError } = useHeroRoster();
-  const active = heroes.find((h) => h.hero_id === heroId) ?? heroes[0] ?? null;
-
-  if (isPending) return <p className="muted" style={{ padding: '14px 2px' }}>Loading base stats…</p>;
-  if (isError || heroes.length === 0 || !active) {
-    return (
-      <EmptyState
-        title="Base stats not available yet"
-        message="Base stats are captured once per patch. This patch's capture hasn't landed yet."
-        icon="chart"
-      />
-    );
-  }
-
-  //Only entries whose nested value is numeric are display-worthy; grouped into
-  //gameplay sections with the engine scalers/zero-defaults collapsed (§presentation).
-  const statEntries = Object.entries(active.stats)
-    .filter((e): e is [string, BaseStatValue] => typeof (e[1] as { value?: unknown } | null)?.value === 'number')
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([key, v]) => ({ key, value: v.value, label: statLabel(key, v.display_stat_name) }));
-  const { groups, raw } = groupBaseStats(statEntries);
-
-  const tile = (s: { key: string; value: number; label: string }) => {
-    const unit = statUnit(s.key);
-    return (
-      <div key={s.key} className="tile statile">
-        <div className="label-xs" title={s.label} style={{ overflowWrap: 'anywhere', overflow: 'hidden' }}>{s.label}</div>
-        <div className="display tnum" style={{ fontSize: 22, fontWeight: 700 }}>
-          {fmtStat(s.value)}
-          {unit && <span className="muted" style={{ fontSize: 13, fontWeight: 600, marginLeft: 3 }}>{unit}</span>}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div>
-      <div className="between" style={{ gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-        <div className="flex" style={{ alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <HeroSelect heroes={heroes} activeId={active.hero_id} onHero={onHero} />
-          <HowToPlayLink hero={active} roster={roster} />
-        </div>
-        <span className="mono faint" style={{ fontSize: 12 }}>
-          patch {active.patch_id} · {active.source}
-        </span>
-      </div>
-      {statEntries.length === 0 ? (
-        <EmptyState title="No numeric base stats" message="No numeric starting stats were recorded for this hero this patch." icon="inbox" />
-      ) : (
-        <div style={{ display: 'grid', gap: 18 }}>
-          {groups.map((g) => (
-            <section key={g.key}>
-              <div className="label-xs" style={{ marginBottom: 8, color: 'var(--cyan)', letterSpacing: '0.1em' }}>{g.label}</div>
-              <div className="stat-grid">{g.stats.map(tile)}</div>
-            </section>
-          ))}
-          {raw.length > 0 && (
-            <details>
-              <summary className="label-xs" style={{ cursor: 'pointer', color: 'var(--muted)' }}>
-                Raw engine values · {raw.length}
-              </summary>
-              <div className="stat-grid" style={{ marginTop: 12 }}>{raw.map(tile)}</div>
-            </details>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+export type { RosterSlug };
 
 //---- Community builds (design Lab §13) --------------------------------------
 //GET /heroes/:id/builds. The server's recency-weighted sort is authoritative. NO win rate:
@@ -308,6 +160,7 @@ const TABS: { value: Tab; label: string }[] = [
 function BuildLabInner({ roster }: { roster: RosterSlug[] }) {
   const [tab, setTab] = useState<Tab>('analyze');
   const [heroId, setHeroId] = useState<number | null>(null);
+  const [handover, setHandover] = useState<BuildInput | null>(null);
   //A shared `#b1:` link carries a board — hand it to Create. Read AFTER hydration: server and
   //client must render the same first tab, and BuildCreator reads the fragment itself once mounted.
   useEffect(() => {
@@ -330,8 +183,18 @@ function BuildLabInner({ roster }: { roster: RosterSlug[] }) {
         ))}
       </div>
       <div style={{ paddingTop: 12 }}>
-        {tab === 'analyze' && <AnalyzeTab heroId={heroId} onHero={setHeroId} roster={roster} />}
-        {tab === 'create' && <BuildCreator />}
+        {tab === 'analyze' && (
+          <AnalyzeTab
+            heroId={heroId}
+            onHero={setHeroId}
+            roster={roster}
+            onEditCopy={(build) => {
+              setHandover(build);
+              setTab('create');
+            }}
+          />
+        )}
+        {tab === 'create' && <BuildCreator initial={handover} />}
         {tab === 'community' && <CommunityBuildsTab heroId={heroId} onHero={setHeroId} roster={roster} />}
       </div>
     </div>
