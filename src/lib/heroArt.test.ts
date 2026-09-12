@@ -76,6 +76,6 @@ describe('heroArt', () => {
     expect(heroArt('')).toBeNull();
     expect(heroArt(`${UP}/backgrounds/bebop_bg.png`)).toBeNull();
     expect(heroArt(`${DEADLOCK_ASSETS_HOST}/assets-api-res/images/items/spirit/improved_spirit.png`)).toBeNull();
-    expect(heroArt('/assets/ranks/rank07-archon.png')).toBeNull();
+    expect(heroArt('/assets/ranks/rank07.png')).toBeNull();
   });
 });

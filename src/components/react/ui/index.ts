@@ -11,6 +11,8 @@ export { default as Chip } from './Chip';
 export { default as StatTile } from './StatTile';
 export { default as LiveStatChip } from './LiveStatChip';
 export { default as BracketFilter, type BracketValue } from './BracketFilter';
+export { default as FilterBar, bracketLabel } from './FilterBar';
+export { default as SectionHeader } from './SectionHeader';
 export { default as BucketFilter } from './BucketFilter';
 export { default as EmptyState } from './EmptyState';
 export { default as Skeleton } from './Skeleton';

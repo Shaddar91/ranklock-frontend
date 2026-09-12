@@ -1,12 +1,6 @@
-//============================================================================
-//Deadlock rank metadata + emblem helpers (ported from the prototype data.jsx).
-//
-//Ranks are a FIXED 12-tier ladder (Obscurus … Eternus), each with a subrank
-//I–VI. The API exposes a player's rank as a single `badge` number = tier*10 +
-//subrank (see types/api.ts). The rank EMBLEMS are app-owned design assets bundled
-//under public/assets/ranks/ (not served by the API), so they live here, not in
-//the API client.
-//============================================================================
+//Deadlock rank ladder: 12 tiers (Obscurus … Eternus), each with a subrank I–VI.
+//The API exposes a player's rank as one `badge` = tier*10 + subrank (types/api.ts).
+//Names and colors are the assets.deadlock-api.com /v2/ranks ladder, probed 2026-09-11.
 
 export interface RankMeta {
   tier: number;
@@ -16,18 +10,18 @@ export interface RankMeta {
 
 //Ordered by tier 0..11; index === tier.
 export const RANKS: readonly RankMeta[] = [
-  { tier: 0, name: 'Obscurus', color: '#7d7d7d' },
-  { tier: 1, name: 'Initiate', color: '#a06a3e' },
-  { tier: 2, name: 'Seeker', color: '#c2456f' },
-  { tier: 3, name: 'Alchemist', color: '#7d8fd6' },
-  { tier: 4, name: 'Arcanist', color: '#8fc35f' },
-  { tier: 5, name: 'Ritualist', color: '#dda326' },
-  { tier: 6, name: 'Emissary', color: '#ee4f57' },
-  { tier: 7, name: 'Archon', color: '#b47feb' },
-  { tier: 8, name: 'Oracle', color: '#c1794a' },
-  { tier: 9, name: 'Phantom', color: '#9aa3ad' },
-  { tier: 10, name: 'Ascendant', color: '#c39751' },
-  { tier: 11, name: 'Eternus', color: '#5ce9a9' },
+  { tier: 0, name: 'Obscurus', color: '#333333' },
+  { tier: 1, name: 'Initiate', color: '#6A3E1E' },
+  { tier: 2, name: 'Seeker', color: '#882355' },
+  { tier: 3, name: 'Acolyte', color: '#5C6DAB' },
+  { tier: 4, name: 'Sentinel', color: '#719C47' },
+  { tier: 5, name: 'Mystic', color: '#DDA326' },
+  { tier: 6, name: 'Ritualist', color: '#EE4F57' },
+  { tier: 7, name: 'Emissary', color: '#B47FEB' },
+  { tier: 8, name: 'Oracle', color: '#955138' },
+  { tier: 9, name: 'Phantom', color: '#7C7C7C' },
+  { tier: 10, name: 'Ascendant', color: '#C39751' },
+  { tier: 11, name: 'Eternus', color: '#5CE9A9' },
 ];
 
 export const SUBRANK_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI'] as const;
@@ -39,14 +33,13 @@ export function getRank(tier: number): RankMeta {
   return RANKS[clamped] as RankMeta;
 }
 
-//Public emblem path. Files live at public/assets/ranks/rankNN-<name>.png and are
-//served from the site root, so the URL is absolute ("/assets/…").
+//Emblem path. Keyed by TIER only (not name) so a ladder rename never 404s the art;
+//files are app-owned under public/assets/ranks/ and served from the site root.
 export function rankImg(tier: number): string {
-  const r = getRank(tier);
-  return `/assets/ranks/rank${String(r.tier).padStart(2, '0')}-${r.name.toLowerCase()}.png`;
+  return `/assets/ranks/rank${String(getRank(tier).tier).padStart(2, '0')}.png`;
 }
 
-//"Archon IV" style label. sub is 1..6 (0/undefined → no numeral).
+//"Emissary IV" style label. sub is 1..6 (0/undefined → no numeral).
 export function subLabel(tier: number, sub?: number | null): string {
   const r = getRank(tier);
   if (!sub) return r.name;

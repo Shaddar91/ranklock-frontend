@@ -152,6 +152,14 @@ export interface ItemStat {
   avg_buy_time_relative?: number | null;
   avg_sell_time_s?: number | null;
   avg_sell_time_relative?: number | null;
+  //Items §3 "Most bought on" (C12). ABSENT for an item the item_hero_stats fold has no
+  //row for — the column is additive, never a null the table has to special-case.
+  top_hero?: ItemTopHero;
+}
+
+export interface ItemTopHero {
+  hero_id: number;
+  share_of_games: number;
 }
 
 //---- matches ----------------------------------------------------------------
@@ -832,4 +840,256 @@ export interface BuildScore {
 export interface ScoredBuild extends TrimmedBuild {
   author_name: string | null;
   score: BuildScore | null;
+}
+
+//---- rank-bracketed + community builds (C2-C4) ------------------------------
+
+//Upstream hero-build-stats numbers for one published build: rolling 30 days at a
+//lobby-average badge floor. Every field is null when upstream carries no row at
+//the floor — the build keeps its place in the list either way.
+export interface CommunityStats {
+  win_rate_30d: number | null;
+  matches: number | null;
+  wins: number | null;
+  players: number | null;
+}
+
+//GET /heroes/:id/builds?scored=1 element — the scored build with its 30-day numbers
+//flattened on (hero_builds.rs `CommunityBuild`).
+export interface CommunityBuild extends ScoredBuild, CommunityStats {}
+
+//GET /builds/:build_id — one build by id, hero_id riding the body, same flattening.
+export interface BuildById extends TrimmedBuild, CommunityStats {}
+
+//The four served rank brackets; the badge bounds resolve server-side, so no badge
+//arithmetic crosses the wire.
+export type RankedBracketKey = 'initiate-sentinel' | 'mystic-emissary' | 'oracle-phantom' | 'ascendant-eternus';
+
+export interface RankedBracketInfo {
+  key: string;
+  min_badge: number;
+  max_badge: number;
+}
+
+export interface RankedBuild extends TrimmedBuild {
+  matches: number;
+  wins: number;
+  win_rate: number;
+  wilson_lower: number;
+}
+
+//GET /heroes/:id/builds/ranked?bracket= — top builds inside one bracket, Wilson-lower sorted.
+export interface RankedBuildsResponse {
+  bracket: RankedBracketInfo;
+  min_matches: number;
+  window: string;
+  source: string;
+  builds: RankedBuild[];
+}
+
+//---- ability orders (GET /heroes/:id/ability-orders) -------------------------
+
+//`abilities` is the raw ability-id sequence in level order; length is NOT fixed
+//(12..16 all ride live) and ids exceed 2^31, so they arrive as plain numbers.
+export interface AbilityOrder {
+  abilities: number[];
+  wins: number;
+  losses: number;
+  matches: number;
+  players: number;
+  win_rate: number;
+}
+
+export interface AbilityOrdersResponse {
+  min_matches: number;
+  window: string;
+  source: string;
+  orders: AbilityOrder[];
+}
+
+//---- item timing / detail / pairs / per-rank WR / heroes (C6-C9, C12) --------
+
+//GET /items/:id/timing — one row per game minute, plus the purchase-minute quartiles.
+export interface ItemTimingBucket {
+  bucket: number;
+  matches: number;
+  wins: number;
+  win_rate: number;
+  avg_buy_time_s: number;
+}
+
+export interface ItemTimingResponse {
+  item_id: number;
+  buckets: ItemTimingBucket[];
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+  total_matches: number;
+  window: string;
+  source: string;
+}
+
+//One resolved component-tree edge (a component of, or a parent built from, this item).
+export interface ItemEdge {
+  item_id: number;
+  class_name: string;
+  item_name: string;
+  icon_url: string | null;
+}
+
+//Valve's item text, split by role. Each key is OMITTED when upstream has no text for it.
+export interface ItemDetailText {
+  desc?: string;
+  passive?: string;
+  active?: string;
+}
+
+//GET /items/:id/detail. `cooldown` is absent (never null) on a passive item.
+export interface ItemDetailResponse {
+  item_id: number;
+  class_name: string;
+  item_name: string;
+  item_slot_type: string | null;
+  item_tier: number | null;
+  cost: number | null;
+  shop_image_webp: string | null;
+  is_shop_item: boolean;
+  modifiers: unknown[];
+  activation: string | null;
+  is_active_item: boolean;
+  cooldown?: number;
+  text: ItemDetailText;
+  text_key: string;
+  components: ItemEdge[];
+  builds_into: ItemEdge[];
+  source: string;
+}
+
+//GET /items/:id/pairs. win_rate_delta is null whenever the item's own base rate is
+//unknown — render no Δ rather than one measured against a guess.
+export interface ItemPair {
+  item_id: number;
+  matches: number;
+  wins: number;
+  win_rate: number;
+  win_rate_delta: number | null;
+}
+
+export interface ItemPairsResponse {
+  item_id: number;
+  pairs: ItemPair[];
+  base_win_rate: number | null;
+  min_matches: number;
+  window: string;
+  source: string;
+}
+
+//GET /items/:id/win-rate-by-rank — the 11 RANKED tiers (Obscurus is excluded as
+//unranked). `thin` marks a tier under `thin_below` matches; win_rate is null at zero.
+export interface ItemRankWinRate {
+  tier: number;
+  name: string;
+  min_badge: number;
+  max_badge: number;
+  matches: number;
+  wins: number;
+  win_rate: number | null;
+  thin: boolean;
+}
+
+export interface ItemRankWinRatesResponse {
+  item_id: number;
+  tiers: ItemRankWinRate[];
+  thin_below: number;
+  window: string;
+  source: string;
+}
+
+//GET /items/:id/heroes — who buys this item, from our own matches.
+export interface ItemHeroShare {
+  hero_id: number;
+  share_of_games: number | null;
+  win_rate: number | null;
+  games: number;
+}
+
+export interface ItemHeroesResponse {
+  item_id: number;
+  heroes: ItemHeroShare[];
+  item_games: number;
+  computed_at?: string;
+  window: string;
+  source: string;
+}
+
+//---- hero assets slim (GET /heroes/:id/assets) -------------------------------
+
+export interface HeroDescription {
+  lore?: string;
+  playstyle?: string;
+  role?: string;
+}
+
+//`stat` is upstream's specific_stat_scale_type (ETechPower, ETechCooldown, …).
+export interface HeroAbilityScaling {
+  stat?: string;
+  scale?: number;
+  function?: string;
+}
+
+export interface HeroAbilityProperty {
+  name: string;
+  value: unknown;
+  label?: string;
+  unit?: string;
+  kind?: string;
+  scaling?: HeroAbilityScaling;
+}
+
+//`bonus` arrives as a number OR a numeric string upstream — parse at the call site.
+export interface HeroAbilityUpgrade {
+  name: string;
+  bonus?: unknown;
+}
+
+export interface HeroAbilityTier {
+  tier: number;
+  upgrades: HeroAbilityUpgrade[];
+  description?: string;
+}
+
+export interface HeroAbilityNumerics {
+  ability_id: number;
+  class_name: string;
+  slot: string;
+  order: number;
+  name?: string;
+  ability_type?: string;
+  icon_url?: string;
+  description?: string;
+  properties: HeroAbilityProperty[];
+  tiers: HeroAbilityTier[];
+}
+
+//Every optional key is ABSENT when upstream omits it — an absent scaling row must read
+//as absent, never as an invented null. `abilities_source` stamps where the per-tier
+//numerics came from.
+export interface HeroAssetsResponse {
+  hero_id: number;
+  hero_name?: string;
+  window: string;
+  source: string;
+  abilities_source: string;
+  description?: HeroDescription;
+  tags?: unknown;
+  complexity?: unknown;
+  images?: unknown;
+  starting_stats?: unknown;
+  scaling_stats?: unknown;
+  standard_level_up_upgrades?: unknown;
+  level_info?: unknown;
+  item_slot_info?: unknown;
+  cost_bonuses?: unknown;
+  purchase_bonuses?: unknown;
+  abilities: HeroAbilityNumerics[];
 }

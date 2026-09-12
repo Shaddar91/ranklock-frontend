@@ -14,7 +14,7 @@ import { statsThroughDate } from '../../lib/dataHorizon';
 import QueryProvider from './QueryProvider';
 import { Chip } from './ui/index';
 
-function DataAgeChipInner() {
+function DataAgeChipInner({ inline }: { inline?: boolean }) {
   const horizon = useQuery({
     queryKey: queryKeys.dataHorizon(),
     queryFn: api.getDataHorizon,
@@ -24,7 +24,7 @@ function DataAgeChipInner() {
   const date = statsThroughDate(horizon.data);
   if (date == null) return null;
   return (
-    <div style={{ marginTop: 8 }}>
+    <div style={inline ? undefined : { marginTop: 8 }}>
       <Chip
         tone="neutral"
         title={`Newest match in the dataset started ${date}. Everything on this site is computed from matches up to that date.`}
@@ -35,10 +35,11 @@ function DataAgeChipInner() {
   );
 }
 
-export default function DataAgeChip() {
+//`inline` drops the stacking margin so the chip can sit in a filter-bar row.
+export default function DataAgeChip({ inline }: { inline?: boolean }) {
   return (
     <QueryProvider>
-      <DataAgeChipInner />
+      <DataAgeChipInner inline={inline} />
     </QueryProvider>
   );
 }

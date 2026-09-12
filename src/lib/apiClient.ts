@@ -1,6 +1,9 @@
 //Typed HTTP/JSON client for the RankLock Rust/Axum API (api.ranklock.app).
 import type {
+  AbilityOrdersResponse,
   BadgeHistoryRow,
+  BuildById,
+  CommunityBuild,
   CompareResponse,
   ComparePlayerResponse,
   CurrentUser,
@@ -9,6 +12,7 @@ import type {
   GameMode,
   HealthResponse,
   HeroAbility,
+  HeroAssetsResponse,
   HeroBracket,
   HeroBuildStats,
   HeroCountersResponse,
@@ -19,8 +23,13 @@ import type {
   HeroSummary,
   HeroSynergiesResponse,
   ImproveResponse,
+  ItemDetailResponse,
+  ItemHeroesResponse,
   ItemModifier,
+  ItemPairsResponse,
+  ItemRankWinRatesResponse,
   ItemStat,
+  ItemTimingResponse,
   LaneCurveResponse,
   LeaderboardEntry,
   MatchDetail,
@@ -38,10 +47,10 @@ import type {
   PlayerMatchRow,
   PlayerProfileResponse,
   PlayerSoulsResponse,
+  RankedBuildsResponse,
   RankPopulationRow,
   ReadinessResponse,
   SearchResult,
-  ScoredBuild,
   SoulsCohortResponse,
   TrimmedBuild,
 } from '../types/api';
@@ -201,6 +210,17 @@ export const queryKeys = {
   heroBuildStats: (id: number, tier?: number, match_mode?: MatchMode) =>
     ['hero', id, 'build-stats', tier ?? 0, match_mode ?? 'Ranked'] as const,
   heroAbilities: (id: number) => ['hero', id, 'abilities'] as const,
+  //Rank-bracketed builds + the by-id import source (C2/C4).
+  heroRankedBuilds: (id: number, bracket: string, min_matches?: number) =>
+    ['hero', id, 'builds', 'ranked', bracket, min_matches ?? null] as const,
+  build: (id: number) => ['build', id] as const,
+  heroAbilityOrders: (id: number) => ['hero', id, 'ability-orders'] as const,
+  heroAssets: (id: number) => ['hero', id, 'assets'] as const,
+  itemTiming: (id: number) => ['item', id, 'timing'] as const,
+  itemDetail: (id: number) => ['item', id, 'detail'] as const,
+  itemPairs: (id: number) => ['item', id, 'pairs'] as const,
+  itemRankWinRates: (id: number) => ['item', id, 'win-rate-by-rank'] as const,
+  itemHeroes: (id: number) => ['item', id, 'heroes'] as const,
   heroMatchups: (id: number, bracket?: number, game_mode?: GameMode) =>
     ['hero', id, 'matchups', bracket ?? null, game_mode ?? null] as const,
   heroCounters: (id: number) => ['hero', id, 'counters'] as const,
@@ -280,10 +300,24 @@ export const api = {
     apiFetch<HeroSummary[]>('/heroes', { query: params }),
   getHeroStats: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
     apiFetch<HeroSummary>(`/heroes/${id}/stats`, { query: { bracket, game_mode } }),
+  //?scored=1 additionally carries each build's upstream 30-day numbers (win_rate_30d /
+  //matches / wins / players), all null when upstream has no row at the badge floor.
   getHeroBuilds: <S extends boolean = false>(id: number, sort?: BuildSort, scored?: S) =>
-    apiFetch<S extends true ? ScoredBuild[] : TrimmedBuild[]>(`/heroes/${id}/builds`, {
+    apiFetch<S extends true ? CommunityBuild[] : TrimmedBuild[]>(`/heroes/${id}/builds`, {
       query: { sort, scored: scored ? 1 : undefined },
     }),
+  //Top builds inside one rank bracket, Wilson-lower sorted. `bracket` is one of the four
+  //served keys; an unknown key 400s listing them. min_matches clamps to 1..500 server-side.
+  getRankedBuilds: (id: number, bracket: string, min_matches?: number) =>
+    apiFetch<RankedBuildsResponse>(`/heroes/${id}/builds/ranked`, { query: { bracket, min_matches } }),
+  //One published build by id — the Build Lab Analyze import source. 404 for an id upstream
+  //has no build for; hero_id rides the body since the route carries no hero.
+  getBuildById: (build_id: number) => apiFetch<BuildById>(`/builds/${build_id}`),
+  //Level-order aggregates, floored at 500 matches upstream-side (no caller can lower it).
+  getAbilityOrders: (id: number) => apiFetch<AbilityOrdersResponse>(`/heroes/${id}/ability-orders`),
+  //The hero's client-side numerics: identity, scaling, investment track, per-ability tiers.
+  //Optional keys are ABSENT when upstream omits them — never read a gap as a zero.
+  getHeroAssets: (id: number) => apiFetch<HeroAssetsResponse>(`/heroes/${id}/assets`),
   //Item sets + buy order from our own matches. Only `tier=0` is served (the backend 400s the rest),
   //and 202/501 arrive as an ApiError the caller classifies with `isComputing` / `isDisabled`.
   getHeroBuildStats: (id: number, tier: number = 0, match_mode: MatchMode = 'Ranked') =>
@@ -299,6 +333,18 @@ export const api = {
     apiFetch<HeroItemWinRate[]>(`/heroes/${id}/item-win-rates`, { query: params }).then(enrichItems),
   getItems: (bracket?: number, game_mode?: GameMode, hero_id?: number) =>
     apiFetch<ItemStat[]>('/items/stats', { query: { bracket, game_mode, hero_id } }).then(enrichItems),
+  //Purchase-minute histogram + quartiles for one item.
+  getItemTiming: (item_id: number) => apiFetch<ItemTimingResponse>(`/items/${item_id}/timing`),
+  //Catalog row + component-tree edges + Valve's text. 404 on an unknown id.
+  getItemDetail: (item_id: number) => apiFetch<ItemDetailResponse>(`/items/${item_id}/detail`),
+  //Partner items and the win-rate lift when both are on the board.
+  getItemPairs: (item_id: number) => apiFetch<ItemPairsResponse>(`/items/${item_id}/pairs`),
+  //Win rate across the 11 ranked tiers; a tier under `thin_below` matches is flagged `thin`.
+  getItemRankWinRates: (item_id: number) =>
+    apiFetch<ItemRankWinRatesResponse>(`/items/${item_id}/win-rate-by-rank`),
+  //Who buys this item, from our own matches. An item the fold has no rows for is an EMPTY
+  //hero list, never a 404 — the card renders its own empty state.
+  getItemHeroes: (item_id: number) => apiFetch<ItemHeroesResponse>(`/items/${item_id}/heroes`),
   //Offset paging (ui-residuals C1): limit ≤50, offset ≤100k; the offset path answers with
   //X-Total-Count so the /matches pager can size itself (`total` null until that ships live).
   getRecentMatches: (params?: { game_mode?: string; match_mode?: string; limit?: number; offset?: number }) =>

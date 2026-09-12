@@ -32,7 +32,7 @@ describe('rewriteAssetUrl', () => {
   });
 
   it('leaves already-local and foreign URLs untouched even when flipped', () => {
-    expect(rewriteAssetUrl('/assets/ranks/rank07-archon.png', OURS)).toBe('/assets/ranks/rank07-archon.png');
+    expect(rewriteAssetUrl('/assets/ranks/rank07.png', OURS)).toBe('/assets/ranks/rank07.png');
     expect(rewriteAssetUrl('https://example.com/x.png', OURS)).toBe('https://example.com/x.png');
   });
 
@@ -65,7 +65,7 @@ describe('preferWebp', () => {
       'https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/haze.svg',
     );
     expect(preferWebp('https://example.com/x.png', OURS)).toBe('https://example.com/x.png');
-    expect(preferWebp('/assets/ranks/rank07-archon.png', OURS)).toBe('/assets/ranks/rank07-archon.png');
+    expect(preferWebp('/assets/ranks/rank07.png', OURS)).toBe('/assets/ranks/rank07.png');
     expect(preferWebp(null, OURS)).toBeNull();
     expect(preferWebp(undefined, OURS)).toBeUndefined();
     expect(preferWebp('', OURS)).toBe('');

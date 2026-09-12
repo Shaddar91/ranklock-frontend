@@ -13,7 +13,7 @@ import { buildAheadMessage, humanize, PlaystyleRadarPanel, SEV } from './Analyti
 import { ShareCompareButton } from './ShareCompareButton';
 import { useCompare, useComparePlayer, usePlayerHeroes, usePlayerHeroesPlayed, usePlayerMatches, usePlayerPerformance, usePlayerReadiness } from './usePlayer';
 import { api, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClient';
-import { rankFromBadge } from '../../../lib/ranks';
+import { rankFromBadge, RANKS } from '../../../lib/ranks';
 import { scopeCaption, scopeParams, type PlayerScope } from '../../../lib/playerScope';
 import { usePlayerScope } from './usePlayerScope';
 import { useCompareTarget } from './useCompareTarget';
@@ -349,22 +349,9 @@ export function ReadinessCard({ id }: { id: number }) {
 
 //---- compare (you vs cohort league) -----------------------------------------
 
-//Deadlock rank-tier names (tier = badge/10, 1..11). Mirrored from the backend's
-//tier_name() (deadlock-backend/src/main.rs:1268-1283) so the UI can name a tier by
-//number; keep in lockstep with the backend.
-const TIER_NAMES: Record<number, string> = {
-  1: 'Initiate',
-  2: 'Seeker',
-  3: 'Alchemist',
-  4: 'Arcanist',
-  5: 'Ritualist',
-  6: 'Emissary',
-  7: 'Archon',
-  8: 'Oracle',
-  9: 'Phantom',
-  10: 'Ascendant',
-  11: 'Eternus',
-};
+//The ranked tiers 1..11 by name, off the one pinned ladder in lib/ranks — Obscurus(0)
+//is unranked and is never a comparison target.
+const RANKED_TIERS = RANKS.slice(1);
 
 //Comparison-target options: the RELATIVE league_offsets below; the "Jump to tier" group
 //in the selector sends an absolute target_tier, which overrides league_offset server-side
@@ -373,7 +360,7 @@ const TARGET_OPTIONS: ReadonlyArray<readonly [string, string]> = [
   ['same', 'Your rank'],
   ['one_up', 'One rank up'],
   ['two_up', 'Two ranks up'],
-  ['top', `Best — ${TIER_NAMES[11]}`],
+  ['top', `Best — ${RANKS[11]!.name}`],
 ];
 
 //---- compare to a specific player (optional, behind the rank selector) ------
@@ -682,9 +669,9 @@ export function ComparePanel({ id }: { id: number }) {
           ))}
         </optgroup>
         <optgroup label="Jump to tier">
-          {Object.entries(TIER_NAMES).map(([tier, name]) => (
-            <option key={tier} value={`tier:${tier}`}>
-              {name}
+          {RANKED_TIERS.map((r) => (
+            <option key={r.tier} value={`tier:${r.tier}`}>
+              {r.name}
             </option>
           ))}
         </optgroup>

@@ -1856,3 +1856,59 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 .cat-flex {
   --cat: var(--faint);
 }
+
+/* ---------- section head + sticky filter bar ---------- */
+.sechead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.sechead-main {
+  min-width: 0;
+}
+.sechead-note {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--muted);
+  max-width: 70ch;
+}
+.sechead-action {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.filterbar {
+  position: sticky;
+  top: var(--fb-top, 60px);
+  z-index: 30;
+  margin: 0 0 18px;
+  background: color-mix(in srgb, var(--ink) 86%, transparent);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.filterbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+.filterbar-rank,
+.filterbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.filterbar-label {
+  color: var(--text-2);
+}
