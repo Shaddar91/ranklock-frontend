@@ -31,6 +31,10 @@ function attrFullName(attr) {
   return '';
 }
 
+//Presentational React primitives with no state, no effects and no handlers: an .astro page
+//renders them to static HTML on purpose, so hydrating them would ship runtime for nothing.
+const SERVER_RENDERED_PRIMITIVES = new Set(['SectionHeader', 'EmptyState', 'StatTile', 'TierPill']);
+
 const requireClientDirective = {
   meta: {
     type: 'problem',
@@ -60,7 +64,7 @@ const requireClientDirective = {
       JSXOpeningElement(node) {
         if (!node.name || node.name.type !== 'JSXIdentifier') return;
         const name = node.name.name;
-        if (!islandImports.has(name)) return;
+        if (!islandImports.has(name) || SERVER_RENDERED_PRIMITIVES.has(name)) return;
         const hasClient = node.attributes.some((attr) =>
           attrFullName(attr).startsWith('client:'),
         );

@@ -4,7 +4,14 @@ import { api } from './apiClient';
 import { buildFetch } from './buildData';
 import { rankDesc, toPct } from './narrative';
 import type { ItemBracketRow } from './itemNarrative';
-import type { DataHorizonResponse, HeroBracket, HeroItemWinRate, HeroSummary, ItemStat } from '../types/api';
+import type {
+  DataHorizonResponse,
+  HeroBracket,
+  HeroItemWinRate,
+  HeroSummary,
+  ItemStat,
+  LaneCurvePoint,
+} from '../types/api';
 
 export interface BracketDef {
   key: HeroBracket;
@@ -32,6 +39,15 @@ function once<T>(key: string, make: () => Promise<T>): Promise<T> {
 /** One /meta/data-horizon fetch per build, shared by every page that prints a fold window. */
 export function dataHorizon(): Promise<DataHorizonResponse | null> {
   return once('dataHorizon', () => buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null));
+}
+
+//Cumulative souls per game minute, all ranks — the affordability baseline every hero build
+//page measures its running board cost against. Values are THOUSANDS of souls on the wire.
+export function soulsCurve(): Promise<LaneCurvePoint[]> {
+  return once('soulsCurve', async () => {
+    const res = await buildFetch(api.getLaneFarmCurve({ metric: 'souls' }), null);
+    return (res?.points ?? []).filter((p) => p.p50 != null && p.t_seconds <= 3600);
+  });
 }
 
 export function rosterByBracket(): Promise<Map<HeroBracket, HeroSummary[]>> {

@@ -635,50 +635,6 @@
 }
 
 /* per-hero build pages (/heroes/<slug>/build/) */
-.bp-sec {
-  margin-bottom: 24px;
-}
-.bp-sec .h-sec {
-  margin-bottom: 6px;
-}
-.bp-sub {
-  margin: 0 0 14px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--muted);
-  max-width: 78ch;
-}
-.bp-tier {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 14px;
-}
-.bp-tier-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-2);
-}
-.bp-tier-select {
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: var(--raised);
-  color: var(--text);
-  font-size: 12.5px;
-  font-weight: 600;
-}
-.bp-tier-select:disabled {
-  opacity: 0.8;
-  cursor: not-allowed;
-}
-.bp-tier-note {
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--muted);
-  max-width: 60ch;
-}
 .bp-set {
   display: flex;
   flex-wrap: wrap;
@@ -706,72 +662,237 @@
   color: var(--gold);
   font-weight: 700;
 }
-.bp-builds {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 10px;
+
+/* §1 phase cards: the core/situational pill and the games column the overview has no room for */
+.bp-phase-row {
+  grid-template-columns: 32px minmax(0, 1fr) 40px 50px 54px;
 }
-.bp-build {
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  background: var(--raised);
-}
-.bp-build-head {
+.bp-phase-title {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.bp-pill {
+  flex: none;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  font: 600 9px var(--display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bp-pill-core {
+  border-color: var(--brass-3);
+  color: var(--brass-1);
+}
+.bp-phase-games {
+  font-size: 11px;
+  text-align: right;
+}
+
+/* §2 buy-order track */
+.bp-track {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
   gap: 8px;
 }
-.bp-build-name {
-  font-weight: 700;
+.bp-slot {
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  text-align: center;
+  padding: 10px 8px;
+  text-decoration: none;
+  transition: var(--t-fast);
+}
+.bp-slot:hover {
+  border-color: var(--brass-3);
+}
+.bp-slot-n {
+  font: 600 10px var(--mono);
+  letter-spacing: 0.08em;
+  color: var(--brass-1);
+}
+.bp-slot-name {
+  font: 600 12px/1.2 var(--display);
   color: var(--text);
-  font-size: 14.5px;
+  min-height: 29px;
 }
-.bp-build-by {
-  font-size: 12.5px;
+.bp-slot-min,
+.bp-slot-afford {
+  font-size: 11px;
   color: var(--muted);
 }
-.bp-build-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 5px;
+.bp-slot-souls {
   font-size: 11.5px;
+  color: var(--gold);
+}
+
+/* §3 two-column band: sets beside the situational families */
+.bp-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.bp-table {
+  overflow: hidden;
+}
+.bp-srow,
+.bp-brow {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+}
+.bp-srow {
+  grid-template-columns: minmax(0, 1fr) 60px 56px 60px;
+}
+.bp-brow {
+  grid-template-columns: minmax(0, 1.6fr) 76px 78px 76px 132px 96px;
+}
+.bp-bhead {
+  border-top: 0;
+  padding-top: 10px;
+  padding-bottom: 6px;
+}
+.bp-srow .num,
+.bp-brow .num {
+  text-align: right;
+}
+.bp-tile {
+  position: relative;
+  display: inline-flex;
+  text-decoration: none;
+}
+.bp-tile .bp-mult {
+  position: absolute;
+  right: -2px;
+  bottom: -4px;
+  font-size: 10px;
+}
+.bp-tile-ability .iicon {
+  border-radius: 50%;
+  outline: 1px solid var(--sapphire);
+}
+.bp-sit {
+  display: grid;
+  gap: 8px;
+}
+.bp-sit-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 150px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+}
+.bp-sit-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.bp-sit-effect {
+  font-size: 11px;
   color: var(--muted);
+  text-wrap: pretty;
 }
-.bp-build-score {
-  margin-top: 7px;
-  font-size: 12.5px;
-  color: var(--text-2);
-}
-.bp-build-cats {
+.bp-sit-picks {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 9px;
 }
-.bp-cat {
-  padding: 3px 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  font-size: 11.5px;
+.bp-chip-text {
+  display: grid;
+  line-height: 1.25;
+}
+.bp-chip-mod {
+  font-size: 10.5px;
+  font-weight: 400;
   color: var(--muted);
 }
-.bp-cat-n {
-  color: var(--text-2);
-  font-weight: 700;
+
+/* §4 community builds: the bracket selector, the ability chips and the updated badge */
+.bp-brackets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
 }
-.bp-note p {
-  color: var(--text-2);
-  font-size: 14px;
-  max-width: 78ch;
-  margin: 10px 0 0;
+.bp-brk {
+  padding: 6px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--raised);
+  color: var(--muted);
+  font: 600 12px var(--display);
+  cursor: pointer;
+  transition: var(--t-fast);
 }
-.bp-window {
+.bp-brk:hover {
+  border-color: var(--cyan-deep);
+  color: var(--text-2);
+}
+.bp-brk.on {
+  border-color: var(--brass-3);
+  background: var(--overlay);
+  color: var(--brass-1);
+}
+.bp-btitle {
+  min-width: 0;
+}
+.bp-bname {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bp-bname-untitled {
+  font-style: italic;
+  color: var(--text-2);
+}
+.bp-bby {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bp-points {
+  display: flex;
+  gap: 4px;
+}
+.bp-points .kit-key {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+.bp-upd {
+  justify-self: end;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  font: 600 10px var(--display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.bp-upd-now {
+  border-color: var(--win);
+  color: var(--win);
+}
+.bp-thin {
+  margin: 0;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
   font-size: 12px;
+  line-height: 1.6;
   color: var(--muted);
 }
 

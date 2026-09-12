@@ -1,40 +1,36 @@
 ---
-//SSG per-hero build page: the item sets and buy order our own matches measure,
-//the rank-scoped item table, and the community's published builds with their
-//upstream attribution. Every section is baked at build time; only the rank
-//filter on the item table hydrates.
+//SSG hero build page — design 01 §Build §1-§6. The phase cards and the buy-order track answer
+//the sticky rank filter; the community table carries its own bracket selector because the
+//upstream build aggregate splits four ways, not twelve.
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import GameArt from '../../../components/GameArt.astro';
-import Narrative from '../../../components/Narrative.astro';
-import WinRate from '../../../components/WinRate.astro';
-import ItemsTable from '../../../components/react/ItemsTable';
+import HeroBand from '../../../components/hero/HeroBand.astro';
+import SectionHeader from '../../../components/react/ui/SectionHeader';
+import EmptyState from '../../../components/react/ui/EmptyState';
+import HeroFilterBar from '../../../components/react/hero/HeroFilterBar';
+import BuildPhases from '../../../components/react/hero/BuildPhases';
+import CommunityBuilds from '../../../components/react/hero/CommunityBuilds';
 import { api } from '../../../lib/apiClient';
 import { buildFetch } from '../../../lib/buildData';
-import { dataHorizon } from '../../../lib/buildIndexes';
+import { dataHorizon, soulsCurve } from '../../../lib/buildIndexes';
 import { breadcrumbJsonLd } from '../../../lib/seo';
-import { count, shortDate } from '../../../lib/format';
-import { authorLabel, favoriteCounts, formatUpdated } from '../../../lib/buildMeta';
+import { count, pickShare, shortDate } from '../../../lib/format';
+import { catalogIndex, situationalGroups, winningSets } from '../../../lib/heroBuild';
 import { heroArt } from '../../../lib/heroArt';
 import { publishedGuideSlugs } from '../../../lib/guideRoutes';
 import { heroPath, slugRoster } from '../../../lib/heroSlugs';
 import { releasedRoster } from '../../../lib/heroRoster';
-import {
-  buildNarrative,
-  buyOrderByPos,
-  dedupeSetItems,
-  itemName,
-  rankedItemWinRates,
-  rankedSets,
-  sumMatchupBrackets,
-} from '../../../lib/buildNarrative';
-import { toPct } from '../../../lib/narrative';
 import type {
+  AbilityOrdersResponse,
+  CommunityBuild,
+  HeroAbility,
+  HeroAssetsResponse,
   HeroBuildStats,
   HeroItemWinRate,
   HeroSummary,
+  ItemModifier,
   ItemStat,
-  MatchupEntry,
-  ScoredBuild,
+  Patch,
 } from '../../../types/api';
 
 export async function getStaticPaths() {
@@ -57,60 +53,91 @@ const emptyStats: HeroBuildStats = {
   buy_order: [],
 };
 
-//Badge buckets 1-5 are the only unambiguous matchup read: bracket 0 returns one row
-//per match_mode with no way to tell them apart (deadlock-backend analytics.rs MATCHUP_SQL).
-const MATCHUP_BUCKETS = [1, 2, 3, 4, 5];
+const [assets, itemStats, modifiers, stats, itemWinRates, builds, abilityRows, abilityOrders, currentPatch, curve, horizon] =
+  await Promise.all([
+    buildFetch(api.getHeroAssets(hero.hero_id), null as HeroAssetsResponse | null),
+    buildFetch(api.getItems(undefined, undefined, hero.hero_id), [] as ItemStat[]),
+    buildFetch(api.getItemModifiers(), [] as ItemModifier[]),
+    buildFetch(api.getHeroBuildStats(hero.hero_id), emptyStats),
+    buildFetch(api.getHeroItemWinRates(hero.hero_id), [] as HeroItemWinRate[]),
+    buildFetch(api.getHeroBuilds(hero.hero_id, 'weekly', true), [] as CommunityBuild[]),
+    buildFetch(api.getHeroAbilities(hero.hero_id), [] as HeroAbility[]),
+    buildFetch(api.getAbilityOrders(hero.hero_id), null as AbilityOrdersResponse | null),
+    buildFetch(api.getCurrentPatch(), null as Patch | null),
+    soulsCurve(),
+    dataHorizon(),
+  ]);
 
-const [stats, builds, itemWinRates, rankItems, horizon, ...matchupPages] = await Promise.all([
-  buildFetch(api.getHeroBuildStats(hero.hero_id), emptyStats),
-  buildFetch(api.getHeroBuilds(hero.hero_id, 'weekly', true), [] as ScoredBuild[]),
-  buildFetch(api.getHeroItemWinRates(hero.hero_id), [] as HeroItemWinRate[]),
-  buildFetch(api.getItems(0, undefined, hero.hero_id), [] as ItemStat[]),
-  dataHorizon(),
-  ...MATCHUP_BUCKETS.map((b) => buildFetch(api.getHeroMatchups(hero.hero_id, b), [] as MatchupEntry[])),
-]);
+const catalog = catalogIndex(modifiers);
+//Tile props resolve here: an ability entry has no item page to link to, so it renders as a
+//plain tile with the ability marker rather than a dead link.
+const sets = winningSets(stats.item_sets, catalog).map((s) => ({
+  ...s,
+  tiles: s.entries.map((e) => ({
+    ...e,
+    cls: e.shopItem ? 'bp-tile' : 'bp-tile bp-tile-ability',
+    href: e.shopItem ? `/items/${e.itemId}/` : undefined,
+    title: e.shopItem ? e.name : `${e.name} - ability upgrade`,
+  })),
+}));
+const situational = situationalGroups(modifiers, itemWinRates);
 
-const heroById = new Map(roster.map((h) => [h.hero_id, h]));
-const matchups = sumMatchupBrackets(matchupPages as MatchupEntry[][], hero.hero_id);
-const sets = rankedSets(stats.item_sets);
-const positions = buyOrderByPos(stats.buy_order);
-const nowSeconds = Math.floor(Date.now() / 1000);
+//§5: the two orders the Overview legend explains, recapped here without the legend and
+//without a cold gate (design 01 §Build §5).
+const slotOfAbility = Object.fromEntries(
+  abilityRows
+    .filter((a) => a.slot.startsWith('signature'))
+    .sort((a, b) => a.order - b.order)
+    .map((a, i) => [String(a.ability_id), i + 1]),
+);
+const orders = abilityOrders?.orders ?? [];
+const mostPlayed = orders.reduce<(typeof orders)[number] | null>((best, o) => (best && best.matches >= o.matches ? best : o), null);
+const bestWinRate = orders.reduce<(typeof orders)[number] | null>((best, o) => (best && best.win_rate >= o.win_rate ? best : o), null);
+const skillRows = [
+  { label: 'Most played', order: mostPlayed },
+  { label: 'Highest win rate', order: bestWinRate },
+]
+  .filter((r) => r.order != null)
+  .map((r) => ({
+    label: r.label,
+    matches: r.order!.matches,
+    winRate: r.order!.win_rate * 100,
+    chips: r.order!.abilities.map((id, i) => ({ key: slotOfAbility[String(id)] ?? 0, level: i + 1 })),
+  }));
 
-//E1 cold (202/501, or folded with nothing over the games floor) hides the set + buy-order sections;
-//single-item win rates are the only honest substitute, and only for the sets — buy order has none.
-const FALLBACK_ITEMS = 20;
-const fallbackItems = sets.length === 0 ? rankedItemWinRates(itemWinRates).slice(0, FALLBACK_ITEMS) : [];
-
-const sections = buildNarrative({
-  hero,
-  roster,
-  itemSets: stats.item_sets,
-  buyOrder: stats.buy_order,
-  itemWinRates,
-  builds,
-  matchups,
-  heroName: (id) => heroById.get(id)?.hero_name ?? `Hero ${id}`,
-});
-
-const windowOf = (ds: string) => horizon?.datasets.find((d) => d.dataset === ds);
-const statsThrough = shortDate(horizon?.max_match_start_time);
-const setWindow = windowOf('hero-itemset-win-rates');
-const setLo = shortDate(setWindow?.window_lo);
-const setHi = shortDate(setWindow?.window_hi);
-const itemWindow = windowOf('hero-item-win-rates');
-const itemLo = shortDate(itemWindow?.window_lo);
-const itemHi = shortDate(itemWindow?.window_hi);
+const byPicks = [...roster].sort((a, b) => (b.picks ?? 0) - (a.picks ?? 0));
+const patchRank = byPicks.findIndex((h) => h.hero_id === hero.hero_id) + 1;
+const pickRate = pickShare(hero.picks, roster.reduce((sum, h) => sum + (h.picks ?? 0), 0));
 
 const heroUrl = heroPath(name);
 const canonicalPath = `${heroUrl}build/`;
-
-//Guide-gated route: the sentence naming it is dropped for a hero with no guide file.
 const hasGuide = (await publishedGuideSlugs()).has(Astro.params.slug as string);
-const art = heroArt(hero.icon_url);
-const description = builds.length
-  ? `${name} item sets that win most in RankLock's ranked match data, with games and win rate for each, plus community builds scored on those numbers.`
-  : `${name} item sets that win most in RankLock's ranked match data, with games and win rate for each, and the items with the highest win rate at your rank.`;
+const tabs = [
+  { label: 'Overview', href: heroUrl, current: false },
+  { label: 'Build', href: canonicalPath, current: true },
+  ...(hasGuide ? [{ label: 'How to play', href: `${heroUrl}guide/`, current: false }] : []),
+  { label: 'Counters', href: `${heroUrl}#matchups`, current: false },
+];
 
+const windowOf = (ds: string) => horizon?.datasets.find((d) => d.dataset === ds);
+const setWindow = windowOf('hero-itemset-win-rates');
+const setLo = shortDate(setWindow?.window_lo);
+const setHi = shortDate(setWindow?.window_hi);
+const buyThrough = shortDate(windowOf('item-stats')?.window_hi ?? horizon?.max_match_start_time);
+
+const setsNote =
+  `All ranks · sorted by Wilson lower bound${setLo && setHi ? ` · ${setLo} to ${setHi}` : ''}. ` +
+  'A set is the six purchases our own matches measured together; the fold counts ability upgrades ' +
+  'alongside shop items, so a set can mix both and a repeat shows as ×n.';
+const situationalNote =
+  `Four modifier families from the item catalog. Inside each, the items with the highest Wilson lower bound on ${name} ` +
+  '— RankLock public matches, all ranks. Which enemy to buy them against is not derived and is not shown.';
+const skillNote = abilityOrders
+  ? `${abilityOrders.source} · ${abilityOrders.window} · orders under ${abilityOrders.min_matches.toLocaleString('en-US')} matches hidden`
+  : 'deadlock-api.com ability-order aggregates';
+
+const art = heroArt(hero.icon_url);
+const description = `What to buy on ${name} and when: the build by phase, the buy order with its running souls cost, the item sets that win, and the published builds with their 30-day win rate.`;
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
@@ -118,10 +145,6 @@ const jsonLd = breadcrumbJsonLd(origin, [
   { name, path: heroUrl },
   { name: 'Build', path: canonicalPath },
 ]);
-
-const heroOptions = roster.map((h) => ({ hero_id: h.hero_id, hero_name: h.hero_name }));
-const hasAnything =
-  sets.length > 0 || positions.length > 0 || rankItems.length > 0 || builds.length > 0 || fallbackItems.length > 0;
 ---
 
 <BaseLayout
@@ -131,252 +154,159 @@ const hasAnything =
   jsonLd={jsonLd}
   backdropHero={art?.cls}
 >
-  <main class="container">
-    <nav class="kicker" style="margin-bottom:14px;">
-      <a href={heroUrl} style="color:var(--muted);">← {name} stats</a>
-    </nav>
+  <HeroBand
+    hero={hero}
+    assets={assets}
+    patchRank={patchRank}
+    rosterSize={roster.length}
+    pickRate={pickRate}
+    tabs={tabs}
+  />
 
-    <div class="entity-head">
-      <GameArt name={name} src={hero.icon_url} wrapClass="entity-art" fontSize={32} eager />
-      <div class="hero-head-text">
-        <div class="kicker">Build · Deadlock</div>
-        <h1 class="h-page">{name} build</h1>
-      </div>
-    </div>
+  <div class="container">
+    <HeroFilterBar currentPath={canonicalPath} client:load />
+  </div>
 
-    <p class="page-intro">
-      What RankLock's own match data says wins on {name}, and what the community has published.
-      For win rate, matchups and duo partners see <a href={heroUrl}>{name}'s stats page</a>;{
-        hasGuide && (
-          <Fragment> for the abilities, levelling order and counters, read <a href={`${heroUrl}guide/`}>how to play {name}</a>;</Fragment>
-        )
-      } to assemble a build of your own, open the <a href="/build-lab/">build lab</a>.
-    </p>
+  <main class="container hero-main">
+    <BuildPhases
+      client:load
+      heroId={hero.hero_id}
+      initialItemStats={itemStats}
+      catalog={[...catalog.values()]}
+      curve={curve}
+    />
 
-    {hasAnything ? <Narrative sections={sections} /> : null}
-
-    {
-      sets.length > 0 && (
-        <section class="panel panel-pad bp-sec">
-          <h2 class="h-sec">Winning item sets</h2>
-          <p class="bp-sub">
-            Six-slot sets our matches measured, ordered by Wilson lower bound, which discounts a rate
-            taken from few games. An entry bought twice in one set shows as x2.
-            {setLo && setHi && ` These sets cover ${setLo} to ${setHi}, a narrower window than the rest of this page.`}
-          </p>
-          <div class="bp-tier">
-            <label class="bp-tier-label" for="set-tier">Rank cohort</label>
-            <select id="set-tier" class="bp-tier-select" disabled>
-              <option value="0" selected>All ranks</option>
-            </select>
-            <span class="bp-tier-note">
-              Only the all-ranks cohort is folded, so no per-rank option is offered here. Rank-scoped
-              single-item win rates are in the table below.
-            </span>
-          </div>
-          <div class="dt-scroll">
-            <table class="dt">
-              <thead>
-                <tr>
-                  <th><span class="th-static">Item set</span></th>
-                  <th class="num"><span class="th-static">Win rate</span></th>
-                  <th class="num"><span class="th-static">Games</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {sets.map((s) => (
-                  <tr>
-                    <td>
-                      <span class="bp-set">
-                        {dedupeSetItems(s.items).map((i) => (
-                          <a class="bp-chip" href={`/items/${i.item_id}/`}>
-                            <GameArt name={itemName(i)} src={i.icon_url} wrapClass="iicon" wrapStyle="width:22px; height:22px;" />
-                            <span>{itemName(i)}</span>
-                            {i.n > 1 && <span class="bp-mult">x{i.n}</span>}
-                          </a>
-                        ))}
-                      </span>
-                    </td>
-                    <td class="num"><WinRate wr={toPct(s.win_rate)} /></td>
-                    <td class="num"><span class="tnum">{count(s.games)}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )
-    }
-
-    {
-      fallbackItems.length > 0 && (
-        <section class="panel panel-pad bp-sec">
-          <h2 class="h-sec">Highest win rate {name} items</h2>
-          <p class="bp-sub">
-            No {name} item set has been folded from our matches yet, so there is no set table and no buy
-            order to show — a buy order has no substitute and is left out rather than guessed. These are
-            the single items with the highest win rate on {name}, all ranks, in the same Wilson order.
-            {itemLo && itemHi && ` They cover ${itemLo} to ${itemHi}.`}
-          </p>
-          <div class="dt-scroll">
-            <table class="dt">
-              <thead>
-                <tr>
-                  <th><span class="th-static">Item</span></th>
-                  <th class="num"><span class="th-static">Win rate</span></th>
-                  <th class="num"><span class="th-static">Games</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {fallbackItems.map((r) => (
-                  <tr>
-                    <td>
-                      <a class="flex" href={`/items/${r.item_id}/`} style="align-items:center; gap:10px; text-decoration:none;">
-                        <GameArt name={itemName(r)} src={r.icon_url} wrapClass="iicon" wrapStyle="width:26px; height:26px;" />
-                        <span class="display" style="font-weight:600; color:var(--text);">{itemName(r)}</span>
+    <section id="sets" class="bp-two">
+      <div>
+        <SectionHeader
+          kicker="Which full sets win"
+          title="Winning six-purchase sets"
+          note={setsNote}
+        />
+        {
+          sets.length === 0 ? (
+            <EmptyState title="Computing" message="No purchase set has been folded for this hero yet. This block refreshes hourly." />
+          ) : (
+            <div class="panel bp-table">
+              <div class="bp-srow bp-bhead">
+                <span class="label-xs">Set</span>
+                <span class="label-xs num">Games</span>
+                <span class="label-xs num">WR</span>
+                <span class="label-xs num">Wilson</span>
+              </div>
+              {sets.map((s) => (
+                <div class="bp-srow">
+                  <span class="bp-set">
+                    {s.tiles.map((e) => (
+                      <a class={e.cls} href={e.href} title={e.title}>
+                        <GameArt name={e.name} src={e.iconUrl} wrapClass="iicon" wrapStyle="width:30px; height:30px;" />
+                        {e.count > 1 && <span class="bp-mult">x{e.count}</span>}
                       </a>
-                    </td>
-                    <td class="num"><WinRate wr={toPct(r.win_rate ?? 0)} /></td>
-                    <td class="num"><span class="tnum">{count(r.games)}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )
-    }
-
-    {
-      positions.length > 0 && (
-        <section class="panel panel-pad bp-sec">
-          <h2 class="h-sec">Buy order</h2>
-          <p class="bp-sub">
-            The highest-confidence buy at each of the {count(positions.length)} measured slots, same Wilson
-            ordering. A count is the matches in which that item was the buy at that slot, so the counts do not
-            simply fall away as the slot number rises.
-          </p>
-          <div class="dt-scroll">
-            <table class="dt">
-              <thead>
-                <tr>
-                  <th class="num"><span class="th-static">Slot</span></th>
-                  <th><span class="th-static">Item</span></th>
-                  <th class="num"><span class="th-static">Win rate</span></th>
-                  <th class="num"><span class="th-static">Games</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {positions.map((p) => {
-                  const r = p.rows[0]!;
-                  return (
-                    <tr>
-                      <td class="num"><span class="tnum">{p.pos}</span></td>
-                      <td>
-                        <a class="flex" href={`/items/${r.item_id}/`} style="align-items:center; gap:10px; text-decoration:none;">
-                          <GameArt name={itemName(r)} src={r.icon_url} wrapClass="iicon" wrapStyle="width:26px; height:26px;" />
-                          <span class="display" style="font-weight:600; color:var(--text);">{itemName(r)}</span>
-                        </a>
-                      </td>
-                      <td class="num"><WinRate wr={toPct(r.win_rate)} /></td>
-                      <td class="num"><span class="tnum">{count(r.games)}</span></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )
-    }
-
-    {
-      rankItems.length > 0 && (
-        <section class="panel panel-pad bp-sec">
-          <h2 class="h-sec">Best {name} items at your rank</h2>
-          <p class="bp-sub">
-            Single-item win rates on {name}, filtered by badge tier. Item sets above are all-ranks only;
-            this table is the one place the build splits by rank.
-            {itemLo && itemHi && ` It covers ${itemLo} to ${itemHi}.`}
-          </p>
-          <ItemsTable initialRows={rankItems} heroes={heroOptions} pinnedHero={hero.hero_id} client:load />
-        </section>
-      )
-    }
-
-    {
-      builds.length > 0 && (
-        <section class="panel panel-pad bp-sec">
-          <h2 class="h-sec">Community {name} builds</h2>
-          <p class="bp-sub">
-            Published builds as their authors wrote them, ordered by weekly favorites and never by score.
-            A score line states which of our numbers it is: the win rate of that exact core item set when
-            our matches measured it, otherwise the average win rate of the core items. Neither is the win
-            rate of players running the build, and a build we cannot score shows no score at all. The list
-            comes from the public{' '}
-            <a href="https://deadlock-api.com" target="_blank" rel="noopener noreferrer">deadlock-api</a>
-            {' '}builds feed.
-          </p>
-          <ul class="bp-builds">
-            {builds.map((b) => (
-              <li class="bp-build">
-                <div class="bp-build-head">
-                  <span class="display bp-build-name">{b.name}</span>
-                  <span class="bp-build-by">by {authorLabel(b)}</span>
+                    ))}
+                  </span>
+                  <span class="mono tnum num muted">{count(s.games)}</span>
+                  <span class="mono tnum num" style={`color:${s.winRate >= 50 ? 'var(--win)' : 'var(--loss)'}`}>
+                    {s.winRate.toFixed(1)}%
+                  </span>
+                  <span class="mono tnum num muted">{s.wilson.toFixed(1)}%</span>
                 </div>
-                <div class="bp-build-meta mono">
-                  {favoriteCounts(b).map((f) => (
-                    <span>{count(f.value)} {f.label}</span>
-                  ))}
-                  <span>Updated {formatUpdated(b.last_updated_timestamp, nowSeconds)}</span>
-                  <span>Version {b.version}</span>
-                </div>
-                {b.score && <div class="bp-build-score">{b.score.label}</div>}
-                {b.categories.length > 0 && (
-                  <div class="bp-build-cats">
-                    {b.categories.map((c) => (
-                      <span class="bp-cat">
-                        {c.name} <span class="bp-cat-n">{c.items.length}</span>
-                      </span>
+              ))}
+            </div>
+          )
+        }
+      </div>
+
+      <div>
+        <SectionHeader
+          kicker="What to swap in"
+          title="Situational picks"
+          note={situationalNote}
+        />
+        {
+          situational.length === 0 ? (
+            <EmptyState title="Computing" message="No item in these families has a measured win rate on this hero yet." />
+          ) : (
+            <div class="bp-sit">
+              {situational.map((g) => (
+                <div class="panel panel-pad bp-sit-row">
+                  <div>
+                    <div class="display bp-sit-label">{g.label}</div>
+                    <div class="bp-sit-effect">{g.effect}</div>
+                  </div>
+                  <div class="bp-sit-picks">
+                    {g.picks.map((p) => (
+                      <a class="bp-chip" href={`/items/${p.itemId}/`}>
+                        <GameArt name={p.name} src={p.iconUrl} wrapClass="iicon" wrapStyle="width:24px; height:24px;" />
+                        <span class="bp-chip-text">
+                          <span class="display">{p.name}</span>
+                          <span class="bp-chip-mod mono">{p.modifier}</span>
+                        </span>
+                        <span class="mono tnum" style={`color:${p.winRate >= 50 ? 'var(--win)' : 'var(--loss)'}`}>
+                          {p.winRate.toFixed(1)}%
+                        </span>
+                      </a>
                     ))}
                   </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )
-    }
-
-    {
-      !hasAnything && (
-        <p class="page-intro">
-          No {name} build data had been folded when this page was built. The hero's win rate, matchups
-          and items are on <a href={heroUrl}>{name}'s stats page</a>.
-        </p>
-      )
-    }
-
-    <section class="panel panel-pad bp-note">
-      <h2 class="h-sec">Where these numbers come from</h2>
-      <p>
-        Item sets and buy order are folded from RankLock's own ranked match data, not from build
-        favorites: a set counts only when it was actually finished in a game we ingested. Win rates
-        are shares of games won. Ordering is by Wilson lower bound, which discounts a high rate
-        measured over few games.
-      </p>
-      <p>
-        Community builds come from the public build list with their authors' names and text as
-        published. RankLock cannot measure how a published build performs, because our match rows do
-        not carry which build a player followed, so the score shown is the average win rate of that
-        build's core items and is labelled that way. The <a href="/methodology/">methodology page</a>
-        defines every number here, and <a href="/tier-list/">the tier list</a> puts {name} against the rest of the roster.
-      </p>
-      <p class="mono bp-window">
-        {sets.length > 0 && setLo && setHi && `Item sets and buy order cover ${setLo} to ${setHi}. `}
-        {itemLo && itemHi && `Per-item win rates cover ${itemLo} to ${itemHi}. `}
-        {statsThrough && `Newest match in the dataset: ${statsThrough}.`}
-      </p>
+                </div>
+              ))}
+            </div>
+          )
+        }
+      </div>
     </section>
+
+    <CommunityBuilds
+      client:load
+      heroId={hero.hero_id}
+      initialBuilds={builds}
+      abilitySlots={slotOfAbility}
+      currentPatchId={currentPatch?.patch_id ?? null}
+      nowSeconds={Math.floor(Date.now() / 1000)}
+    />
+
+    <section id="skill-recap">
+      <SectionHeader kicker="What to level" title="Skill order" note={skillNote}>
+        <a class="kicker" slot="action" href={`${heroUrl}#skill-order`}>
+          Both orders with the legend on Overview →
+        </a>
+      </SectionHeader>
+      {
+        skillRows.length === 0 ? (
+          <EmptyState title="Computing" message="Ability-order stats are still folding. This block refreshes hourly." />
+        ) : (
+          <div class="panel skill-panel">
+            {skillRows.map((row) => (
+              <div class="skill-row">
+                <div>
+                  <div class="display skill-label">{row.label}</div>
+                  <div class="mono tnum skill-meta">
+                    {count(row.matches)} matches ·{' '}
+                    <span style={`color:${row.winRate >= 50 ? 'var(--win)' : 'var(--loss)'}`}>
+                      {row.winRate.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+                <div class="skill-chips">
+                  {row.chips.map((c) => (
+                    <span class="skill-chip">
+                      <span class={`kit-key k${c.key}`}>{c.key || '?'}</span>
+                      <span class="mono skill-lvl">{c.level}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      }
+    </section>
+
+    <p class="hero-footnote">
+      Build, item and ability-order win rates: deadlock-api.com aggregates, trailing 30 days, at the sample floor each
+      block names; never RankLock's own matches, which carry no per-match purchases. Buys, buy minutes and the souls
+      curve: RankLock public matches{buyThrough ? `, through ${buyThrough}` : ''}. Purchase sets: all ranks until the
+      tier axis is folded. A build's title is not a fact; its 30-day column is. Rank means badge tier, never an MMR
+      number.
+    </p>
   </main>
 </BaseLayout>

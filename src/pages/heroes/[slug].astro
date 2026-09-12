@@ -3,14 +3,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
 import { breadcrumbJsonLd } from '../../lib/seo';
-import { count, duration, fixed, kda, metaTier, pct, pickShare, shortDate } from '../../lib/format';
+import { count, pickShare, shortDate } from '../../lib/format';
 import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
-import StatTile from '../../components/react/ui/StatTile';
 import EmptyState from '../../components/react/ui/EmptyState';
 import SectionHeader from '../../components/react/ui/SectionHeader';
-import TierPill from '../../components/react/ui/TierPill';
 import GameArt from '../../components/GameArt.astro';
+import HeroBand from '../../components/hero/HeroBand.astro';
 import HeroFilterBar from '../../components/react/hero/HeroFilterBar';
 import HeroMetaIsland from '../../components/react/hero/HeroMetaIsland';
 import { heroArt } from '../../lib/heroArt';
@@ -65,8 +64,6 @@ const jsonLd = breadcrumbJsonLd(origin, [
 ]);
 
 const art = heroArt(hero?.icon_url);
-const tier = metaTier(hero?.win_rate);
-const heroKda = kda(hero?.avg_kills, hero?.avg_deaths, hero?.avg_assists);
 
 const [
   matchupRowsRaw,
@@ -248,91 +245,14 @@ const tabs = [
   {
     hero ? (
       <Fragment>
-        <section class="container hero-band">
-          <div class="hero-band-top">
-            <div class="hero-band-id">
-              {art ? (
-                <span class="hero-plate" title={name}>
-                  <img
-                    src={art.cardGloat}
-                    alt={name}
-                    width="200"
-                    height="240"
-                    loading="eager"
-                    fetchpriority="high"
-                    data-fallback={art.card}
-                    onerror="if(this.src!==this.dataset.fallback){this.src=this.dataset.fallback}else{this.onerror=null;this.style.display='none'}"
-                  />
-                </span>
-              ) : (
-                <GameArt name={name} src={hero.icon_url} wrapClass="entity-art" fontSize={32} eager />
-              )}
-              <div class="hero-band-text">
-                <div class="kicker">
-                  Hero{assets?.description?.role ? ` · ${assets.description.role}` : ''}
-                  {patchRank > 0 ? ` · #${patchRank} of ${roster.length} this patch` : ''}
-                </div>
-                <h1 class="h-page">{name}</h1>
-                {assets?.description?.playstyle && <p class="hero-blurb">{assets.description.playstyle}</p>}
-                <div class="hero-tags">
-                  {(Array.isArray(assets?.tags) ? (assets?.tags as string[]) : []).map((t) => (
-                    <span class="chip">{t}</span>
-                  ))}
-                  {typeof assets?.complexity === 'number' && (
-                    <span class="chip">
-                      Complexity
-                      <span class="cxdots">
-                        {[1, 2, 3].map((d) => (
-                          <i class={d <= (assets.complexity as number) ? 'on' : ''}></i>
-                        ))}
-                      </span>
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div class="hero-tiles">
-              <StatTile label="Win rate" value={pct(hero.win_rate)} color="var(--win)">
-                <Fragment slot="sub">
-                  {
-                    hero.delta_win_rate_7d == null ? (
-                      <span class="muted trend-note">trend appears once the 7-day fold lands</span>
-                    ) : (
-                      <span class={hero.delta_win_rate_7d >= 0 ? 'tnum trend-note win-c' : 'tnum trend-note loss-c'}>
-                        {hero.delta_win_rate_7d >= 0 ? '▲' : '▼'} {Math.abs(hero.delta_win_rate_7d).toFixed(1)} · 7 days
-                      </span>
-                    )
-                  }
-                </Fragment>
-              </StatTile>
-              <StatTile label="Matches" value={count(hero.picks)}>
-                <span class="muted trend-note" slot="sub">
-                  pick rate {pickRate == null ? '—' : `${pickRate.toFixed(1)}%`}
-                </span>
-              </StatTile>
-              <StatTile label="KDA" value={fixed(heroKda)}>
-                <span class="muted trend-note tnum" slot="sub">
-                  {fixed(hero.avg_kills, 1)} / {fixed(hero.avg_deaths, 1)} / {fixed(hero.avg_assists, 1)}
-                </span>
-              </StatTile>
-              <StatTile label="Avg souls" value={count(hero.avg_net_worth)} color="var(--gold)">
-                <span class="muted trend-note" slot="sub">per {duration(hero.avg_duration_s)} match</span>
-              </StatTile>
-              <StatTile label="Meta tier" value="">
-                <TierPill slot="value" tier={tier ?? '—'} />
-                <span class="muted trend-note" slot="sub">RankLock editorial, S to F, off win rate</span>
-              </StatTile>
-          </div>
-
-          <nav class="tabs hero-tabs" aria-label="Hero sections">
-            {tabs.map((t) => (
-              <a class={t.current ? 'tab on' : 'tab'} href={t.href} aria-current={t.current ? 'page' : undefined}>
-                {t.label}
-              </a>
-            ))}
-          </nav>
-        </section>
+        <HeroBand
+          hero={hero}
+          assets={assets}
+          patchRank={patchRank}
+          rosterSize={roster.length}
+          pickRate={pickRate}
+          tabs={tabs}
+        />
 
         <div class="container">
           <HeroFilterBar currentPath={canonicalPath} client:load />
