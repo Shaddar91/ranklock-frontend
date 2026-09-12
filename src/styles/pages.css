@@ -1704,7 +1704,7 @@
 .itemsx-card .dt thead th.num .th-static {
   justify-content: flex-end;
 }
-/* the prototype names the active sort in the count strip above, never as a glyph */
+/* the design names the active sort in the count strip above, never as a glyph */
 .itemsx-card .dt thead th .ar {
   display: none;
 }
@@ -1738,7 +1738,7 @@
 .itemsx-card .dt tbody td:last-child {
   padding-right: 12px;
 }
-/* the prototype's rows carry no zebra — only its one highlighted subject row is tinted */
+/* the design's rows carry no zebra — only its one highlighted subject row is tinted */
 [data-table='zebra'] .itemsx-card .dt tbody tr:nth-child(even) {
   background: none;
 }
