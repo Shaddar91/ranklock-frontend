@@ -1,34 +1,26 @@
-//Items index island (/items, client:load) — design 01 Items §1-§4: the sort presets,
-//the sticky 12-emblem rank bar, the slot x tier category nav and the win-rate table.
-//Rank is a badge tier (the filter serves the band it falls in), never an MMR score.
+//Items index island (/items, client:load) — the slot x tier category nav and the
+//win-rate table card. The rank bar and the sort presets are sibling islands sharing
+//itemsIndexState. Rank is a badge tier (the filter serves the band it falls in).
 import { useCallback, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, isComputing, queryKeys } from '../../lib/apiClient';
 import { computingMessage } from '../../lib/apiStates';
 import { useGameMode } from '../../lib/useGameMode';
 import { bracketBucket, servedBandLabel } from '../../lib/heroBracket';
+import { useItemsBracket, useItemsSort } from '../../lib/itemsIndexState';
 import QueryProvider from './QueryProvider';
 import CategoryNav from './CategoryNav';
-import {
-  type BracketValue,
-  DataTable,
-  type DataTableColumn,
-  FilterBar,
-  GameIcon,
-  ItemHoverCard,
-  WinBar,
-} from './ui/index';
-import type { SortState } from './ui/DataTable';
+import { DataTable, type DataTableColumn, GameIcon, ItemHoverCard, WinBar } from './ui/index';
 import {
   activePreset,
   ALL_CATEGORIES,
   categoryTitle,
   filterByCategory,
   hasTopHero,
+  slotClass,
   type CategorySelection,
   type ItemIndexRow,
   itemIndexRows,
-  SORT_PRESETS,
 } from '../../lib/itemsIndex';
 import { count, DASH, duration, pct } from '../../lib/format';
 import { itemAbility } from '../../lib/itemDescriptions';
@@ -49,19 +41,17 @@ function ItemsTableInner({
   initialRows,
   initialCatalog,
   heroes,
-  currentPath,
   statsThrough,
 }: {
   initialRows: ItemStat[];
   initialCatalog: ItemModifier[];
   heroes: ItemsHeroOption[];
-  currentPath: string;
   statsThrough?: string;
 }) {
   const { mode } = useGameMode();
-  const [bracket, setBracket] = useState<BracketValue>('all');
+  const { bracket } = useItemsBracket();
+  const { sort, setSort } = useItemsSort();
   const [category, setCategory] = useState<CategorySelection>(ALL_CATEGORIES);
-  const [sort, setSort] = useState<SortState>(SORT_PRESETS[0]!.sort);
   const bucket = bracketBucket(bracket);
 
   const { data, isPending, isError, error } = useQuery({
@@ -107,10 +97,10 @@ function ItemsTableInner({
   );
   const joined = useMemo(() => itemIndexRows(data ?? [], catalog), [data, catalog]);
   const rows = useMemo(() => filterByCategory(joined, category), [joined, category]);
-  const showTopHero = hasTopHero(joined);
+  const topHeroServed = hasTopHero(joined);
 
-  const columns = useMemo<DataTableColumn<ItemIndexRow>[]>(() => {
-    const cols: DataTableColumn<ItemIndexRow>[] = [
+  const columns = useMemo<DataTableColumn<ItemIndexRow>[]>(
+    () => [
       {
         key: 'item',
         header: 'Item',
@@ -118,8 +108,8 @@ function ItemsTableInner({
         //`asChild`: the link itself is the card trigger (one tab stop, aria-describedby on the <a>).
         render: (it) => (
           <ItemHoverCard asChild data={cardFor(it)}>
-            <a className="itemsx-item" href={`/items/${it.item_id}/`}>
-              <GameIcon kind="item" name={itemLabel(it)} src={it.icon_url} size={28} />
+            <a className={`itemsx-item ${slotClass(it.slot)}`} href={`/items/${it.item_id}/`}>
+              <GameIcon kind="item" name={itemLabel(it)} src={it.icon_url} size={32} />
               <span className="itemsx-item-text">
                 <span className="display itemsx-name">{itemLabel(it)}</span>
                 {(it.slotTier || it.cost != null) && (
@@ -135,9 +125,18 @@ function ItemsTableInner({
         ),
       },
       {
+        key: 'players',
+        header: 'Players',
+        numeric: true,
+        width: 92,
+        sortValue: (it) => it.players ?? null,
+        render: (it) =>
+          it.players == null ? <span className="faint">{DASH}</span> : <span className="tnum">{count(it.players)}</span>,
+      },
+      {
         key: 'wr',
         header: 'Win rate',
-        numeric: true,
+        width: 182,
         sortValue: (it) => it.win_rate ?? null,
         render: (it) => (it.win_rate == null ? <span className="faint">{DASH}</span> : <WinBar wr={it.win_rate} />),
       },
@@ -145,24 +144,25 @@ function ItemsTableInner({
         key: 'buy',
         header: 'Avg buy',
         numeric: true,
+        width: 92,
         sortValue: (it) => it.avg_buy_time_s ?? null,
         render: (it) =>
           it.avg_buy_time_s == null ? (
             <span className="faint">{DASH}</span>
           ) : (
-            <span className="tnum">{duration(it.avg_buy_time_s)}</span>
+            <span className="tnum itemsx-dim">{duration(it.avg_buy_time_s)}</span>
           ),
       },
-    ];
-    if (showTopHero) {
-      cols.push({
+      {
         key: 'on',
         header: 'Most bought on',
+        width: 162,
+        sortable: topHeroServed,
         sortValue: (it) => (it.top_hero ? (heroById.get(it.top_hero.hero_id)?.hero_name ?? null) : null),
         render: (it) => {
           const top = it.top_hero;
-          const hero = top ? heroById.get(top.hero_id) : undefined;
           if (!top) return <span className="faint">{DASH}</span>;
+          const hero = heroById.get(top.hero_id);
           const name = hero?.hero_name ?? `Hero ${top.hero_id}`;
           return (
             <span className="itemsx-on">
@@ -174,90 +174,71 @@ function ItemsTableInner({
             </span>
           );
         },
-      });
-    }
-    cols.push({
-      key: 'matches',
-      header: 'Matches',
-      numeric: true,
-      sortValue: (it) => it.matches ?? it.picks ?? null,
-      render: (it) => <span className="tnum">{count(it.matches ?? it.picks)}</span>,
-    });
-    return cols;
-  }, [cardFor, heroById, showTopHero]);
+      },
+      {
+        key: 'matches',
+        header: 'Matches',
+        numeric: true,
+        width: 108,
+        sortValue: (it) => it.matches ?? it.picks ?? null,
+        render: (it) => <span className="tnum itemsx-dim">{count(it.matches ?? it.picks)}</span>,
+      },
+    ],
+    [cardFor, heroById, topHeroServed],
+  );
 
   const band = servedBandLabel(bracket);
   const preset = activePreset(sort);
   const modeLabel = mode === 'StreetBrawl' ? 'Street Brawl' : 'Normal';
 
   return (
-    <div>
-      <FilterBar bracket={bracket} onBracketChange={setBracket} currentPath={currentPath} />
-
-      <div className="itemsx-presets">
-        <span className="label-xs">Sort</span>
-        <div className="sortpresets" role="group" aria-label="Sort the item table">
-          {SORT_PRESETS.map((p) => {
-            const on = preset?.key === p.key;
-            return (
-              <button
-                type="button"
-                key={p.key}
-                className={'sortpreset' + (on ? ' on' : '')}
-                aria-pressed={on}
-                onClick={() => setSort(p.sort)}
-              >
-                {p.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
+    <>
       <CategoryNav value={category} onChange={setCategory} />
 
-      <div className="itemsx-head">
-        <span className="display itemsx-title">{categoryTitle(category)}</span>
-        <span className="mono itemsx-meta">
-          {count(rows.length)} items · sorted by {preset ? preset.label : 'this column'} · {band}
-        </span>
+      <div className="itemsx-card">
+        <div className="itemsx-head">
+          <span className="display itemsx-title">{categoryTitle(category)}</span>
+          <span className="mono itemsx-meta">
+            {count(rows.length)} items · sorted by {preset ? preset.label : 'this column'} · {band}
+          </span>
+        </div>
+
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={(it) => it.item_id}
+          loading={isPending}
+          sort={sort}
+          onSortChange={setSort}
+          caption={`Item win rates for ${categoryTitle(category)} at ${band} (badge tiers), with the average buy time`}
+          emptyTitle={
+            //202 = healthy, deliberately gating; "offline" is reserved for real network/5xx failure.
+            isComputing(error)
+              ? 'Item stats are computing'
+              : isError
+                ? 'Item stats unavailable'
+                : category.slot
+                  ? `No ${categoryTitle(category)} rows in this band yet`
+                  : 'No items for this band yet'
+          }
+          emptyMessage={
+            isComputing(error)
+              ? computingMessage('item win-rates are being generated', error)
+              : isError
+                ? 'The stats API is offline — item win-rates fill in when it comes back online.'
+                : 'No data for this category and rank band yet. Try another band or category, or check back after the next refresh.'
+          }
+        />
       </div>
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(it) => it.item_id}
-        loading={isPending}
-        sort={sort}
-        onSortChange={setSort}
-        caption={`Item win rates for ${categoryTitle(category)} at ${band} (badge tiers), with the average buy time`}
-        emptyTitle={
-          //202 = healthy, deliberately gating; "offline" is reserved for real network/5xx failure.
-          isComputing(error)
-            ? 'Item stats are computing'
-            : isError
-              ? 'Item stats unavailable'
-              : category.slot
-                ? `No ${categoryTitle(category)} rows in this band yet`
-                : 'No items for this band yet'
-        }
-        emptyMessage={
-          isComputing(error)
-            ? computingMessage('item win-rates are being generated', error)
-            : isError
-              ? 'The stats API is offline — item win-rates fill in when it comes back online.'
-              : 'No data for this category and rank band yet. Try another band or category, or check back after the next refresh.'
-        }
-      />
-
       <p className="itemsx-foot">
-        Win rate, matches and average buy time: deadlock-api.com item aggregates, {modeLabel} · {band}
+        Players, win rate, matches and average buy time: deadlock-api.com item aggregates, {modeLabel} · {band}
         {statsThrough ? `, through ${statsThrough}` : ''}. Category, tier and cost: the item catalog (
         {count(catalog.length)} buildable items; {count(joined.length)} carry win-rate rows this band).
-        {!showTopHero && ' "Most bought on" appears once the item-hero fold serves its first rows.'} Rank means
+        {!topHeroServed && ' Most bought on is computing — the item-hero fold has served no rows yet.'} Rank means
         badge tier, never an MMR number.
       </p>
-    </div>
+    </>
   );
 }
 
@@ -265,13 +246,11 @@ export default function ItemsTable({
   initialRows,
   initialCatalog = [],
   heroes = [],
-  currentPath = '/items',
   statsThrough,
 }: {
   initialRows: ItemStat[];
   initialCatalog?: ItemModifier[];
   heroes?: ItemsHeroOption[];
-  currentPath?: string;
   statsThrough?: string;
 }) {
   return (
@@ -280,7 +259,6 @@ export default function ItemsTable({
         initialRows={initialRows}
         initialCatalog={initialCatalog}
         heroes={heroes}
-        currentPath={currentPath}
         statsThrough={statsThrough}
       />
     </QueryProvider>

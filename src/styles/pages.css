@@ -1533,13 +1533,23 @@
   font-size: 11px;
 }
 
-/* ---------- items index (design 01 Items §1-§4) ---------- */
-.itemsx-presets {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
+/* ---------- items index ---------- */
+.itemsx-main {
+  display: grid;
+  gap: 22px;
+  padding-bottom: calc(48px + env(safe-area-inset-bottom));
+}
+.itemsx-page-head .kicker {
+  display: block;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+.itemsx-intro {
+  margin: 8px 0 0;
+  max-width: 620px;
+  color: var(--text-2);
+  line-height: 1.5;
+  text-wrap: pretty;
 }
 .sortpresets {
   display: flex;
@@ -1548,7 +1558,7 @@
 }
 .sortpreset {
   padding: 8px 12px;
-  border-radius: var(--r-card);
+  border-radius: var(--r-pill);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--muted);
@@ -1576,7 +1586,6 @@
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   padding: 10px 14px;
-  margin-bottom: 14px;
 }
 .catnav-row {
   display: flex;
@@ -1622,7 +1631,7 @@
 .catnav-tier {
   min-width: 38px;
   padding: 6px 8px;
-  border-radius: 4px;
+  border-radius: var(--r-pill);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--muted);
@@ -1640,13 +1649,22 @@
   color: var(--text);
   box-shadow: 0 0 0 1px var(--cat) inset;
 }
+
+/* the table lives inside the card, with its count strip as the card's first row */
+.itemsx-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
 .itemsx-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  padding: 10px 12px;
+  line-height: normal;
 }
 .itemsx-title {
   font-size: 14px;
@@ -1655,7 +1673,77 @@
 }
 .itemsx-meta {
   font-size: 12px;
+  font-weight: 500;
   color: var(--muted);
+}
+/* the card owns the frame, so the table's own wrapper draws neither */
+.itemsx-card .dt-wrap {
+  border: 0;
+  border-radius: 0;
+}
+.itemsx-card .dt {
+  table-layout: fixed;
+}
+/* 6px cell padding + 12px at the two outer edges reproduces the design grid's
+   12px column gap inside a real <table> */
+.itemsx-card .dt thead th {
+  position: static;
+  padding: 0;
+  background: none;
+  border-bottom: 0;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.itemsx-card .dt thead th .th-btn,
+.itemsx-card .dt thead th .th-static {
+  display: flex;
+  padding: 6px;
+  line-height: 14px;
+}
+.itemsx-card .dt thead th.num .th-static {
+  justify-content: flex-end;
+}
+/* the prototype names the active sort in the count strip above, never as a glyph */
+.itemsx-card .dt thead th .ar {
+  display: none;
+}
+.itemsx-card .dt tbody td {
+  padding: 7px 6px;
+  border-bottom: 0;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  line-height: normal;
+}
+/* every numeric cell is mono in the design; only the two name cells are display */
+.itemsx-card .dt tbody td .tnum {
+  font-family: var(--mono);
+}
+.itemsx-card .dt tbody td .itemsx-dim {
+  font-weight: 400;
+  color: var(--muted);
+}
+/* item tiles carry their category's tint, as the design's `tint()` does */
+.itemsx-item .iicon {
+  background: color-mix(in oklab, var(--cat) 16%, var(--raised));
+  border-color: color-mix(in oklab, var(--cat) 45%, var(--border));
+}
+.itemsx-card .dt thead th:first-child .th-btn,
+.itemsx-card .dt thead th:first-child .th-static,
+.itemsx-card .dt tbody td:first-child {
+  padding-left: 12px;
+}
+.itemsx-card .dt thead th:last-child .th-btn,
+.itemsx-card .dt thead th:last-child .th-static,
+.itemsx-card .dt tbody td:last-child {
+  padding-right: 12px;
+}
+/* the prototype's rows carry no zebra — only its one highlighted subject row is tinted */
+[data-table='zebra'] .itemsx-card .dt tbody tr:nth-child(even) {
+  background: none;
+}
+.itemsx-card .dt tbody td .wbar {
+  flex: 1;
 }
 .itemsx-item,
 .itemsx-on {
@@ -1664,6 +1752,9 @@
   gap: 10px;
   min-width: 0;
   text-decoration: none;
+}
+.itemsx-on {
+  gap: 7px;
 }
 .itemsx-item-text,
 .itemsx-on-text {
@@ -1674,6 +1765,7 @@
 .itemsx-name {
   font-size: 13px;
   font-weight: 600;
+  line-height: normal;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -1681,15 +1773,17 @@
 }
 .itemsx-on .itemsx-name {
   font-weight: 500;
+  font-size: 12px;
   color: var(--text-2);
 }
 .itemsx-sub {
   font-size: 11px;
+  line-height: normal;
   color: var(--muted);
   white-space: nowrap;
 }
 .itemsx-foot {
-  margin: 16px 0 0;
+  margin: 0;
   font-size: 12px;
   color: var(--muted);
   line-height: 1.6;

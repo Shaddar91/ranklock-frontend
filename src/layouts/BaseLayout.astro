@@ -33,6 +33,8 @@ interface Props {
   chrome?: boolean;
   //pin the hero-art backdrop to one hero class (hero pages); unset => the rotating roster.
   backdropHero?: string;
+  //false => flat ink, no splash plate (the Items index, whose design draws none).
+  backdrop?: boolean;
 }
 
 //Current locale from the URL (en at root, /ru/… etc.). Fallback-rewritten pages
@@ -54,14 +56,17 @@ const {
   modifiedTime,
   chrome = true,
   backdropHero,
+  backdrop = true,
 } = Astro.props;
+
+const atmos = backdrop ? ATMOS : 'off';
 ---
 
 <!doctype html>
 <html
   lang={lang}
   data-theme="foundry"
-  data-atmos={ATMOS}
+  data-atmos={atmos}
   data-promo={AD_SLOTS}
   data-brass="bold"
   data-density="regular"
@@ -128,7 +133,7 @@ const {
          not mounted at all (no roster preloads, no timer) and data-atmos="off" on
          <html>. SSR renders the first hero (no flash / works without JS); the island
          cycles the roster on the client. Decorative + behind all content. */
-      ATMOS === 'hero' && <HeroBackdrop client:idle hero={backdropHero} />
+      atmos === 'hero' && <HeroBackdrop client:idle hero={backdropHero} />
     }
     {chrome && <SiteHeader />}
     <slot />
