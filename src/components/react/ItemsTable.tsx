@@ -1,23 +1,45 @@
-//Items win-rate table island (/items, client:load): rank bracket by badge tier (never MMR score),
-//hero scope (All heroes by default, per-hero ranking on explicit select) and the average buy time
-//from the upstream row. Build-time "all ranks / all heroes" rows seed React Query for SEO.
+//Items index island (/items, client:load) — design 01 Items §1-§4: the sort presets,
+//the sticky 12-emblem rank bar, the slot x tier category nav and the win-rate table.
+//Rank is a badge tier (the filter serves the band it falls in), never an MMR score.
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, isComputing, queryKeys } from '../../lib/apiClient';
 import { computingMessage } from '../../lib/apiStates';
 import { useGameMode } from '../../lib/useGameMode';
+import { bracketBucket, servedBandLabel } from '../../lib/heroBracket';
 import QueryProvider from './QueryProvider';
-import { DataTable, type DataTableColumn, GameIcon, Tooltip, WinBar } from './ui/index';
-import BucketFilter from './ui/BucketFilter';
-import { ITEM_BUCKETS, itemBracketParam, itemHeroParam, type RankBucket } from '../../lib/brackets';
+import CategoryNav from './CategoryNav';
+import {
+  type BracketValue,
+  DataTable,
+  type DataTableColumn,
+  FilterBar,
+  GameIcon,
+  Tooltip,
+  WinBar,
+} from './ui/index';
+import type { SortState } from './ui/DataTable';
+import {
+  activePreset,
+  ALL_CATEGORIES,
+  categoryTitle,
+  filterByCategory,
+  hasTopHero,
+  type CategorySelection,
+  type ItemIndexRow,
+  itemIndexRows,
+  SORT_PRESETS,
+} from '../../lib/itemsIndex';
+import { itemTierLabel } from '../../lib/itemTiers';
 import { count, DASH, duration, pct } from '../../lib/format';
 import { itemDescription } from '../../lib/itemDescriptions';
-import type { ItemStat } from '../../types/api';
+import type { ItemModifier, ItemStat } from '../../types/api';
 
 export interface ItemsHeroOption {
   hero_id: number;
   hero_name: string;
+  icon_url?: string | null;
 }
 
 function itemLabel(it: ItemStat): string {
@@ -37,8 +59,9 @@ function TipRow({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function ItemTooltipContent({ it }: { it: ItemStat }) {
+function ItemTooltipContent({ it }: { it: ItemIndexRow }) {
   const desc = itemDescription(it.item_id);
+  const tier = itemTierLabel(it.tier);
   return (
     <div style={{ display: 'grid', gap: 9, minWidth: 190 }}>
       <div className="flex" style={{ alignItems: 'center', gap: 9 }}>
@@ -47,6 +70,13 @@ function ItemTooltipContent({ it }: { it: ItemStat }) {
           {itemLabel(it)}
         </span>
       </div>
+      {tier && (
+        <div className="faint" style={{ fontSize: 11.5 }}>
+          {it.slot ? `${it.slotTier.split(' · ')[0]} · ` : ''}
+          {tier}
+          {it.cost != null ? ` · ${count(it.cost)} souls` : ''}
+        </div>
+      )}
       {desc && (
         <p className="muted" style={{ margin: 0, fontSize: 12, lineHeight: 1.4 }}>
           {desc}
@@ -80,35 +110,46 @@ function ItemTooltipContent({ it }: { it: ItemStat }) {
 
 function ItemsTableInner({
   initialRows,
+  initialCatalog,
   heroes,
-  pinnedHero,
+  currentPath,
+  statsThrough,
 }: {
   initialRows: ItemStat[];
+  initialCatalog: ItemModifier[];
   heroes: ItemsHeroOption[];
-  pinnedHero?: number;
+  currentPath: string;
+  statsThrough?: string;
 }) {
   const { mode } = useGameMode();
-  const [bucket, setBucket] = useState<RankBucket['key']>(0);
-  const [hero, setHero] = useState(pinnedHero ?? 0);
-
-  const heroOptions = useMemo(
-    () => heroes.filter((h) => h.hero_name?.trim()).sort((a, b) => a.hero_name.localeCompare(b.hero_name)),
-    [heroes],
-  );
-  const heroName = hero > 0 ? heroOptions.find((h) => h.hero_id === hero)?.hero_name : undefined;
+  const [bracket, setBracket] = useState<BracketValue>('all');
+  const [category, setCategory] = useState<CategorySelection>(ALL_CATEGORIES);
+  const [sort, setSort] = useState<SortState>(SORT_PRESETS[0]!.sort);
+  const bucket = bracketBucket(bracket);
 
   const { data, isPending, isError, error } = useQuery({
-    queryKey: queryKeys.items(itemBracketParam(bucket), mode, itemHeroParam(hero)),
-    queryFn: () => api.getItems(itemBracketParam(bucket), mode, itemHeroParam(hero)),
-    //Seed only the view the rows were baked for (all ranks, Normal, the page's hero scope); every other combination fetches.
-    initialData: bucket === 0 && mode === 'Normal' && hero === (pinnedHero ?? 0) ? initialRows : undefined,
+    queryKey: queryKeys.items(bucket, mode),
+    queryFn: () => api.getItems(bucket, mode),
+    //Seed only the view the rows were baked for (all ranks, Normal); every other band fetches.
+    initialData: bucket == null && mode === 'Normal' ? initialRows : undefined,
     placeholderData: keepPreviousData,
   });
 
-  const rows = data ?? [];
+  //Slot, tier and cost live in the shop catalog, not in the stats row.
+  const { data: catalog = initialCatalog } = useQuery({
+    queryKey: queryKeys.itemModifiers(),
+    queryFn: () => api.getItemModifiers(),
+    initialData: initialCatalog.length > 0 ? initialCatalog : undefined,
+    staleTime: 60 * 60_000,
+  });
 
-  const columns = useMemo<DataTableColumn<ItemStat>[]>(
-    () => [
+  const heroById = useMemo(() => new Map(heroes.map((h) => [h.hero_id, h])), [heroes]);
+  const joined = useMemo(() => itemIndexRows(data ?? [], catalog), [data, catalog]);
+  const rows = useMemo(() => filterByCategory(joined, category), [joined, category]);
+  const showTopHero = hasTopHero(joined);
+
+  const columns = useMemo<DataTableColumn<ItemIndexRow>[]>(() => {
+    const cols: DataTableColumn<ItemIndexRow>[] = [
       {
         key: 'item',
         header: 'Item',
@@ -116,14 +157,17 @@ function ItemsTableInner({
         //`asChild`: the link itself is the tooltip trigger (one tab stop, aria-describedby on the <a>).
         render: (it) => (
           <Tooltip asChild content={<ItemTooltipContent it={it} />}>
-            <a
-              className="flex"
-              href={`/items/${it.item_id}/`}
-              style={{ alignItems: 'center', gap: 10, textDecoration: 'none', cursor: 'pointer' }}
-            >
+            <a className="itemsx-item" href={`/items/${it.item_id}/`}>
               <GameIcon kind="item" name={itemLabel(it)} src={it.icon_url} size={28} />
-              <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
-                {itemLabel(it)}
+              <span className="itemsx-item-text">
+                <span className="display itemsx-name">{itemLabel(it)}</span>
+                {(it.slotTier || it.cost != null) && (
+                  <span className="itemsx-sub">
+                    {[it.slotTier, it.cost != null ? `${count(it.cost)} souls` : null]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </span>
+                )}
               </span>
             </a>
           </Tooltip>
@@ -137,15 +181,8 @@ function ItemsTableInner({
         render: (it) => (it.win_rate == null ? <span className="faint">{DASH}</span> : <WinBar wr={it.win_rate} />),
       },
       {
-        key: 'matches',
-        header: 'Matches',
-        numeric: true,
-        sortValue: (it) => it.matches ?? it.picks ?? null,
-        render: (it) => <span className="tnum">{count(it.matches ?? it.picks)}</span>,
-      },
-      {
         key: 'buy',
-        header: 'Avg buy time',
+        header: 'Avg buy',
         numeric: true,
         sortValue: (it) => it.avg_buy_time_s ?? null,
         render: (it) =>
@@ -155,87 +192,136 @@ function ItemsTableInner({
             <span className="tnum">{duration(it.avg_buy_time_s)}</span>
           ),
       },
-    ],
-    [],
-  );
+    ];
+    if (showTopHero) {
+      cols.push({
+        key: 'on',
+        header: 'Most bought on',
+        sortValue: (it) => (it.top_hero ? (heroById.get(it.top_hero.hero_id)?.hero_name ?? null) : null),
+        render: (it) => {
+          const top = it.top_hero;
+          const hero = top ? heroById.get(top.hero_id) : undefined;
+          if (!top) return <span className="faint">{DASH}</span>;
+          const name = hero?.hero_name ?? `Hero ${top.hero_id}`;
+          return (
+            <span className="itemsx-on">
+              <GameIcon kind="hero" name={name} src={hero?.icon_url} size={22} />
+              <span className="itemsx-on-text">
+                <span className="display itemsx-name">{name}</span>
+                <span className="itemsx-sub tnum">{pct(top.share_of_games, 0)} of buys</span>
+              </span>
+            </span>
+          );
+        },
+      });
+    }
+    cols.push({
+      key: 'matches',
+      header: 'Matches',
+      numeric: true,
+      sortValue: (it) => it.matches ?? it.picks ?? null,
+      render: (it) => <span className="tnum">{count(it.matches ?? it.picks)}</span>,
+    });
+    return cols;
+  }, [heroById, showTopHero]);
 
-  const scope = heroName ? `on ${heroName}` : 'across all heroes';
+  const band = servedBandLabel(bracket);
+  const preset = activePreset(sort);
+  const modeLabel = mode === 'StreetBrawl' ? 'Street Brawl' : 'Normal';
 
   return (
     <div>
-      <div className="between" style={{ marginBottom: 14, gap: 16, flexWrap: 'wrap' }}>
-        <span className="label-xs">{heroName ? `Win rate on ${heroName} at your rank` : 'Win rate at your rank'}</span>
-        <div className="flex" style={{ alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          {pinnedHero ? (
-            <span className="flex" style={{ alignItems: 'center', gap: 8 }}>
-              <span className="label-xs">Hero</span>
-              <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
-                {heroName ?? `Hero ${pinnedHero}`}
-              </span>
-            </span>
-          ) : (
-            <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
-              <span className="label-xs">Hero</span>
-              <select
-                className="field"
-                style={{ width: 'auto', padding: '8px 12px' }}
-                value={hero}
-                onChange={(e) => setHero(Number(e.target.value))}
-                aria-label="Rank items on a hero"
+      <FilterBar bracket={bracket} onBracketChange={setBracket} currentPath={currentPath} />
+
+      <div className="itemsx-presets">
+        <span className="label-xs">Sort</span>
+        <div className="sortpresets" role="group" aria-label="Sort the item table">
+          {SORT_PRESETS.map((p) => {
+            const on = preset?.key === p.key;
+            return (
+              <button
+                type="button"
+                key={p.key}
+                className={'sortpreset' + (on ? ' on' : '')}
+                aria-pressed={on}
+                onClick={() => setSort(p.sort)}
               >
-                <option value={0}>All heroes</option>
-                {heroOptions.map((h) => (
-                  <option key={h.hero_id} value={h.hero_id}>
-                    {h.hero_name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <BucketFilter buckets={ITEM_BUCKETS} value={bucket} onChange={setBucket} ariaLabel="Item win-rate by rank" />
+                {p.label}
+              </button>
+            );
+          })}
         </div>
       </div>
+
+      <CategoryNav value={category} onChange={setCategory} />
+
+      <div className="itemsx-head">
+        <span className="display itemsx-title">{categoryTitle(category)}</span>
+        <span className="mono itemsx-meta">
+          {count(rows.length)} items · sorted by {preset ? preset.label : 'this column'} · {band}
+        </span>
+      </div>
+
       <DataTable
         columns={columns}
         rows={rows}
         rowKey={(it) => it.item_id}
         loading={isPending}
-        initialSort={{ key: 'wr', dir: -1 }}
-        caption={`Item win-rates ${scope} by rank bracket (badge tiers), with the average buy time`}
+        sort={sort}
+        onSortChange={setSort}
+        caption={`Item win rates for ${categoryTitle(category)} at ${band} (badge tiers), with the average buy time`}
         emptyTitle={
           //202 = healthy, deliberately gating; "offline" is reserved for real network/5xx failure.
           isComputing(error)
             ? 'Item stats are computing'
             : isError
               ? 'Item stats unavailable'
-              : heroName
-                ? `No items for ${heroName} in this bracket yet`
-                : 'No items for this bracket yet'
+              : category.slot
+                ? `No ${categoryTitle(category)} rows in this band yet`
+                : 'No items for this band yet'
         }
         emptyMessage={
           isComputing(error)
             ? computingMessage('item win-rates are being generated', error)
             : isError
               ? 'The stats API is offline — item win-rates fill in when it comes back online.'
-              : 'No data for this hero and rank band yet. Try another bracket or hero, or check back after the next refresh.'
+              : 'No data for this category and rank band yet. Try another band or category, or check back after the next refresh.'
         }
       />
+
+      <p className="itemsx-foot">
+        Win rate, matches and average buy time: deadlock-api.com item aggregates, {modeLabel} · {band}
+        {statsThrough ? `, through ${statsThrough}` : ''}. Category, tier and cost: the item catalog (
+        {count(catalog.length)} buildable items; {count(joined.length)} carry win-rate rows this band).
+        {!showTopHero && ' "Most bought on" appears once the item-hero fold serves its first rows.'} Rank means
+        badge tier, never an MMR number.
+      </p>
     </div>
   );
 }
 
 export default function ItemsTable({
   initialRows,
+  initialCatalog = [],
   heroes = [],
-  pinnedHero,
+  currentPath = '/items',
+  statsThrough,
 }: {
   initialRows: ItemStat[];
+  initialCatalog?: ItemModifier[];
   heroes?: ItemsHeroOption[];
-  pinnedHero?: number;
+  currentPath?: string;
+  statsThrough?: string;
 }) {
   return (
     <QueryProvider>
-      <ItemsTableInner initialRows={initialRows} heroes={heroes} pinnedHero={pinnedHero} />
+      <ItemsTableInner
+        initialRows={initialRows}
+        initialCatalog={initialCatalog}
+        heroes={heroes}
+        currentPath={currentPath}
+        statsThrough={statsThrough}
+      />
     </QueryProvider>
   );
 }

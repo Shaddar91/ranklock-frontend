@@ -1,25 +1,24 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import DataAgeChip from '../components/react/DataAgeChip';
 import ItemsTable from '../components/react/ItemsTable';
-import GameModeToggle from '../components/react/ui/GameModeToggle';
 import { api } from '../lib/apiClient';
 import { buildFetch, buildFetchNonEmpty } from '../lib/buildData';
 import { breadcrumbJsonLd } from '../lib/seo';
 import { shortDate } from '../lib/format';
-import type { DataHorizonResponse, HeroSummary, ItemStat } from '../types/api';
+import type { DataHorizonResponse, HeroSummary, ItemModifier, ItemStat } from '../types/api';
 
-//SSG items win-rate table (requirements §B.5). THE BUG FIX lives in ItemsTable:
-//the rank bracket is labelled by BADGE TIER / rank emblem, never an MMR-score
-//range. Build-time rows (bucket 0 = all ranks) seed the island for SEO; the
-//bracket selector refetches each 0–5 bucket client-side. The bake-empty guard
-//fails the build if this bake comes back empty (ALLOW_EMPTY_STATS_BUILD=1 to
-//override) — a cold origin must not silently ship an empty items table.
+//SSG items index (design 01 Items §1-§4). Build-time rows (all ranks) seed the island for
+//SEO; the rank bar refetches per band client-side. The bake-empty guard fails the build if
+//this bake comes back empty (ALLOW_EMPTY_STATS_BUILD=1 to override) — a cold origin must
+//not silently ship an empty items table.
 const items = await buildFetchNonEmpty<ItemStat>(api.getItems(), '/items/stats (items table)');
-//Hero <select> options for the per-hero ranking; an empty roster only hides the select.
+//Shop catalog: the slot/tier/cost behind the §2 category nav and the row sub-line.
+const catalog = await buildFetch(api.getItemModifiers(), [] as ItemModifier[]);
+//Names + portraits for the §3 "Most bought on" medallion; mode-agnostic, so Normal is enough.
 const heroes = (await buildFetch(api.getHeroes({ game_mode: 'Normal' }), [] as HeroSummary[])).map((h) => ({
   hero_id: h.hero_id,
   hero_name: h.hero_name,
+  icon_url: h.icon_url,
 }));
 
 const horizon = await buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null);
@@ -35,29 +34,30 @@ const path = Astro.url.pathname;
 
 <BaseLayout
   title="Deadlock item win rates by rank | RankLock"
-  description="Every Deadlock item ranked by win rate, with average buy time and the ranked games it was bought in, filtered by rank tier."
+  description="Every Deadlock item ranked by win rate, with average buy time and the ranked games it was bought in, filtered by rank tier, slot and tier."
   canonicalPath="/items"
   jsonLd={jsonLd}
 >
   <main class="container">
     <div class="page-head">
       <div>
-        <div class="kicker">Items</div>
+        <div class="kicker">Shop</div>
         <h1 class="h-page">Deadlock item win rates</h1>
       </div>
-      {/* Mode filter for this page's mode-separated tables; GameModeToggle documents why it sits here, not the nav. */}
-      <GameModeToggle currentPath={path} client:load />
     </div>
-    {/* data-age honesty (Component 11): renders nothing until /meta/data-horizon serves a date */}
-    <DataAgeChip client:load />
     <p class="page-intro">
-      Every Deadlock item ranked by win rate, with the average buy time and how many ranked games it was
-      bought in{statsThrough ? `, through ${statsThrough}` : ''}. Brackets are badge tiers, from Initiate to
-      Eternus, never an MMR range. Pick a hero to rank the same items on that hero, or open the
+      Every buildable item with how often it is bought, when, and how often the buyer wins{
+        statsThrough ? `, through ${statsThrough}` : ''
+      }. Rank means badge tier, from Initiate to Eternus, never an MMR range. Filter by slot and tier, or open the
       <a href="/heroes/">hero win rates</a>.
     </p>
-    <div style="margin-top:20px;">
-      <ItemsTable initialRows={items} heroes={heroes} client:load />
-    </div>
+    <ItemsTable
+      initialRows={items}
+      initialCatalog={catalog}
+      heroes={heroes}
+      currentPath={path}
+      statsThrough={statsThrough}
+      client:load
+    />
   </main>
 </BaseLayout>

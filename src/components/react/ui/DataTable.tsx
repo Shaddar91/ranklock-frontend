@@ -26,7 +26,7 @@ export interface DataTableColumn<T> {
   width?: number | string;
 }
 
-interface SortState {
+export interface SortState {
   key: string;
   dir: 1 | -1;
 }
@@ -38,6 +38,10 @@ interface DataTableProps<T> {
   loading?: boolean;
   skeletonRows?: number;
   initialSort?: SortState;
+  //Controlled sort: pass both to let a caller's own control (the Items index sort
+  //presets) and the header buttons drive one shared sort state.
+  sort?: SortState | null;
+  onSortChange?: (next: SortState) => void;
   emptyTitle?: string;
   emptyMessage?: string;
   emptyIcon?: IconName;
@@ -56,12 +60,15 @@ export default function DataTable<T>({
   loading = false,
   skeletonRows = 8,
   initialSort,
+  sort: controlledSort,
+  onSortChange,
   emptyTitle = 'Nothing here yet',
   emptyMessage = 'No rows to show.',
   emptyIcon = 'inbox',
   caption,
 }: DataTableProps<T>) {
-  const [sort, setSort] = useState<SortState | null>(initialSort ?? null);
+  const [internalSort, setInternalSort] = useState<SortState | null>(initialSort ?? null);
+  const sort = controlledSort === undefined ? internalSort : controlledSort;
 
   const sorted = useMemo(() => {
     if (!sort) return rows;
@@ -102,7 +109,10 @@ export default function DataTable<T>({
   }, [rows, sort, columns, rowKey]);
 
   function onSort(key: string) {
-    setSort((s) => (s && s.key === key ? { key, dir: (s.dir === 1 ? -1 : 1) as 1 | -1 } : { key, dir: -1 }));
+    const next: SortState =
+      sort && sort.key === key ? { key, dir: (sort.dir === 1 ? -1 : 1) as 1 | -1 } : { key, dir: -1 };
+    if (onSortChange) onSortChange(next);
+    else setInternalSort(next);
   }
 
   function ariaSort(col: DataTableColumn<T>): 'ascending' | 'descending' | 'none' {
