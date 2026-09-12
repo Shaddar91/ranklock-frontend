@@ -16,6 +16,7 @@ import { dataHorizon, soulsCurve } from '../../../lib/buildIndexes';
 import { breadcrumbJsonLd } from '../../../lib/seo';
 import { count, pickShare, shortDate } from '../../../lib/format';
 import { catalogIndex, situationalGroups, winningSets } from '../../../lib/heroBuild';
+import { signatureSlots } from '../../../lib/buildMeta';
 import { heroArt } from '../../../lib/heroArt';
 import { publishedGuideSlugs } from '../../../lib/guideRoutes';
 import { heroPath, slugRoster } from '../../../lib/heroSlugs';
@@ -84,12 +85,7 @@ const situational = situationalGroups(modifiers, itemWinRates);
 
 //§5: the two orders the Overview legend explains, recapped here without the legend and
 //without a cold gate (design 01 §Build §5).
-const slotOfAbility = Object.fromEntries(
-  abilityRows
-    .filter((a) => a.slot.startsWith('signature'))
-    .sort((a, b) => a.order - b.order)
-    .map((a, i) => [String(a.ability_id), i + 1]),
-);
+const slotOfAbility = signatureSlots(abilityRows);
 const orders = abilityOrders?.orders ?? [];
 const mostPlayed = orders.reduce<(typeof orders)[number] | null>((best, o) => (best && best.matches >= o.matches ? best : o), null);
 const bestWinRate = orders.reduce<(typeof orders)[number] | null>((best, o) => (best && best.win_rate >= o.win_rate ? best : o), null);

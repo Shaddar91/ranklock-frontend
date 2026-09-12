@@ -70,3 +70,13 @@ export function favoriteCounts(b: {
   if (b.num_favorites != null) out.push({ label: 'all-time favorites', value: b.num_favorites });
   return out;
 }
+
+//Ability id -> signature slot 1..4, so a build's first four points render as the hero's own keys.
+export function signatureSlots(abilities: readonly { ability_id: number; slot: string; order: number }[] | undefined): Record<string, number> {
+  return Object.fromEntries(
+    [...(abilities ?? [])]
+      .filter((a) => a.slot?.startsWith('signature'))
+      .sort((a, b) => a.order - b.order)
+      .map((a, i) => [String(a.ability_id), i + 1]),
+  );
+}

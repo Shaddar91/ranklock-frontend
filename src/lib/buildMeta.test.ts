@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { isUpdatedThisPatch, formatUpdated, abilityOrderSequence, sortLabel, authorLabel, favoriteCounts } from './buildMeta';
+import {
+  isUpdatedThisPatch,
+  formatUpdated,
+  abilityOrderSequence,
+  sortLabel,
+  authorLabel,
+  favoriteCounts,
+  signatureSlots,
+} from './buildMeta';
 
 const PATCH = '2026-08-22';
 const patchStart = Math.floor(Date.parse('2026-08-22T00:00:00Z') / 1000);
@@ -79,5 +87,24 @@ describe('buildMeta — favorite counts', () => {
   });
   it('keeps a real zero', () => {
     expect(favoriteCounts({ num_weekly_favorites: 0 })).toEqual([{ label: 'weekly favorites', value: 0 }]);
+  });
+});
+
+describe('buildMeta — signature slot map', () => {
+  const rows = [
+    { ability_id: 40, slot: 'signature_3', order: 3 },
+    { ability_id: 10, slot: 'signature_1', order: 1 },
+    { ability_id: 99, slot: 'ultimate', order: 4 },
+    { ability_id: 20, slot: 'signature_2', order: 2 },
+    { ability_id: 30, slot: 'signature_4', order: 5 },
+  ];
+
+  it('numbers the signature abilities 1..4 by their served order and drops the ultimate', () => {
+    expect(signatureSlots(rows)).toEqual({ '10': 1, '20': 2, '40': 3, '30': 4 });
+  });
+
+  it('an absent roster is an empty map, never a crash', () => {
+    expect(signatureSlots(undefined)).toEqual({});
+    expect(signatureSlots([])).toEqual({});
   });
 });

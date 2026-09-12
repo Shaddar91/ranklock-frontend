@@ -1,5 +1,6 @@
-//Hero Build §4 — the published builds ranked by their upstream 30-day win rate, plus the rank
-//bracket selector. The bracket is page state, never a URL: one URL per intent (brief rule 7).
+//Hero Build §4 / Build Lab §13 — the published builds ranked by their upstream 30-day win rate.
+//One island, two mount points: the Build page adds the rank bracket selector, the lab mount adds
+//the per-row Import. The bracket is page state, never a URL: one URL per intent (brief rule 7).
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
@@ -18,6 +19,11 @@ export interface CommunityBuildsProps {
   abilitySlots: Record<string, number>;
   currentPatchId: string | null;
   nowSeconds: number;
+  kicker?: string;
+  //Off in the lab: the Build page is the primary surface for the rank filter (04 §4).
+  brackets?: boolean;
+  //Supplied by the lab mount only; a row whose id never rode the wire cannot be imported.
+  onImport?: (buildId: number) => void;
 }
 
 type Selection = 'weekly' | RankedBracketKey;
@@ -26,9 +32,11 @@ type Selection = 'weekly' | RankedBracketKey;
 //asks upstream for lobbies at badge 80 and above (backend COMMUNITY_BADGE_FLOOR).
 const WEEKLY_NOTE =
   'Trending across all ranks · win rate from deadlock-api.com hero-build-stats: lobby-average badge 80+ · trailing 30 days · min 20 matches';
+const IMPORT_NOTE = 'Import opens the build in Analyze';
 
 interface Row {
   key: string;
+  buildId: number;
   title: string;
   untitled: boolean;
   author: string;
@@ -44,14 +52,23 @@ interface Row {
 export default function CommunityBuilds(props: CommunityBuildsProps) {
   return (
     <QueryProvider>
-      <Table {...props} />
+      <CommunityBuildsTable {...props} />
     </QueryProvider>
   );
 }
 
-function Table({ heroId, initialBuilds, abilitySlots, currentPatchId, nowSeconds }: CommunityBuildsProps) {
+export function CommunityBuildsTable({
+  heroId,
+  initialBuilds,
+  abilitySlots,
+  currentPatchId,
+  nowSeconds,
+  kicker = 'Which published build actually wins',
+  brackets = true,
+  onImport,
+}: CommunityBuildsProps) {
   const [selection, setSelection] = useState<Selection>('weekly');
-  const ranked = selection !== 'weekly';
+  const ranked = brackets && selection !== 'weekly';
 
   const { data, isPending, isError } = useQuery({
     queryKey: queryKeys.heroRankedBuilds(heroId, selection),
@@ -63,6 +80,7 @@ function Table({ heroId, initialBuilds, abilitySlots, currentPatchId, nowSeconds
   const rows = useMemo(() => {
     const toRow = (b: TrimmedBuild, winRate: number | null, matches: number | null, author: string): Row => ({
       key: String(b.hero_build_id),
+      buildId: b.hero_build_id,
       title: b.name?.trim() || author,
       untitled: !b.name?.trim(),
       author,
@@ -84,36 +102,39 @@ function Table({ heroId, initialBuilds, abilitySlots, currentPatchId, nowSeconds
     return (data?.builds ?? []).map((b) => toRow(b, b.win_rate * 100, b.matches, authorLabel(b)));
   }, [ranked, data, initialBuilds, abilitySlots, currentPatchId, nowSeconds]);
 
-  const note = ranked
+  const base = ranked
     ? data
       ? `${data.source} · ${data.window} · min ${data.min_matches} matches · sorted by Wilson lower bound`
       : 'deadlock-api.com hero-build-stats — lobby-average badge · trailing 30 days · min 20 matches'
     : WEEKLY_NOTE;
+  const note = onImport ? `${base} · ${IMPORT_NOTE}` : base;
 
   return (
     <section id="community">
-      <SectionHeader kicker="Which published build actually wins" title="Community builds" note={note} />
-      <div className="bp-brackets" role="group" aria-label="Rank bracket">
-        <button
-          type="button"
-          className={selection === 'weekly' ? 'bp-brk on' : 'bp-brk'}
-          aria-pressed={selection === 'weekly'}
-          onClick={() => setSelection('weekly')}
-        >
-          Trending
-        </button>
-        {RANKED_BRACKETS.map((option) => (
+      <SectionHeader kicker={kicker} title="Community builds" note={note} />
+      {brackets && (
+        <div className="bp-brackets" role="group" aria-label="Rank bracket">
           <button
             type="button"
-            key={option.key}
-            className={selection === option.key ? 'bp-brk on' : 'bp-brk'}
-            aria-pressed={selection === option.key}
-            onClick={() => setSelection(option.key)}
+            className={selection === 'weekly' ? 'bp-brk on' : 'bp-brk'}
+            aria-pressed={selection === 'weekly'}
+            onClick={() => setSelection('weekly')}
           >
-            {rankedBracketLabel(option)}
+            Trending
           </button>
-        ))}
-      </div>
+          {RANKED_BRACKETS.map((option) => (
+            <button
+              type="button"
+              key={option.key}
+              className={selection === option.key ? 'bp-brk on' : 'bp-brk'}
+              aria-pressed={selection === option.key}
+              onClick={() => setSelection(option.key)}
+            >
+              {rankedBracketLabel(option)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {ranked && isPending ? (
         <EmptyState title="Loading" message="Fetching the builds that win in this bracket." />
@@ -125,7 +146,7 @@ function Table({ heroId, initialBuilds, abilitySlots, currentPatchId, nowSeconds
           message="No published build in this bracket has 20 matches at a lobby-average badge inside it. Nothing from a neighbouring bracket is shown in its place."
         />
       ) : (
-        <div className="panel bp-table">
+        <div className={onImport ? 'panel bp-table bp-table-import' : 'panel bp-table'}>
           <div className="bp-brow bp-bhead">
             <span className="label-xs">Build</span>
             <span className="label-xs num">30d WR</span>
@@ -133,6 +154,7 @@ function Table({ heroId, initialBuilds, abilitySlots, currentPatchId, nowSeconds
             <span className="label-xs num">Weekly ♥</span>
             <span className="label-xs">First 4 points</span>
             <span className="label-xs num">Updated</span>
+            {onImport && <span className="label-xs num">Import</span>}
           </div>
           {rows.map((r) => (
             <div className="bp-brow" key={r.key}>
@@ -164,6 +186,17 @@ function Table({ heroId, initialBuilds, abilitySlots, currentPatchId, nowSeconds
               <span className={r.thisPatch ? 'bp-upd bp-upd-now' : 'bp-upd'}>
                 {r.thisPatch ? 'This patch' : r.updated}
               </span>
+              {onImport && (
+                <button
+                  type="button"
+                  className="btn btn-ghost bp-import"
+                  disabled={r.buildId <= 0}
+                  aria-label={`Import ${r.title} into Analyze`}
+                  onClick={() => onImport(r.buildId)}
+                >
+                  Import
+                </button>
+              )}
             </div>
           ))}
           {ranked && rows.length < 3 && (

@@ -759,6 +759,14 @@
   padding-top: 10px;
   padding-bottom: 6px;
 }
+.bp-table-import .bp-brow {
+  grid-template-columns: minmax(0, 1.6fr) 72px 74px 70px 124px 92px 84px;
+}
+.bp-import {
+  justify-self: end;
+  padding: 5px 13px;
+  font-size: 12px;
+}
 .bp-srow .num,
 .bp-brow .num {
   text-align: right;

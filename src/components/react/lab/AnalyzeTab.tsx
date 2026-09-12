@@ -69,6 +69,10 @@ interface AnalyzeTabProps {
   onHero: (id: number) => void;
   roster: RosterSlug[];
   onEditCopy: (build: BuildInput) => void;
+  //Handed over by a Community-tab Import row; cleared through onImportConsumed so the same
+  //row can be imported again after the board has been replaced here.
+  importBuildId: number | null;
+  onImportConsumed: () => void;
 }
 
 const minute = (at: AffordableAt | null): string => (at == null ? '—' : `${Math.round(at.tSeconds / 60)}′`);
@@ -77,7 +81,14 @@ function catalogEntries(ids: readonly number[], category: string): BuildEntry[] 
   return ids.map((itemId) => ({ itemId, category }));
 }
 
-export default function AnalyzeTab({ heroId, onHero, roster, onEditCopy }: AnalyzeTabProps) {
+export default function AnalyzeTab({
+  heroId,
+  onHero,
+  roster,
+  onEditCopy,
+  importBuildId,
+  onImportConsumed,
+}: AnalyzeTabProps) {
   const { heroes, isPending: rosterPending, isError: rosterError } = useHeroRoster();
   const active = heroes.find((h) => h.hero_id === heroId) ?? heroes[0] ?? null;
   const hero = active?.hero_id ?? null;
@@ -164,6 +175,15 @@ export default function AnalyzeTab({ heroId, onHero, roster, onEditCopy }: Analy
   useEffect(() => {
     if (importQuery.isError) setImportError('No build with that id — check the number and try again.');
   }, [importQuery.isError]);
+
+  useEffect(() => {
+    if (importBuildId == null) return;
+    setImportError(null);
+    setActivePreset(null);
+    setBoard(null);
+    setBuildId(importBuildId);
+    onImportConsumed();
+  }, [importBuildId, onImportConsumed]);
 
   const presets = useMemo<StartFromPreset[]>(
     () => startFromPresets(buildStatsQuery.data, communityQuery.data?.[0], byId),
