@@ -1,8 +1,7 @@
 //Items index island (/items, client:load) — design 01 Items §1-§4: the sort presets,
 //the sticky 12-emblem rank bar, the slot x tier category nav and the win-rate table.
 //Rank is a badge tier (the filter serves the band it falls in), never an MMR score.
-import { useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, isComputing, queryKeys } from '../../lib/apiClient';
 import { computingMessage } from '../../lib/apiStates';
@@ -16,7 +15,7 @@ import {
   type DataTableColumn,
   FilterBar,
   GameIcon,
-  Tooltip,
+  ItemHoverCard,
   WinBar,
 } from './ui/index';
 import type { SortState } from './ui/DataTable';
@@ -31,9 +30,9 @@ import {
   itemIndexRows,
   SORT_PRESETS,
 } from '../../lib/itemsIndex';
-import { itemTierLabel } from '../../lib/itemTiers';
 import { count, DASH, duration, pct } from '../../lib/format';
-import { itemDescription } from '../../lib/itemDescriptions';
+import { itemAbility } from '../../lib/itemDescriptions';
+import { overlayFromWire, upgradesFor, type ItemOverlayData } from '../../lib/itemOverlay';
 import type { ItemModifier, ItemStat } from '../../types/api';
 
 export interface ItemsHeroOption {
@@ -44,68 +43,6 @@ export interface ItemsHeroOption {
 
 function itemLabel(it: ItemStat): string {
   return it.item_name ?? `Item ${it.item_id}`;
-}
-
-function TipRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="between" style={{ gap: 20 }}>
-      <span className="label-xs" style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 500 }}>
-        {label}
-      </span>
-      <span className="tnum" style={{ fontWeight: 600, color: 'var(--text)' }}>
-        {children}
-      </span>
-    </div>
-  );
-}
-
-function ItemTooltipContent({ it }: { it: ItemIndexRow }) {
-  const desc = itemDescription(it.item_id);
-  const tier = itemTierLabel(it.tier);
-  return (
-    <div style={{ display: 'grid', gap: 9, minWidth: 190 }}>
-      <div className="flex" style={{ alignItems: 'center', gap: 9 }}>
-        <GameIcon kind="item" name={itemLabel(it)} src={it.icon_url} size={26} />
-        <span className="display" style={{ fontWeight: 700, color: 'var(--text)', fontSize: 14 }}>
-          {itemLabel(it)}
-        </span>
-      </div>
-      {tier && (
-        <div className="faint" style={{ fontSize: 11.5 }}>
-          {it.slot ? `${it.slotTier.split(' · ')[0]} · ` : ''}
-          {tier}
-          {it.cost != null ? ` · ${count(it.cost)} souls` : ''}
-        </div>
-      )}
-      {desc && (
-        <p className="muted" style={{ margin: 0, fontSize: 12, lineHeight: 1.4 }}>
-          {desc}
-        </p>
-      )}
-      <div style={{ height: 1, background: 'var(--border)' }} />
-      <div style={{ display: 'grid', gap: 7 }}>
-        <TipRow label="Win rate">
-          {it.win_rate == null ? (
-            <span className="faint">{DASH}</span>
-          ) : (
-            <span style={{ color: it.win_rate >= 50 ? 'var(--win)' : 'var(--loss)' }}>{pct(it.win_rate)}</span>
-          )}
-        </TipRow>
-        <TipRow label="Matches">{count(it.matches ?? it.picks)}</TipRow>
-        <TipRow label="Avg buy time">
-          {it.avg_buy_time_s == null ? <span className="faint">{DASH}</span> : duration(it.avg_buy_time_s)}
-        </TipRow>
-        {it.avg_buy_time_relative != null && (
-          <TipRow label="Bought at">{pct(it.avg_buy_time_relative, 0)} of the match</TipRow>
-        )}
-      </div>
-      {it.win_rate == null && (
-        <div className="faint" style={{ fontSize: 11, lineHeight: 1.3 }}>
-          Win rate fills in after the next data refresh.
-        </div>
-      )}
-    </div>
-  );
 }
 
 function ItemsTableInner({
@@ -143,7 +80,31 @@ function ItemsTableInner({
     staleTime: 60 * 60_000,
   });
 
+  //One card model per item from the modifiers payload — the stats row carries no modifiers.
+  const overlays = useMemo(
+    () => new Map((catalog ?? []).filter((r) => r.item_id != null).map((r) => [r.item_id as number, overlayFromWire(r)])),
+    [catalog],
+  );
+
   const heroById = useMemo(() => new Map(heroes.map((h) => [h.hero_id, h])), [heroes]);
+  const cardFor = useCallback(
+    (it: ItemIndexRow): ItemOverlayData =>
+      overlays.get(it.item_id) ?? {
+        id: it.item_id,
+        name: itemLabel(it),
+        icon: it.icon_url ?? null,
+        slot: it.slot,
+        tier: it.tier,
+        cost: it.cost,
+        brawl: false,
+        modifiers: [],
+        upgradesFrom: upgradesFor(it.item_id),
+        upgradesInto: [],
+        cooldown: null,
+        ability: itemAbility(it.item_id),
+      },
+    [overlays],
+  );
   const joined = useMemo(() => itemIndexRows(data ?? [], catalog), [data, catalog]);
   const rows = useMemo(() => filterByCategory(joined, category), [joined, category]);
   const showTopHero = hasTopHero(joined);
@@ -154,9 +115,9 @@ function ItemsTableInner({
         key: 'item',
         header: 'Item',
         sortValue: (it) => itemLabel(it),
-        //`asChild`: the link itself is the tooltip trigger (one tab stop, aria-describedby on the <a>).
+        //`asChild`: the link itself is the card trigger (one tab stop, aria-describedby on the <a>).
         render: (it) => (
-          <Tooltip asChild content={<ItemTooltipContent it={it} />}>
+          <ItemHoverCard asChild data={cardFor(it)}>
             <a className="itemsx-item" href={`/items/${it.item_id}/`}>
               <GameIcon kind="item" name={itemLabel(it)} src={it.icon_url} size={28} />
               <span className="itemsx-item-text">
@@ -170,7 +131,7 @@ function ItemsTableInner({
                 )}
               </span>
             </a>
-          </Tooltip>
+          </ItemHoverCard>
         ),
       },
       {
@@ -223,7 +184,7 @@ function ItemsTableInner({
       render: (it) => <span className="tnum">{count(it.matches ?? it.picks)}</span>,
     });
     return cols;
-  }, [heroById, showTopHero]);
+  }, [cardFor, heroById, showTopHero]);
 
   const band = servedBandLabel(bracket);
   const preset = activePreset(sort);

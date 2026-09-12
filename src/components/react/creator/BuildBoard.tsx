@@ -1,24 +1,29 @@
-//The picked build laid out over the item board: four slots per category plus four flex slots,
-//with the per-item imbue target and conditional flag that feed BuildInput. Slot placement is
-//presentational — the souls spend below is always computeStats' own per-category figure.
-import { EmptyState, GameIcon } from '../ui/index';
+//The picked build laid out over the game's board: 9 inventory slots plus one flex slot per
+//enemy Walker destroyed, any item in any slot, with the per-item imbue target and conditional
+//flag that feed BuildInput. Slot placement is presentational — the souls spend below is always
+//computeStats' own per-category figure.
+import { EmptyState, GameIcon, ItemHoverCard } from '../ui/index';
 import { count } from '../../../lib/format';
+import { overlayFromCatalog, type ItemOverlayData } from '../../../lib/itemOverlay';
+import { itemTierNumeral } from '../../../lib/itemTiers';
 import type { HeroAbility } from '../../../types/api';
 import {
-  BUCKETS,
-  BUCKET_LABEL,
-  bucketOf,
+  categoryOf,
+  CATEGORY_LABEL,
+  FLEX_SLOTS,
   hasAbilityScopedMods,
+  INVENTORY_SLOTS,
   itemLabel,
-  SLOTS_PER_BUCKET,
+  TOTAL_SLOTS,
   type BoardLayout,
-  type Bucket,
   type CatalogItem,
 } from './buildModel';
 
 interface BuildBoardProps {
   layout: BoardLayout;
   byId: Map<number, CatalogItem>;
+  heroName: string | null;
+  soulsSpent: number;
   abilities: HeroAbility[];
   abilitiesPending: boolean;
   imbueTargets: Record<number, number>;
@@ -40,6 +45,32 @@ interface SlotCardProps {
   onImbue: (itemId: number, abilityId: number | null) => void;
   onToggleConditional: (itemId: number) => void;
   onRemove: (itemId: number) => void;
+}
+
+//An id this patch's catalog does not carry: the hover card still names it and fetches its detail.
+function bareOverlay(itemId: number, name: string): ItemOverlayData {
+  return {
+    id: itemId,
+    name,
+    icon: null,
+    slot: null,
+    tier: null,
+    cost: null,
+    brawl: false,
+    modifiers: [],
+    upgradesFrom: [],
+    upgradesInto: [],
+    cooldown: null,
+    ability: null,
+  };
+}
+
+function slotLine(item: CatalogItem | undefined): string {
+  const cat = categoryOf(item?.item_slot_type);
+  const numeral = itemTierNumeral(item?.item_tier);
+  return [cat ? CATEGORY_LABEL[cat] : null, numeral ? `Tier ${numeral}` : null, `${count(item?.cost)} souls`]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 function SlotCard({
@@ -64,17 +95,17 @@ function SlotCard({
   return (
     <div className="tile" style={{ padding: '9px 10px', opacity: excluded ? 0.55 : 1 }}>
       <div className="between" style={{ gap: 8 }}>
-        <span className="flex" style={{ alignItems: 'center', gap: 8, minWidth: 0 }}>
-          <GameIcon kind="item" name={name} src={item?.icon} size={26} />
-          <span style={{ minWidth: 0 }}>
-            <span className="display" style={{ display: 'block', fontWeight: 600, fontSize: 13, color: 'var(--text)' }}>
-              {name}
-            </span>
-            <span className="faint tnum" style={{ fontSize: 11 }}>
-              T{item?.item_tier ?? '?'} · {count(item?.cost)} souls · {BUCKET_LABEL[bucketOf(item?.item_slot_type)]}
+        <ItemHoverCard data={item ? overlayFromCatalog(item) : bareOverlay(itemId, name)}>
+          <span className="flex" style={{ alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <GameIcon kind="item" name={name} src={item?.icon} size={26} />
+            <span style={{ minWidth: 0 }}>
+              <span className="display" style={{ display: 'block', fontWeight: 600, fontSize: 13, color: 'var(--text)' }}>
+                {name}
+              </span>
+              <span className="faint tnum" style={{ fontSize: 11 }}>{slotLine(item)}</span>
             </span>
           </span>
-        </span>
+        </ItemHoverCard>
         <button
           type="button"
           className="btn btn-ghost"
@@ -147,9 +178,40 @@ function EmptySlot({ label }: { label: string }) {
   );
 }
 
+function SlotGroup({
+  label,
+  ids,
+  slots,
+  emptyLabel,
+  card,
+}: {
+  label: string;
+  ids: number[];
+  slots: number;
+  emptyLabel: string;
+  card: (id: number) => React.ReactNode;
+}) {
+  return (
+    <section className="panel catpanel">
+      <div className="cat-h">
+        <span className="display" style={{ flex: 1 }}>{label}</span>
+        <span className="label-xs tnum">{ids.length} / {slots}</span>
+      </div>
+      <div className="grid" style={{ padding: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 10 }}>
+        {ids.map(card)}
+        {Array.from({ length: Math.max(0, slots - ids.length) }, (_, i) => (
+          <EmptySlot key={`empty-${i}`} label={emptyLabel} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function BuildBoard({
   layout,
   byId,
+  heroName,
+  soulsSpent,
   abilities,
   abilitiesPending,
   imbueTargets,
@@ -159,56 +221,62 @@ export default function BuildBoard({
   onToggleConditional,
   onRemove,
 }: BuildBoardProps) {
-  const total = BUCKETS.reduce((n, b) => n + layout.buckets[b].length, 0) + layout.extra.length;
+  const filled = layout.inventory.length + layout.flex.length;
+  const total = filled + layout.extra.length;
 
-  if (total === 0) {
-    return (
-      <div className="panel panel-pad">
-        <EmptyState
-          title="No items yet"
-          message="Pick items from the catalog — they fill their own category first, then the flex slots."
-          icon="inbox"
-        />
-      </div>
-    );
-  }
+  const card = (id: number) => (
+    <SlotCard
+      key={id}
+      itemId={id}
+      item={byId.get(id)}
+      abilities={abilities}
+      abilitiesPending={abilitiesPending}
+      imbuedTo={imbueTargets[id]}
+      flagged={conditionalItems.includes(id)}
+      excluded={conditionalItems.includes(id) && !conditionalsEnabled}
+      onImbue={onImbue}
+      onToggleConditional={onToggleConditional}
+      onRemove={onRemove}
+    />
+  );
 
   return (
     <div className="grid" style={{ gap: 12 }}>
-      {BUCKETS.map((bucket: Bucket) => {
-        const ids = layout.buckets[bucket];
-        return (
-          <section key={bucket} className="panel catpanel">
-            <div className="cat-h">
-              <span className="display" style={{ flex: 1 }}>{BUCKET_LABEL[bucket]}</span>
-              <span className="label-xs tnum">{ids.length} / {SLOTS_PER_BUCKET}</span>
-            </div>
-            <div
-              className="grid"
-              style={{ padding: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 10 }}
-            >
-              {ids.map((id) => (
-                <SlotCard
-                  key={id}
-                  itemId={id}
-                  item={byId.get(id)}
-                  abilities={abilities}
-                  abilitiesPending={abilitiesPending}
-                  imbuedTo={imbueTargets[id]}
-                  flagged={conditionalItems.includes(id)}
-                  excluded={conditionalItems.includes(id) && !conditionalsEnabled}
-                  onImbue={onImbue}
-                  onToggleConditional={onToggleConditional}
-                  onRemove={onRemove}
-                />
-              ))}
-              {Array.from({ length: Math.max(0, SLOTS_PER_BUCKET - ids.length) }, (_, i) => (
-                <EmptySlot key={`empty-${i}`} label={`Empty ${BUCKET_LABEL[bucket].toLowerCase()} slot`} />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      <div className="between" style={{ gap: 12, flexWrap: 'wrap' }}>
+        <span className="display" style={{ fontWeight: 600, fontSize: 15, color: 'var(--text)' }}>
+          {heroName ? `Board · ${heroName}` : 'Board'}
+        </span>
+        <span className="tnum amber-c" style={{ fontSize: 12.5 }}>
+          {count(soulsSpent)} souls · {filled} of {TOTAL_SLOTS} slots
+        </span>
+      </div>
+
+      {total === 0 ? (
+        <div className="panel panel-pad">
+          <EmptyState
+            title="No items yet"
+            message="Pick items from the shop — any item fits any slot, the 9 inventory slots first."
+            icon="inbox"
+          />
+        </div>
+      ) : (
+        <>
+          <SlotGroup
+            label={`Inventory · ${INVENTORY_SLOTS} slots`}
+            ids={layout.inventory}
+            slots={INVENTORY_SLOTS}
+            emptyLabel="Empty slot"
+            card={card}
+          />
+          <SlotGroup
+            label="Flex · 1 per enemy Walker"
+            ids={layout.flex}
+            slots={FLEX_SLOTS}
+            emptyLabel="Empty flex slot"
+            card={card}
+          />
+        </>
+      )}
 
       {layout.extra.length > 0 && (
         <section className="panel catpanel">

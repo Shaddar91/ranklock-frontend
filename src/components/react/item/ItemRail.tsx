@@ -17,8 +17,7 @@ import GameIcon from '../ui/GameIcon';
 import Chip from '../ui/Chip';
 import EmptyState from '../ui/EmptyState';
 import Skeleton from '../ui/Skeleton';
-import Tooltip from '../ui/Tooltip';
-import ItemOverlayCard from '../ui/ItemOverlayCard';
+import ItemHoverCard from '../ui/ItemHoverCard';
 
 export interface EdgeView {
   itemId: number;
@@ -114,11 +113,13 @@ function RailBlocks({
       brawl: false,
       modifiers: [],
       upgradesFrom: upgradesFor(id),
+      upgradesInto: [],
+      cooldown: null,
       ability: itemAbility(id),
     };
 
   const ItemTile = ({ id, name, icon, sub }: { id: number; name: string; icon: string | null; sub?: string }) => (
-    <Tooltip content={<ItemOverlayCard data={overlayFor(id, name, icon)} />} asChild>
+    <ItemHoverCard data={overlayFor(id, name, icon)} asChild>
       <a className="itemd-tile" href={`/items/${id}/`}>
         <GameIcon kind="item" name={name} src={icon} size={26} />
         <span className="itemd-tile-text">
@@ -126,7 +127,7 @@ function RailBlocks({
           {sub && <span className="itemd-tile-sub">{sub}</span>}
         </span>
       </a>
-    </Tooltip>
+    </ItemHoverCard>
   );
 
   const pairRows = (pairs?.pairs ?? []).map((p) => ({

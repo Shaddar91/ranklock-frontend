@@ -7,7 +7,6 @@ import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { computeStats, type BaseStats } from '../../../lib/computeStats';
 import { readBuildFromHash } from '../../../lib/buildShare';
-import { count } from '../../../lib/format';
 import { EmptyState } from '../ui/index';
 import type { HeroAbility, HeroBaseStats, HeroSummary, ItemModifier } from '../../../types/api';
 import BuildBoard from './BuildBoard';
@@ -15,7 +14,7 @@ import HeroPicker from './HeroPicker';
 import BuildToolbar from './BuildToolbar';
 import CalculatedPanels from './CalculatedPanels';
 import ItemPicker from './ItemPicker';
-import { imbueAbilities, indexCatalog, layoutBuild, MAX_ITEMS, normalizeCatalog } from './buildModel';
+import { imbueAbilities, indexCatalog, layoutBuild, normalizeCatalog, TOTAL_SLOTS } from './buildModel';
 import { useBuildDraft } from './useBuildDraft';
 
 const NO_BASE: BaseStats = {};
@@ -143,21 +142,15 @@ export default function BuildCreator() {
             {flagged > 0 && <span className="faint tnum">({flagged} flagged)</span>}
           </label>
         </div>
-        <div className="flex" style={{ gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span className="label-xs">
-            {build.items.length} / {MAX_ITEMS} items ·{' '}
-            <span className="tnum amber-c">{count(stats.spend.total)}</span> souls
-          </span>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            style={{ padding: '6px 14px' }}
-            disabled={build.items.length === 0}
-            onClick={clearItems}
-          >
-            Clear
-          </button>
-        </div>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          style={{ padding: '6px 14px' }}
+          disabled={build.items.length === 0}
+          onClick={clearItems}
+        >
+          Clear
+        </button>
       </div>
 
       {patchDrift && (
@@ -170,7 +163,7 @@ export default function BuildCreator() {
         <ItemPicker
           catalog={catalog}
           picked={build.items}
-          boardFull={build.items.length >= MAX_ITEMS}
+          boardFull={build.items.length >= TOTAL_SLOTS}
           isPending={catalogQuery.isPending}
           isError={catalogQuery.isError}
           onAdd={addItem}
@@ -180,6 +173,8 @@ export default function BuildCreator() {
           <BuildBoard
             layout={layout}
             byId={byId}
+            heroName={hero?.hero_name ?? null}
+            soulsSpent={stats.spend.total}
             abilities={abilities}
             abilitiesPending={abilityQuery.isPending && heroId != null}
             imbueTargets={build.imbueTargets ?? {}}

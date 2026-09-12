@@ -1,9 +1,9 @@
 //Item detail (design 01 §Item) pure logic: purchase-minute folding, catalog-derived
 //tags, the assumed upgrade discount, peer ranking and the patch-note name match.
 import { MODIFIER_FAMILIES } from './heroBuild';
-import { toModifierRows } from './itemOverlay';
+import { toModifierRows, type ItemOverlayData, type UpgradeRef } from './itemOverlay';
 import { itemTierNumeral } from './itemTiers';
-import type { ItemTimingBucket, Patch } from '../types/api';
+import type { ItemDetailResponse, ItemEdge, ItemTimingBucket, Patch } from '../types/api';
 
 //Mirrors scripts/gen-item-catalog.mjs plainText: Valve's item text carries light HTML
 //(<span class="highlight">, <br>, entities), flattened for an injection-safe page.
@@ -141,4 +141,39 @@ export function patchesNamingItem(patches: readonly Patch[], itemName: string | 
   const needle = (itemName ?? '').trim().toLowerCase();
   if (needle.length === 0) return [];
   return patches.filter((p) => (p.notes_summary ?? '').toLowerCase().includes(needle));
+}
+
+function edgeRefs(edges: readonly ItemEdge[] | undefined): UpgradeRef[] {
+  return (edges ?? []).map((e) => ({ id: e.item_id, name: e.item_name, icon: e.icon_url }));
+}
+
+/**
+ * Fold GET /items/:id/detail over the bundled card model: live component-tree edges,
+ * cooldown and Valve's split text win; bundled values stay wherever the route is silent.
+ */
+export function mergeItemDetail(base: ItemOverlayData, detail: ItemDetailResponse | undefined): ItemOverlayData {
+  if (!detail) return base;
+  const active = plainItemText(detail.text.active);
+  const passive = plainItemText(detail.text.passive);
+  const desc = plainItemText(detail.text.desc);
+  const from = edgeRefs(detail.components);
+  const into = edgeRefs(detail.builds_into);
+  return {
+    ...base,
+    name: detail.item_name || base.name,
+    icon: base.icon ?? detail.shop_image_webp,
+    slot: base.slot ?? detail.item_slot_type,
+    tier: base.tier ?? detail.item_tier,
+    cost: base.cost ?? detail.cost,
+    modifiers: base.modifiers.length > 0 ? base.modifiers : toModifierRows(detail.modifiers),
+    upgradesFrom: from.length > 0 ? from : base.upgradesFrom,
+    upgradesInto: into,
+    cooldown: detail.cooldown ?? null,
+    ability: {
+      active: detail.is_active_item,
+      imbue: base.ability?.imbue ?? false,
+      desc: active ?? desc ?? base.ability?.desc ?? null,
+      passive: passive ?? (active != null ? desc : null) ?? base.ability?.passive ?? null,
+    },
+  };
 }

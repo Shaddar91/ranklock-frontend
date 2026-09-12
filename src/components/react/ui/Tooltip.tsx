@@ -26,9 +26,13 @@ interface TooltipProps {
   className?: string;
   //clone the single child element as the trigger instead of wrapping it (see header)
   asChild?: boolean;
+  //extra class on the portaled popover — `tt-item` widens it for the item hover card
+  popClass?: string;
+  //popover width used for the flip-at-the-viewport-edge maths; must match popClass' CSS
+  popWidth?: number;
 }
 
-//gap between trigger and popover, and the popover's max width (mirrors the CSS)
+//gap between trigger and popover, and the popover's default max width (mirrors the CSS)
 const GAP = 8;
 const MAX_W = 260;
 
@@ -47,7 +51,7 @@ function chain<E>(own: ((e: E) => void) | undefined, next: (e: E) => void): (e: 
   };
 }
 
-export default function Tooltip({ content, children, className, asChild }: TooltipProps) {
+export default function Tooltip({ content, children, className, asChild, popClass, popWidth }: TooltipProps) {
   const id = useId();
   //Broad element type so the same ref serves the <span> wrapper OR a cloned <a>.
   const anchorRef = useRef<HTMLElement | null>(null);
@@ -66,10 +70,10 @@ export default function Tooltip({ content, children, className, asChild }: Toolt
     if (!el) return;
     const r = el.getBoundingClientRect();
     const above = r.top > 180;
-    const left = Math.max(8, Math.min(r.left, window.innerWidth - MAX_W - 8));
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - (popWidth ?? MAX_W) - 8));
     const top = above ? r.top - GAP : r.bottom + GAP;
     setCoords({ left, top, above });
-  }, []);
+  }, [popWidth]);
 
   const show = useCallback(() => {
     place();
@@ -143,7 +147,7 @@ export default function Tooltip({ content, children, className, asChild }: Toolt
           <div
             id={id}
             role="tooltip"
-            className="tt-pop"
+            className={popClass ? `tt-pop ${popClass}` : 'tt-pop'}
             style={{ left: coords.left, top: coords.top, transform: coords.above ? 'translateY(-100%)' : 'none' }}
           >
             {content}

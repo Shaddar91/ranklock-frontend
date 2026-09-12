@@ -1,33 +1,34 @@
 //Pure model for the Build Creator: narrows the wire catalog into the shape computeStats eats,
-//lays a build out over the 4+4+4+4 item board, and answers which items an imbue can actually
-//move (the ability-scoped property set derived from STAT_DEFS). No React, no I/O.
+//lays a build out over the 9 inventory + 3 flex slots, and answers which items an imbue can
+//actually move (the ability-scoped property set derived from STAT_DEFS). No React, no I/O.
 import { STAT_DEFS, type ItemMods, type ModifierRow } from '../../../lib/computeStats';
 import { itemIcon } from '../../../lib/itemCatalog';
 import { toModifierRows } from '../../../lib/itemOverlay';
 import type { HeroAbility, ItemModifier } from '../../../types/api';
 
-export type Bucket = 'weapon' | 'vitality' | 'spirit' | 'flex';
+//Flex is a SLOT, never a shop category — an uncategorised item still takes an ordinary slot.
+export type Category = 'weapon' | 'vitality' | 'spirit';
 
-export const BUCKETS: Bucket[] = ['weapon', 'vitality', 'spirit', 'flex'];
+export const CATEGORIES: readonly Category[] = ['weapon', 'vitality', 'spirit'];
 
-export const BUCKET_LABEL: Record<Bucket, string> = {
+export const CATEGORY_LABEL: Record<Category, string> = {
   weapon: 'Weapon',
   vitality: 'Vitality',
   spirit: 'Spirit',
-  flex: 'Flex',
 };
 
-export const SLOTS_PER_BUCKET = 4;
-export const MAX_ITEMS = BUCKETS.length * SLOTS_PER_BUCKET;
+//The board since the 2025-11-21 client: 9 universal slots plus one flex slot per enemy Walker.
+export const INVENTORY_SLOTS = 9;
+export const FLEX_SLOTS = 3;
+export const TOTAL_SLOTS = INVENTORY_SLOTS + FLEX_SLOTS;
 
 export interface CatalogItem extends ItemMods {
   item_id: number;
   icon: string | null;
 }
 
-//Mirrors computeStats' slotCategory so the board and the souls spend agree on a category.
-export function bucketOf(slot: string | null | undefined): Bucket {
-  return slot === 'weapon' || slot === 'vitality' || slot === 'spirit' ? slot : 'flex';
+export function categoryOf(slot: string | null | undefined): Category | null {
+  return slot === 'weapon' || slot === 'vitality' || slot === 'spirit' ? slot : null;
 }
 
 /** Wire rows (`modifiers: unknown[]`, nullable id) → the catalog computeStats consumes. */
@@ -42,8 +43,7 @@ export function normalizeCatalog(rows: ItemModifier[] | undefined): CatalogItem[
       item_slot_type: r.item_slot_type,
       item_tier: r.item_tier,
       cost: r.cost,
-      //Catalog icon join — the modifiers payload ships no icon for some shop items;
-      //letter tiles stay only for entries the catalog is also missing.
+      //the modifiers payload ships no icon for some shop items — join the bundled catalog
       icon: itemIcon(r.item_id, r.shop_image_webp),
       modifiers,
     });
@@ -60,27 +60,27 @@ export function itemLabel(itemId: number, item: CatalogItem | undefined): string
 }
 
 export interface BoardLayout {
-  buckets: Record<Bucket, number[]>;
+  inventory: number[];
+  flex: number[];
   //ids with no open slot, or absent from this patch's catalog — surfaced, never silently dropped.
   extra: number[];
 }
 
-/** Place items in pick order: own category first, a flex slot once that category is full. */
+/** Place items in pick order: the 9 inventory slots first, then the 3 flex slots. */
 export function layoutBuild(items: number[], byId: Map<number, CatalogItem>): BoardLayout {
-  const buckets: Record<Bucket, number[]> = { weapon: [], vitality: [], spirit: [], flex: [] };
+  const inventory: number[] = [];
+  const flex: number[] = [];
   const extra: number[] = [];
   for (const id of items) {
-    const item = byId.get(id);
-    if (!item) {
+    if (!byId.has(id)) {
       extra.push(id);
       continue;
     }
-    const own = bucketOf(item.item_slot_type);
-    if (buckets[own].length < SLOTS_PER_BUCKET) buckets[own].push(id);
-    else if (buckets.flex.length < SLOTS_PER_BUCKET) buckets.flex.push(id);
+    if (inventory.length < INVENTORY_SLOTS) inventory.push(id);
+    else if (flex.length < FLEX_SLOTS) flex.push(id);
     else extra.push(id);
   }
-  return { buckets, extra };
+  return { inventory, flex, extra };
 }
 
 /** The four purchasable abilities; innate rows are not imbue targets. */

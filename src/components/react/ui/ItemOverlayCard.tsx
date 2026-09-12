@@ -1,17 +1,14 @@
-//The shared item overlay card (rendered inside a Tooltip): name, slot · tier ·
-//souls cost, what the item does (with its Active / Imbue badges), the FULL modifier
-//list with values, and "Upgrades from" lineage.
-//One component for every item-row overlay — Build Lab modifiers table + creator
-//catalog. Street Brawl items show a labeled chip instead of the placeholder
-//tier-5 / 9,999-souls economy.
+//The shared item hover card (design Lab §15), rendered inside a Tooltip: category-tinted
+//header with icon, name, cost and slot · tier; the full modifier list; the Active / Passive
+//block with its cooldown; "Upgrades from / into"; and the investment / resale footer.
+//One card for every item tile in the app — mount it through ItemHoverCard.
 import type { ItemOverlayData } from '../../../lib/itemOverlay';
+import { slotName } from '../../../lib/itemDetail';
+import { itemTierLabel } from '../../../lib/itemTiers';
 import { count } from '../../../lib/format';
 import GameIcon from './GameIcon';
 import Chip from './Chip';
-
-function slotLabel(slot: string | null): string | null {
-  return slot ? slot.charAt(0).toUpperCase() + slot.slice(1) : null;
-}
+import type { UpgradeRef } from '../../../lib/itemOverlay';
 
 function modValue(value: number, isPercent: boolean): string {
   const sign = value > 0 ? '+' : '';
@@ -19,74 +16,102 @@ function modValue(value: number, isPercent: boolean): string {
   return `${sign}${v}${isPercent ? '%' : ''}`;
 }
 
-export default function ItemOverlayCard({ data }: { data: ItemOverlayData }) {
-  const meta = [
-    slotLabel(data.slot),
-    !data.brawl && data.tier != null ? `Tier ${data.tier}` : null,
-    !data.brawl && data.cost != null ? `${count(data.cost)} souls` : null,
-  ].filter(Boolean);
+function UpgradeList({ label, refs }: { label: string; refs: UpgradeRef[] }) {
+  return (
+    <div className="itemcard-path">
+      <span className="label-xs itemcard-pathlabel">{label}</span>
+      <span className="itemcard-pathrefs">
+        {refs.map((u) => (
+          <span key={u.id} className="itemcard-pathref">
+            <GameIcon kind="item" name={u.name} src={u.icon} size={16} />
+            <span>{u.name}</span>
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+}
+
+export default function ItemOverlayCard({
+  data,
+  catalogPatch,
+}: {
+  data: ItemOverlayData;
+  //Stamps the footer; omitted entirely when the served patch is unknown.
+  catalogPatch?: string | null;
+}) {
+  const category = slotName(data.slot);
+  const tier = data.brawl ? null : itemTierLabel(data.tier);
+  const meta = [category, tier].filter(Boolean).join(' · ');
+  const kind = data.ability?.active ? 'Active' : data.modifiers.length > 0 || data.ability ? 'Passive' : null;
+  const text = data.ability?.desc ?? null;
+  const passive = data.ability?.passive ?? null;
+  const footer = data.brawl
+    ? null
+    : [
+        data.cost != null && category ? `Adds ${count(data.cost)} to ${category} investment` : null,
+        data.cost != null ? `sells for ${count(Math.round(data.cost / 2))} souls` : null,
+        catalogPatch ? `catalog patch ${catalogPatch}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · ');
 
   return (
-    <div style={{ display: 'grid', gap: 8, minWidth: 200 }}>
-      <div className="flex" style={{ alignItems: 'center', gap: 9 }}>
-        <GameIcon kind="item" name={data.name} src={data.icon} size={26} />
-        <div style={{ minWidth: 0 }}>
-          <div className="display" style={{ fontWeight: 700, color: 'var(--text)', fontSize: 13.5, lineHeight: 1.2 }}>
-            {data.name}
+    <div className={`itemcard cat-${data.slot ?? 'flex'}`}>
+      <div className="itemcard-head">
+        <GameIcon kind="item" name={data.name} src={data.icon} size={44} />
+        <div className="itemcard-id">
+          <div className="display itemcard-name">{data.name}</div>
+          <div className="itemcard-sub">
+            {!data.brawl && data.cost != null && <span className="tnum itemcard-cost">{count(data.cost)} souls</span>}
+            {meta && <span className="itemcard-meta">{meta}</span>}
           </div>
-          <div className="faint" style={{ fontSize: 11.5 }}>{meta.join(' · ')}</div>
         </div>
         {data.brawl && <Chip>Street Brawl</Chip>}
       </div>
-      {(data.ability?.active || data.ability?.imbue) && (
-        <div className="flex" style={{ gap: 6 }}>
-          {data.ability.active && <Chip tone="gold">Active</Chip>}
-          {data.ability.imbue && <Chip tone="win">Imbue</Chip>}
+
+      <div className="itemcard-mods">
+        {data.modifiers.length === 0 ? (
+          <span className="faint">No modifiers in this catalog snapshot</span>
+        ) : (
+          data.modifiers.map((m, i) => (
+            <div key={`${m.property_type}-${i}`} className="itemcard-mod">
+              <span className="tnum itemcard-modv">{modValue(m.value, m.is_percent)}</span>
+              <span>{m.label ?? m.property_type}</span>
+            </div>
+          ))
+        )}
+      </div>
+
+      {(text || passive || data.ability?.imbue) && (
+        <div className="itemcard-text">
+          <div className="itemcard-texthead">
+            <span className="label-xs itemcard-kind">{kind ?? 'Passive'}</span>
+            <span className="itemcard-cd">
+              {data.ability?.imbue && <span className="itemcard-imbue">Imbue</span>}
+              {data.cooldown != null && <span className="tnum">{data.cooldown}s cooldown</span>}
+            </span>
+          </div>
+          {text && <p className="itemcard-body">{text}</p>}
+          {passive && passive !== text && (
+            <p className="itemcard-body itemcard-passive">
+              <span className="label-xs">Passive</span> {passive}
+            </p>
+          )}
         </div>
       )}
-      {data.ability?.desc != null && (
-        <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, color: 'var(--text-2)' }}>
-          {data.ability.desc}
-        </p>
+
+      {(data.upgradesFrom.length > 0 || data.upgradesInto.length > 0) && (
+        <div className="itemcard-paths">
+          {data.upgradesFrom.length > 0 && <UpgradeList label="Upgrades from" refs={data.upgradesFrom} />}
+          {data.upgradesInto.length > 0 && <UpgradeList label="Upgrades into" refs={data.upgradesInto} />}
+        </div>
       )}
-      {data.ability?.passive != null && (
-        <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, color: 'var(--muted)' }}>
-          <span className="label-xs">Passive</span> {data.ability.passive}
-        </p>
-      )}
-      <div style={{ height: 1, background: 'var(--border)' }} />
-      {data.modifiers.length === 0 ? (
-        <span className="faint" style={{ fontSize: 12 }}>No listed modifiers</span>
+
+      {data.brawl ? (
+        <div className="itemcard-foot">Street Brawl shop only — its tier and souls cost are placeholders.</div>
       ) : (
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 4 }}>
-          {data.modifiers.map((m, i) => (
-            <li key={`${m.property_type}-${i}`} className="flex" style={{ gap: 7, alignItems: 'baseline' }}>
-              <span className="tnum" style={{ fontWeight: 600, color: 'var(--text)', flex: 'none' }}>
-                {modValue(m.value, m.is_percent)}
-              </span>
-              <span style={{ fontSize: 12 }}>{m.label ?? m.property_type}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {data.upgradesFrom.length > 0 && (
-        <>
-          <div style={{ height: 1, background: 'var(--border)' }} />
-          <div>
-            <span className="label-xs" style={{ display: 'block', marginBottom: 4 }}>Upgrades from</span>
-            {data.upgradesFrom.map((u) => (
-              <span key={u.id} className="flex" style={{ alignItems: 'center', gap: 6, fontSize: 12 }}>
-                <GameIcon kind="item" name={u.name} src={u.icon} size={16} />
-                <span style={{ color: 'var(--text)' }}>{u.name}</span>
-              </span>
-            ))}
-          </div>
-        </>
-      )}
-      {data.brawl && (
-        <span className="faint" style={{ fontSize: 11, lineHeight: 1.3 }}>
-          Street Brawl shop only — the tier and souls cost in the catalog are placeholders.
-        </span>
+        footer && <div className="itemcard-foot">{footer}</div>
       )}
     </div>
   );

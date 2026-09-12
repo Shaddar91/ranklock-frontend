@@ -3,7 +3,7 @@
 //consume — `conditionalsOn` is derived, so a shared or saved build always matches the panels.
 import { useCallback, useMemo, useState } from 'react';
 import type { BuildInput } from '../../../lib/computeStats';
-import { MAX_ITEMS } from './buildModel';
+import { TOTAL_SLOTS } from './buildModel';
 
 interface DraftState {
   heroId: number | null;
@@ -57,7 +57,7 @@ export function useBuildDraft(): BuildDraft {
 
   const addItem = useCallback((itemId: number) => {
     setState((p) =>
-      p.items.includes(itemId) || p.items.length >= MAX_ITEMS ? p : { ...p, items: [...p.items, itemId] },
+      p.items.includes(itemId) || p.items.length >= TOTAL_SLOTS ? p : { ...p, items: [...p.items, itemId] },
     );
   }, []);
 

@@ -23,6 +23,11 @@ export interface ItemOverlayData {
   brawl: boolean;
   modifiers: ModifierRow[];
   upgradesFrom: UpgradeRef[];
+  //Parents this item builds into. Only GET /items/:id/detail carries them, so the bundled
+  //constructors leave it empty and mergeItemDetail (lib/itemDetail) fills it.
+  upgradesInto: UpgradeRef[];
+  //Seconds; null on a passive item or before the detail route answers.
+  cooldown: number | null;
   //What the item does in words + its active / imbue flags; null for items the feed describes nowhere.
   ability: ItemAbility | null;
 }
@@ -90,6 +95,8 @@ export function overlayFromWire(r: ItemModifier, map: UpgradesMap = UPGRADES): I
     brawl: isBrawlAsset(r.shop_image_webp),
     modifiers: toModifierRows(r.modifiers),
     upgradesFrom: upgradesFor(r.item_id, map),
+    upgradesInto: [],
+    cooldown: null,
     ability: itemAbility(r.item_id),
   };
 }
@@ -105,6 +112,8 @@ export function overlayFromCatalog(it: OverlayCatalogRow, map: UpgradesMap = UPG
     brawl: isBrawlAsset(it.icon),
     modifiers: it.modifiers,
     upgradesFrom: upgradesFor(it.item_id, map),
+    upgradesInto: [],
+    cooldown: null,
     ability: itemAbility(it.item_id),
   };
 }

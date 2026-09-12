@@ -1,62 +1,38 @@
-//============================================================================
-//Build Lab island (C9) — wires the warmed-but-unconsumed Build Lab endpoints
-//(§A.4): GET /heroes/base-stats (versioned starting-stats snapshot), GET
-///heroes/:id/builds (top community builds) and GET /items/modifiers (the
-//buildable items + their modifier rows). ONE island mounted on /build-lab,
-//three tabs: Hero base stats · Builds · Item modifiers.
-//
-//Build-ahead caveat (§A.4): analytics.hero_base_stats is EMPTY locally until the
-//patch snapshot hook runs, so /heroes/base-stats may 502 / return []. Every tab
-//empty-states instead of crashing (requirements §8.1).
-//============================================================================
-import { useMemo, useState } from 'react';
+//Build Lab island — ONE island on /build-lab, three tabs (design Lab §2): Analyze · Create ·
+//Community builds. Item modifiers are no longer a tab; every item tile carries the hover card.
+//hero_base_stats is captured once per patch, so every tab empty-states instead of crashing.
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
-import { DataTable, type DataTableColumn, EmptyState, GameIcon, ItemOverlayCard, Tooltip } from './ui/index';
-import { overlayFromWire, splitBrawl } from '../../lib/itemOverlay';
+import { EmptyState, GameIcon } from './ui/index';
 import { count, DASH, fixed } from '../../lib/format';
 import { statLabel } from '../../lib/statLabel';
 import { groupBaseStats, statUnit } from '../../lib/baseStatGroups';
 import { abilityOrderSequence, formatUpdated, isUpdatedThisPatch, SORT_MODES, type BuildSort } from '../../lib/buildMeta';
 import BuildCreator from './creator/BuildCreator';
-import type { HeroAbility, HeroBaseStats, ItemModifier, TrimmedBuild } from '../../types/api';
+import type { HeroAbility, HeroBaseStats, TrimmedBuild } from '../../types/api';
 
-type Tab = 'creator' | 'builds' | 'heroes' | 'items';
+type Tab = 'analyze' | 'create' | 'community';
 
-//The released hero roster, handed down from build-lab.astro. The lab's own roster is
-///heroes/base-stats, which is never run through releasedRoster()/slugRoster(), so a hero
-//there may have no page — this is the guard that keeps a "how to play" link off a 404.
-//hasGuide narrows it again: /heroes/<slug>/guide/ exists only where a guide file does.
+//The lab's own roster is /heroes/base-stats, which never runs through releasedRoster(), so a
+//hero there may have no page — this roster is the guard that keeps a "how to play" link off a 404.
 export interface RosterSlug {
   hero_id: number;
   slug: string;
   hasGuide: boolean;
 }
 
-//snake_case stat key → "Title Case" label. The raw starting_stats keys are an
-//upstream concern; this is a presentational humanization, not invented data.
-function humanize(key: string): string {
-  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 function fmtStat(v: number): string {
   return Number.isInteger(v) ? count(v) : fixed(v);
 }
 
-//A base-stats entry is a nested object carrying a numeric `value` plus an
-//upstream display label — NOT a bare number. See GET /heroes/base-stats
-//(builds.rs HeroBaseStats); the shared `stats: Record<string, unknown>` masks
-//this, so we narrow it here at the point of consumption.
+//A base-stats entry is a nested object carrying a numeric `value`, NOT a bare number; the
+//shared `stats: Record<string, unknown>` masks that, so narrow it at the point of consumption.
 type BaseStatValue = { value: number; display_stat_name?: string };
 
-//---- shared playable-hero roster -------------------------------------------
-//The /heroes/base-stats snapshot restricted to currently-playable heroes
-//(Component 1's server-side fix). Belt-and-suspenders: drop any row whose
-//hero_name is empty/whitespace BEFORE sort/map, so the <select> can never render
-//a blank <option> even if the base-stats API ever regresses. Shared by the base
-//-stats and builds tabs — react-query dedupes the single /heroes/base-stats
-//fetch across both consumers.
+//Drop any row whose hero_name is empty BEFORE sort/map, so the <select> can never render a
+//blank <option> if base-stats regresses. react-query dedupes the one fetch across both tabs.
 function useHeroRoster() {
   const q = useQuery<HeroBaseStats[]>({
     queryKey: queryKeys.heroBaseStats(),
@@ -72,9 +48,6 @@ function useHeroRoster() {
   return { heroes, isPending: q.isPending, isError: q.isError };
 }
 
-//Shared hero <select> — the same control on the base-stats and builds tabs,
-//writing the picked hero into the island-level selection so it persists across
-//tab switches.
 function HeroSelect({
   heroes,
   activeId,
@@ -112,9 +85,9 @@ function HowToPlayLink({ hero, roster }: { hero: HeroBaseStats | null; roster: R
   );
 }
 
-//---- hero base stats --------------------------------------------------------
+//---- Analyze (design Lab §6 rail: the hero's served stats) -------------------
 
-function HeroBaseStatsTab({
+function AnalyzeTab({
   heroId,
   onHero,
   roster,
@@ -193,12 +166,9 @@ function HeroBaseStatsTab({
   );
 }
 
-//---- meta tab (builds) ------------------------------------------------------
-//The hero's meta builds — GET /heroes/:id/builds?sort=weekly|favorites. Default is the
-//server's recency-weighted weekly sort (stale-favorites giants demoted); the FE never
-//re-sorts by lifetime favorites. Each card shows only signals the wire carries — weekly +
-//all-time favorites, last update, an "updated this patch" badge, and the learn order drawn
-//with the abilities-route icons. NO win-rate: our matches can't rank builds (items anonymized).
+//---- Community builds (design Lab §13) --------------------------------------
+//GET /heroes/:id/builds. The server's recency-weighted sort is authoritative. NO win rate:
+//our matches can't rank builds (items are anonymized).
 
 function AbilityOrderRow({ build, abilities }: { build: TrimmedBuild; abilities: Map<number, HeroAbility> }) {
   const seq = abilityOrderSequence(build.ability_order)
@@ -218,7 +188,7 @@ function AbilityOrderRow({ build, abilities }: { build: TrimmedBuild; abilities:
   );
 }
 
-function HeroBuildsTab({
+function CommunityBuildsTab({
   heroId,
   onHero,
   roster,
@@ -329,158 +299,20 @@ function HeroBuildsTab({
   );
 }
 
-//---- item modifiers ---------------------------------------------------------
-
-//Item cell = the overlay trigger: hover, keyboard focus or tap opens the full
-//card (name, slot·tier·cost, every modifier, upgrade lineage).
-function itemCell(it: ItemModifier) {
-  return (
-    <Tooltip content={<ItemOverlayCard data={overlayFromWire(it)} />}>
-      <span className="flex" style={{ alignItems: 'center', gap: 10 }}>
-        <GameIcon kind="item" name={it.item_name ?? 'Item'} src={it.shop_image_webp} size={28} />
-        <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>{it.item_name ?? `Item ${it.item_id ?? ''}`}</span>
-      </span>
-    </Tooltip>
-  );
-}
-
-function ItemModifiersTab() {
-  const { data, isPending, isError } = useQuery<ItemModifier[]>({
-    queryKey: queryKeys.itemModifiers(),
-    queryFn: () => api.getItemModifiers(),
-  });
-  const items = data ?? [];
-  const [slot, setSlot] = useState<string>('');
-
-  //Street Brawl rows (brawl shop-art path — see lib/itemOverlay) never mix into
-  //the competitive table; they render in their own labeled section below.
-  const { competitive, brawl } = useMemo(() => splitBrawl(items, (it) => it.shop_image_webp), [items]);
-
-  const slots = useMemo(() => {
-    const set = new Set<string>();
-    competitive.forEach((it) => it.item_slot_type && set.add(it.item_slot_type));
-    return [...set].sort();
-  }, [competitive]);
-
-  const rows = useMemo(
-    () => (slot === '' ? competitive : competitive.filter((it) => it.item_slot_type === slot)),
-    [competitive, slot],
-  );
-
-  const columns = useMemo<DataTableColumn<ItemModifier>[]>(
-    () => [
-      {
-        key: 'item',
-        header: 'Item',
-        sortValue: (it) => it.item_name ?? '',
-        render: itemCell,
-      },
-      { key: 'slot', header: 'Slot', sortValue: (it) => it.item_slot_type ?? '', render: (it) => <span className="faint">{it.item_slot_type ?? DASH}</span> },
-      { key: 'tier', header: 'Tier', numeric: true, sortValue: (it) => it.item_tier, render: (it) => <span className="tnum">{it.item_tier ?? DASH}</span> },
-      { key: 'cost', header: 'Cost', numeric: true, sortValue: (it) => it.cost, render: (it) => <span className="tnum gold-c">{it.cost == null ? DASH : count(it.cost)}</span> },
-      { key: 'mods', header: 'Modifiers', numeric: true, sortValue: (it) => it.modifiers.length, render: (it) => <span className="tnum">{count(it.modifiers.length)}</span> },
-    ],
-    [],
-  );
-
-  const brawlColumns = useMemo<DataTableColumn<ItemModifier>[]>(
-    () => [
-      { key: 'item', header: 'Item', sortValue: (it) => it.item_name ?? '', render: itemCell },
-      { key: 'slot', header: 'Slot', sortValue: (it) => it.item_slot_type ?? '', render: (it) => <span className="faint">{it.item_slot_type ?? DASH}</span> },
-      { key: 'shop', header: 'Shop', sortValue: () => '', render: () => <span className="chip">Street Brawl</span> },
-      { key: 'mods', header: 'Modifiers', numeric: true, sortValue: (it) => it.modifiers.length, render: (it) => <span className="tnum">{count(it.modifiers.length)}</span> },
-    ],
-    [],
-  );
-
-  //Plain-language explainer so the tab's purpose is unambiguous — this is a
-  //reference CATALOG of every buildable item and the stat bonuses ("modifiers")
-  //it grants, NOT a build editor. Rendered in every state (incl. empty/loading).
-  const explainer = (
-    <p className="muted" style={{ fontSize: 12.5, margin: '0 0 12px' }}>
-      {'Every buildable item and the stat bonuses (“modifiers”) it grants. To put a build together, use the Creator tab.'}
-    </p>
-  );
-
-  return (
-    <div>
-      {explainer}
-      {isPending ? (
-        <p className="muted" style={{ padding: '14px 2px' }}>Loading item modifiers…</p>
-      ) : isError || items.length === 0 ? (
-        <EmptyState
-          title="Item modifiers not available yet"
-          message="The item list is still loading on the server. Check back in a few minutes."
-          icon="inbox"
-        />
-      ) : (
-        <div>
-          <div className="between" style={{ gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-            <span className="label-xs">{count(rows.length)} buildable items</span>
-            <label className="flex" style={{ alignItems: 'center', gap: 8 }}>
-              <span className="label-xs">Slot</span>
-              <select
-                className="field"
-                style={{ width: 'auto', padding: '8px 12px' }}
-                value={slot}
-                onChange={(e) => setSlot(e.target.value)}
-                aria-label="Filter by item slot"
-              >
-                <option value="">All slots</option>
-                {slots.map((s) => (
-                  <option key={s} value={s}>{humanize(s)}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <DataTable
-            columns={columns}
-            rows={rows}
-            rowKey={(it, i) => it.item_id ?? i}
-            initialSort={{ key: 'cost', dir: -1 }}
-            caption="Buildable item modifiers — slot, tier, cost and modifier count"
-            emptyTitle="No items for this slot"
-            emptyMessage="Try another slot."
-          />
-          {brawl.length > 0 && (
-            <details style={{ marginTop: 18 }}>
-              <summary className="label-xs" style={{ cursor: 'pointer', color: 'var(--muted)' }}>
-                Street Brawl items · {count(brawl.length)}
-              </summary>
-              <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 12px' }}>
-                Sold only in the Street Brawl mode shop — they never appear in competitive matches. The catalog lists
-                them at tier 5 / 9,999 souls; those are placeholders, not prices, so this table drops both columns.
-              </p>
-              <DataTable
-                columns={brawlColumns}
-                rows={brawl}
-                rowKey={(it, i) => it.item_id ?? i}
-                caption="Street Brawl shop items — slot and modifier count"
-                emptyTitle="No Street Brawl items"
-                emptyMessage="The catalog served none."
-              />
-            </details>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 const TABS: { value: Tab; label: string }[] = [
-  { value: 'creator', label: 'Creator' },
-  { value: 'builds', label: 'Meta builds' },
-  { value: 'heroes', label: 'Hero base stats' },
-  { value: 'items', label: 'Item modifiers' },
+  { value: 'analyze', label: 'Analyze' },
+  { value: 'create', label: 'Create' },
+  { value: 'community', label: 'Community builds' },
 ];
 
 function BuildLabInner({ roster }: { roster: RosterSlug[] }) {
-  //Default to the creator so a shared `#b1:` link lands on it (the creator reads the fragment
-  //itself). Fixed for server + client render — no hydration mismatch.
-  const [tab, setTab] = useState<Tab>('creator');
-  //Island-level hero selection, shared by the base-stats and meta-builds tabs so a hero picked
-  //on one stays picked on the other.
+  const [tab, setTab] = useState<Tab>('analyze');
   const [heroId, setHeroId] = useState<number | null>(null);
+  //A shared `#b1:` link carries a board — hand it to Create. Read AFTER hydration: server and
+  //client must render the same first tab, and BuildCreator reads the fragment itself once mounted.
+  useEffect(() => {
+    if (window.location.hash.startsWith('#b1:')) setTab('create');
+  }, []);
   return (
     <div>
       <div className="tabs" role="tablist" aria-label="Build Lab">
@@ -498,10 +330,9 @@ function BuildLabInner({ roster }: { roster: RosterSlug[] }) {
         ))}
       </div>
       <div style={{ paddingTop: 12 }}>
-        {tab === 'creator' && <BuildCreator />}
-        {tab === 'builds' && <HeroBuildsTab heroId={heroId} onHero={setHeroId} roster={roster} />}
-        {tab === 'heroes' && <HeroBaseStatsTab heroId={heroId} onHero={setHeroId} roster={roster} />}
-        {tab === 'items' && <ItemModifiersTab />}
+        {tab === 'analyze' && <AnalyzeTab heroId={heroId} onHero={setHeroId} roster={roster} />}
+        {tab === 'create' && <BuildCreator />}
+        {tab === 'community' && <CommunityBuildsTab heroId={heroId} onHero={setHeroId} roster={roster} />}
       </div>
     </div>
   );

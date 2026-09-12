@@ -4,13 +4,15 @@ import {
   BUY_WR_BANDS,
   foldTiming,
   itemTags,
+  mergeItemDetail,
   patchesNamingItem,
   plainItemText,
   rankPeers,
   upgradeDiscount,
   type PeerRow,
 } from './itemDetail';
-import type { ItemTimingBucket, Patch } from '../types/api';
+import { overlayFromWire } from './itemOverlay';
+import type { ItemDetailResponse, ItemTimingBucket, Patch } from '../types/api';
 
 const bucket = (b: number, matches: number, wins: number): ItemTimingBucket => ({
   bucket: b,
@@ -151,5 +153,72 @@ describe('plainItemText', () => {
   it('returns null for absent or markup-only text', () => {
     expect(plainItemText(null)).toBeNull();
     expect(plainItemText('<br>')).toBeNull();
+  });
+});
+
+describe('mergeItemDetail — the hover card over GET /items/:id/detail', () => {
+  const base = overlayFromWire(
+    {
+      item_id: 100,
+      item_name: 'Debuff Reducer',
+      item_slot_type: 'vitality',
+      item_tier: 2,
+      cost: 1600,
+      shop_image_webp: 'https://cdn.example/images/items/vitality/debuff_reducer.webp',
+      modifiers: [{ property_type: 'P', value: 12, is_percent: true, label: 'Debuff Resist' }],
+    },
+    {},
+  );
+
+  const detail: ItemDetailResponse = {
+    item_id: 100,
+    class_name: 'upgrade_debuff_reducer',
+    item_name: 'Debuff Reducer',
+    item_slot_type: 'vitality',
+    item_tier: 2,
+    cost: 1600,
+    shop_image_webp: null,
+    is_shop_item: true,
+    modifiers: [],
+    activation: 'instant_cast',
+    is_active_item: true,
+    cooldown: 48,
+    text: { desc: 'Cleanses <b>negative</b> effects.', passive: 'Reduces debuff duration.', active: 'Cleanse yourself.' },
+    text_key: 'citadel_upgrade_debuff_reducer',
+    components: [{ item_id: 10, class_name: 'c', item_name: 'Extra Regen', icon_url: null }],
+    builds_into: [{ item_id: 900, class_name: 'p', item_name: 'Debuff Remover', icon_url: null }],
+    source: 'assets',
+  };
+
+  it('folds in the component tree both ways, the cooldown and Valve’s split text', () => {
+    const card = mergeItemDetail(base, detail);
+    expect(card.upgradesFrom.map((u) => u.name)).toEqual(['Extra Regen']);
+    expect(card.upgradesInto.map((u) => u.name)).toEqual(['Debuff Remover']);
+    expect(card.cooldown).toBe(48);
+    expect(card.ability?.active).toBe(true);
+    expect(card.ability?.desc).toBe('Cleanse yourself.');
+    expect(card.ability?.passive).toBe('Reduces debuff duration.');
+  });
+
+  it('keeps the catalog modifiers — the detail route serves them unlabelled', () => {
+    expect(mergeItemDetail(base, detail).modifiers).toEqual(base.modifiers);
+  });
+
+  it('returns the bundled card untouched while the route has not answered', () => {
+    expect(mergeItemDetail(base, undefined)).toBe(base);
+  });
+
+  it('leaves a passive item with no cooldown and no parents', () => {
+    const passive = mergeItemDetail(base, {
+      ...detail,
+      is_active_item: false,
+      cooldown: undefined,
+      text: { passive: 'Always on.' },
+      builds_into: [],
+    });
+    expect(passive.cooldown).toBeNull();
+    expect(passive.ability?.active).toBe(false);
+    expect(passive.ability?.passive).toBe('Always on.');
+    expect(passive.upgradesInto).toEqual([]);
   });
 });

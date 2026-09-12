@@ -13,8 +13,7 @@ import { count, DASH } from '../../../lib/format';
 import GameIcon from '../ui/GameIcon';
 import SectionHeader from '../ui/SectionHeader';
 import EmptyState from '../ui/EmptyState';
-import Tooltip from '../ui/Tooltip';
-import ItemOverlayCard from '../ui/ItemOverlayCard';
+import ItemHoverCard from '../ui/ItemHoverCard';
 import type { ItemStat } from '../../../types/api';
 
 export interface ItemCatalogEntry {
@@ -94,12 +93,14 @@ export default function HeroItemTables({
       brawl: false,
       modifiers: [],
       upgradesFrom: upgradesFor(id),
+      upgradesInto: [],
+      cooldown: null,
       ability: itemAbility(id),
     };
   };
 
   const ItemCell = ({ id, name, icon }: { id: number; name: string; icon: string | null }) => (
-    <Tooltip content={<ItemOverlayCard data={overlayFor(id, name, icon)} />} asChild>
+    <ItemHoverCard data={overlayFor(id, name, icon)} asChild>
       <a className="itbl-item" href={`/items/${id}/`}>
         <GameIcon kind="item" name={name} src={icon ?? meta(id).icon} size={28} />
         <span className="itbl-item-text">
@@ -107,7 +108,7 @@ export default function HeroItemTables({
           <span className="itbl-sub">{meta(id).slotTier}</span>
         </span>
       </a>
-    </Tooltip>
+    </ItemHoverCard>
   );
 
   const popular = useMemo(
