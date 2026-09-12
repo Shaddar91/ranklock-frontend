@@ -8,7 +8,7 @@
 //state). A pre-C8 API without the route, a pre-data API serving nulls, and a
 //failed fetch all collapse to the same "unknown → show nothing" outcome.
 import type { DataHorizonResponse } from '../types/api';
-import { shortDate } from './format';
+import { dayDate, shortDate } from './format';
 
 //The lineage dataset key the backend stamps for the economy-curve Gold family
 //(analytics.economy_curve_lineage — the only stamped dataset today).
@@ -19,6 +19,13 @@ export const ECONOMY_CURVE_DATASET = 'economy-curve';
 //(missing/null/invalid), meaning: render no chip at all.
 export function statsThroughDate(horizon: DataHorizonResponse | null | undefined): string | null {
   const formatted = shortDate(horizon?.max_match_start_time);
+  return formatted === '' ? null : formatted;
+}
+
+//Same horizon in the filter bar's compact day form — "7 Sep 2026". null on the
+//same unknown-horizon contract as statsThroughDate.
+export function statsThroughDay(horizon: DataHorizonResponse | null | undefined): string | null {
+  const formatted = dayDate(horizon?.max_match_start_time);
   return formatted === '' ? null : formatted;
 }
 

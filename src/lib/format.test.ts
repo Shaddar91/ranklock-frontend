@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pct, fixed, count, kda, metaTier, pickShare, duration, shortDate, readingTime, DASH } from './format';
+import { pct, fixed, count, kda, metaTier, pickShare, duration, dayDate, minuteClock, shortDate, readingTime, DASH } from './format';
 
 //Pure display formatters + stat derivations. The whole point of these is that a
 //missing/NaN input renders the em-dash (or a safe default) rather than "NaN%"/"null",
@@ -145,5 +145,28 @@ describe('readingTime', () => {
     expect(readingTime('just a few words')).toBe('1 min read');
     expect(readingTime('')).toBe('1 min read');
     expect(readingTime(null)).toBe('1 min read');
+  });
+});
+
+describe('dayDate', () => {
+  it('renders the compact day the freshness pill uses', () => {
+    expect(dayDate('2026-09-07T09:59:29Z')).toBe('7 Sep 2026');
+    expect(dayDate('2026-09-10T23:59:59Z')).toBe('10 Sep 2026');
+  });
+  it('returns an empty string for missing / invalid input', () => {
+    expect(dayDate(null)).toBe('');
+    expect(dayDate('not-a-date')).toBe('');
+  });
+});
+
+describe('minuteClock', () => {
+  it('renders fractional minutes as m:ss', () => {
+    expect(minuteClock(1.1667)).toBe('1:10');
+    expect(minuteClock(34)).toBe('34:00');
+    expect(minuteClock(0)).toBe('0:00');
+  });
+  it('dashes a missing or negative minute', () => {
+    expect(minuteClock(null)).toBe(DASH);
+    expect(minuteClock(-1)).toBe(DASH);
   });
 });

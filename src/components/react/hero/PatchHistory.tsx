@@ -30,13 +30,24 @@ export interface PatchHistoryProps {
 export default function PatchHistory({ heroName, patches, moves, paragraph, guideHref }: PatchHistoryProps) {
   const moveOf = (id: string) => moves?.find((m) => m.patchId === id) ?? null;
   const currentId = patches.find((p) => p.isCurrent)?.patchId ?? patches[0]?.patchId ?? '';
+  //The design replaces the whole table with the cold box while the mover fold is out —
+  //a row list with the before/after column blank is not a state this block draws.
+  const cold = patches.length === 0 || moves == null;
 
   return (
     <section id="patches" className="patch-grid">
       <div>
         <SectionHeader kicker="What changed" title={`Patch history for ${heroName}`} />
-        {patches.length === 0 ? (
-          <EmptyState title="Computing" message="The patch registry is still folding. This block refreshes hourly." />
+        {cold ? (
+          <EmptyState
+            tone="cold"
+            title="Computing"
+            message={
+              patches.length === 0
+                ? 'The patch registry is still folding. This block refreshes hourly.'
+                : `Patch movers for ${currentId} answered 202. The before/after column appears once the fold completes.`
+            }
+          />
         ) : (
           <div className="panel patch-list">
             {patches.map((p) => {
@@ -76,12 +87,6 @@ export default function PatchHistory({ heroName, patches, moves, paragraph, guid
               );
             })}
           </div>
-        )}
-        {moves == null && patches.length > 0 && (
-          <EmptyState
-            title="Computing"
-            message={`Patch movers for ${currentId} answered 202. The before/after column appears once the fold completes.`}
-          />
         )}
       </div>
 

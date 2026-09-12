@@ -22,9 +22,7 @@ export default function BracketFilter({ value, onChange, tiers = [4, 5, 6, 7, 8,
         aria-pressed={value === 'all'}
         onClick={() => onChange('all')}
       >
-        <span className="display" style={{ fontSize: 12 }}>
-          All
-        </span>
+        <span className="display brk-all">All</span>
       </button>
       {tiers.map((t) => {
         const r = getRank(t);

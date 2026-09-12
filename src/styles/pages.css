@@ -906,7 +906,71 @@
 
 /* ---------- hero overview: identity band, kit, skill order, phases ---------- */
 .hero-band {
-  padding-top: 22px;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--brass-4);
+  background: linear-gradient(180deg, var(--surface), var(--ink));
+}
+.hero-band-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  opacity: 0.22;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+}
+.hero-band-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 28px max(24px, env(safe-area-inset-right)) 0 max(24px, env(safe-area-inset-left));
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 28px;
+  align-items: end;
+}
+.hero-portrait {
+  position: relative;
+  width: 200px;
+  height: 240px;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  border: 1px solid var(--brass-3);
+  background: radial-gradient(circle at 50% 30%, var(--overlay), var(--ink));
+  display: grid;
+  place-items: center;
+}
+.hero-portrait-mono {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 72px;
+  color: var(--brass-3);
+  opacity: 0.6;
+}
+.hero-portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+.hero-portrait .corner {
+  width: 14px;
+  height: 14px;
+  color: var(--brass-1);
+  z-index: 2;
+  border-width: 1px;
+}
+.hero-band-col {
+  display: grid;
+  gap: 18px;
+  padding-bottom: 4px;
 }
 .hero-band-top {
   display: flex;
@@ -915,22 +979,12 @@
   align-items: flex-end;
   justify-content: space-between;
 }
-.hero-band-id {
-  display: flex;
-  gap: 20px;
-  align-items: flex-end;
-  min-width: 0;
-}
-.hero-band .hero-plate {
-  width: 200px;
-}
 .hero-band-text {
   display: grid;
   gap: 8px;
   min-width: 0;
-  padding-bottom: 6px;
 }
-.hero-band-text .h-page {
+.hero-band-text .h-hero {
   margin: 0;
 }
 .hero-blurb {
@@ -960,24 +1014,38 @@
   background: var(--cyan-bright);
 }
 .hero-tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  flex: 1 1 460px;
-}
-.trend-note {
-  font-size: 11px;
 }
 .hero-tabs {
-  margin-top: 18px;
+  display: flex;
+  gap: 6px;
+  border-bottom: 0;
+  margin-bottom: -1px;
 }
 .hero-tabs .tab {
   text-decoration: none;
+  padding: 10px 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid transparent;
+}
+.hero-tabs .tab.on::after {
+  content: none;
+}
+.hero-tabs .tab.on {
+  border-bottom-color: var(--cyan-bright);
 }
 .hero-main {
   display: grid;
   gap: 36px;
+  padding-top: 28px;
   padding-bottom: 48px;
+}
+/* an unconfigured promo slot renders nothing; the wrapper must not still eat a grid row */
+.hero-ad {
+  display: contents;
 }
 .hero-meta {
   display: grid;
@@ -1020,36 +1088,45 @@
   gap: 10px;
   align-content: start;
 }
+/* the three kit panels carry the design's 14px card padding, not the 20/24 panel pad */
+.kit-panels > .panel-pad,
+.kit-grid > .panel-pad {
+  padding: 14px;
+}
+.kit-panels .empty-cold {
+  margin-top: 4px;
+  padding: 18px 14px;
+}
 .kit-head {
   display: flex;
   gap: 12px;
   align-items: center;
 }
 .kit-key {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 6px;
   flex: none;
   display: grid;
   place-items: center;
   font-family: var(--mono);
   font-weight: 700;
-  font-size: 17px;
+  font-size: 18px;
   background: color-mix(in srgb, var(--ak) 18%, var(--raised));
   border: 1px solid color-mix(in srgb, var(--ak) 45%, var(--border));
   color: var(--ak);
 }
 .k1 {
-  --ak: var(--cyan-bright);
+  --ak: var(--info);
 }
 .k2 {
-  --ak: var(--gold);
+  --ak: oklch(0.75 0.12 170);
 }
 .k3 {
-  --ak: var(--sapphire-acc);
+  --ak: var(--cyan-bright);
 }
 .k4 {
-  --ak: var(--loss);
+  --ak: var(--gold);
 }
 .kit-title {
   min-width: 0;
@@ -1095,11 +1172,17 @@
 }
 .kit-tier {
   display: grid;
-  grid-template-columns: 30px 1fr;
+  grid-template-columns: 30px 36px 1fr;
   gap: 8px;
   align-items: start;
   font-size: 12.5px;
   color: var(--text-2);
+}
+.kit-tier-ap {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  padding-top: 4px;
 }
 .kit-tier-k {
   font-size: 10px;
@@ -1184,8 +1267,8 @@
   justify-items: center;
 }
 .skill-chip .kit-key {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   font-size: 13px;
 }
 .skill-lvl {
@@ -1282,6 +1365,19 @@
   gap: 8px;
   min-width: 0;
 }
+.mup-mono {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-2);
+}
 .mup-name {
   font-size: 13px;
   white-space: nowrap;
@@ -1330,6 +1426,9 @@
   padding: 10px 12px 6px;
   align-items: end;
   border-top: none;
+}
+.itbl-head .label-xs {
+  white-space: nowrap;
 }
 .itbl-title {
   font-size: 14px;
@@ -1406,6 +1505,7 @@
 }
 .reading {
   position: relative;
+  padding: 16px;
 }
 .reading-body {
   margin: 0;

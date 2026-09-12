@@ -71,6 +71,23 @@ export function shortDate(iso: string | null | undefined): string {
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
+//ISO timestamp → "7 Sep 2026" (UTC) — the compact day the filter-bar freshness
+//pill and the band kickers use. Invalid → empty string, like shortDate.
+export function dayDate(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const parts = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const [month, dayComma, year] = parts.split(' ');
+  return `${dayComma?.replace(',', '')} ${month} ${year}`;
+}
+
+/** Minutes (fractional) → "12:30" (m:ss), the design's buy-time form; null → "—". */
+export function minuteClock(minutes: number | null | undefined): string {
+  if (minutes == null || Number.isNaN(minutes) || minutes < 0) return DASH;
+  return duration(Math.round(minutes * 60));
+}
+
 //Raw markdown body → "4 min read". Pure word-count heuristic at 200 wpm (the
 //common blog estimate), floored at 1 so the shortest guide never reads "0 min".
 //Dependency-free on purpose — runs at build time over the post's raw `body`.

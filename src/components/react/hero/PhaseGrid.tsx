@@ -1,6 +1,7 @@
 //Hero Overview §5 — the recommended build by phase. An island rather than SSR markup because
 //every tile carries the app-wide item hover card, which needs a React root + QueryProvider.
 import { overlayFromMeta, type OverlayMeta } from '../../../lib/itemOverlay';
+import { minuteClock } from '../../../lib/format';
 import type { PhaseCard } from '../../../lib/heroOverview';
 import QueryProvider from '../QueryProvider';
 import GameIcon from '../ui/GameIcon';
@@ -22,7 +23,7 @@ export default function PhaseGrid(props: PhaseGridProps) {
 
 function Grid({ phases, catalog }: PhaseGridProps) {
   if (phases.every((p) => p.items.length === 0)) {
-    return <EmptyState title="Computing" message="Item buy times are still folding. This block refreshes hourly." />;
+    return <EmptyState tone="cold" title="Computing" message="Item buy times are still folding. This block refreshes hourly." />;
   }
   return (
     <div className="phase-grid">
@@ -43,7 +44,7 @@ function Grid({ phases, catalog }: PhaseGridProps) {
                     <span className="display phase-name">{it.name}</span>
                     <span className="phase-sub">{it.slotTier}</span>
                   </span>
-                  <span className="mono tnum phase-min">{Math.round(it.minute)}′</span>
+                  <span className="mono tnum phase-min">{minuteClock(it.minute)}</span>
                   <span className="mono tnum" style={{ color: it.winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}>
                     {it.winRate.toFixed(1)}%
                   </span>

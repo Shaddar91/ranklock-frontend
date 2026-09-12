@@ -9,7 +9,7 @@ import { useGameMode } from '../../../lib/useGameMode';
 import { bracketBucket, servedBandLabel, useHeroBracket } from '../../../lib/heroBracket';
 import { overlayFromWire, upgradesFor, type ItemOverlayData } from '../../../lib/itemOverlay';
 import { itemAbility } from '../../../lib/itemDescriptions';
-import { count, DASH } from '../../../lib/format';
+import { count, minuteClock } from '../../../lib/format';
 import GameIcon from '../ui/GameIcon';
 import SectionHeader from '../ui/SectionHeader';
 import EmptyState from '../ui/EmptyState';
@@ -125,11 +125,7 @@ export default function HeroItemTables({
       <SectionHeader
         kicker="What players buy vs what wins"
         title={`Items on ${heroName}`}
-        note={
-          <>
-            {`Buys and average buy minute: RankLock public matches · ${servedBandLabel(bracket)}. Win rates rank by Wilson lower bound over all ranks — the per-rank item fold has no rows yet, so that table does not follow the filter.`}
-          </>
-        }
+        note={`Buys = ${heroName} matches with the item · ${servedBandLabel(bracket)} · WR ranked by Wilson lower bound, all ranks`}
       />
       <div className="itbl-grid">
         <div className="panel itbl">
@@ -140,7 +136,7 @@ export default function HeroItemTables({
             <span className="label-xs num">WR</span>
           </div>
           {popular.length === 0 ? (
-            <EmptyState title="Computing" message="Item buys for this rank are still folding. This block refreshes hourly." />
+            <EmptyState tone="cold" title="Computing" message="Item buys for this rank are still folding. This block refreshes hourly." />
           ) : (
             popular.map((r) => {
               const name = r.item_name ?? meta(r.item_id).name ?? `Item ${r.item_id}`;
@@ -150,7 +146,7 @@ export default function HeroItemTables({
                   <ItemCell id={r.item_id} name={name} icon={r.icon_url ?? null} />
                   <span className="tnum num">{count(r.matches)}</span>
                   <span className="tnum num muted">
-                    {r.avg_buy_time_s == null ? DASH : `${Math.round(r.avg_buy_time_s / 60)}′`}
+                    {minuteClock(r.avg_buy_time_s == null ? null : r.avg_buy_time_s / 60)}
                   </span>
                   <span className="tnum num" style={{ color: wr >= 50 ? 'var(--win)' : 'var(--loss)' }}>
                     {wr.toFixed(1)}%
@@ -169,7 +165,7 @@ export default function HeroItemTables({
             <span className="label-xs num">Games</span>
           </div>
           {winRateRows.length === 0 ? (
-            <EmptyState title="Computing" message="Item win rates are still folding. This block refreshes hourly." />
+            <EmptyState tone="cold" title="Computing" message="Item win rates are still folding. This block refreshes hourly." />
           ) : (
             winRateRows.slice(0, rows).map((r) => (
               <div className="itbl-row itbl-cols-wr" key={r.itemId}>

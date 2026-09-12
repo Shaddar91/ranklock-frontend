@@ -57,7 +57,21 @@ export function statChips(properties: readonly HeroAbilityProperty[], max = 5): 
 
 export interface AbilityTierRow {
   label: string;
+  ap: string;
   effect: string;
+}
+
+//Game constant: an ability point costs 1 / 2 / 5 AP at T1 / T2 / T3. Not served
+//anywhere in the ability payload, so the column is rendered from the rule.
+const TIER_AP = [1, 2, 5];
+
+//Upstream serves only `signature` / `ultimate`. A signature ability with no cooldown
+//is the kit's passive — the only signal the payload carries for the design's label.
+function abilityTypeLabel(type: string, ability: HeroAbilityNumerics | undefined): string {
+  if (type === 'ultimate') return 'Ultimate';
+  if (type !== 'signature') return type ? statLabel(type) : '';
+  const cooldown = (ability?.properties ?? []).find((p) => p.name === 'AbilityCooldown');
+  return (numeric(cooldown?.value) ?? 0) > 0 ? 'Active' : 'Passive';
 }
 
 //Upgrade keys are the raw client property names ("AbilityCooldown"); upstream's own
@@ -77,7 +91,8 @@ function tierRows(ability: HeroAbilityNumerics | undefined): AbilityTierRow[] {
         return `${shown} ${upgradeLabel(u.name)}`.trim();
       })
       .join(' · ');
-    return { label: `T${t.tier}`, effect: described || fromUpgrades };
+    const ap = TIER_AP[t.tier - 1];
+    return { label: `T${t.tier}`, ap: ap == null ? '' : `${ap} AP`, effect: described || fromUpgrades };
   });
 }
 
@@ -117,7 +132,7 @@ export function abilityCards(
     return {
       key: i + 1,
       name: a.name || plainText(spec?.name) || `Ability ${i + 1}`,
-      type: a.ability_type ?? spec?.ability_type ?? '',
+      type: abilityTypeLabel(a.ability_type ?? spec?.ability_type ?? '', spec),
       chips: statChips(spec?.properties ?? []),
       description: routeText || assetText,
       tiers: tierRows(spec),
@@ -136,28 +151,63 @@ export interface StatRow {
 }
 
 //Curated, ordered subset of the client's starting_stats — the rest are scale factors
-//(crit/proc/tech multipliers sitting at 1) that read as noise on a hero page.
+//(crit/proc/tech multipliers sitting at 1) that read as noise on a hero page. Each
+//carries the design's short label and the unit the client value is measured in.
 const BASE_STAT_KEYS = [
-  'max_health',
-  'base_health_regen',
-  'max_move_speed',
-  'sprint_speed',
-  'stamina',
-  'light_melee_damage',
-  'heavy_melee_damage',
+  { key: 'max_health', label: 'Max health', unit: '', signed: false },
+  { key: 'base_health_regen', label: 'Health regen', unit: ' /s', signed: false, dp: 1 },
+  { key: 'max_move_speed', label: 'Move speed', unit: ' m/s', signed: false, dp: 1 },
+  { key: 'sprint_speed', label: 'Sprint speed', unit: ' m/s', signed: true, dp: 1 },
+  { key: 'stamina', label: 'Stamina', unit: '', signed: false },
+  { key: 'light_melee_damage', label: 'Light melee', unit: '', signed: false },
+  { key: 'heavy_melee_damage', label: 'Heavy melee', unit: '', signed: false },
 ] as const;
 
 export function baseStatRows(stats: Record<string, unknown> | null | undefined): StatRow[] {
   if (!stats) return [];
-  return BASE_STAT_KEYS.flatMap((key) => {
-    const entry = stats[key] as { value?: unknown; display_stat_name?: string } | number | undefined;
+  return BASE_STAT_KEYS.flatMap((spec) => {
+    const entry = stats[spec.key] as { value?: unknown } | number | undefined;
     const value = typeof entry === 'object' && entry != null ? entry.value : entry;
     const n = numeric(value);
     if (n == null) return [];
-    const display = typeof entry === 'object' && entry != null ? entry.display_stat_name : undefined;
-    return [{ k: statLabel(key, display), v: trimNumber(n) }];
+    const dp = 'dp' in spec ? (spec.dp as number) : null;
+    const shown = dp == null ? trimNumber(n) : n.toFixed(dp);
+    return [{ k: spec.label, v: `${spec.signed && n > 0 ? '+' : ''}${shown}${spec.unit}` }];
   });
 }
+
+//The design's Weapon panel. No served route carries a weapon baseline today
+//(`starting_stats` has only the weapon_power multipliers), so this returns no rows and
+//the panel renders its cold state; it fills itself the day the keys appear.
+const WEAPON_STAT_KEYS = [
+  { key: 'dps', label: 'DPS', unit: '' },
+  { key: 'sustained_dps', label: 'Sustained DPS', unit: '' },
+  { key: 'bullet_damage', label: 'Bullet damage', unit: '' },
+  { key: 'rounds_per_second', label: 'Rounds per second', unit: '' },
+  { key: 'clip_size', label: 'Clip', unit: '' },
+  { key: 'reload_time', label: 'Reload', unit: 's' },
+  { key: 'falloff_start', label: 'Falloff', unit: 'm' },
+] as const;
+
+export function weaponRows(stats: Record<string, unknown> | null | undefined): StatRow[] {
+  if (!stats) return [];
+  return WEAPON_STAT_KEYS.flatMap((spec) => {
+    const entry = stats[spec.key] as { value?: unknown } | number | undefined;
+    const value = typeof entry === 'object' && entry != null ? entry.value : entry;
+    const n = numeric(value);
+    return n == null ? [] : [{ k: spec.label, v: `${trimNumber(n)}${spec.unit}` }];
+  });
+}
+
+//The design reads the scaling rows in this order; served keys outside it keep their
+//payload order behind them.
+const PER_LEVEL_ORDER = [
+  'MODIFIER_VALUE_BASE_BULLET_DAMAGE_FROM_LEVEL',
+  'MODIFIER_VALUE_BASE_HEALTH_FROM_LEVEL',
+  'MODIFIER_VALUE_TECH_POWER',
+  'MODIFIER_VALUE_BULLET_ARMOR_DAMAGE_RESIST',
+  'MODIFIER_VALUE_TECH_RESIST',
+];
 
 const PER_LEVEL_LABELS: Record<string, string> = {
   MODIFIER_VALUE_BASE_HEALTH_FROM_LEVEL: 'Max health',
@@ -172,9 +222,18 @@ const PER_LEVEL_LABELS: Record<string, string> = {
 
 export function perLevelRows(upgrades: unknown): StatRow[] {
   if (typeof upgrades !== 'object' || upgrades == null) return [];
-  return Object.entries(upgrades as Record<string, unknown>).flatMap(([key, value]) => {
-    const n = numeric(value);
-    if (n == null || n === 0) return [];
-    return [{ k: PER_LEVEL_LABELS[key] ?? statLabel(key.replace(/^MODIFIER_VALUE_/, '')), v: `+${trimNumber(n)}` }];
-  });
+  const rank = (key: string) => {
+    const i = PER_LEVEL_ORDER.indexOf(key);
+    return i < 0 ? PER_LEVEL_ORDER.length : i;
+  };
+  return Object.entries(upgrades as Record<string, unknown>)
+    .filter(([, value]) => {
+      const n = numeric(value);
+      return n != null && n !== 0;
+    })
+    .sort(([a], [b]) => rank(a) - rank(b))
+    .map(([key, value]) => ({
+      k: PER_LEVEL_LABELS[key] ?? statLabel(key.replace(/^MODIFIER_VALUE_/, '')),
+      v: `+${trimNumber(numeric(value) as number)}`,
+    }));
 }

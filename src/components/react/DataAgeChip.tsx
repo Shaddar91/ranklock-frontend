@@ -1,26 +1,42 @@
-//"Stats through {date}" — the shared data-age chip (Component 11 / MASTER M2).
-//One small island mounted in the page header of every stats surface (Heroes,
-//Items, Patches, Lane Lab) so no page implies the numbers are live when the
-//whole site is computed from a frozen ingestion window.
-//
-//Fed by GET /meta/data-horizon (max_match_start_time — the newest ingested
-//match). Honesty contract: while the endpoint is absent (404 on a pre-deploy
-//API), erroring, still loading, or serving a null horizon, this renders NOTHING
-//— no fake date, no error state. The islands on a page share the singleton
-//QueryClient, so Lane Lab's sample-window caption reuses this same fetch.
+//"Stats through {date}" — the shared data-age chip, on every stats surface so no page
+//implies live numbers over a frozen ingestion window. Fed by GET /meta/data-horizon;
+//an absent, erroring or null horizon renders NOTHING — never a fake date.
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../lib/apiClient';
-import { statsThroughDate } from '../../lib/dataHorizon';
+import { statsThroughDate, statsThroughDay } from '../../lib/dataHorizon';
 import QueryProvider from './QueryProvider';
 import { Chip } from './ui/index';
 
-function DataAgeChipInner({ inline }: { inline?: boolean }) {
+interface DataAgeChipProps {
+  inline?: boolean;
+  //`pill` = the filter-bar form; `through` = a build-time day that skips the client fetch.
+  pill?: boolean;
+  patch?: string | null;
+  through?: string | null;
+}
+
+function DataAgeChipInner({ inline, pill, patch, through }: DataAgeChipProps) {
   const horizon = useQuery({
     queryKey: queryKeys.dataHorizon(),
     queryFn: api.getDataHorizon,
     //a pre-deploy 404 / offline API is an EXPECTED silent state — don't retry-hammer it.
     retry: false,
+    enabled: through == null,
   });
+  if (pill) {
+    const day = through ?? statsThroughDay(horizon.data);
+    if (day == null) return null;
+    return (
+      <span
+        className="mono tnum freshpill"
+        title={`Newest match in the dataset started ${day}. Everything on this site is computed from matches up to that date.`}
+      >
+        <i className="freshpill-dot" aria-hidden="true" />
+        Through {day}
+        {patch ? ` · patch ${patch}` : ''}
+      </span>
+    );
+  }
   const date = statsThroughDate(horizon.data);
   if (date == null) return null;
   return (
@@ -36,10 +52,10 @@ function DataAgeChipInner({ inline }: { inline?: boolean }) {
 }
 
 //`inline` drops the stacking margin so the chip can sit in a filter-bar row.
-export default function DataAgeChip({ inline }: { inline?: boolean }) {
+export default function DataAgeChip(props: DataAgeChipProps) {
   return (
     <QueryProvider>
-      <DataAgeChipInner inline={inline} />
+      <DataAgeChipInner {...props} />
     </QueryProvider>
   );
 }

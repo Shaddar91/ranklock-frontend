@@ -3,7 +3,13 @@
 import FilterBar from '../ui/FilterBar';
 import { useHeroBracket } from '../../../lib/heroBracket';
 
-export default function HeroFilterBar({ currentPath }: { currentPath: string }) {
+interface HeroFilterBarProps {
+  currentPath: string;
+  patch?: string | null;
+  through?: string | null;
+}
+
+export default function HeroFilterBar({ currentPath, patch, through }: HeroFilterBarProps) {
   const { bracket, setBracket } = useHeroBracket();
-  return <FilterBar bracket={bracket} onBracketChange={setBracket} currentPath={currentPath} />;
+  return <FilterBar bracket={bracket} onBracketChange={setBracket} currentPath={currentPath} bleed patch={patch} through={through} />;
 }

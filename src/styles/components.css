@@ -147,6 +147,20 @@
 .btn-ghost {
   background: transparent;
 }
+/* design's small-caps action button (Test in Build Lab / Open in Build Lab) */
+.btn-caps {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 9px 14px;
+}
+/* the section-head trailing link: sentence case, 13px display, accent */
+.sec-link {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
 .btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -597,6 +611,49 @@ textarea {
 [data-badge='label-only'] .brk img {
   display: none;
 }
+/* filter-bar form: round, full-colour rank medallions, brass ring on the active one */
+[data-badge='emblem-only'] .brkfilter {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+[data-badge='emblem-only'] .brk {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  position: relative;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+}
+[data-badge='emblem-only'] .brk img {
+  position: absolute;
+  inset: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  object-fit: contain;
+  filter: none;
+}
+[data-badge='emblem-only'] .brk:hover {
+  border-color: var(--brass-2);
+  background: var(--surface);
+}
+[data-badge='emblem-only'] .brk.on {
+  border-color: var(--brass-1);
+  background: var(--overlay);
+  box-shadow: none;
+}
+.brk-all {
+  font-size: 12px;
+  font-weight: 600;
+}
+[data-badge='emblem-only'] .brk-all {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
 
 /* ---------- game-mode toggle (global Normal/Brawl, on the meta pages) ---------- */
 .gm-toggle {
@@ -717,10 +774,68 @@ textarea {
   background: color-mix(in srgb, var(--tc) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--tc) 40%, transparent);
 }
+.statile-band .tierpill {
+  min-width: 34px;
+  width: auto;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  font-size: 16px;
+  background: color-mix(in srgb, var(--tc) 22%, var(--raised));
+  border-color: color-mix(in srgb, var(--tc) 50%, var(--border));
+}
 
 /* ---------- stat tile ---------- */
 .statile {
   padding: 14px 15px;
+}
+.statile-head {
+  margin-bottom: 6px;
+}
+.statile-value {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.statile-unit {
+  font-size: 15px;
+  color: var(--muted);
+  margin-left: 2px;
+}
+.statile-trend {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+.statile-sub {
+  margin-top: 6px;
+}
+/* band card — the hero/item identity-band metric (design: 26px mono, no filigree) */
+.statile-band {
+  background: color-mix(in srgb, var(--raised) 85%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 12px 14px;
+  min-width: 132px;
+}
+.statile-band .statile-head {
+  margin-bottom: 0;
+}
+.statile-band .statile-value {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.statile-band .statile-sub {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
 }
 
 /* ---------- legend ---------- */
@@ -1027,6 +1142,19 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
   font-size: 13px;
   color: var(--muted);
   max-width: 40ch;
+}
+/* cold-data box — the design's dashed "Computing" placeholder */
+.empty-cold {
+  border: 1px dashed var(--border);
+  border-radius: var(--r-card);
+  padding: 22px;
+  gap: 4px;
+}
+.empty-cold .empty-title {
+  font-size: 13px;
+}
+.empty-cold .empty-sub {
+  max-width: 52ch;
 }
 
 /* theme switcher island */
@@ -1995,7 +2123,7 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 /* ---------- section head + sticky filter bar ---------- */
 .sechead {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
@@ -2004,19 +2132,29 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 .sechead-main {
   min-width: 0;
 }
+.sechead .kicker {
+  margin-bottom: 6px;
+}
+.sechead .h-sec {
+  margin: 0;
+}
+.h-sec-sm {
+  font-size: 15px;
+}
 .sechead-note {
-  margin: 6px 0 0;
-  font-size: 12.5px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.4;
   color: var(--muted);
-  max-width: 70ch;
+  text-align: right;
 }
 .sechead-action {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-top: 12px;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .filterbar {
@@ -2032,13 +2170,12 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 .filterbar-inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
-  padding: 8px 0;
+  padding: 10px 0;
 }
-.filterbar-rank,
 .filterbar-right {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -2046,4 +2183,55 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 }
 .filterbar-label {
   color: var(--text-2);
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 500;
+  font-size: 12px;
+  font-family: var(--display);
+}
+/* full-bleed under the hero band: the bar owns the page gutter, not a wrapper */
+.filterbar--bleed {
+  margin: 0;
+  border-top: 0;
+}
+.filterbar--bleed .filterbar-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 10px max(24px, env(safe-area-inset-right)) 10px max(24px, env(safe-area-inset-left));
+}
+
+/* freshness pill — live dot + the ingestion day + the catalog patch */
+.freshpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.freshpill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--win);
+  animation: rl-pulse 1.6s ease-in-out infinite;
+}
+@keyframes rl-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .freshpill-dot {
+    animation: none;
+  }
 }

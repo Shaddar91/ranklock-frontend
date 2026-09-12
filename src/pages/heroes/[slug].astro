@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
 import { breadcrumbJsonLd } from '../../lib/seo';
-import { count, pickShare, shortDate } from '../../lib/format';
+import { count, dayDate, pickShare, shortDate } from '../../lib/format';
 import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
 import EmptyState from '../../components/react/ui/EmptyState';
@@ -16,7 +16,7 @@ import { heroArt } from '../../lib/heroArt';
 import { publishedGuideSlugs } from '../../lib/guideRoutes';
 import { releasedRoster } from '../../lib/heroRoster';
 import { heroPath, slugRoster } from '../../lib/heroSlugs';
-import { abilityCards, baseStatRows, perLevelRows } from '../../lib/heroKit';
+import { abilityCards, baseStatRows, perLevelRows, weaponRows } from '../../lib/heroKit';
 import { buildPhases, duoRows, matchupRows, mergeMatchups, phaseCandidates, readingTheNumbers } from '../../lib/heroOverview';
 import { itemTierNumeral } from '../../lib/itemTiers';
 import type {
@@ -111,9 +111,10 @@ const pickRate = pickShare(hero?.picks, totalPicks);
 const kit = abilityCards(abilityRows, assets);
 const baseRows = baseStatRows((baseStats?.stats ?? assets?.starting_stats) as Record<string, unknown> | null);
 const levelRows = perLevelRows(assets?.standard_level_up_upgrades);
+const weaponStats = weaponRows((baseStats?.stats ?? assets?.starting_stats) as Record<string, unknown> | null);
 const kitPatch = baseStats?.patch_id ?? patches.find((p) => p.is_current)?.patch_id ?? '';
 const kitNote = [
-  `Numbers from the client${kitPatch ? ` · patch ${kitPatch}` : ''}`,
+  `Numbers from the ${kitPatch || 'current'} client`,
   kit.textSource === 'assets-localization' ? 'ability text © Valve (localization join)' : 'ability text © Valve',
 ].join(' · ');
 
@@ -201,6 +202,7 @@ const patchRows = patches.slice(0, 3).map((p) => ({
   isCurrent: p.is_current,
 }));
 
+const horizonDay = dayDate(horizon?.max_match_start_time) || null;
 const windowOf = (ds: string) => horizon?.datasets.find((d) => d.dataset === ds);
 const matchWindowHi = windowOf('hero-matchups')?.window_hi ?? horizon?.max_match_start_time ?? null;
 const matchWindow = matchWindowHi ? `through ${shortDate(matchWindowHi)}` : 'window unavailable';
@@ -254,13 +256,11 @@ const tabs = [
           tabs={tabs}
         />
 
-        <div class="container">
-          <HeroFilterBar currentPath={canonicalPath} client:load />
-        </div>
+        <HeroFilterBar currentPath={canonicalPath} patch={kitPatch || null} through={horizonDay} client:load />
 
         <main class="container hero-main">
           {AD_SLOTS === 'on' && (
-            <div>
+            <div class="hero-ad">
               <AdSlot kind="banner" client:load />
             </div>
           )}
@@ -268,7 +268,11 @@ const tabs = [
           <section id="kit">
             <SectionHeader kicker="How it works" title="Kit" note={kitNote} />
             {kit.cards.length === 0 ? (
-              <EmptyState title="Computing" message="The ability catalog is still folding. This block refreshes hourly." />
+              <EmptyState
+                tone="cold"
+                title="Computing"
+                message="The ability catalog is still folding. This block refreshes hourly."
+              />
             ) : (
               <div class="kit-grid">
                 {kit.cards.map((a) => (
@@ -295,6 +299,7 @@ const tabs = [
                         {a.tiers.map((t) => (
                           <div class="kit-tier">
                             <span class="mono kit-tier-k">{t.label}</span>
+                            <span class="mono kit-tier-ap">{t.ap}</span>
                             <span>{t.effect}</span>
                           </div>
                         ))}
@@ -306,39 +311,63 @@ const tabs = [
             )}
 
             <div class="kit-panels">
-              {baseRows.length > 0 && (
-                <div class="panel panel-pad">
-                  <div class="kit-panel-head">
-                    <span class="display">Base stats</span>
-                    <span class="muted">level 1{kitPatch ? ` · patch ${kitPatch}` : ''}</span>
-                  </div>
-                  {baseRows.map((r) => (
+              <div class="panel panel-pad">
+                <div class="kit-panel-head">
+                  <span class="display">Weapon</span>
+                  <span class="muted">DPS at 0–25m, no items</span>
+                </div>
+                {weaponStats.length === 0 ? (
+                  <EmptyState
+                    tone="cold"
+                    title="Computing"
+                    message="No served route carries a weapon baseline yet. This panel fills when bullet damage, fire cycle, clip, reload and falloff are served."
+                  />
+                ) : (
+                  weaponStats.map((r) => (
                     <div class="kit-stat">
                       <span>{r.k}</span>
                       <span class="mono tnum">{r.v}</span>
                     </div>
-                  ))}
+                  ))
+                )}
+              </div>
+              <div class="panel panel-pad">
+                <div class="kit-panel-head">
+                  <span class="display">Base stats</span>
+                  <span class="muted">level 1{kitPatch ? ` · patch ${kitPatch}` : ''}</span>
                 </div>
-              )}
-              {levelRows.length > 0 && (
-                <div class="panel panel-pad">
-                  <div class="kit-panel-head">
-                    <span class="display">Per level</span>
-                    <span class="muted">power increases, up to level 36</span>
-                  </div>
-                  {levelRows.map((r) => (
+                {baseRows.length === 0 ? (
+                  <EmptyState tone="cold" title="Computing" message="Base stats for this patch are still folding." />
+                ) : (
+                  baseRows.map((r) => (
                     <div class="kit-stat">
                       <span>{r.k}</span>
                       <span class="mono tnum">{r.v}</span>
                     </div>
-                  ))}
-                  <div class="kit-panel-foot">
-                    <a class="btn btn-brass" href="/build-lab/">
-                      Test in Build Lab
-                    </a>
-                  </div>
+                  ))
+                )}
+              </div>
+              <div class="panel panel-pad">
+                <div class="kit-panel-head">
+                  <span class="display">Per level</span>
+                  <span class="muted">power increases, up to level 36</span>
                 </div>
-              )}
+                {levelRows.length === 0 ? (
+                  <EmptyState tone="cold" title="Computing" message="Per-level scaling for this patch is still folding." />
+                ) : (
+                  levelRows.map((r) => (
+                    <div class="kit-stat">
+                      <span>{r.k}</span>
+                      <span class="mono tnum">{r.v}</span>
+                    </div>
+                  ))
+                )}
+                <div class="kit-panel-foot">
+                  <a class="btn btn-brass btn-caps" href="/build-lab/">
+                    Test in Build Lab
+                  </a>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -353,7 +382,11 @@ const tabs = [
               }
             />
             {skillRows.length === 0 ? (
-              <EmptyState title="Computing" message="Ability-order stats are still folding. This block refreshes hourly." />
+              <EmptyState
+                tone="cold"
+                title="Computing"
+                message="Ability-order stats are still folding. This block refreshes hourly."
+              />
             ) : (
               <div class="panel skill-panel">
                 {skillRows.map((row) => (
@@ -392,9 +425,9 @@ const tabs = [
             <SectionHeader
               kicker="What to buy"
               title="Recommended build by phase"
-              note="Phase bands are RankLock editorial · minute = median buy minute (deadlock-api.com, trailing 30 days) · win rate over RankLock public matches"
+              note="Minute = median buy minute · phase bands are RankLock editorial"
             >
-              <a class="kicker" slot="action" href={`${canonicalPath}build/`}>
+              <a class="sec-link" slot="action" href={`${canonicalPath}build/`}>
                 Full build, alternatives and community builds →
               </a>
             </SectionHeader>
