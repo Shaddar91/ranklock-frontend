@@ -1,35 +1,44 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import WinRate from '../../components/WinRate.astro';
 import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
 import { breadcrumbJsonLd } from '../../lib/seo';
-import { count, fixed, kda, metaTier, pct, shortDate } from '../../lib/format';
-import GameArt from '../../components/GameArt.astro';
+import { count, duration, fixed, kda, metaTier, pct, pickShare, shortDate } from '../../lib/format';
 import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
-import Narrative from '../../components/Narrative.astro';
-import { heroNarrative, type HeroCounter, type HeroTierMatchups } from '../../lib/heroNarrative';
+import StatTile from '../../components/react/ui/StatTile';
+import EmptyState from '../../components/react/ui/EmptyState';
+import SectionHeader from '../../components/react/ui/SectionHeader';
+import TierPill from '../../components/react/ui/TierPill';
+import GameArt from '../../components/GameArt.astro';
+import HeroFilterBar from '../../components/react/hero/HeroFilterBar';
+import HeroMetaIsland from '../../components/react/hero/HeroMetaIsland';
 import { heroArt } from '../../lib/heroArt';
 import { publishedGuideSlugs } from '../../lib/guideRoutes';
 import { releasedRoster } from '../../lib/heroRoster';
 import { heroPath, slugRoster } from '../../lib/heroSlugs';
-import { HERO_BRACKETS, rosterByBracket } from '../../lib/buildIndexes';
+import { abilityCards, baseStatRows, perLevelRows } from '../../lib/heroKit';
+import { buildPhases, duoRows, matchupRows, mergeMatchups, phaseCandidates, readingTheNumbers } from '../../lib/heroOverview';
+import { itemTierNumeral } from '../../lib/itemTiers';
 import type {
+  AbilityOrdersResponse,
   DataHorizonResponse,
   HeroAbility,
-  HeroCounterRow,
+  HeroAssetsResponse,
+  HeroBaseStats,
   HeroItemWinRate,
   HeroSummary,
   HeroSynergyRow,
+  ItemModifier,
+  ItemStat,
+  ItemTimingResponse,
   MatchupEntry,
   Patch,
-  TrimmedBuild,
 } from '../../types/api';
 
-//SSG hero detail: headline stats plus the matchup, synergy, item and build
-//tables are baked at build time. A section with no rows is omitted from the
-//DOM — never an empty-state, never a promise of future data.
+//SSG hero overview: every table is baked at build time. The rank filter and the two
+//blocks that answer it hydrate; a section with no rows renders the computing state
+//the DESIGN-SYSTEM defines, never a promise of data that does not exist.
 export async function getStaticPaths() {
   const heroes = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'heroes/[slug]');
   if (heroes.length === 0) {
@@ -43,16 +52,11 @@ const { hero, roster } = Astro.props as { hero: HeroSummary | null; roster: Hero
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const name = hero?.hero_name ?? 'Hero';
-const title = hero
-  ? `${name} Deadlock win rate and matchups | RankLock`
-  : 'Hero — RankLock';
+const title = hero ? `${name} Deadlock win rate and matchups | RankLock` : 'Hero — RankLock';
 const description = hero
-  ? `${name} in Deadlock: win rate, pick rate and KDA, its best and worst matchups, the items that win on it, and community builds.`
+  ? `${name} in Deadlock: win rate, pick rate and KDA, its kit, skill order, the items that win on it, and its best and worst matchups.`
   : 'Deadlock hero detail.';
 const canonicalPath = hero ? heroPath(hero.hero_name) : '/heroes';
-
-//The chip follows the published `guides` entries, the same set /heroes/<slug>/guide/ mints its
-//paths from: linking unconditionally would promise the page for every hero without a guide.
 const hasGuide = (await publishedGuideSlugs()).has(Astro.params.slug as string);
 const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
@@ -60,110 +64,177 @@ const jsonLd = breadcrumbJsonLd(origin, [
   { name, path: canonicalPath },
 ]);
 
-const tier = metaTier(hero?.win_rate);
 const art = heroArt(hero?.icon_url);
+const tier = metaTier(hero?.win_rate);
 const heroKda = kda(hero?.avg_kills, hero?.avg_deaths, hero?.avg_assists);
 
-//Same fetch path as the hero list above (apiClient + buildFetch at build time).
-//A failed or empty endpoint bakes as zero rows and its section is dropped, so a
-//cold origin yields a shorter page, not a broken build.
-//Badge buckets 1-5: the per-band matchup read the ladder sentences need (hero_matchups BRACKET_RANGES).
-const MATCHUP_BUCKETS = [1, 2, 3, 4, 5];
-
-const [matchupRows, synergyRows, itemRows, abilityRows, counterRows, buildRows, horizon, patches, ...bucketPages] = hero
+const [
+  matchupRowsRaw,
+  synergyRows,
+  itemWinRates,
+  itemStats,
+  abilityRows,
+  assets,
+  baseStats,
+  abilityOrders,
+  patches,
+  horizon,
+  modifiers,
+] = hero
   ? await Promise.all([
       buildFetch(api.getHeroMatchups(hero.hero_id), [] as MatchupEntry[]),
       buildFetch(api.getHeroSynergies(hero.hero_id), [] as HeroSynergyRow[]),
       buildFetch(api.getHeroItemWinRates(hero.hero_id), [] as HeroItemWinRate[]),
+      buildFetch(api.getItems(undefined, undefined, hero.hero_id), [] as ItemStat[]),
       buildFetch(api.getHeroAbilities(hero.hero_id), [] as HeroAbility[]),
-      buildFetch(api.getHeroCounters(hero.hero_id), [] as HeroCounterRow[]),
-      buildFetch(api.getHeroBuilds(hero.hero_id), [] as TrimmedBuild[]),
-      buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null),
+      buildFetch(api.getHeroAssets(hero.hero_id), null as HeroAssetsResponse | null),
+      buildFetch(api.getHeroBaseStatsOne(hero.hero_id), null as HeroBaseStats | null),
+      buildFetch(api.getAbilityOrders(hero.hero_id), null as AbilityOrdersResponse | null),
       buildFetch(api.getPatches(), [] as Patch[]),
-      ...MATCHUP_BUCKETS.map((b) => buildFetch(api.getHeroMatchups(hero.hero_id, b), [] as MatchupEntry[])),
+      buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null),
+      buildFetch(api.getItemModifiers(), [] as ItemModifier[]),
     ])
-  : [
-      [] as MatchupEntry[], [] as HeroSynergyRow[], [] as HeroItemWinRate[], [] as HeroAbility[],
-      [] as HeroCounterRow[], [] as TrimmedBuild[], null, [] as Patch[],
-    ];
+  : [[], [], [], [], [], null, null, null, [], null, []];
 
-const tierMatchups: HeroTierMatchups[] = MATCHUP_BUCKETS.map((tier, i) => ({
-  tier,
-  rows: (bucketPages[i] ?? []) as MatchupEntry[],
-}));
+const catalogById = new Map(modifiers.map((m) => [m.item_id, m]));
+const slotTierOf = (id: number): string => {
+  const row = catalogById.get(id);
+  if (!row) return '';
+  const slot = row.item_slot_type ? row.item_slot_type[0]!.toUpperCase() + row.item_slot_type.slice(1) : '';
+  const numeral = itemTierNumeral(row.item_tier);
+  return [slot, numeral].filter(Boolean).join(' · ');
+};
 
-const counters: HeroCounter[] = counterRows
-  .filter((c) => c.matches_played > 0)
-  .map((c) => {
-    const per = (v: number | undefined) => (typeof v === 'number' ? v / c.matches_played : 0);
-    return {
-      enemyId: c.enemy_hero_id,
-      matches: c.matches_played,
-      souls: per(c.networth),
-      deaths: per(c.deaths),
-      kills: per(c.kills),
-      objDamage: per(c.obj_damage),
-      enemySouls: per(c.enemy_networth),
-      enemyDeaths: per(c.enemy_deaths),
-      enemyKills: per(c.enemy_kills),
-      enemyObjDamage: per(c.enemy_obj_damage),
-    };
-  });
+//§1 kicker: the hero's standing among the released roster by pick count this patch.
+const byPicks = [...roster].sort((a, b) => (b.picks ?? 0) - (a.picks ?? 0));
+const patchRank = hero ? byPicks.findIndex((h) => h.hero_id === hero.hero_id) + 1 : 0;
+const totalPicks = roster.reduce((sum, h) => sum + (h.picks ?? 0), 0);
+const pickRate = pickShare(hero?.picks, totalPicks);
+
+const kit = abilityCards(abilityRows, assets);
+const baseRows = baseStatRows((baseStats?.stats ?? assets?.starting_stats) as Record<string, unknown> | null);
+const levelRows = perLevelRows(assets?.standard_level_up_upgrades);
+const kitPatch = baseStats?.patch_id ?? patches.find((p) => p.is_current)?.patch_id ?? '';
+const kitNote = [
+  `Numbers from the client${kitPatch ? ` · patch ${kitPatch}` : ''}`,
+  kit.textSource === 'assets-localization' ? 'ability text © Valve (localization join)' : 'ability text © Valve',
+].join(' · ');
+
+//§4: the two orders the design names. Chips colour by signature slot; upstream serves
+//15- or 16-long sequences and both ride as-is.
+const slotOfAbility = new Map(
+  abilityRows.filter((a) => a.slot.startsWith('signature')).sort((a, b) => a.order - b.order).map((a, i) => [a.ability_id, i + 1]),
+);
+const orders = abilityOrders?.orders ?? [];
+const mostPlayed = orders.reduce<(typeof orders)[number] | null>((best, o) => (best && best.matches >= o.matches ? best : o), null);
+const bestWinRate = orders.reduce<(typeof orders)[number] | null>((best, o) => (best && best.win_rate >= o.win_rate ? best : o), null);
+const skillRows = [
+  { label: 'Most played', order: mostPlayed },
+  { label: 'Highest win rate', order: bestWinRate },
+]
+  .filter((r) => r.order != null)
+  .map((r) => ({
+    label: r.label,
+    matches: r.order!.matches,
+    winRate: r.order!.win_rate * 100,
+    chips: r.order!.abilities.map((id, i) => ({ key: slotOfAbility.get(id) ?? 0, level: i + 1 })),
+  }));
+
+//§5: shortlist the most-bought items per band on the aggregate's average, resolve each
+//to its true median buy minute, then band and render on that one number.
+const candidates = phaseCandidates(itemStats);
+const timings = await Promise.all(
+  candidates.map((r) => buildFetch(api.getItemTiming(r.item_id), null as ItemTimingResponse | null)),
+);
+const medianMinute = new Map(candidates.map((r, i) => [r.item_id, timings[i]?.p50 ?? null]));
+const phases = buildPhases(candidates, slotTierOf, (r) => medianMinute.get(r.item_id) ?? null);
+const phaseItemIds = phases.flatMap((p) => p.items.map((i) => i.itemId));
 
 const heroById = new Map(roster.map((h) => [h.hero_id, h]));
+const rankedMatchups = matchupRows(mergeMatchups(matchupRowsRaw), hero?.win_rate ?? null, heroById);
+const duos = duoRows(synergyRows, hero?.hero_id ?? 0, hero?.win_rate ?? null, heroById);
 
-const matchups = [...matchupRows].sort((a, b) => b.win_rate - a.win_rate);
+const winRateTable = itemWinRates
+  .filter((r) => r.games != null && r.win_rate != null && catalogById.has(r.item_id))
+  .slice(0, 8)
+  .map((r) => ({
+    itemId: r.item_id,
+    name: catalogById.get(r.item_id)?.item_name ?? `Item ${r.item_id}`,
+    winRate: (r.win_rate as number) * 100,
+    wilson: (r.wilson_lower ?? 0) * 100,
+    games: r.games as number,
+  }));
 
-const synergies = synergyRows
-  .map((r) => {
-    const partnerId = r.hero_id1 === hero?.hero_id ? r.hero_id2 : r.hero_id1;
-    const winRate = r.matches_played > 0 ? (r.wins / r.matches_played) * 100 : 0;
-    return { partnerId, matches: r.matches_played, winRate };
-  })
-  .filter((r) => r.matches > 0)
-  .sort((a, b) => b.winRate - a.winRate);
+//Only the rows this page can render travel to the island; the full 167-row catalog stays
+//a client fetch behind the hover card.
+const renderedIds = new Set<number>([
+  ...itemStats.slice(0, 40).map((r) => r.item_id),
+  ...winRateTable.map((r) => r.itemId),
+  ...phaseItemIds,
+]);
+const catalog = Object.fromEntries(
+  [...renderedIds].flatMap((id) => {
+    const row = catalogById.get(id);
+    return row
+      ? [[
+          String(id),
+          {
+            name: row.item_name ?? `Item ${id}`,
+            icon: row.shop_image_webp,
+            slot: row.item_slot_type,
+            tier: row.item_tier,
+            cost: row.cost,
+            slotTier: slotTierOf(id),
+          },
+        ]]
+      : [];
+  }),
+);
 
-const items = itemRows
-  .filter((r) => r.win_rate != null)
-  .sort((a, b) => (b.win_rate ?? 0) - (a.win_rate ?? 0))
-  .slice(0, 20);
+const currentPatch = patches.find((p) => p.is_current) ?? patches[0] ?? null;
+const movers = currentPatch ? await buildFetch(api.getPatchMovers(currentPatch.patch_id), null) : null;
+//The registry stamps its own provenance line on every auto-registered patch; that is
+//plumbing, not a patch note, so it never reaches a reader.
+const REGISTRY_BOILERPLATE = 'Auto-registered patch window';
+const patchRows = patches.slice(0, 3).map((p) => ({
+  patchId: p.patch_id,
+  date: shortDate(p.released_at),
+  note: p.notes_summary?.startsWith(REGISTRY_BOILERPLATE) ? null : p.notes_summary,
+  notesUrl: p.notes_url,
+  isCurrent: p.is_current,
+}));
 
-const builds = buildRows.slice(0, 12);
-
-
-//Provenance for the explanatory copy: each analytics dataset names its own fold
-//window in /meta/data-horizon; patches inside it come from the live patch list.
 const windowOf = (ds: string) => horizon?.datasets.find((d) => d.dataset === ds);
-const windowLo = windowOf('hero-matchups')?.window_lo ?? windowOf('hero-item-win-rates')?.window_lo ?? null;
-const windowHi = windowOf('hero-matchups')?.window_hi ?? windowOf('hero-item-win-rates')?.window_hi ?? null;
-const statsThrough = shortDate(horizon?.max_match_start_time);
-const patchesInWindow =
-  windowLo && windowHi
-    ? patches.filter((p) => p.released_at >= windowLo && p.released_at <= windowHi).length
-    : null;
-const currentPatch = patches.find((p) => p.is_current) ?? null;
+const matchWindowHi = windowOf('hero-matchups')?.window_hi ?? horizon?.max_match_start_time ?? null;
+const matchWindow = matchWindowHi ? `through ${shortDate(matchWindowHi)}` : 'window unavailable';
+const itemWindow = 'trailing 30 days';
 
-const bracketRosters = hero ? await rosterByBracket() : null;
-const sections = hero
-  ? heroNarrative({
-      hero,
-      roster,
-      matchups: matchupRows,
-      tierMatchups,
-      counters,
-      abilities: abilityRows,
-      synergies,
-      items: itemRows,
-      brackets: HERO_BRACKETS.map((b) => ({ key: b.key, label: b.label, roster: bracketRosters?.get(b.key) ?? [] })),
-      heroName: (id) => heroById.get(id)?.hero_name ?? `Hero ${id}`,
-      statsThrough,
-      window: windowLo && windowHi ? { lo: shortDate(windowLo), hi: shortDate(windowHi) } : null,
-      patchesInWindow,
-      currentPatch: currentPatch
-        ? { label: currentPatch.version_label, since: shortDate(currentPatch.released_at) }
+const paragraph = hero
+  ? readingTheNumbers({
+      heroName: name,
+      winRate: hero.win_rate,
+      patchRank: patchRank > 0 ? patchRank : null,
+      rosterSize: roster.length,
+      worstMatchups: [...rankedMatchups].reverse().slice(0, 3).map((m) => ({ name: m.name, winRate: m.winRate })),
+      bestDuo: duos[0] ? { name: duos[0].name, winRate: duos[0].winRate } : null,
+      topWinRateItem: winRateTable[0]
+        ? { name: winRateTable[0].name, winRate: winRateTable[0].winRate, games: winRateTable[0].games }
         : null,
+      mostBoughtItem: (() => {
+        const top = [...itemStats].sort((a, b) => (b.matches ?? 0) - (a.matches ?? 0))[0];
+        return top?.avg_buy_time_s == null
+          ? null
+          : { name: top.item_name ?? `Item ${top.item_id}`, minute: top.avg_buy_time_s / 60, pickRate: null };
+      })(),
     })
   : [];
+
+const tabs = [
+  { label: 'Overview', href: canonicalPath, current: true },
+  { label: 'Build', href: `${canonicalPath}build/`, current: false },
+  ...(hasGuide ? [{ label: 'How to play', href: `${canonicalPath}guide/`, current: false }] : []),
+  { label: 'Counters', href: '#matchups', current: false },
+];
 ---
 
 <BaseLayout
@@ -174,23 +245,19 @@ const sections = hero
   noindex={!hero}
   backdropHero={art?.cls}
 >
-  <main class="container">
-    <nav class="kicker" style="margin-bottom:14px;">
-      <a href="/heroes/" style="color:var(--muted);">← All heroes</a>
-    </nav>
-
-    {
-      hero ? (
-        <div>
-          <div class={art ? 'entity-head hero-head' : 'entity-head'}>
-            {
-              art ? (
+  {
+    hero ? (
+      <Fragment>
+        <section class="container hero-band">
+          <div class="hero-band-top">
+            <div class="hero-band-id">
+              {art ? (
                 <span class="hero-plate" title={name}>
                   <img
                     src={art.cardGloat}
                     alt={name}
-                    width="280"
-                    height="380"
+                    width="200"
+                    height="240"
                     loading="eager"
                     fetchpriority="high"
                     data-fallback={art.card}
@@ -199,191 +266,314 @@ const sections = hero
                 </span>
               ) : (
                 <GameArt name={name} src={hero.icon_url} wrapClass="entity-art" fontSize={32} eager />
-              )
-            }
-            <div class="hero-head-text">
-              <div class="kicker">Hero · Deadlock</div>
-              <h1 class="h-page">{name} win rate and matchups</h1>
-              {tier && <span class="chip" style="margin-top:6px;">Meta tier {tier}</span>}
-              {
-                hasGuide && (
-                  <a class="chip" href={`${canonicalPath}guide/`} style="margin-top:6px; margin-left:2px;">
-                    How to play {name}
-                  </a>
-                )
-              }
-            </div>
-            {art && <img class="hero-wordmark" src={art.nameSvg} alt="" aria-hidden="true" loading="lazy" onerror="this.remove()" />}
-          </div>
-
-          <div class="stat-grid" style="margin-bottom:24px;">
-            <div class="tile statile">
-              <div class="label-xs">Win rate</div>
-              <div class="display tnum" style="font-size:26px; font-weight:700; color:var(--win);">{pct(hero.win_rate)}</div>
-            </div>
-            <div class="tile statile">
-              <div class="label-xs">Picks</div>
-              <div class="display tnum" style="font-size:26px; font-weight:700;">{count(hero.picks)}</div>
-            </div>
-            <div class="tile statile">
-              <div class="label-xs">KDA</div>
-              <div class="display tnum" style="font-size:26px; font-weight:700;">{fixed(heroKda)}</div>
-            </div>
-            <div class="tile statile">
-              <div class="label-xs">Avg souls</div>
-              <div class="display tnum" style="font-size:26px; font-weight:700; color:var(--gold);">{count(hero.avg_net_worth)}</div>
-            </div>
-          </div>
-
-          {
-            /* Mid-content sponsor slot after the headline stat grid (ads plan C5,
-               hero_mid), gated by PUBLIC_AD_SLOTS. Placeholder until ad units exist. */
-            AD_SLOTS === 'on' && (
-              <div style="margin:0 0 24px;">
-                <AdSlot kind="banner" client:load />
-              </div>
-            )
-          }
-
-          <Narrative sections={sections} />
-
-          {
-            matchups.length > 0 && (
-              <section class="panel panel-pad" style="margin-bottom:24px;">
-                <h2 class="h-sec" style="margin-bottom:10px;">Matchups</h2>
-                <div class="dt-scroll">
-                  <table class="dt">
-                    <thead>
-                      <tr>
-                        <th><span class="th-static">Opponent</span></th>
-                        <th class="num"><span class="th-static">Win rate</span></th>
-                        <th class="num"><span class="th-static">Matches</span></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {matchups.map((m) => (
-                        <tr>
-                          <td>
-                            <span class="display" style="font-weight:600; color:var(--text);">
-                              vs {heroById.get(m.hero_b_id)?.hero_name ?? `Hero ${m.hero_b_id}`}
-                            </span>
-                          </td>
-                          <td class="num"><WinRate wr={m.win_rate <= 1 ? m.win_rate * 100 : m.win_rate} /></td>
-                          <td class="num"><span class="tnum">{count(m.matches)}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              )}
+              <div class="hero-band-text">
+                <div class="kicker">
+                  Hero{assets?.description?.role ? ` · ${assets.description.role}` : ''}
+                  {patchRank > 0 ? ` · #${patchRank} of ${roster.length} this patch` : ''}
                 </div>
-              </section>
-            )
-          }
-
-          {
-            synergies.length > 0 && (
-              <section class="panel panel-pad" style="margin-bottom:24px;">
-                <h2 class="h-sec" style="margin-bottom:10px;">Duo synergies</h2>
-                <div class="dt-scroll">
-                  <table class="dt">
-                    <thead>
-                      <tr>
-                        <th><span class="th-static">Duo partner</span></th>
-                        <th class="num"><span class="th-static">Win rate</span></th>
-                        <th class="num"><span class="th-static">Matches</span></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {synergies.map((s) => {
-                        const partner = heroById.get(s.partnerId);
-                        const partnerName = partner?.hero_name ?? `Hero ${s.partnerId}`;
-                        return (
-                          <tr>
-                            <td>
-                              <span class="flex" style="align-items:center; gap:10px;">
-                                <GameArt name={partnerName} src={partner?.icon_url} wrapClass="hav" wrapStyle="width:28px; height:28px;" />
-                                <span class="display" style="font-weight:600; color:var(--text);">with {partnerName}</span>
-                              </span>
-                            </td>
-                            <td class="num"><WinRate wr={s.winRate} /></td>
-                            <td class="num"><span class="tnum">{count(s.matches)}</span></td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            )
-          }
-
-          {
-            items.length > 0 && (
-              <section class="panel panel-pad" style="margin-bottom:24px;">
-                <h2 class="h-sec" style="margin-bottom:10px;">Best items by win rate</h2>
-                <div class="dt-scroll">
-                  <table class="dt">
-                    <thead>
-                      <tr>
-                        <th><span class="th-static">Item</span></th>
-                        <th class="num"><span class="th-static">Win rate</span></th>
-                        <th class="num"><span class="th-static">Matches</span></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.map((r) => {
-                        const itemName = r.item_name ?? `Item ${r.item_id}`;
-                        return (
-                          <tr>
-                            <td>
-                              <span class="flex" style="align-items:center; gap:10px;">
-                                <GameArt name={itemName} src={r.icon_url} wrapClass="iicon" wrapStyle="width:28px; height:28px;" />
-                                <span class="display" style="font-weight:600; color:var(--text);">{itemName}</span>
-                              </span>
-                            </td>
-                            <td class="num"><WinRate wr={(r.win_rate as number) <= 1 ? (r.win_rate as number) * 100 : (r.win_rate as number)} /></td>
-                            <td class="num"><span class="tnum">{count(r.games)}</span></td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            )
-          }
-
-          {
-            builds.length > 0 && (
-              <section class="panel panel-pad" style="margin-bottom:24px;">
-                <div class="between" style="margin-bottom:10px; gap:16px; flex-wrap:wrap;">
-                  <h2 class="h-sec" style="margin:0;">Community builds</h2>
-                  <a class="kicker" href={`${canonicalPath}build/`}>{name} build guide →</a>
-                </div>
-                <ul style="list-style:none; margin:0; padding:8px 0;">
-                  {builds.map((b) => (
-                    <li class="statrow">
-                      <span class="display" style="font-weight:600; color:var(--text);">{b.name}</span>
-                      <span class="mono" style="font-size:12px; color:var(--gold);">♥ {count(b.num_favorites)}</span>
-                    </li>
+                <h1 class="h-page">{name}</h1>
+                {assets?.description?.playstyle && <p class="hero-blurb">{assets.description.playstyle}</p>}
+                <div class="hero-tags">
+                  {(Array.isArray(assets?.tags) ? (assets?.tags as string[]) : []).map((t) => (
+                    <span class="chip">{t}</span>
                   ))}
-                </ul>
-                <p class="muted" style="font-size:13px; margin:8px 0 0;">
-                  Author names, item lists and the measured best sets are on the{' '}
-                  <a href={`${canonicalPath}build/`}>{name} build page</a>.
-                </p>
-              </section>
-            )
-          }
+                  {typeof assets?.complexity === 'number' && (
+                    <span class="chip">
+                      Complexity
+                      <span class="cxdots">
+                        {[1, 2, 3].map((d) => (
+                          <i class={d <= (assets.complexity as number) ? 'on' : ''}></i>
+                        ))}
+                      </span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div class="hero-tiles">
+              <StatTile label="Win rate" value={pct(hero.win_rate)} color="var(--win)">
+                <Fragment slot="sub">
+                  {
+                    hero.delta_win_rate_7d == null ? (
+                      <span class="muted trend-note">trend appears once the 7-day fold lands</span>
+                    ) : (
+                      <span class={hero.delta_win_rate_7d >= 0 ? 'tnum trend-note win-c' : 'tnum trend-note loss-c'}>
+                        {hero.delta_win_rate_7d >= 0 ? '▲' : '▼'} {Math.abs(hero.delta_win_rate_7d).toFixed(1)} · 7 days
+                      </span>
+                    )
+                  }
+                </Fragment>
+              </StatTile>
+              <StatTile label="Matches" value={count(hero.picks)}>
+                <span class="muted trend-note" slot="sub">
+                  pick rate {pickRate == null ? '—' : `${pickRate.toFixed(1)}%`}
+                </span>
+              </StatTile>
+              <StatTile label="KDA" value={fixed(heroKda)}>
+                <span class="muted trend-note tnum" slot="sub">
+                  {fixed(hero.avg_kills, 1)} / {fixed(hero.avg_deaths, 1)} / {fixed(hero.avg_assists, 1)}
+                </span>
+              </StatTile>
+              <StatTile label="Avg souls" value={count(hero.avg_net_worth)} color="var(--gold)">
+                <span class="muted trend-note" slot="sub">per {duration(hero.avg_duration_s)} match</span>
+              </StatTile>
+              <StatTile label="Meta tier" value="">
+                <TierPill slot="value" tier={tier ?? '—'} />
+                <span class="muted trend-note" slot="sub">RankLock editorial, S to F, off win rate</span>
+              </StatTile>
+          </div>
+
+          <nav class="tabs hero-tabs" aria-label="Hero sections">
+            {tabs.map((t) => (
+              <a class={t.current ? 'tab on' : 'tab'} href={t.href} aria-current={t.current ? 'page' : undefined}>
+                {t.label}
+              </a>
+            ))}
+          </nav>
+        </section>
+
+        <div class="container">
+          <HeroFilterBar currentPath={canonicalPath} client:load />
         </div>
-      ) : (
-        <div>
-          <h1 class="h-page">Hero stats</h1>
-          <p class="page-intro">
-            No hero data was available when this page was built. Browse the <a href="/heroes/">hero meta table</a> for the
-            full roster.
-          </p>
-        </div>
-      )
-    }
-  </main>
+
+        <main class="container hero-main">
+          {AD_SLOTS === 'on' && (
+            <div>
+              <AdSlot kind="banner" client:load />
+            </div>
+          )}
+
+          <section id="kit">
+            <SectionHeader kicker="How it works" title="Kit" note={kitNote} />
+            {kit.cards.length === 0 ? (
+              <EmptyState title="Computing" message="The ability catalog is still folding. This block refreshes hourly." />
+            ) : (
+              <div class="kit-grid">
+                {kit.cards.map((a) => (
+                  <article class="panel panel-pad kit-card">
+                    <div class="kit-head">
+                      <span class={`kit-key k${a.key}`}>{a.key}</span>
+                      <span class="kit-title">
+                        <span class="display kit-name">{a.name}</span>
+                        <span class="label-xs">{a.type}</span>
+                      </span>
+                    </div>
+                    {a.chips.length > 0 && (
+                      <div class="kit-chips">
+                        {a.chips.map((c) => (
+                          <span class="kit-chip">
+                            {c.k} <b class="tnum">{c.v}</b>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {a.description && <p class="kit-desc">{a.description}</p>}
+                    {a.tiers.length > 0 && (
+                      <div class="kit-tiers">
+                        {a.tiers.map((t) => (
+                          <div class="kit-tier">
+                            <span class="mono kit-tier-k">{t.label}</span>
+                            <span>{t.effect}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+
+            <div class="kit-panels">
+              {baseRows.length > 0 && (
+                <div class="panel panel-pad">
+                  <div class="kit-panel-head">
+                    <span class="display">Base stats</span>
+                    <span class="muted">level 1{kitPatch ? ` · patch ${kitPatch}` : ''}</span>
+                  </div>
+                  {baseRows.map((r) => (
+                    <div class="kit-stat">
+                      <span>{r.k}</span>
+                      <span class="mono tnum">{r.v}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {levelRows.length > 0 && (
+                <div class="panel panel-pad">
+                  <div class="kit-panel-head">
+                    <span class="display">Per level</span>
+                    <span class="muted">power increases, up to level 36</span>
+                  </div>
+                  {levelRows.map((r) => (
+                    <div class="kit-stat">
+                      <span>{r.k}</span>
+                      <span class="mono tnum">{r.v}</span>
+                    </div>
+                  ))}
+                  <div class="kit-panel-foot">
+                    <a class="btn btn-brass" href="/build-lab/">
+                      Test in Build Lab
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section id="skill-order">
+            <SectionHeader
+              kicker="What to level first"
+              title="Skill order"
+              note={
+                abilityOrders
+                  ? `${abilityOrders.source} · ${abilityOrders.window} · orders under ${abilityOrders.min_matches.toLocaleString('en-US')} matches hidden`
+                  : 'deadlock-api.com ability-order aggregates'
+              }
+            />
+            {skillRows.length === 0 ? (
+              <EmptyState title="Computing" message="Ability-order stats are still folding. This block refreshes hourly." />
+            ) : (
+              <div class="panel skill-panel">
+                {skillRows.map((row) => (
+                  <div class="skill-row">
+                    <div>
+                      <div class="display skill-label">{row.label}</div>
+                      <div class="mono tnum skill-meta">
+                        {count(row.matches)} matches ·{' '}
+                        <span style={`color:${row.winRate >= 50 ? 'var(--win)' : 'var(--loss)'}`}>
+                          {row.winRate.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                    <div class="skill-chips">
+                      {row.chips.map((c) => (
+                        <span class="skill-chip">
+                          <span class={`kit-key k${c.key}`}>{c.key || '?'}</span>
+                          <span class="mono skill-lvl">{c.level}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <div class="legend skill-legend">
+                  {kit.cards.map((a) => (
+                    <span>
+                      <span class={`kit-swatch k${a.key}`} /> {a.key} {a.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section id="build-summary">
+            <SectionHeader
+              kicker="What to buy"
+              title="Recommended build by phase"
+              note="Phase bands are RankLock editorial · minute = median buy minute (deadlock-api.com, trailing 30 days) · win rate over RankLock public matches"
+            >
+              <a class="kicker" slot="action" href={`${canonicalPath}build/`}>
+                Full build, alternatives and community builds →
+              </a>
+            </SectionHeader>
+            {phases.every((p) => p.items.length === 0) ? (
+              <EmptyState title="Computing" message="Item buy times are still folding. This block refreshes hourly." />
+            ) : (
+              <div class="phase-grid">
+                {phases.map((p) => (
+                  <div class="panel panel-pad phase-card">
+                    <div class="phase-head">
+                      <span class="display">{p.name}</span>
+                      <span class="mono muted">{p.range}</span>
+                    </div>
+                    {p.items.length === 0 ? (
+                      <p class="muted phase-empty">No item clears this band yet.</p>
+                    ) : (
+                      p.items.map((it) => (
+                        <a class="phase-row" href={`/items/${it.itemId}/`}>
+                          <GameArt name={it.name} src={it.iconUrl} wrapClass="iicon" wrapStyle="width:32px; height:32px;" />
+                          <span class="phase-item">
+                            <span class="display phase-name">{it.name}</span>
+                            <span class="phase-sub">{it.slotTier}</span>
+                          </span>
+                          <span class="mono tnum phase-min">{Math.round(it.minute)}′</span>
+                          <span class="mono tnum" style={`color:${it.winRate >= 50 ? 'var(--win)' : 'var(--loss)'}`}>
+                            {it.winRate.toFixed(1)}%
+                          </span>
+                        </a>
+                      ))
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <HeroMetaIsland
+            client:load
+            matchups={{
+              heroId: hero.hero_id,
+              heroWinRate: hero.win_rate,
+              roster: roster.map((h) => ({
+                hero_id: h.hero_id,
+                hero_name: h.hero_name,
+                icon_url: h.icon_url,
+                picks: h.picks,
+                win_rate: h.win_rate,
+                avg_kills: null,
+                avg_deaths: null,
+                avg_assists: null,
+                avg_net_worth: null,
+                avg_duration_s: null,
+              })),
+              initialMatchups: matchupRowsRaw,
+              duos: synergyRows.map((r) => ({
+                hero_id1: r.hero_id1,
+                hero_id2: r.hero_id2,
+                wins: r.wins,
+                matches_played: r.matches_played,
+              })),
+            }}
+            items={{
+              heroId: hero.hero_id,
+              heroName: name,
+              initialItemStats: itemStats.slice(0, 40).map((r) => ({
+                item_id: r.item_id,
+                item_name: r.item_name,
+                icon_url: r.icon_url,
+                matches: r.matches,
+                win_rate: r.win_rate,
+                avg_buy_time_s: r.avg_buy_time_s,
+              })) as ItemStat[],
+              winRateRows: winRateTable,
+              catalog,
+            }}
+            patches={{
+              heroName: name,
+              patches: patchRows,
+              moves: movers == null ? null : [],
+              paragraph,
+              guideHref: hasGuide ? `${canonicalPath}guide/` : null,
+            }}
+            footnote={{
+              matchWindow,
+              itemWindow,
+              kitPatch: kitPatch || 'unknown',
+              abilityOrderFloor: abilityOrders?.min_matches ?? null,
+            }}
+          />
+        </main>
+      </Fragment>
+    ) : (
+      <main class="container">
+        <h1 class="h-page">Hero stats</h1>
+        <p class="page-intro">
+          No hero data was available when this page was built. Browse the <a href="/heroes/">hero meta table</a> for the
+          full roster.
+        </p>
+      </main>
+    )
+  }
 </BaseLayout>
