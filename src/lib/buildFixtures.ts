@@ -1,7 +1,7 @@
 //Golden-test fixtures: Infernus base-stats snapshot (patch 2026-08-22) + the exact item rows the
 //computeStats goldens reference, captured live from api.ranklock.app. The asserted numbers
 //are hand-derived from these values; regenerate if the snapshot changes.
-import type { BaseStats, ItemMods } from './computeStats';
+import type { BaseStats, HeroAssetsLike, ItemMods } from './computeStats';
 
 export const INFERNUS_PATCH = "2026-08-22";
 export const INFERNUS_BASE: BaseStats = {
@@ -408,3 +408,277 @@ export const CATALOG: ItemMods[] = [
     ]
   }
 ];
+
+//The investment track + per-level scaling the same live snapshot serves on /heroes/1/assets
+//(probed 2026-09-12): 11 thresholds ending 22,400/28,800, the 4,800 spike, and the 8,000 step
+//the design's 13-tick track got wrong.
+export const INFERNUS_ASSETS: HeroAssetsLike = {
+  "cost_bonuses": {
+    "spirit": [
+      {
+        "bonus": 7.0,
+        "gold_threshold": 800,
+        "percent_on_graph": 7.0
+      },
+      {
+        "bonus": 11.0,
+        "gold_threshold": 1600,
+        "percent_on_graph": 7.0
+      },
+      {
+        "bonus": 15.0,
+        "gold_threshold": 2400,
+        "percent_on_graph": 8.0
+      },
+      {
+        "bonus": 19.0,
+        "gold_threshold": 3200,
+        "percent_on_graph": 8.0
+      },
+      {
+        "bonus": 38.0,
+        "gold_threshold": 4800,
+        "percent_on_graph": 9.0
+      },
+      {
+        "bonus": 45.0,
+        "gold_threshold": 6400,
+        "percent_on_graph": 9.0
+      },
+      {
+        "bonus": 52.0,
+        "gold_threshold": 8000,
+        "percent_on_graph": 10.0
+      },
+      {
+        "bonus": 59.0,
+        "gold_threshold": 11200,
+        "percent_on_graph": 10.0
+      },
+      {
+        "bonus": 66.0,
+        "gold_threshold": 16000,
+        "percent_on_graph": 10.0
+      },
+      {
+        "bonus": 75.0,
+        "gold_threshold": 22400,
+        "percent_on_graph": 11.0
+      },
+      {
+        "bonus": 100.0,
+        "gold_threshold": 28800,
+        "percent_on_graph": 11.0
+      }
+    ],
+    "vitality": [
+      {
+        "bonus": 9.0,
+        "gold_threshold": 800,
+        "percent_on_graph": 7.0
+      },
+      {
+        "bonus": 12.0,
+        "gold_threshold": 1600,
+        "percent_on_graph": 7.0
+      },
+      {
+        "bonus": 15.0,
+        "gold_threshold": 2400,
+        "percent_on_graph": 8.0
+      },
+      {
+        "bonus": 20.0,
+        "gold_threshold": 3200,
+        "percent_on_graph": 8.0
+      },
+      {
+        "bonus": 38.0,
+        "gold_threshold": 4800,
+        "percent_on_graph": 9.0
+      },
+      {
+        "bonus": 42.0,
+        "gold_threshold": 6400,
+        "percent_on_graph": 9.0
+      },
+      {
+        "bonus": 46.0,
+        "gold_threshold": 8000,
+        "percent_on_graph": 10.0
+      },
+      {
+        "bonus": 50.0,
+        "gold_threshold": 11200,
+        "percent_on_graph": 10.0
+      },
+      {
+        "bonus": 54.0,
+        "gold_threshold": 16000,
+        "percent_on_graph": 10.0
+      },
+      {
+        "bonus": 60.0,
+        "gold_threshold": 22400,
+        "percent_on_graph": 11.0
+      },
+      {
+        "bonus": 66.0,
+        "gold_threshold": 28800,
+        "percent_on_graph": 11.0
+      }
+    ],
+    "weapon": [
+      {
+        "bonus": 9.0,
+        "gold_threshold": 800,
+        "percent_on_graph": 7.0
+      },
+      {
+        "bonus": 12.0,
+        "gold_threshold": 1600,
+        "percent_on_graph": 7.0
+      },
+      {
+        "bonus": 15.0,
+        "gold_threshold": 2400,
+        "percent_on_graph": 8.0
+      },
+      {
+        "bonus": 18.0,
+        "gold_threshold": 3200,
+        "percent_on_graph": 8.0
+      },
+      {
+        "bonus": 46.0,
+        "gold_threshold": 4800,
+        "percent_on_graph": 9.0
+      },
+      {
+        "bonus": 54.0,
+        "gold_threshold": 6400,
+        "percent_on_graph": 9.0
+      },
+      {
+        "bonus": 62.0,
+        "gold_threshold": 8000,
+        "percent_on_graph": 10.0
+      },
+      {
+        "bonus": 74.0,
+        "gold_threshold": 11200,
+        "percent_on_graph": 10.0
+      },
+      {
+        "bonus": 86.0,
+        "gold_threshold": 16000,
+        "percent_on_graph": 10.0
+      },
+      {
+        "bonus": 100.0,
+        "gold_threshold": 22400,
+        "percent_on_graph": 11.0
+      },
+      {
+        "bonus": 115.0,
+        "gold_threshold": 28800,
+        "percent_on_graph": 11.0
+      }
+    ]
+  },
+  "purchase_bonuses": {
+    "spirit": [
+      {
+        "tier": 1,
+        "value": "4",
+        "value_type": "MODIFIER_VALUE_TECH_POWER"
+      },
+      {
+        "tier": 2,
+        "value": "7",
+        "value_type": "MODIFIER_VALUE_TECH_POWER"
+      },
+      {
+        "tier": 3,
+        "value": "10",
+        "value_type": "MODIFIER_VALUE_TECH_POWER"
+      },
+      {
+        "tier": 4,
+        "value": "13",
+        "value_type": "MODIFIER_VALUE_TECH_POWER"
+      },
+      {
+        "tier": 5,
+        "value": "16",
+        "value_type": "MODIFIER_VALUE_TECH_POWER"
+      }
+    ],
+    "vitality": [
+      {
+        "tier": 1,
+        "value": "7",
+        "value_type": "MODIFIER_VALUE_BASE_HEALTH_PERCENT"
+      },
+      {
+        "tier": 2,
+        "value": "8",
+        "value_type": "MODIFIER_VALUE_BASE_HEALTH_PERCENT"
+      },
+      {
+        "tier": 3,
+        "value": "9",
+        "value_type": "MODIFIER_VALUE_BASE_HEALTH_PERCENT"
+      },
+      {
+        "tier": 4,
+        "value": "10",
+        "value_type": "MODIFIER_VALUE_BASE_HEALTH_PERCENT"
+      },
+      {
+        "tier": 5,
+        "value": "11",
+        "value_type": "MODIFIER_VALUE_BASE_HEALTH_PERCENT"
+      }
+    ],
+    "weapon": [
+      {
+        "tier": 1,
+        "value": "4",
+        "value_type": "MODIFIER_VALUE_WEAPON_DAMAGE_INCREASE"
+      },
+      {
+        "tier": 2,
+        "value": "8",
+        "value_type": "MODIFIER_VALUE_WEAPON_DAMAGE_INCREASE"
+      },
+      {
+        "tier": 3,
+        "value": "13",
+        "value_type": "MODIFIER_VALUE_WEAPON_DAMAGE_INCREASE"
+      },
+      {
+        "tier": 4,
+        "value": "18",
+        "value_type": "MODIFIER_VALUE_WEAPON_DAMAGE_INCREASE"
+      },
+      {
+        "tier": 5,
+        "value": "23",
+        "value_type": "MODIFIER_VALUE_WEAPON_DAMAGE_INCREASE"
+      }
+    ]
+  },
+  "standard_level_up_upgrades": {
+    "MODIFIER_VALUE_BASE_BULLET_DAMAGE_FROM_LEVEL": 0.088,
+    "MODIFIER_VALUE_BASE_BULLET_DAMAGE_FROM_LEVEL_ALT_FIRE": 0.0,
+    "MODIFIER_VALUE_BASE_HEALTH_FROM_LEVEL": 39.0,
+    "MODIFIER_VALUE_BASE_MELEE_DAMAGE_FROM_LEVEL": 1.58,
+    "MODIFIER_VALUE_BONUS_ATTACK_RANGE": 0.0,
+    "MODIFIER_VALUE_BOON_COUNT": 1.0,
+    "MODIFIER_VALUE_BULLET_ARMOR_DAMAGE_RESIST": 0.0,
+    "MODIFIER_VALUE_TECH_DAMAGE_MULTIPLIER": 0.0,
+    "MODIFIER_VALUE_TECH_POWER": 1.1,
+    "MODIFIER_VALUE_TECH_RESIST": 0.0
+  }
+};
