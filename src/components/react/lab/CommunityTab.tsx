@@ -7,7 +7,7 @@ import { signatureSlots } from '../../../lib/buildMeta';
 import { EmptyState } from '../ui/index';
 import { CommunityBuildsTable } from '../hero/CommunityBuilds';
 import { HeroSelect, HowToPlayLink, useHeroRoster, type RosterSlug } from './HeroBar';
-import type { CommunityBuild, HeroAbility } from '../../../types/api';
+import type { CommunityBuild, HeroAbility, Patch } from '../../../types/api';
 
 interface CommunityTabProps {
   heroId: number | null;
@@ -31,6 +31,13 @@ export default function CommunityTab({ heroId, onHero, roster, onImport }: Commu
     queryKey: queryKeys.heroAbilities(hero ?? -1),
     queryFn: () => api.getHeroAbilities(hero!),
     enabled: hero != null,
+    retry: false,
+  });
+
+  const patchesQuery = useQuery<Patch[]>({
+    queryKey: queryKeys.patches(),
+    queryFn: () => api.getPatches(),
+    staleTime: 60 * 60_000,
     retry: false,
   });
 
@@ -68,7 +75,7 @@ export default function CommunityTab({ heroId, onHero, roster, onImport }: Commu
           heroId={active.hero_id}
           initialBuilds={builds}
           abilitySlots={abilitySlots}
-          currentPatchId={active.patch_id ?? null}
+          patches={patchesQuery.data ?? []}
           nowSeconds={nowSeconds}
           kicker={`Published in-game builds · ${active.hero_name}`}
           brackets={false}

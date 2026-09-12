@@ -8,7 +8,7 @@ import { bracketBucket, servedBandLabel, useHeroBracket } from '../../../lib/her
 import { bracketLabel } from '../ui/FilterBar';
 import { buildByPhase, buyOrderTrack, type CatalogEntry } from '../../../lib/heroBuild';
 import { overlayFromMeta } from '../../../lib/itemOverlay';
-import { count } from '../../../lib/format';
+import { count, minuteClock } from '../../../lib/format';
 import QueryProvider from '../QueryProvider';
 import GameIcon from '../ui/GameIcon';
 import SectionHeader from '../ui/SectionHeader';
@@ -24,7 +24,6 @@ export interface BuildPhasesProps {
   slots?: number;
 }
 
-const minute = (m: number | null): string => (m == null ? '—' : `${Math.round(m)}′`);
 const wrColor = (wr: number) => ({ color: wr >= 50 ? 'var(--win)' : 'var(--loss)' });
 
 export default function BuildPhases(props: BuildPhasesProps) {
@@ -71,15 +70,15 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
         <SectionHeader
           kicker="What to buy and when"
           title="The build by phase"
-          note={`Buys, average buy minute and win rate: RankLock public matches · ${band}. Phase bands and the core/situational split are RankLock editorial — core means the item is bought in at least 60% of the games the hero's most-bought item is.`}
+          note={`Minute = average buy time · WR = games where the item was bought in that phase · ${band} · Core is RankLock editorial`}
           action={
-            <a className="btn btn-brass" href="/build-lab/">
+            <a className="btn btn-brass btn-caps" href="/build-lab/">
               Open in Build Lab
             </a>
           }
         />
         {phases.every((p) => p.items.length === 0) ? (
-          <EmptyState title="Computing" message="Item buys for this rank are still folding. This block refreshes hourly." />
+          <EmptyState tone="cold" title="Computing" message="Item buys for this rank are still folding. This block refreshes hourly." />
         ) : (
           <div className="phase-grid">
             {phases.map((p) => (
@@ -90,6 +89,13 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
                     {p.range}
                     {p.souls == null ? '' : ` · ≈ ${count(p.souls)} souls`}
                   </span>
+                </div>
+                <div className="bp-phase-head">
+                  <span />
+                  <span>Item</span>
+                  <span className="num">Min</span>
+                  <span className="num">WR</span>
+                  <span className="num">Games</span>
                 </div>
                 {p.items.length === 0 ? (
                   <p className="muted phase-empty">No item clears this band yet.</p>
@@ -105,9 +111,11 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
                               {it.core ? 'Core' : 'Situational'}
                             </span>
                           </span>
-                          <span className="phase-sub">{it.slotTier}</span>
+                          <span className="phase-sub">
+                            {it.cost == null ? it.slotTier : `${it.slotTier} · ${count(it.cost)} souls`}
+                          </span>
                         </span>
-                        <span className="mono tnum phase-min">{minute(it.minute)}</span>
+                        <span className="mono tnum phase-min">{minuteClock(it.minute)}</span>
                         <span className="mono tnum" style={wrColor(it.winRate)}>
                           {it.winRate.toFixed(1)}%
                         </span>
@@ -126,10 +134,10 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
         <SectionHeader
           kicker="In what order"
           title="Buy order by slot"
-          note={`The ${slots} most-bought items on this hero in average-buy-minute order · ${band}. Souls = the running board cost from the item catalog; affordable = when a median-farming lobby (${paceLabel}) has that many souls — RankLock public matches p50, all heroes, because the souls curve is not hero-scoped.`}
+          note={`Souls = cumulative board cost · minute = when a median-farming lobby (${paceLabel}) can afford the slot`}
         />
         {track.length === 0 ? (
-          <EmptyState title="Computing" message="Item costs and buy times are still folding. This block refreshes hourly." />
+          <EmptyState tone="cold" title="Computing" message="Item costs and buy times are still folding. This block refreshes hourly." />
         ) : (
           <div className="bp-track">
             {track.map((s) => (
@@ -138,10 +146,9 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
                   <span className="mono bp-slot-n">SLOT {s.pos}</span>
                   <GameIcon kind="item" name={s.name} src={s.iconUrl} size={38} />
                   <span className="display bp-slot-name">{s.name}</span>
-                  <span className="mono tnum bp-slot-min">bought {minute(s.minute)}</span>
-                  <span className="mono tnum bp-slot-souls">{count(s.cumulative)} souls</span>
-                  <span className="mono tnum bp-slot-afford">affordable {minute(s.affordMinute)}</span>
-                  <span className="mono tnum" style={wrColor(s.winRate)}>
+                  <span className="mono tnum bp-slot-min">{minuteClock(s.affordMinute)}</span>
+                  <span className="mono tnum bp-slot-souls">{count(s.cumulative)}</span>
+                  <span className="mono tnum bp-slot-wr" style={wrColor(s.winRate)}>
                     {s.winRate.toFixed(1)}%
                   </span>
                 </a>

@@ -4,21 +4,25 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
-import { abilityOrderSequence, authorLabel, formatUpdated, isUpdatedThisPatch } from '../../../lib/buildMeta';
+import { abilityOrderSequence, authorLabel, patchesAgo } from '../../../lib/buildMeta';
 import { RANKED_BRACKETS, rankedBracketLabel } from '../../../lib/heroBuild';
 import { count, DASH } from '../../../lib/format';
 import QueryProvider from '../QueryProvider';
 import SectionHeader from '../ui/SectionHeader';
 import EmptyState from '../ui/EmptyState';
-import type { CommunityBuild, RankedBracketKey, TrimmedBuild } from '../../../types/api';
+import type { CommunityBuild, Patch, RankedBracketKey, RankedBuildsResponse, TrimmedBuild } from '../../../types/api';
 
 export interface CommunityBuildsProps {
   heroId: number;
   initialBuilds: CommunityBuild[];
   //Ability id -> signature slot 1..4, so the first four points render as the hero's own keys.
   abilitySlots: Record<string, number>;
-  currentPatchId: string | null;
+  patches: Pick<Patch, 'released_at'>[];
   nowSeconds: number;
+  //The bracket the page opens on, with its rows baked at build time so the table renders
+  //its win-rate column in the static HTML.
+  initialSelection?: Selection;
+  initialRanked?: RankedBuildsResponse | null;
   kicker?: string;
   //Off in the lab: the Build page is the primary surface for the rank filter (04 §4).
   brackets?: boolean;
@@ -26,12 +30,11 @@ export interface CommunityBuildsProps {
   onImport?: (buildId: number) => void;
 }
 
-type Selection = 'weekly' | RankedBracketKey;
+export type Selection = 'weekly' | RankedBracketKey;
 
-//The weekly join and the ranked route both floor at 20 matches; the weekly one additionally
-//asks upstream for lobbies at badge 80 and above (backend COMMUNITY_BADGE_FLOOR).
-const WEEKLY_NOTE =
-  'Trending across all ranks · win rate from deadlock-api.com hero-build-stats: lobby-average badge 80+ · trailing 30 days · min 20 matches';
+//Trending is the weekly-favorites join; it carries no win rate today, so the table says so
+//rather than ranking on a column it cannot fill.
+const WEEKLY_NOTE = 'Trending across all ranks by weekly favorites · no 30-day win rate is served for this join';
 const IMPORT_NOTE = 'Import opens the build in Analyze';
 
 interface Row {
@@ -61,51 +64,59 @@ export function CommunityBuildsTable({
   heroId,
   initialBuilds,
   abilitySlots,
-  currentPatchId,
+  patches,
   nowSeconds,
+  initialSelection = 'weekly',
+  initialRanked = null,
   kicker = 'Which published build actually wins',
   brackets = true,
   onImport,
 }: CommunityBuildsProps) {
-  const [selection, setSelection] = useState<Selection>('weekly');
+  const [selection, setSelection] = useState<Selection>(brackets ? initialSelection : 'weekly');
   const ranked = brackets && selection !== 'weekly';
 
   const { data, isPending, isError } = useQuery({
     queryKey: queryKeys.heroRankedBuilds(heroId, selection),
     queryFn: () => api.getRankedBuilds(heroId, selection),
     enabled: ranked,
+    initialData: selection === initialSelection && initialRanked ? initialRanked : undefined,
     staleTime: 30 * 60_000,
   });
 
   const rows = useMemo(() => {
-    const toRow = (b: TrimmedBuild, winRate: number | null, matches: number | null, author: string): Row => ({
-      key: String(b.hero_build_id),
-      buildId: b.hero_build_id,
-      title: b.name?.trim() || author,
-      untitled: !b.name?.trim(),
-      author,
-      categories: b.categories.length,
-      winRate,
-      matches,
-      weekly: b.num_weekly_favorites,
-      points: abilityOrderSequence(b.ability_order)
-        .slice(0, 4)
-        .map((id) => abilitySlots[String(id)] ?? 0),
-      updated: formatUpdated(b.last_updated_timestamp, nowSeconds),
-      thisPatch: isUpdatedThisPatch(b.last_updated_timestamp, currentPatchId),
-    });
+    //Trending carries the weekly favorite count, the ranked route the all-time one; a row
+    //never mixes the two and the column header names the one it holds.
+    const toRow = (b: TrimmedBuild, winRate: number | null, matches: number | null, author: string): Row => {
+      const updated = patchesAgo(b.last_updated_timestamp, patches, nowSeconds);
+      return {
+        key: String(b.hero_build_id),
+        buildId: b.hero_build_id,
+        title: b.name?.trim() || author,
+        untitled: !b.name?.trim(),
+        author,
+        categories: b.categories.length,
+        winRate,
+        matches,
+        weekly: ranked ? b.num_favorites : b.num_weekly_favorites,
+        points: abilityOrderSequence(b.ability_order)
+          .slice(0, 4)
+          .map((id) => abilitySlots[String(id)] ?? 0),
+        updated,
+        thisPatch: updated === 'This patch',
+      };
+    };
     if (!ranked) {
       return initialBuilds.map((b) =>
         toRow(b, b.win_rate_30d == null ? null : b.win_rate_30d * 100, b.matches, authorLabel(b)),
       );
     }
     return (data?.builds ?? []).map((b) => toRow(b, b.win_rate * 100, b.matches, authorLabel(b)));
-  }, [ranked, data, initialBuilds, abilitySlots, currentPatchId, nowSeconds]);
+  }, [ranked, data, initialBuilds, abilitySlots, patches, nowSeconds]);
 
   const base = ranked
     ? data
-      ? `${data.source} · ${data.window} · min ${data.min_matches} matches · sorted by Wilson lower bound`
-      : 'deadlock-api.com hero-build-stats — lobby-average badge · trailing 30 days · min 20 matches'
+      ? `Real 30-day win rate, minimum ${data.min_matches} matches · Wilson lower bound breaks ties · ${data.source}`
+      : 'Real 30-day win rate · deadlock-api.com hero-build-stats, lobby-average badge'
     : WEEKLY_NOTE;
   const note = onImport ? `${base} · ${IMPORT_NOTE}` : base;
 
@@ -151,7 +162,7 @@ export function CommunityBuildsTable({
             <span className="label-xs">Build</span>
             <span className="label-xs num">30d WR</span>
             <span className="label-xs num">Matches</span>
-            <span className="label-xs num">Weekly ♥</span>
+            <span className="label-xs num">{ranked ? 'Favorites ♥' : 'Weekly ♥'}</span>
             <span className="label-xs">First 4 points</span>
             <span className="label-xs num">Updated</span>
             {onImport && <span className="label-xs num">Import</span>}
@@ -183,9 +194,7 @@ export function CommunityBuildsTable({
                   ))
                 )}
               </span>
-              <span className={r.thisPatch ? 'bp-upd bp-upd-now' : 'bp-upd'}>
-                {r.thisPatch ? 'This patch' : r.updated}
-              </span>
+              <span className={r.thisPatch ? 'bp-upd bp-upd-now' : 'bp-upd'}>{r.updated}</span>
               {onImport && (
                 <button
                   type="button"

@@ -22,7 +22,7 @@ export default function SituationalPicks(props: SituationalPicksProps) {
 
 function Groups({ groups, catalog }: SituationalPicksProps) {
   if (groups.length === 0) {
-    return <EmptyState title="Computing" message="No item in these families has a measured win rate on this hero yet." />;
+    return <EmptyState tone="cold" title="Computing" message="No item in these families has a measured win rate on this hero yet." />;
   }
   return (
     <div className="bp-sit">
@@ -35,13 +35,10 @@ function Groups({ groups, catalog }: SituationalPicksProps) {
           <div className="bp-sit-picks">
             {g.picks.map((p) => (
               <ItemHoverCard data={overlayFromMeta(p.itemId, catalog[String(p.itemId)])} asChild key={p.itemId}>
-                <a className="bp-chip" href={`/items/${p.itemId}/`}>
+                <a className="bp-chip" href={`/items/${p.itemId}/`} title={p.modifier}>
                   <GameIcon kind="item" name={p.name} src={p.iconUrl} size={24} />
-                  <span className="bp-chip-text">
-                    <span className="display">{p.name}</span>
-                    <span className="bp-chip-mod mono">{p.modifier}</span>
-                  </span>
-                  <span className="mono tnum" style={{ color: p.winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}>
+                  <span className="bp-chip-name">{p.name}</span>
+                  <span className="bp-chip-wr tnum" style={{ color: p.winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}>
                     {p.winRate.toFixed(1)}%
                   </span>
                 </a>

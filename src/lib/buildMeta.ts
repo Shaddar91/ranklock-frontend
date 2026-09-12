@@ -13,14 +13,12 @@ export function sortLabel(sort: BuildSort): string {
   return SORT_MODES.find((s) => s.value === sort)?.label ?? sort;
 }
 
-//Parse a patch id / date string ("2026-08-22" or an ISO datetime) to epoch seconds; null if absent.
 function patchStartSeconds(patchDate: string | null | undefined): number | null {
   if (!patchDate) return null;
   const ms = Date.parse(patchDate.length <= 10 ? `${patchDate}T00:00:00Z` : patchDate);
   return Number.isFinite(ms) ? Math.floor(ms / 1000) : null;
 }
 
-/** True when a build's last update is at/after the current patch's start (the "updated this patch" badge). */
 export function isUpdatedThisPatch(lastUpdatedTs: number | null | undefined, patchDate: string | null | undefined): boolean {
   const start = patchStartSeconds(patchDate);
   if (start == null || lastUpdatedTs == null) return false;
@@ -38,8 +36,25 @@ export function formatUpdated(lastUpdatedTs: number | null | undefined, nowSecon
   return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
-//The build's ability-order blob is upstream-shaped: `{ currency_changes: [{ ability_id, ... }] }`,
-//one entry per point spent. The learn ORDER is the distinct ability ids in first-appearance order.
+/** The design's Updated badge: "This patch" / "Last patch" / "N patches ago"; dated outside the registry. */
+export function patchesAgo(
+  lastUpdatedTs: number | null | undefined,
+  patches: readonly { released_at: string }[],
+  nowSeconds: number,
+): string {
+  if (lastUpdatedTs == null) return '—';
+  const starts = patches
+    .map((p) => patchStartSeconds(p.released_at))
+    .filter((t): t is number => t != null)
+    .sort((a, b) => b - a);
+  const i = starts.findIndex((start) => lastUpdatedTs >= start);
+  if (i < 0) return formatUpdated(lastUpdatedTs, nowSeconds);
+  if (i === 0) return 'This patch';
+  if (i === 1) return 'Last patch';
+  return `${i} patches ago`;
+}
+
+//Upstream shape is `{ currency_changes: [{ ability_id, ... }] }`, one entry per point spent.
 export function abilityOrderSequence(abilityOrder: unknown): number[] {
   const changes = (abilityOrder as { currency_changes?: unknown })?.currency_changes;
   if (!Array.isArray(changes)) return [];

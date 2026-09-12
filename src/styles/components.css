@@ -2133,6 +2133,7 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
   min-width: 0;
 }
 .sechead .kicker {
+  line-height: 1;
   margin-bottom: 6px;
 }
 .sechead .h-sec {

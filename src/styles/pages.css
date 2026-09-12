@@ -638,18 +638,16 @@
 .bp-set {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
 }
 .bp-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   padding: 4px 8px 4px 4px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 5px;
   background: var(--raised);
-  font-size: 12.5px;
-  font-weight: 600;
   color: var(--text);
   text-decoration: none;
   transition: var(--t-fast);
@@ -658,14 +656,23 @@
   border-color: var(--cyan-deep);
   background: var(--overlay);
 }
-.bp-mult {
-  color: var(--gold);
-  font-weight: 700;
+/* §1 phase cards: the core/situational pill and the games column the overview has no room for.
+   Specificity beats the later .phase-row rule, which would otherwise flatten the fifth column. */
+.phase-row.bp-phase-row,
+.bp-phase-head {
+  grid-template-columns: 32px minmax(0, 1fr) 44px 52px 54px;
 }
-
-/* §1 phase cards: the core/situational pill and the games column the overview has no room for */
-.bp-phase-row {
-  grid-template-columns: 32px minmax(0, 1fr) 40px 50px 54px;
+.bp-phase-head {
+  display: grid;
+  gap: 10px;
+  padding: 4px 0 6px;
+  font: 600 10px var(--display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bp-phase-head .num {
+  text-align: right;
 }
 .bp-phase-title {
   display: flex;
@@ -689,18 +696,19 @@
 }
 .bp-phase-games {
   font-size: 11px;
+  font-weight: 400;
   text-align: right;
 }
 
 /* §2 buy-order track */
 .bp-track {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 8px;
 }
 .bp-slot {
   display: grid;
-  gap: 5px;
+  gap: 6px;
   justify-items: center;
   text-align: center;
   padding: 10px 8px;
@@ -716,25 +724,27 @@
   color: var(--brass-1);
 }
 .bp-slot-name {
-  font: 600 12px/1.2 var(--display);
+  font: 600 12px/1.15 var(--display);
   color: var(--text);
-  min-height: 29px;
+  min-height: 28px;
 }
-.bp-slot-min,
-.bp-slot-afford {
-  font-size: 11px;
-  color: var(--muted);
+.bp-slot-min {
+  font: 500 12px var(--mono);
+  color: var(--text-2);
 }
 .bp-slot-souls {
-  font-size: 11.5px;
+  font: 500 11px var(--mono);
   color: var(--gold);
+}
+.bp-slot-wr {
+  font: 600 11px var(--mono);
 }
 
 /* §3 two-column band: sets beside the situational families */
 .bp-two {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-  gap: 16px;
+  gap: 12px;
   align-items: start;
 }
 .bp-table {
@@ -749,15 +759,21 @@
   border-top: 1px solid var(--border);
 }
 .bp-srow {
-  grid-template-columns: minmax(0, 1fr) 60px 56px 60px;
+  grid-template-columns: minmax(0, 1fr) 64px 60px 64px;
 }
 .bp-brow {
-  grid-template-columns: minmax(0, 1.6fr) 76px 78px 76px 132px 96px;
+  grid-template-columns: minmax(0, 1.6fr) 80px 80px 80px 150px 110px;
+  gap: 12px;
+  padding: 9px 12px;
 }
 .bp-bhead {
   border-top: 0;
   padding-top: 10px;
   padding-bottom: 6px;
+}
+.bp-bhead .label-xs {
+  font-family: var(--display);
+  font-size: 10px;
 }
 .bp-table-import .bp-brow {
   grid-template-columns: minmax(0, 1.6fr) 72px 74px 70px 124px 92px 84px;
@@ -776,14 +792,7 @@
   display: inline-flex;
   text-decoration: none;
 }
-.bp-tile .bp-mult {
-  position: absolute;
-  right: -2px;
-  bottom: -4px;
-  font-size: 10px;
-}
 .bp-tile-ability .iicon {
-  border-radius: 50%;
   outline: 1px solid var(--sapphire);
 }
 .bp-sit {
@@ -811,14 +820,11 @@
   flex-wrap: wrap;
   gap: 6px;
 }
-.bp-chip-text {
-  display: grid;
-  line-height: 1.25;
+.bp-chip-name {
+  font: 500 12px var(--display);
 }
-.bp-chip-mod {
-  font-size: 10.5px;
-  font-weight: 400;
-  color: var(--muted);
+.bp-chip-wr {
+  font: 500 11px var(--mono);
 }
 
 /* §4 community builds: the bracket selector, the ability chips and the updated badge */
@@ -884,7 +890,7 @@
   justify-self: end;
   padding: 3px 6px;
   border: 1px solid var(--border);
-  border-radius: var(--r-pill);
+  border-radius: 3px;
   font: 600 10px var(--display);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1266,7 +1272,7 @@
   gap: 3px;
   justify-items: center;
 }
-.skill-chip .kit-key {
+.skill-chips .kit-key {
   width: 30px;
   height: 30px;
   font-size: 13px;
@@ -1283,6 +1289,7 @@
 .phase-card {
   display: grid;
   align-content: start;
+  padding: 14px;
 }
 .phase-head {
   display: flex;

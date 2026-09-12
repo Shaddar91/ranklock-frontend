@@ -29,6 +29,10 @@ export const RANKED_BRACKETS: readonly RankedBracketOption[] = [
   { key: 'ascendant-eternus', tiers: [10, 11] },
 ];
 
+//The bracket the Build page opens on: the served surface that carries a 30-day win rate on
+//every row, which is the shape the design's Community builds table draws.
+export const DEFAULT_RANKED_BRACKET: RankedBracketKey = 'oracle-phantom';
+
 export function rankedBracketLabel(option: RankedBracketOption): string {
   return `${getRank(option.tiers[0]).name} – ${getRank(option.tiers[1]).name}`;
 }
@@ -300,7 +304,6 @@ export interface SetEntry {
   name: string;
   iconUrl: string | null;
   shopItem: boolean;
-  count: number;
 }
 
 export interface SetRow {
@@ -310,8 +313,9 @@ export interface SetRow {
   wilson: number;
 }
 
-/** The folded sets in Wilson order. An entry is flagged `shopItem: false` when it is an
- *  ability upgrade — the fold counts both, and the block says so rather than filtering. */
+/** The folded sets in Wilson order, one tile per purchase. An entry is flagged
+ *  `shopItem: false` when it is an ability upgrade — the fold counts both, and the block
+ *  says so rather than filtering. */
 export function winningSets(
   sets: readonly BuildStatsItemSet[],
   catalog: ReadonlyMap<number, CatalogEntry>,
@@ -322,21 +326,12 @@ export function winningSets(
     .sort((a, b) => b.wilson_lower - a.wilson_lower)
     .slice(0, limit)
     .map((s) => {
-      const entries: SetEntry[] = [];
-      for (const item of s.items) {
-        const seen = entries.find((e) => e.itemId === item.item_id);
-        if (seen) {
-          seen.count += 1;
-          continue;
-        }
-        entries.push({
-          itemId: item.item_id,
-          name: item.item_name ?? `Item ${item.item_id}`,
-          iconUrl: item.icon_url ?? null,
-          shopItem: catalog.has(item.item_id),
-          count: 1,
-        });
-      }
+      const entries: SetEntry[] = s.items.map((item) => ({
+        itemId: item.item_id,
+        name: item.item_name ?? `Item ${item.item_id}`,
+        iconUrl: item.icon_url ?? null,
+        shopItem: catalog.has(item.item_id),
+      }));
       return { entries, games: s.games, winRate: s.win_rate * 100, wilson: s.wilson_lower * 100 };
     });
 }

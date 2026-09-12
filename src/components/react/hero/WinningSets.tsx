@@ -2,7 +2,7 @@
 //every shop tile carries the app-wide item hover card, which needs a React root + QueryProvider.
 import { overlayFromMeta, type OverlayMeta } from '../../../lib/itemOverlay';
 import { count } from '../../../lib/format';
-import type { SetEntry, SetRow } from '../../../lib/heroBuild';
+import type { SetRow } from '../../../lib/heroBuild';
 import QueryProvider from '../QueryProvider';
 import GameIcon from '../ui/GameIcon';
 import EmptyState from '../ui/EmptyState';
@@ -24,15 +24,9 @@ export default function WinningSets(props: WinningSetsProps) {
 function Table({ sets, catalog }: WinningSetsProps) {
   if (sets.length === 0) {
     return (
-      <EmptyState title="Computing" message="No purchase set has been folded for this hero yet. This block refreshes hourly." />
+      <EmptyState tone="cold" title="Computing" message="No set has been folded for this hero yet. This block refreshes hourly." />
     );
   }
-  const art = (e: SetEntry) => (
-    <>
-      <GameIcon kind="item" name={e.name} src={e.iconUrl} size={30} />
-      {e.count > 1 && <span className="bp-mult">x{e.count}</span>}
-    </>
-  );
   return (
     <div className="panel bp-table">
       <div className="bp-srow bp-bhead">
@@ -44,17 +38,17 @@ function Table({ sets, catalog }: WinningSetsProps) {
       {sets.map((s, i) => (
         <div className="bp-srow" key={i}>
           <span className="bp-set">
-            {s.entries.map((e) =>
+            {s.entries.map((e, j) =>
               //An ability entry has no item page to link to and no catalog card behind it.
               e.shopItem ? (
-                <ItemHoverCard data={overlayFromMeta(e.itemId, catalog[String(e.itemId)])} asChild key={e.itemId}>
+                <ItemHoverCard data={overlayFromMeta(e.itemId, catalog[String(e.itemId)])} asChild key={j}>
                   <a className="bp-tile" href={`/items/${e.itemId}/`} title={e.name}>
-                    {art(e)}
+                    <GameIcon kind="item" name={e.name} src={e.iconUrl} size={30} />
                   </a>
                 </ItemHoverCard>
               ) : (
-                <a className="bp-tile bp-tile-ability" title={`${e.name} - ability upgrade`} key={e.itemId}>
-                  {art(e)}
+                <a className="bp-tile bp-tile-ability" title={`${e.name} — ability upgrade`} key={j}>
+                  <GameIcon kind="item" name={e.name} src={e.iconUrl} size={30} />
                 </a>
               ),
             )}

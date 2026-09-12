@@ -156,17 +156,14 @@ describe('winningSets — the folded purchase sets, abilities flagged not filter
     { items: [{ item_id: 10, item_name: 'Swift Striker', icon_url: null }], games: 900, wins: 460, win_rate: 0.511, wilson_lower: 0.49 },
   ];
 
-  it('collapses a repeated purchase into one entry carrying its count', () => {
+  it('draws one tile per purchase, repeats included', () => {
     const [first] = winningSets(sets, catalog);
-    expect(first?.entries.map((e) => [e.name, e.count])).toEqual([
-      ['Fixation', 2],
-      ['Swift Striker', 1],
-    ]);
+    expect(first?.entries.map((e) => e.name)).toEqual(['Fixation', 'Fixation', 'Swift Striker']);
   });
 
   it('flags an entry the shop catalog does not carry as an ability upgrade', () => {
     const [first] = winningSets(sets, catalog);
-    expect(first?.entries.map((e) => e.shopItem)).toEqual([false, true]);
+    expect(first?.entries.map((e) => e.shopItem)).toEqual([false, false, true]);
   });
 
   it('sorts by Wilson lower bound, not by raw win rate', () => {

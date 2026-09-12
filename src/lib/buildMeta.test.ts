@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   isUpdatedThisPatch,
   formatUpdated,
+  patchesAgo,
   abilityOrderSequence,
   sortLabel,
   authorLabel,
@@ -32,6 +33,27 @@ describe('buildMeta — relative updated label', () => {
     expect(formatUpdated(now - 21 * 86400, now)).toBe('3w ago');
     expect(formatUpdated(Math.floor(Date.parse('2024-10-23T00:00:00Z') / 1000), now)).toMatch(/2024/);
     expect(formatUpdated(null, now)).toBe('—');
+  });
+});
+
+describe('buildMeta — patch-relative updated badge', () => {
+  const now = Math.floor(Date.parse('2026-09-12T00:00:00Z') / 1000);
+  const patches = [
+    { released_at: '2026-08-22' },
+    { released_at: '2026-08-12' },
+    { released_at: '2026-07-30' },
+  ];
+  const at = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 1000);
+  it('names the patch a build was last touched in', () => {
+    expect(patchesAgo(at('2026-09-01'), patches, now)).toBe('This patch');
+    expect(patchesAgo(at('2026-08-22'), patches, now)).toBe('This patch');
+    expect(patchesAgo(at('2026-08-15'), patches, now)).toBe('Last patch');
+    expect(patchesAgo(at('2026-08-01'), patches, now)).toBe('2 patches ago');
+  });
+  it('falls back to the dated label outside the patch registry', () => {
+    expect(patchesAgo(at('2024-10-23'), patches, now)).toMatch(/2024/);
+    expect(patchesAgo(at('2026-09-01'), [], now)).toMatch(/ago|today/);
+    expect(patchesAgo(null, patches, now)).toBe('—');
   });
 });
 

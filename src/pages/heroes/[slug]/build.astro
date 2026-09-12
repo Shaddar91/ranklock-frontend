@@ -15,8 +15,8 @@ import { api } from '../../../lib/apiClient';
 import { buildFetch } from '../../../lib/buildData';
 import { dataHorizon, soulsCurve } from '../../../lib/buildIndexes';
 import { breadcrumbJsonLd } from '../../../lib/seo';
-import { count, pickShare, shortDate } from '../../../lib/format';
-import { catalogIndex, situationalGroups, winningSets } from '../../../lib/heroBuild';
+import { count, dayDate, pickShare, shortDate } from '../../../lib/format';
+import { catalogIndex, DEFAULT_RANKED_BRACKET, situationalGroups, winningSets } from '../../../lib/heroBuild';
 import { signatureSlots } from '../../../lib/buildMeta';
 import { heroArt } from '../../../lib/heroArt';
 import { publishedGuideSlugs } from '../../../lib/guideRoutes';
@@ -33,6 +33,7 @@ import type {
   ItemModifier,
   ItemStat,
   Patch,
+  RankedBuildsResponse,
 } from '../../../types/api';
 
 export async function getStaticPaths() {
@@ -55,7 +56,7 @@ const emptyStats: HeroBuildStats = {
   buy_order: [],
 };
 
-const [assets, itemStats, modifiers, stats, itemWinRates, builds, abilityRows, abilityOrders, currentPatch, curve, horizon] =
+const [assets, itemStats, modifiers, stats, itemWinRates, builds, rankedBuilds, abilityRows, abilityOrders, patches, curve, horizon] =
   await Promise.all([
     buildFetch(api.getHeroAssets(hero.hero_id), null as HeroAssetsResponse | null),
     buildFetch(api.getItems(undefined, undefined, hero.hero_id), [] as ItemStat[]),
@@ -63,9 +64,10 @@ const [assets, itemStats, modifiers, stats, itemWinRates, builds, abilityRows, a
     buildFetch(api.getHeroBuildStats(hero.hero_id), emptyStats),
     buildFetch(api.getHeroItemWinRates(hero.hero_id), [] as HeroItemWinRate[]),
     buildFetch(api.getHeroBuilds(hero.hero_id, 'weekly', true), [] as CommunityBuild[]),
+    buildFetch(api.getRankedBuilds(hero.hero_id, DEFAULT_RANKED_BRACKET), null as RankedBuildsResponse | null),
     buildFetch(api.getHeroAbilities(hero.hero_id), [] as HeroAbility[]),
     buildFetch(api.getAbilityOrders(hero.hero_id), null as AbilityOrdersResponse | null),
-    buildFetch(api.getCurrentPatch(), null as Patch | null),
+    buildFetch(api.getPatches(), [] as Patch[]),
     soulsCurve(),
     dataHorizon(),
   ]);
@@ -100,7 +102,7 @@ const skillRows = [
     label: r.label,
     matches: r.order!.matches,
     winRate: r.order!.win_rate * 100,
-    chips: r.order!.abilities.map((id, i) => ({ key: slotOfAbility[String(id)] ?? 0, level: i + 1 })),
+    chips: r.order!.abilities.map((id) => slotOfAbility[String(id)] ?? 0),
   }));
 
 const byPicks = [...roster].sort((a, b) => (b.picks ?? 0) - (a.picks ?? 0));
@@ -118,21 +120,14 @@ const tabs = [
 ];
 
 const windowOf = (ds: string) => horizon?.datasets.find((d) => d.dataset === ds);
-const setWindow = windowOf('hero-itemset-win-rates');
-const setLo = shortDate(setWindow?.window_lo);
-const setHi = shortDate(setWindow?.window_hi);
 const buyThrough = shortDate(windowOf('item-stats')?.window_hi ?? horizon?.max_match_start_time);
 
-const setsNote =
-  `All ranks · sorted by Wilson lower bound${setLo && setHi ? ` · ${setLo} to ${setHi}` : ''}. ` +
-  'A set is the six purchases our own matches measured together; the fold counts ability upgrades ' +
-  'alongside shop items, so a set can mix both and a repeat shows as ×n.';
-const situationalNote =
-  `Four modifier families from the item catalog. Inside each, the items with the highest Wilson lower bound on ${name} ` +
-  '— RankLock public matches, all ranks. Which enemy to buy them against is not derived and is not shown.';
-const skillNote = abilityOrders
-  ? `${abilityOrders.source} · ${abilityOrders.window} · orders under ${abilityOrders.min_matches.toLocaleString('en-US')} matches hidden`
-  : 'deadlock-api.com ability-order aggregates';
+const setsNote = 'All ranks · abilities included · sorted by Wilson lower bound';
+const situationalNote = `Modifier families · highest Wilson lower bound on ${name}`;
+
+const currentPatch = patches.find((p) => p.is_current) ?? null;
+const horizonDay = dayDate(horizon?.max_match_start_time) || null;
+const orderFloor = abilityOrders?.min_matches ?? null;
 
 const art = heroArt(hero.icon_url);
 const description = `What to buy on ${name} and when: the build by phase, the buy order with its running souls cost, the item sets that win, and the published builds with their 30-day win rate.`;
@@ -161,9 +156,12 @@ const jsonLd = breadcrumbJsonLd(origin, [
     tabs={tabs}
   />
 
-  <div class="container">
-    <HeroFilterBar currentPath={canonicalPath} client:load />
-  </div>
+  <HeroFilterBar
+    currentPath={canonicalPath}
+    patch={currentPatch?.patch_id ?? null}
+    through={horizonDay}
+    client:load
+  />
 
   <main class="container hero-main">
     <BuildPhases
@@ -178,7 +176,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
       <div>
         <SectionHeader
           kicker="Which full sets win"
-          title="Winning six-purchase sets"
+          title="Winning six-item sets"
           note={setsNote}
         />
         <WinningSets client:visible sets={sets} catalog={tileCatalog} />
@@ -198,20 +196,22 @@ const jsonLd = breadcrumbJsonLd(origin, [
       client:load
       heroId={hero.hero_id}
       initialBuilds={builds}
+      initialSelection={DEFAULT_RANKED_BRACKET}
+      initialRanked={rankedBuilds}
       abilitySlots={slotOfAbility}
-      currentPatchId={currentPatch?.patch_id ?? null}
+      patches={patches}
       nowSeconds={Math.floor(Date.now() / 1000)}
     />
 
     <section id="skill-recap">
-      <SectionHeader kicker="What to level" title="Skill order" note={skillNote}>
-        <a class="kicker" slot="action" href={`${heroUrl}#skill-order`}>
+      <SectionHeader kicker="What to level" title="Skill order">
+        <a class="sec-link" slot="action" href={`${heroUrl}#skill-order`}>
           Both orders with the legend on Overview →
         </a>
       </SectionHeader>
       {
         skillRows.length === 0 ? (
-          <EmptyState title="Computing" message="Ability-order stats are still folding. This block refreshes hourly." />
+          <EmptyState tone="cold" title="Computing" message="Ability-order stats are still folding. This block refreshes hourly." />
         ) : (
           <div class="panel skill-panel">
             {skillRows.map((row) => (
@@ -226,11 +226,8 @@ const jsonLd = breadcrumbJsonLd(origin, [
                   </div>
                 </div>
                 <div class="skill-chips">
-                  {row.chips.map((c) => (
-                    <span class="skill-chip">
-                      <span class={`kit-key k${c.key}`}>{c.key || '?'}</span>
-                      <span class="mono skill-lvl">{c.level}</span>
-                    </span>
+                  {row.chips.map((slot) => (
+                    <span class={`kit-key k${slot}`}>{slot || '?'}</span>
                   ))}
                 </div>
               </div>
@@ -241,11 +238,11 @@ const jsonLd = breadcrumbJsonLd(origin, [
     </section>
 
     <p class="hero-footnote">
-      Build, item and ability-order win rates: deadlock-api.com aggregates, trailing 30 days, at the sample floor each
-      block names; never RankLock's own matches, which carry no per-match purchases. Buys, buy minutes and the souls
-      curve: RankLock public matches{buyThrough ? `, through ${buyThrough}` : ''}. Purchase sets: all ranks until the
-      tier axis is folded. A build's title is not a fact; its 30-day column is. Rank means badge tier, never an MMR
-      number.
+      Build, item and ability-order win rates: deadlock-api.com aggregates, trailing 30 days{
+        orderFloor ? `, orders under ${count(orderFloor)} matches hidden` : ''
+      }; never RankLock's own matches, which carry no per-match purchases. Buy minutes and souls: RankLock matches{
+        buyThrough ? `, through ${buyThrough}` : ''
+      }. Item sets: all ranks until the tier axis is folded. A build's title is not a fact; its 30-day column is.
     </p>
   </main>
 </BaseLayout>
