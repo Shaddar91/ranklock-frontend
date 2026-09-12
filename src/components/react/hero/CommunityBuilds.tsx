@@ -32,9 +32,9 @@ export interface CommunityBuildsProps {
 
 export type Selection = 'weekly' | RankedBracketKey;
 
-//Trending is the weekly-favorites join; it carries no win rate today, so the table says so
-//rather than ranking on a column it cannot fill.
-const WEEKLY_NOTE = 'Trending across all ranks by weekly favorites · no 30-day win rate is served for this join';
+//The weekly-favorites join scores only a handful of its rows, so the table cannot rank on
+//the win-rate column here; the bracket chips above it can.
+const WEEKLY_NOTE = 'Trending across all ranks by weekly favorites · most rows carry no 30-day win rate';
 const IMPORT_NOTE = 'Import opens the build in Analyze';
 
 interface Row {
