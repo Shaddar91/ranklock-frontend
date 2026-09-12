@@ -2,14 +2,12 @@
 //build for the per-bracket rosters and the hero -> item win-rate index.
 import { api } from './apiClient';
 import { buildFetch } from './buildData';
-import { rankDesc, toPct } from './narrative';
-import type { ItemBracketRow } from './itemNarrative';
 import type {
   DataHorizonResponse,
   HeroBracket,
   HeroItemWinRate,
   HeroSummary,
-  ItemStat,
+  ItemDetailResponse,
   LaneCurvePoint,
 } from '../types/api';
 
@@ -90,36 +88,23 @@ export function heroItemIndex(roster: HeroSummary[]): Promise<Map<number, HeroIt
   });
 }
 
-//Items use the integer badge buckets 1-5 (lib/brackets.ts bracket_badge_range); 0 is the
-//all-ranks row the item pages already fetch.
-const ITEM_BADGE_BRACKETS = [1, 2, 3, 4, 5] as const;
+//One /items/:id/detail per catalog item, 8 in flight, so the item pages bake Valve's text,
+//the component-tree edges and the cooldown instead of fetching them after hydration.
+const ITEM_DETAIL_CONCURRENCY = 8;
 
-/** item_id -> one row per badge tier, with the win-rate rank measured inside that tier. */
-export function itemBracketIndex(): Promise<Map<number, ItemBracketRow[]>> {
-  return once('itemBracketIndex', async () => {
-    const perBracket = await Promise.all(
-      ITEM_BADGE_BRACKETS.map(async (b) => [b, await buildFetch(api.getItems(b), [] as ItemStat[])] as const),
-    );
-    const index = new Map<number, ItemBracketRow[]>();
-    for (const [bracket, rows] of perBracket) {
-      const rated = rows.filter((r) => r.win_rate != null && (r.matches ?? r.picks ?? 0) > 0);
-      const wrs = rated.map((r) => toPct(r.win_rate as number));
-      for (const r of rows) {
-        const matches = r.matches ?? r.picks ?? null;
-        const ranked = r.win_rate != null && (matches ?? 0) > 0;
-        const list = index.get(r.item_id) ?? [];
-        list.push({
-          bracket,
-          win_rate: r.win_rate ?? null,
-          matches,
-          avg_buy_time_s: r.avg_buy_time_s ?? null,
-          rank: ranked ? rankDesc(wrs, toPct(r.win_rate as number)) : null,
-          of: ranked ? rated.length : null,
-        });
-        index.set(r.item_id, list);
+/** item_id -> the detail envelope; an id the route 404s or times out is simply absent. */
+export function itemDetailIndex(ids: readonly number[]): Promise<Map<number, ItemDetailResponse>> {
+  return once('itemDetailIndex', async () => {
+    const index = new Map<number, ItemDetailResponse>();
+    const queue = [...ids];
+    const worker = async () => {
+      for (let id = queue.pop(); id != null; id = queue.pop()) {
+        const row = await buildFetch(api.getItemDetail(id), null as ItemDetailResponse | null);
+        if (row) index.set(id, row);
       }
-    }
-    console.log(`[itemBracketIndex] ${index.size} items across ${ITEM_BADGE_BRACKETS.length} badge tiers`);
+    };
+    await Promise.all(Array.from({ length: ITEM_DETAIL_CONCURRENCY }, worker));
+    console.log(`[itemDetailIndex] ${index.size}/${ids.length} items carry a detail row`);
     return index;
   });
 }
