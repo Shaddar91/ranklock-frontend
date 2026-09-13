@@ -122,7 +122,7 @@ const tabs = [
 const windowOf = (ds: string) => horizon?.datasets.find((d) => d.dataset === ds);
 const buyThrough = shortDate(windowOf('item-stats')?.window_hi ?? horizon?.max_match_start_time);
 
-const setsNote = 'All ranks · abilities included · sorted by Wilson lower bound';
+const setsNote = 'All ranks · first six purchases, ability points as key chips · sorted by Wilson lower bound';
 const situationalNote = `Modifier families · highest Wilson lower bound on ${name}`;
 
 const currentPatch = patches.find((p) => p.is_current) ?? null;
@@ -179,7 +179,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
           title="Winning six-item sets"
           note={setsNote}
         />
-        <WinningSets client:visible sets={sets} catalog={tileCatalog} />
+        <WinningSets client:visible sets={sets} catalog={tileCatalog} abilitySlots={slotOfAbility} />
       </div>
 
       <div>

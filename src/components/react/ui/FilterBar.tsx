@@ -43,7 +43,7 @@ export default function FilterBar({
     >
       <div className="filterbar-inner">
         <span className="kicker">Rank</span>
-        <BracketFilter value={bracket} onChange={onBracketChange} tiers={tiers} />
+        <BracketFilter value={bracket} onChange={onBracketChange} tiers={tiers} art="badge" />
         <span className="label-xs filterbar-label">{bracketLabel(bracket)}</span>
         <GameModeToggle currentPath={currentPath} />
         <div className="filterbar-right">

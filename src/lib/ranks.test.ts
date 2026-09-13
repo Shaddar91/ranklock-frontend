@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { chasingTier, getRank, rankFromBadge, rankImg, RANKS } from './ranks';
+import { chasingTier, getRank, rankBadgeImg, rankFromBadge, rankImg, RANKS } from './ranks';
 
 //The assets.deadlock-api.com /v2/ranks ladder pinned 2026-09-11 — Acolyte/Sentinel/Mystic
 //replaced Alchemist/Arcanist/Ritualist at 3-5 and Archon left the ladder entirely.
@@ -27,6 +27,8 @@ describe('RANKS', () => {
   it('keys emblems by tier, not name, so a rename cannot 404 the art', () => {
     expect(rankImg(5)).toBe('/assets/ranks/rank05.png');
     expect(rankImg(11)).toBe('/assets/ranks/rank11.png');
+    expect(rankBadgeImg(7)).toBe('/assets/ranks/badge/rank07.webp');
+    expect(rankBadgeImg(99)).toBe('/assets/ranks/badge/rank11.webp');
   });
 });
 

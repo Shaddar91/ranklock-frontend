@@ -39,6 +39,12 @@ export function rankImg(tier: number): string {
   return `/assets/ranks/rank${String(getRank(tier).tier).padStart(2, '0')}.png`;
 }
 
+//The official framed badge (the game's own rank art), 68 px app-owned copies; the design's
+//filter bar draws these, the emblem set above stays everywhere else.
+export function rankBadgeImg(tier: number): string {
+  return `/assets/ranks/badge/rank${String(getRank(tier).tier).padStart(2, '0')}.webp`;
+}
+
 //"Emissary IV" style label. sub is 1..6 (0/undefined → no numeral).
 export function subLabel(tier: number, sub?: number | null): string {
   const r = getRank(tier);

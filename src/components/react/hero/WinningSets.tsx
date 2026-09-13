@@ -11,6 +11,8 @@ import ItemHoverCard from '../ui/ItemHoverCard';
 export interface WinningSetsProps {
   sets: SetRow[];
   catalog: Record<string, OverlayMeta>;
+  //Ability id -> signature slot 1..4: an ability point in a set renders as the hero's key chip.
+  abilitySlots: Record<string, number>;
 }
 
 export default function WinningSets(props: WinningSetsProps) {
@@ -21,7 +23,7 @@ export default function WinningSets(props: WinningSetsProps) {
   );
 }
 
-function Table({ sets, catalog }: WinningSetsProps) {
+function Table({ sets, catalog, abilitySlots }: WinningSetsProps) {
   if (sets.length === 0) {
     return (
       <EmptyState tone="cold" title="Computing" message="No set has been folded for this hero yet. This block refreshes hourly." />
@@ -39,7 +41,6 @@ function Table({ sets, catalog }: WinningSetsProps) {
         <div className="bp-srow" key={i}>
           <span className="bp-set">
             {s.entries.map((e, j) =>
-              //An ability entry has no item page to link to and no catalog card behind it.
               e.shopItem ? (
                 <ItemHoverCard data={overlayFromMeta(e.itemId, catalog[String(e.itemId)])} asChild key={j}>
                   <a className="bp-tile" href={`/items/${e.itemId}/`} title={e.name}>
@@ -47,9 +48,13 @@ function Table({ sets, catalog }: WinningSetsProps) {
                   </a>
                 </ItemHoverCard>
               ) : (
-                <a className="bp-tile bp-tile-ability" title={`${e.name} — ability upgrade`} key={j}>
-                  <GameIcon kind="item" name={e.name} src={e.iconUrl} size={30} />
-                </a>
+                <span
+                  className={`kit-key k${abilitySlots[String(e.itemId)] ?? 0}`}
+                  title={`${e.name} — ability point`}
+                  key={j}
+                >
+                  {abilitySlots[String(e.itemId)] || '?'}
+                </span>
               ),
             )}
           </span>

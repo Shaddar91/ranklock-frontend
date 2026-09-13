@@ -798,8 +798,11 @@
   display: inline-flex;
   text-decoration: none;
 }
-.bp-tile-ability .iicon {
-  outline: 1px solid var(--sapphire);
+.bp-set .kit-key {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  font-size: 12px;
 }
 .bp-sit {
   display: grid;
