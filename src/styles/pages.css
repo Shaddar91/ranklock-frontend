@@ -789,6 +789,10 @@
 .bp-brow .num {
   text-align: right;
 }
+.bp-brow .tnum {
+  font-family: var(--mono);
+  font-size: 12px;
+}
 .bp-tile {
   position: relative;
   display: inline-flex;
@@ -1140,6 +1144,9 @@
   min-width: 0;
   display: grid;
 }
+.kit-title .label-xs {
+  font-family: var(--display);
+}
 .kit-name {
   font-size: 16px;
   font-weight: 600;
@@ -1362,11 +1369,18 @@
   padding: 10px 12px 6px;
   align-items: end;
 }
+.mup-head .label-xs {
+  font-family: var(--display);
+  font-size: 10px;
+}
 .mup-row {
   border-top: 1px solid var(--border);
 }
 .mup-row:hover {
   background: var(--overlay);
+}
+.mup-row .tnum {
+  font-family: var(--mono);
 }
 .mup-hero {
   display: flex;
@@ -1389,6 +1403,7 @@
 }
 .mup-name {
   font-size: 13px;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1436,8 +1451,10 @@
   align-items: end;
   border-top: none;
 }
-.itbl-head .label-xs {
+.itbl .itbl-head .label-xs {
   white-space: nowrap;
+  font-family: var(--display);
+  font-size: 10px;
 }
 .itbl-title {
   font-size: 14px;
@@ -1447,6 +1464,9 @@
 .itbl .num {
   text-align: right;
   font-size: 12px;
+}
+.itbl-row .tnum {
+  font-family: var(--mono);
 }
 .itbl-item {
   display: flex;
@@ -1462,6 +1482,7 @@
 }
 .itbl-name {
   font-size: 13px;
+  font-weight: 500;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -2083,6 +2104,10 @@
   border-top: 1px solid var(--border);
   font-size: 12px;
 }
+.itemd-wrrow .tnum,
+.itemd-hrow .tnum {
+  font-family: var(--mono);
+}
 .itemd-heroes .itemd-hrow:nth-child(odd) {
   background: color-mix(in oklab, var(--text) 3%, transparent);
 }
@@ -2382,6 +2407,9 @@
   display: grid;
   gap: 22px;
   padding-bottom: calc(48px + env(safe-area-inset-bottom));
+}
+.lab-main .label-xs {
+  font-family: var(--display);
 }
 .lab-page-head .kicker {
   display: block;

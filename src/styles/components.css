@@ -233,8 +233,9 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-family: var(--display);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 4px 9px;
   border-radius: var(--r-pill);
   border: 1px solid var(--border);
@@ -795,6 +796,10 @@ textarea {
 }
 .statile-head {
   margin-bottom: 6px;
+}
+.statile-head .label-xs {
+  font-family: var(--display);
+  font-weight: 500;
 }
 .statile-value {
   font-family: var(--display);
@@ -1856,7 +1861,8 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
   flex-wrap: wrap;
 }
 .itemcard-cost {
-  font-size: 12.5px;
+  font-family: var(--mono);
+  font-size: 13px;
   font-weight: 600;
   color: var(--gold);
 }
@@ -1879,6 +1885,7 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 .itemcard-modv {
   min-width: 54px;
   flex: none;
+  font-family: var(--mono);
   font-weight: 600;
   color: var(--win);
 }
@@ -1895,6 +1902,7 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
   gap: 10px;
 }
 .itemcard-kind {
+  font-family: var(--display);
   color: var(--cyan-bright);
 }
 .itemcard-cd {
@@ -1933,6 +1941,7 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 }
 .itemcard-pathlabel {
   flex: none;
+  font-family: var(--display);
   color: var(--muted);
 }
 .itemcard-pathrefs {
