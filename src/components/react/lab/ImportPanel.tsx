@@ -1,14 +1,15 @@
-//Lab §3 — the import field, the "start from" presets built out of served data, and the
-//imported-build header with its four metric tiles. Every tile prints its window or the
-//honest gap; nothing here computes a number the model did not hand it.
+//Lab §3 — the design's one framed card: the import field, the "start from" presets built out of
+//served data, and the imported-build header with its four metric tiles. Every tile prints its
+//window or the honest gap; nothing here computes a number the model did not hand it.
 import { useState } from 'react';
-import { EmptyState, StatTile } from '../ui/index';
+import { GameIcon } from '../ui/index';
 import { count, DASH, pct } from '../../../lib/format';
 import { IMPORT_CODE_NOTE, IMPORT_PLACEHOLDER, parseImport, type ImportRef } from './analyzeModel';
 import type { StartFromPreset } from './createModel';
 
 export interface ImportedHeader {
   heroName: string | null;
+  heroIcon: string | null;
   title: string;
   author: string;
   updated: string;
@@ -34,7 +35,16 @@ interface ImportPanelProps {
   onPreset: (preset: StartFromPreset) => void;
   header: ImportedHeader | null;
   onEditCopy: () => void;
-  paceSwitch: React.ReactNode;
+}
+
+function Metric({ label, value, sub, color }: { label: string; value: string; sub: string; color?: string }) {
+  return (
+    <div className="lab-mcard">
+      <div className="lab-mcard-l">{label}</div>
+      <div className="lab-mcard-v" style={color ? { color } : undefined}>{value}</div>
+      <div className="lab-mcard-s">{sub}</div>
+    </div>
+  );
 }
 
 export default function ImportPanel({
@@ -46,128 +56,98 @@ export default function ImportPanel({
   onPreset,
   header,
   onEditCopy,
-  paceSwitch,
 }: ImportPanelProps) {
   const [text, setText] = useState('');
 
   return (
-    <section className="grid" style={{ gap: 14 }}>
+    <section className="lab-frame lab-import">
       <form
-        className="flex"
-        style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}
+        className="lab-import-row"
         onSubmit={(e) => {
           e.preventDefault();
           onImport(parseImport(text));
         }}
       >
-        <input
-          className="field"
-          style={{ flex: '1 1 340px', minWidth: 0 }}
-          value={text}
-          placeholder={IMPORT_PLACEHOLDER}
-          aria-label="Build id or RankLock share link"
-          onChange={(e) => setText(e.target.value)}
-        />
-        <button type="submit" className="btn btn-brass" style={{ padding: '8px 16px' }} disabled={pending}>
+        <span className="lab-idfield" title={IMPORT_CODE_NOTE}>
+          <span className="lab-idtag">ID</span>
+          <input
+            value={text}
+            placeholder={IMPORT_PLACEHOLDER}
+            aria-label="Build id or RankLock share link"
+            onChange={(e) => setText(e.target.value)}
+          />
+        </span>
+        <button type="submit" className="btn btn-brass lab-go" disabled={pending}>
           {pending ? 'Importing…' : 'Import build'}
         </button>
       </form>
-      <p className="faint" style={{ fontSize: 12, margin: 0 }}>{IMPORT_CODE_NOTE}</p>
       {error && (
-        <p className="loss-c" style={{ fontSize: 12.5, margin: 0 }} role="alert">
-          {error}
-        </p>
+        <p className="loss-c" style={{ fontSize: 12.5, margin: 0 }} role="alert">{error}</p>
       )}
 
-      <div className="flex" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <span className="label-xs">Or start from</span>
+      <div className="lab-pickrow">
+        <span className="label-xs" style={{ letterSpacing: '0.16em' }}>Or start from</span>
         {presets.map((p) => (
           <button
             key={p.key}
             type="button"
-            className={'tab' + (activePreset === p.key ? ' on' : '')}
-            style={{ padding: '4px 11px', fontSize: 12 }}
+            className={'lab-pick' + (activePreset === p.key ? ' on' : '')}
             title={p.hint}
             disabled={p.itemIds.length === 0}
             onClick={() => onPreset(p)}
           >
             {p.label}
-            <span className="faint tnum" style={{ marginLeft: 6 }}>{p.itemIds.length}</span>
           </button>
         ))}
       </div>
 
-      {header == null ? (
-        <EmptyState
-          title="Nothing imported yet"
-          message="Paste a build id or a RankLock share link, or start from one of the served sets above."
-          icon="inbox"
-        />
-      ) : (
-        <div className="panel panel-pad grid" style={{ gap: 12 }}>
-          <div className="between" style={{ gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      {header && (
+        <div className="lab-imported">
+          <div className="lab-imported-id">
+            <GameIcon kind="hero" name={header.heroName ?? 'Hero'} src={header.heroIcon} size={48} />
             <div style={{ minWidth: 0 }}>
-              <div className="flex" style={{ gap: 9, alignItems: 'center', flexWrap: 'wrap' }}>
-                <span className="display" style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>
-                  {header.title}
-                </span>
-                {header.fresh && (
-                  <span
-                    className="label-xs"
-                    style={{ padding: '2px 8px', borderRadius: 999, border: '1px solid var(--win)', color: 'var(--win)' }}
-                  >
-                    This patch
-                  </span>
-                )}
+              <div className="flex" style={{ alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span className="lab-imported-name">{header.title}</span>
+                {header.fresh && <span className="lab-fresh">This patch</span>}
               </div>
-              <div className="faint" style={{ fontSize: 12, marginTop: 4 }}>
-                {[header.author, header.heroName, `updated ${header.updated}`].filter(Boolean).join(' · ')}
-              </div>
-              <div className="faint tnum" style={{ fontSize: 12, marginTop: 2 }}>
-                {header.categories} categories · {header.items} items · {header.points} ability points
+              <div className="lab-imported-meta">
+                {[
+                  header.author,
+                  header.heroName,
+                  `updated ${header.updated}`,
+                  `${header.categories} categories, ${header.items} items, ${header.points} ability points`,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </div>
             </div>
-            <button type="button" className="btn btn-ghost" style={{ padding: '6px 14px' }} onClick={onEditCopy}>
-              Edit a copy
-            </button>
           </div>
 
-          <div className="stat-grid">
-            <StatTile
-              label="30-day win rate"
+          <div className="lab-mcards">
+            <Metric
+              label="30-day WR"
               value={header.winRate == null ? DASH : pct(header.winRate)}
-              sub={
-                <span className="faint" style={{ fontSize: 11.5 }}>
-                  {header.matches == null
-                    ? 'Upstream carries no 30-day row for this build at the lobby-average badge floor.'
-                    : `${count(header.matches)} matches · rolling 30 days, lobby-average badge floor`}
-                </span>
-              }
-              color={header.winRate == null ? undefined : 'var(--cyan-bright)'}
+              sub={header.matches == null ? 'no served 30-day row' : `${count(header.matches)} matches`}
+              color={header.winRate == null ? undefined : 'var(--win)'}
             />
-            <StatTile
+            <Metric
               label="Weekly ♥"
               value={header.weekly == null ? DASH : count(header.weekly)}
-              sub={<span className="faint" style={{ fontSize: 11.5 }}>Favourites in the last week</span>}
-              color="var(--gold)"
+              sub="favourites, last 7 days"
             />
-            <StatTile
+            <Metric
               label="Price"
               value={count(header.price)}
-              unit="souls"
-              sub={<span className="faint" style={{ fontSize: 11.5 }}>{header.owned} items owned</span>}
-              color="var(--amber)"
+              sub={`souls · ${header.owned} items owned`}
+              color="var(--gold)"
             />
-            <StatTile
-              label="Affordable"
-              value={header.afford}
-              sub={
-                <span className="grid" style={{ gap: 5 }}>
-                  <span className="faint" style={{ fontSize: 11.5 }}>{header.affordNote}</span>
-                  {paceSwitch}
-                </span>
-              }
-            />
+            <Metric label="Affordable" value={header.afford} sub={header.affordNote} />
+          </div>
+
+          <div className="flex" style={{ gap: 8 }}>
+            <button type="button" className="btn btn-ghost btn-caps" style={{ borderRadius: 4 }} onClick={onEditCopy}>
+              Edit a copy
+            </button>
           </div>
         </div>
       )}

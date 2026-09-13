@@ -1,28 +1,24 @@
 //Build Lab Analyze tab (design Lab §3-§6): import or start from a served set, then read that
 //board's purchase order, ability progression and stat rail. Every query here is served; the
 //tab computes nothing the model and C24's calculators do not hand it.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { computeStats, type BaseStats, type BuildInput } from '../../../lib/computeStats';
-import { affordableWindow, CURVE_WINDOW, type AffordableAt } from '../../../lib/labCalc';
 import { useViewer } from '../player/usePlayer';
-import { authorLabel, formatUpdated, isUpdatedThisPatch } from '../../../lib/buildMeta';
-import { statLabel } from '../../../lib/statLabel';
+import { authorLabel, formatUpdated, isUpdatedThisPatch, signatureSlots } from '../../../lib/buildMeta';
 import { EmptyState } from '../ui/index';
 import { indexCatalog, normalizeCatalog } from '../creator/buildModel';
-import { HeroSelect, HowToPlayLink, useHeroRoster, type RosterSlug } from './HeroBar';
+import { useHeroRoster } from './HeroBar';
 import ImportPanel, { type ImportedHeader } from './ImportPanel';
 import PurchaseOrder from './PurchaseOrder';
 import AbilityProgression from './AbilityProgression';
 import AnalyzeRail from './AnalyzeRail';
-import SoulsTimeline from './SoulsTimeline';
 import {
   cohortCurvePoints,
   ownCurvePoints,
   startFromPresets,
   timelineRows,
-  PRESET_SOURCE_NOTE,
   type StartFromPreset,
   type TimelinePace,
 } from './createModel';
@@ -35,16 +31,19 @@ import {
   matchServedOrder,
   phaseGroups,
   purchaseRows,
+  stepsFromSequence,
   tierAbilities,
   type BuildEntry,
   type ImportRef,
 } from './analyzeModel';
+import type { LabBoard } from '../BuildLabIsland';
 import type {
   AbilityOrdersResponse,
   BuildById,
   HeroAbility,
   HeroAssetsResponse,
   HeroBuildStats,
+  HeroSummary,
   ItemModifier,
   LaneCurveResponse,
   PlayerEconomyCurveResponse,
@@ -52,28 +51,34 @@ import type {
 } from '../../../types/api';
 
 const NO_BASE: BaseStats = {};
+const NO_ENTRIES: BuildEntry[] = [];
 const DAY_MS = 24 * 60 * 60_000;
-const PACES = [
-  { key: 'slow', label: 'Slow', factor: '×1.2' },
-  { key: 'median', label: 'Median', factor: '×1' },
-  { key: 'fast', label: 'Fast', factor: '×0.85' },
-] as const;
-type Pace = (typeof PACES)[number]['key'];
+//Both lab tabs read the hero at the same level, so the two boards stay comparable.
+const LAB_LEVEL = 20;
+//The design opens on a loaded board; live does the same from the best-scoring served preset.
+const DEFAULT_PRESET = 'best-wr';
+//The tier switch opens where the design's does — the fully-levelled kit.
+const DEFAULT_TIER = 3;
 
-type BaseStatValue = { value: number; display_stat_name?: string };
+const PACE_LABEL: Record<TimelinePace, string> = {
+  p25: 'slow · p25',
+  p50: 'median · p50',
+  p75: 'fast · p75',
+  you: 'your own',
+};
 
 interface AnalyzeTabProps {
   heroId: number | null;
   onHero: (id: number) => void;
-  roster: RosterSlug[];
+  pace: TimelinePace;
+  onBoard: (board: LabBoard) => void;
+  timeline: ReactNode;
   onEditCopy: (build: BuildInput) => void;
   //Handed over by a Community-tab Import row; cleared through onImportConsumed so the same
   //row can be imported again after the board has been replaced here.
   importBuildId: number | null;
   onImportConsumed: () => void;
 }
-
-const minute = (at: AffordableAt | null): string => (at == null ? '—' : `${Math.round(at.tSeconds / 60)}′`);
 
 function catalogEntries(ids: readonly number[], category: string): BuildEntry[] {
   return ids.map((itemId) => ({ itemId, category }));
@@ -82,7 +87,9 @@ function catalogEntries(ids: readonly number[], category: string): BuildEntry[] 
 export default function AnalyzeTab({
   heroId,
   onHero,
-  roster,
+  pace,
+  onBoard,
+  timeline: timelineNode,
   onEditCopy,
   importBuildId,
   onImportConsumed,
@@ -95,14 +102,14 @@ export default function AnalyzeTab({
   const [board, setBoard] = useState<{ title: string; source: string; entries: BuildEntry[] } | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState<string | null>(null);
-  const [pace, setPace] = useState<Pace>('median');
-  const [timelinePace, setTimelinePace] = useState<TimelinePace>('p50');
-  const [tier, setTier] = useState(1);
+  const [seededFor, setSeededFor] = useState<number | null>(null);
+  const [tier, setTier] = useState(DEFAULT_TIER);
 
   //The signed-in viewer's own souls curve backs the timeline's "You" pace; signed out, it is absent.
   const { viewer } = useViewer();
   const accountId = viewer?.deadlock_account_id ?? null;
 
+  const rosterArt = useQuery<HeroSummary[]>({ queryKey: queryKeys.heroes(), queryFn: () => api.getHeroes() });
   const catalogQuery = useQuery<ItemModifier[]>({
     queryKey: queryKeys.itemModifiers(),
     queryFn: () => api.getItemModifiers(),
@@ -188,8 +195,20 @@ export default function AnalyzeTab({
     [buildStatsQuery.data, communityQuery.data, byId],
   );
 
+  //Open on a board, as the design does: a served preset per hero, until a real import replaces it.
+  useEffect(() => {
+    if (hero == null || buildId != null || seededFor === hero || byId.size === 0) return;
+    const first =
+      presets.find((p) => p.key === DEFAULT_PRESET && p.itemIds.length > 0) ??
+      presets.find((p) => p.itemIds.length > 0);
+    if (!first) return;
+    setSeededFor(hero);
+    setActivePreset(first.key);
+    setBoard({ title: first.label, source: first.hint, entries: catalogEntries(first.itemIds, first.label) });
+  }, [hero, presets, buildId, seededFor, byId]);
+
   const contents = useMemo(() => (imported ? buildContents(imported) : null), [imported]);
-  const entries = contents?.entries ?? board?.entries ?? [];
+  const entries = contents?.entries ?? board?.entries ?? NO_ENTRIES;
   const items = useMemo(() => boardItems(entries, byId), [entries, byId]);
   const rows = useMemo(() => purchaseRows(entries, byId), [entries, byId]);
   const groups = useMemo(() => phaseGroups(rows, curve), [rows, curve]);
@@ -200,50 +219,58 @@ export default function AnalyzeTab({
     [hero, active, items],
   );
   const stats = useMemo(
-    () => computeStats(active?.stats ?? NO_BASE, catalog, buildInput, { assets: assetsQuery.data ?? null }),
+    () => computeStats(active?.stats ?? NO_BASE, catalog, buildInput, { assets: assetsQuery.data ?? null, level: LAB_LEVEL }),
     [active, catalog, buildInput, assetsQuery.data],
   );
   const mods = useMemo(() => buildModifiers(stats, items, byId), [stats, items, byId]);
   const tierRows = useMemo(() => tierAbilities(assetsQuery.data?.abilities, tier), [assetsQuery.data, tier]);
 
-  const steps = useMemo(() => abilitySteps(imported?.ability_order), [imported]);
+  //An imported build carries its own order; a served-preset board reads the hero's most-played one.
+  const topOrder = useMemo(
+    () => [...(ordersQuery.data?.orders ?? [])].sort((a, b) => b.matches - a.matches)[0] ?? null,
+    [ordersQuery.data],
+  );
+  const steps = useMemo(
+    () => (imported ? abilitySteps(imported.ability_order) : stepsFromSequence(topOrder?.abilities ?? [])),
+    [imported, topOrder],
+  );
   const summaries = useMemo(() => abilitySummaries(steps), [steps]);
   const orderMatch = useMemo(() => matchServedOrder(steps, ordersQuery.data?.orders), [steps, ordersQuery.data]);
   const abilityById = useMemo(
     () => new Map((abilitiesQuery.data ?? []).map((a) => [a.ability_id, a])),
     [abilitiesQuery.data],
   );
-
-  const baseStats = useMemo(
-    () =>
-      Object.entries(active?.stats ?? {})
-        .filter((e): e is [string, BaseStatValue] => typeof (e[1] as { value?: unknown } | null)?.value === 'number')
-        .sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([key, v]) => ({ key, value: v.value, label: statLabel(key, v.display_stat_name) })),
-    [active],
-  );
+  const slots = useMemo(() => signatureSlots(abilitiesQuery.data), [abilitiesQuery.data]);
 
   const ownCurve = useMemo(() => ownCurvePoints(ownCurveQuery.data?.you ?? []), [ownCurveQuery.data]);
   const ownCurveAvailable = accountId != null && ownCurve.length > 0;
   const timeline = useMemo(
-    () => timelineRows(rows, soulsCurve, timelinePace, ownCurve),
-    [rows, soulsCurve, timelinePace, ownCurve],
+    () => timelineRows(rows, soulsCurve, pace, ownCurve),
+    [rows, soulsCurve, pace, ownCurve],
   );
-  useEffect(() => {
-    if (timelinePace === 'you' && !ownCurveAvailable) setTimelinePace('p50');
-  }, [timelinePace, ownCurveAvailable]);
 
-  const afford = useMemo(() => affordableWindow(soulsCurve, total, 'p50'), [soulsCurve, total]);
-  const affordAt = pace === 'slow' ? afford.slow : pace === 'fast' ? afford.fast : afford.mid;
+  useEffect(() => {
+    onBoard({ rows: timeline, ownCurve: ownCurveAvailable, share: items.length > 0 ? buildInput : null });
+  }, [timeline, ownCurveAvailable, items.length, buildInput, onBoard]);
+
+  const affordAt = timeline[timeline.length - 1]?.at ?? null;
+  const afford =
+    affordAt == null
+      ? 'past 40′'
+      : `${Math.floor(Math.round(affordAt.tSeconds) / 60)}:${String(Math.round(affordAt.tSeconds) % 60).padStart(2, '0')}`;
 
   const nowS = Math.floor(Date.now() / 1000);
+  const heroIcon = useMemo(
+    () => (rosterArt.data ?? []).find((h) => h.hero_id === hero)?.icon_url ?? null,
+    [rosterArt.data, hero],
+  );
   const header = useMemo<ImportedHeader | null>(() => {
     if (!imported && !board) return null;
-    const paceRow = PACES.find((p) => p.key === pace)!;
-    const affordNote = `at ${paceRow.label.toLowerCase()} pace (${paceRow.factor} on the cost — editorial) · RankLock public matches p50 souls curve, all heroes`;
+    const affordNote = `at ${PACE_LABEL[pace]} farm`;
+    const common = { heroName: active?.hero_name ?? null, heroIcon, price: total, owned: entries.length, afford, affordNote };
     if (imported && contents) {
       return {
-        heroName: active?.hero_name ?? null,
+        ...common,
         title: imported.name || `Build ${imported.hero_build_id}`,
         author: `by ${authorLabel(imported)} · in-game build ${imported.hero_build_id}`,
         updated: formatUpdated(imported.last_updated_timestamp, nowS),
@@ -254,14 +281,10 @@ export default function AnalyzeTab({
         points: contents.points,
         winRate: imported.win_rate_30d == null ? null : imported.win_rate_30d * 100,
         matches: imported.matches,
-        price: total,
-        owned: entries.length,
-        afford: minute(affordAt),
-        affordNote,
       };
     }
     return {
-      heroName: active?.hero_name ?? null,
+      ...common,
       title: board!.title,
       author: board!.source,
       updated: 'now',
@@ -272,12 +295,8 @@ export default function AnalyzeTab({
       points: 0,
       winRate: null,
       matches: null,
-      price: total,
-      owned: entries.length,
-      afford: minute(affordAt),
-      affordNote,
     };
-  }, [imported, board, contents, active, entries.length, total, affordAt, pace, nowS]);
+  }, [imported, board, contents, active, heroIcon, entries.length, total, afford, pace, nowS]);
 
   const onImport = (ref: ImportRef) => {
     setImportError(null);
@@ -307,22 +326,6 @@ export default function AnalyzeTab({
     setBoard({ title: preset.label, source: preset.hint, entries: catalogEntries(preset.itemIds, preset.label) });
   };
 
-  const paceSwitch = (
-    <span className="tabs" role="group" aria-label="Farm pace">
-      {PACES.map((p) => (
-        <button
-          key={p.key}
-          type="button"
-          className={'tab' + (pace === p.key ? ' on' : '')}
-          style={{ padding: '2px 8px', fontSize: 11 }}
-          onClick={() => setPace(p.key)}
-        >
-          {p.label}
-        </button>
-      ))}
-    </span>
-  );
-
   if (rosterPending) return <p className="muted" style={{ padding: '14px 2px' }}>Loading heroes…</p>;
   if (rosterError || heroes.length === 0 || !active) {
     return (
@@ -336,16 +339,6 @@ export default function AnalyzeTab({
 
   return (
     <div className="grid" style={{ gap: 22 }}>
-      <div className="between" style={{ gap: 12, flexWrap: 'wrap' }}>
-        <div className="flex" style={{ alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <HeroSelect heroes={heroes} activeId={active.hero_id} onHero={onHero} />
-          <HowToPlayLink hero={active} roster={roster} />
-        </div>
-        <span className="mono faint" style={{ fontSize: 12 }}>
-          patch {active.patch_id} · {active.source}
-        </span>
-      </div>
-
       <ImportPanel
         onImport={onImport}
         pending={importQuery.isFetching}
@@ -362,12 +355,10 @@ export default function AnalyzeTab({
             abilityOrder: steps.map((s) => s.abilityId),
           })
         }
-        paceSwitch={paceSwitch}
       />
-      <p className="faint" style={{ fontSize: 11.5, margin: '-8px 0 0' }}>{PRESET_SOURCE_NOTE}</p>
 
-      <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 2fr) minmax(300px, 1fr)', gap: 22 }}>
-        <div className="grid" style={{ gap: 22, alignContent: 'start' }}>
+      <div className="lab-cols">
+        <div className="lab-col">
           {rows.length > 0 && (
             <PurchaseOrder
               groups={groups}
@@ -377,35 +368,32 @@ export default function AnalyzeTab({
               band="all ranks"
             />
           )}
-          <SoulsTimeline
-            rows={timeline}
-            pace={timelinePace}
-            onPace={setTimelinePace}
-            ownCurveAvailable={ownCurveAvailable}
-            window={CURVE_WINDOW}
+          <AbilityProgression
+            steps={steps}
+            summaries={summaries}
+            abilities={abilityById}
+            slots={slots}
+            served={imported == null}
+            match={orderMatch}
+            minMatches={ordersQuery.data?.min_matches ?? null}
+            window={ordersQuery.data?.window ?? null}
           />
-          {imported && (
-            <AbilityProgression
-              steps={steps}
-              summaries={summaries}
-              abilities={abilityById}
-              match={orderMatch}
-              minMatches={ordersQuery.data?.min_matches ?? null}
-              window={ordersQuery.data?.window ?? null}
-            />
-          )}
         </div>
         <AnalyzeRail
           stats={stats}
           mods={mods}
           tierAbilities={tierRows}
-          baseStats={baseStats}
+          slots={slots}
+          heroName={active.hero_name}
+          level={LAB_LEVEL}
           hasBoard={items.length > 0}
           boardCount={items.length}
           tier={tier}
           onTier={setTier}
         />
       </div>
+
+      {timelineNode}
     </div>
   );
 }

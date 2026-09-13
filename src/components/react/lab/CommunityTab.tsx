@@ -1,22 +1,22 @@
 //Build Lab §13 — the Hero Build community table mounted a second time (04 §4, one island, two
 //mount points): all-ranks only, no bracket selector, plus the per-row Import into Analyze.
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { signatureSlots } from '../../../lib/buildMeta';
 import { EmptyState } from '../ui/index';
 import { CommunityBuildsTable } from '../hero/CommunityBuilds';
-import { HeroSelect, HowToPlayLink, useHeroRoster, type RosterSlug } from './HeroBar';
+import { useHeroRoster, type RosterSlug } from './HeroBar';
 import type { CommunityBuild, HeroAbility, Patch } from '../../../types/api';
 
 interface CommunityTabProps {
   heroId: number | null;
-  onHero: (id: number) => void;
   roster: RosterSlug[];
   onImport: (buildId: number) => void;
+  timeline: ReactNode;
 }
 
-export default function CommunityTab({ heroId, onHero, roster, onImport }: CommunityTabProps) {
+export default function CommunityTab({ heroId, onImport, timeline }: CommunityTabProps) {
   const { heroes, isPending: rosterPending, isError: rosterError } = useHeroRoster();
   const active = heroes.find((h) => h.hero_id === heroId) ?? heroes[0] ?? null;
   const hero = active?.hero_id ?? null;
@@ -57,11 +57,7 @@ export default function CommunityTab({ heroId, onHero, roster, onImport }: Commu
   }
 
   return (
-    <div className="grid" style={{ gap: 18 }}>
-      <div className="flex" style={{ alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <HeroSelect heroes={heroes} activeId={active.hero_id} onHero={onHero} />
-        <HowToPlayLink hero={active} roster={roster} />
-      </div>
+    <div className="grid" style={{ gap: 22 }}>
       {buildsQuery.isPending ? (
         <p className="muted" style={{ padding: '14px 2px' }}>Loading builds…</p>
       ) : buildsQuery.isError ? (
@@ -82,6 +78,8 @@ export default function CommunityTab({ heroId, onHero, roster, onImport }: Commu
           onImport={onImport}
         />
       )}
+
+      {timeline}
     </div>
   );
 }

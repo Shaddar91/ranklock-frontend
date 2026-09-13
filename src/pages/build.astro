@@ -12,8 +12,7 @@ import type { HeroSummary } from '../types/api';
 //off the indexable /build-lab meta page. The per-build OG card is deferred, so og:image
 //stays the generic default; the island reads the fragment and names the hero in the tab.
 
-//Same released-roster guard /build-lab hands the island — its "how to play" links are
-//keyed on it, not on the /heroes/base-stats roster it fetches itself.
+//The guide links are keyed on this released roster, not the base-stats one the island fetches.
 const released = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'build');
 const guideSlugs = await publishedGuideSlugs();
 const roster = slugRoster(
@@ -27,15 +26,19 @@ const roster = slugRoster(
   description="Open a shared Deadlock build in the RankLock creator — its items, imbues, conditionals and calculated Weapon, Vitality and Spirit stats, souls cost included."
   noindex={true}
 >
-  <main class="container">
-    <div class="kicker">Theorycraft</div>
-    <h1 class="h-page">Shared build</h1>
-    <p class="page-intro">
-      A build shared from the RankLock creator. Tweak it and read its calculated Weapon, Vitality and Spirit stats and
-      souls cost, then open the full <a href="/build-lab/">Build Lab</a> to theorycraft your own.
-    </p>
-    <div style="margin-top:20px;">
-      <BuildLabIsland client:load roster={roster} />
+  <main class="container lab-main">
+    <div class="page-head lab-page-head">
+      <div>
+        <div class="kicker">Theorycraft</div>
+        <h1 class="h-page">Shared build</h1>
+        <p class="lab-intro">
+          A build shared from the RankLock creator. Tweak it and read its calculated Weapon, Vitality and Spirit
+          stats and souls cost, then open the full <a href="/build-lab/">Build Lab</a> to theorycraft your own.
+        </p>
+      </div>
+      <div id="lab-share" class="lab-share-slot"></div>
     </div>
+
+    <BuildLabIsland client:load roster={roster} />
   </main>
 </BaseLayout>

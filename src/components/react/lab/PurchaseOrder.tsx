@@ -1,9 +1,12 @@
-//Lab §4 — the imported build's items in purchase order, grouped by the phase a median-farming
-//lobby reaches their running total in, with the upgrade-difference paid column and the slot note.
+//Lab §4 — the board's items in purchase order, grouped by the phase a median-farming lobby
+//reaches their running total in, with the upgrade-difference paid column and the slot note.
 import { GameIcon, ItemHoverCard, SectionHeader } from '../ui/index';
 import { count, DASH } from '../../../lib/format';
 import { overlayFromCatalog, type ItemOverlayData } from '../../../lib/itemOverlay';
+import { catClass } from '../../../lib/itemDetail';
 import { slotNote, type PhaseGroup, type PurchaseRow } from './analyzeModel';
+
+const HEAD_NOTE = 'Hover an item for its card · running total pays the upgrade difference when a component is owned';
 
 interface PurchaseOrderProps {
   groups: PhaseGroup[];
@@ -32,58 +35,69 @@ function bareOverlay(itemId: number, name: string): ItemOverlayData {
 
 function Row({ row }: { row: PurchaseRow }) {
   return (
-    <div className="statrow" style={{ gap: 10, alignItems: 'center' }}>
-      <span className="mono faint tnum" style={{ fontSize: 11, width: 22, flex: 'none' }}>{row.pos}</span>
+    <div className="lab-porow">
+      <span className="lab-po-pos">{row.pos}</span>
       <ItemHoverCard data={row.item ? overlayFromCatalog(row.item) : bareOverlay(row.itemId, row.name)}>
-        <span className="flex" style={{ alignItems: 'center', gap: 9, flex: 1, minWidth: 0 }}>
-          <GameIcon kind="item" name={row.name} src={row.item?.icon} size={28} />
-          <span style={{ minWidth: 0 }}>
-            <span className="flex" style={{ alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-              <span className="display" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{row.name}</span>
-              {row.upgradeFrom && (
-                <span className="chip" style={{ padding: '1px 7px', fontSize: 10.5 }} title={`Assumed: upgraded from ${row.upgradeFrom.name} (${count(row.upgradeFrom.cost)} souls already sunk)`}>
-                  upgrade · assumed
-                </span>
-              )}
-            </span>
-            <span className="faint" style={{ fontSize: 11 }}>
-              {[row.slotTier, row.category, row.annotation].filter(Boolean).join(' · ')}
-            </span>
-          </span>
+        <span className={`lab-itile ${catClass(row.item?.item_slot_type)}`} style={{ display: 'inline-flex' }}>
+          <GameIcon kind="item" name={row.name} src={row.item?.icon} size={32} />
         </span>
       </ItemHoverCard>
-      <span className="tnum amber-c" style={{ fontSize: 12.5, flex: 'none', minWidth: 74, textAlign: 'right' }}>
-        {row.paid == null ? DASH : count(row.paid)}
+      <span style={{ minWidth: 0 }}>
+        <span className="flex" style={{ alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <span className="lab-po-name">{row.name}</span>
+          {row.upgradeFrom && (
+            <span
+              className="lab-upg"
+              title={`Assumed: upgraded from ${row.upgradeFrom.name} (${count(row.upgradeFrom.cost)} souls already sunk)`}
+            >
+              upgrade
+            </span>
+          )}
+        </span>
+        <span className="lab-po-sub">
+          {[row.slotTier, row.upgradeFrom ? `Upgrades ${row.upgradeFrom.name}` : null, row.annotation]
+            .filter(Boolean)
+            .join(' · ')}
+        </span>
       </span>
-      <span className="tnum faint" style={{ fontSize: 12, flex: 'none', minWidth: 78, textAlign: 'right' }}>
-        {count(row.running)}
-      </span>
+      <span className="lab-po-paid tnum">{row.paid == null ? DASH : count(row.paid)}</span>
+      <span className="lab-po-run tnum">{count(row.running)}</span>
     </div>
   );
 }
 
 export default function PurchaseOrder({ groups, total, owned, phased, band }: PurchaseOrderProps) {
-  const note = phased
+  const foot = phased
     ? `Paid pays the upgrade difference when a component is already owned — the build states no upgrade route, so that is assumed. Phase = the band holding the minute a median-farming lobby affords the running total (RankLock public matches p50, all heroes, ${band}); the build carries no timings of its own.`
     : 'Paid pays the upgrade difference when a component is already owned — the build states no upgrade route, so that is assumed. No economy curve is served right now, so the rows are not split into phases.';
 
   return (
-    <section className="grid" style={{ gap: 10 }}>
-      <SectionHeader kicker="In what order" title="Items in purchase order" note={note} />
-      {groups.map((g) => (
-        <section key={g.name} className="panel catpanel">
-          <div className="cat-h">
-            <span className="display" style={{ flex: 1 }}>{g.name}</span>
-            <span className="label-xs tnum">{g.range} · {g.rows.length} items · {count(g.souls)} souls</span>
+    <section>
+      <SectionHeader kicker="In what order" title="Items in purchase order" note={HEAD_NOTE} />
+      <div className="lab-card lab-card-flush">
+        {groups.map((g) => (
+          <div key={g.name}>
+            <div className="lab-phase">
+              <span>
+                {g.name} <em>{g.range}</em>
+              </span>
+              <span className="tnum">
+                {g.rows.length} items · {count(g.souls)} souls
+              </span>
+            </div>
+            {g.rows.map((row) => (
+              <Row key={row.itemId} row={row} />
+            ))}
           </div>
-          {g.rows.map((row) => <Row key={row.itemId} row={row} />)}
-        </section>
-      ))}
-      <div className="statrow" style={{ borderTop: '1px solid var(--border)', paddingTop: 10 }}>
-        <span className="display" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
-          Total · {owned} items owned, {slotNote(owned)}
-        </span>
-        <span className="sv tnum amber-c">{count(total)} souls</span>
+        ))}
+        <div className="lab-po-total">
+          <span>
+            Total · {owned} items owned, {slotNote(owned)}
+          </span>
+          <span className="lab-po-paid tnum">{count(total)}</span>
+          <span />
+        </div>
+        <p className="lab-tblnote">{foot}</p>
       </div>
     </section>
   );

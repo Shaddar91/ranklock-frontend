@@ -1,16 +1,15 @@
-//Build Lab Create tab (design Lab §7-§12 + §14): the roster chip row and the "start from" chips
-//over C23's board, then the target panel, the computed stat cards, the ability-order editor, the
-//A-vs-B compare and the souls timeline — all read off the one draft this tab owns.
-import { useEffect, useMemo, useState } from 'react';
+//Build Lab Create tab (design Lab §7-§12 + §14): the board beside the shop, the target panel and
+//the computed stat cards on the rail, then the souls timeline, the abilities table beside the
+//order editor and the A-vs-B compare — all read off the one draft this tab owns.
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { computeStats, type BaseStats, type BuildInput } from '../../../lib/computeStats';
-import { CURVE_WINDOW } from '../../../lib/labCalc';
-import { indexCatalog, normalizeCatalog } from '../creator/buildModel';
+import { readBuildFromHash } from '../../../lib/buildShare';
+import { signatureSlots } from '../../../lib/buildMeta';
+import { indexCatalog, layoutBuild, normalizeCatalog, TOTAL_SLOTS } from '../creator/buildModel';
 import { useBuildDraft } from '../creator/useBuildDraft';
-import BuildCreator from '../creator/BuildCreator';
 import { useViewer } from '../player/usePlayer';
-import { count } from '../../../lib/format';
 import { buildModifiers, purchaseRows, tierAbilities, type BuildEntry } from './analyzeModel';
 import {
   cohortCurvePoints,
@@ -18,17 +17,18 @@ import {
   ownCurvePoints,
   startFromPresets,
   timelineRows,
-  PRESET_SOURCE_NOTE,
   type StartFromPreset,
   type TimelinePace,
 } from './createModel';
 import { useHeroRoster } from './HeroBar';
-import HeroChipRow from './HeroChipRow';
+import LabBoard from './LabBoard';
+import LabShop from './LabShop';
 import TargetPanel from './TargetPanel';
 import BoardStatPanels from './BoardStatPanels';
+import BoardAbilities from './BoardAbilities';
 import OrderEditor from './OrderEditor';
 import CompareBoards from './CompareBoards';
-import SoulsTimeline from './SoulsTimeline';
+import type { LabBoard as LabBoardState } from '../BuildLabIsland';
 import type {
   AbilityOrdersResponse,
   HeroAbility,
@@ -37,6 +37,7 @@ import type {
   HeroSummary,
   ItemModifier,
   LaneCurveResponse,
+  Patch,
   PlayerEconomyCurveResponse,
   TrimmedBuild,
 } from '../../../types/api';
@@ -44,25 +45,43 @@ import type {
 const NO_BASE: BaseStats = {};
 const DAY_MS = 24 * 60 * 60_000;
 const DEFAULT_LEVEL = 20;
+//The board, the tier switch and Board B open where the design's do.
+const DEFAULT_TIER = 3;
+const DEFAULT_PRESET = 'best-wr';
+const DEFAULT_COMPARE = 'winning-set';
 
-export default function CreateTab({ initial }: { initial?: BuildInput | null }) {
+interface CreateTabProps {
+  initial?: BuildInput | null;
+  heroId: number | null;
+  onHero: (id: number) => void;
+  pace: TimelinePace;
+  onBoard: (board: LabBoardState) => void;
+  timeline: ReactNode;
+}
+
+export default function CreateTab({ initial, heroId, onHero, pace, onBoard, timeline }: CreateTabProps) {
   const draft = useBuildDraft();
   const { heroes } = useHeroRoster();
   const [level, setLevel] = useState(DEFAULT_LEVEL);
-  const [tier, setTier] = useState(1);
+  const [tier, setTier] = useState(DEFAULT_TIER);
   const [targetId, setTargetId] = useState<number | null>(null);
   const [order, setOrder] = useState<number[]>(initialOrder);
-  const [pace, setPace] = useState<TimelinePace>('p50');
-  const [compareKey, setCompareKey] = useState<string | null>(null);
+  const [compareKey, setCompareKey] = useState<string | null>(DEFAULT_COMPARE);
   const [presetKey, setPresetKey] = useState<string | null>(null);
+  const [seededFor, setSeededFor] = useState<number | null>(null);
 
-  const heroId = draft.heroId;
   const hero = heroes.find((h) => h.hero_id === heroId) ?? null;
 
   const rosterArt = useQuery<HeroSummary[]>({ queryKey: queryKeys.heroes(), queryFn: () => api.getHeroes() });
   const catalogQuery = useQuery<ItemModifier[]>({
     queryKey: queryKeys.itemModifiers(),
     queryFn: () => api.getItemModifiers(),
+  });
+  const patchQuery = useQuery<Patch>({
+    queryKey: queryKeys.patchCurrent(),
+    queryFn: () => api.getCurrentPatch(),
+    staleTime: DAY_MS,
+    retry: false,
   });
   const assetsQuery = useQuery<HeroAssetsResponse>({
     queryKey: queryKeys.heroAssets(heroId ?? -1),
@@ -123,6 +142,10 @@ export default function CreateTab({ initial }: { initial?: BuildInput | null }) 
     () => new Map((rosterArt.data ?? []).map((h) => [h.hero_id, h.icon_url] as const)),
     [rosterArt.data],
   );
+  const picks = useMemo(
+    () => new Map((rosterArt.data ?? []).map((h) => [h.hero_id, h.picks] as const)),
+    [rosterArt.data],
+  );
   const cohortCurve = useMemo(() => cohortCurvePoints(curveQuery.data?.points), [curveQuery.data]);
   const ownCurve = useMemo(() => ownCurvePoints(ownCurveQuery.data?.you ?? []), [ownCurveQuery.data]);
 
@@ -131,7 +154,42 @@ export default function CreateTab({ initial }: { initial?: BuildInput | null }) 
     [buildStatsQuery.data, communityQuery.data, byId],
   );
 
+  const { loadBuild, selectHero } = draft;
+  //A shared link round-trips through the fragment; read it once, after hydration.
+  const [sharedLoaded, setSharedLoaded] = useState(false);
+  useEffect(() => {
+    const shared = readBuildFromHash(window.location.hash);
+    if (!shared) return;
+    loadBuild(shared);
+    setSharedLoaded(true);
+    if (shared.heroId > 0) onHero(shared.heroId);
+  }, [loadBuild, onHero]);
+
+  //"Edit a copy" on Analyze hands the board over; it wins over the empty draft, never over a link.
+  useEffect(() => {
+    if (initial && !sharedLoaded) loadBuild(initial);
+  }, [initial, sharedLoaded, loadBuild]);
+
+  //The page owns the hero; the draft follows it and rebuilds from empty on a real switch.
+  useEffect(() => {
+    if (sharedLoaded || heroId == null) return;
+    selectHero(heroId, heroes.find((h) => h.hero_id === heroId)?.patch_id);
+  }, [heroId, heroes, selectHero, sharedLoaded]);
+
+  //Open on a board, as the design does, unless a share link or an "edit a copy" already filled one.
+  useEffect(() => {
+    if (sharedLoaded || initial || heroId == null || seededFor === heroId || byId.size === 0) return;
+    const first =
+      presets.find((p) => p.key === DEFAULT_PRESET && p.itemIds.length > 0) ??
+      presets.find((p) => p.itemIds.length > 0);
+    if (!first) return;
+    setSeededFor(heroId);
+    setPresetKey(first.key);
+    loadBuild({ heroId, patch: heroes.find((h) => h.hero_id === heroId)?.patch_id, items: first.itemIds });
+  }, [sharedLoaded, initial, heroId, seededFor, presets, heroes, byId, loadBuild]);
+
   const board = draft.build;
+  const layout = useMemo(() => layoutBuild(board.items, byId), [board.items, byId]);
   const stats = useMemo(
     () => computeStats(hero?.stats ?? NO_BASE, catalog, board, { assets: assetsQuery.data ?? null, level }),
     [hero, catalog, board, assetsQuery.data, level],
@@ -142,6 +200,7 @@ export default function CreateTab({ initial }: { initial?: BuildInput | null }) 
     () => [...(abilitiesQuery.data ?? [])].filter((a) => a.slot?.startsWith('signature')).sort((a, b) => a.order - b.order),
     [abilitiesQuery.data],
   );
+  const slots = useMemo(() => signatureSlots(abilitiesQuery.data), [abilitiesQuery.data]);
 
   const compareB = presets.find((p) => p.key === compareKey) ?? null;
   const compareStats = useMemo(() => {
@@ -155,20 +214,24 @@ export default function CreateTab({ initial }: { initial?: BuildInput | null }) 
     [board.items, byId],
   );
   const rows = useMemo(() => purchaseRows(entries, byId), [entries, byId]);
-  const timeline = useMemo(
+  const timelineData = useMemo(
     () => timelineRows(rows, cohortCurve, pace, ownCurve),
     [rows, cohortCurve, pace, ownCurve],
   );
+  const ownCurveAvailable = accountId != null && ownCurve.length > 0;
+
+  useEffect(() => {
+    onBoard({
+      rows: timelineData,
+      ownCurve: ownCurveAvailable,
+      share: board.items.length > 0 ? board : null,
+    });
+  }, [timelineData, ownCurveAvailable, board, onBoard]);
 
   //The target defaults to the hero being built — a mirror match, not an invented opponent.
   useEffect(() => {
     if (targetId == null && heroId != null) setTargetId(heroId);
   }, [targetId, heroId]);
-
-  const ownCurveAvailable = accountId != null && ownCurve.length > 0;
-  useEffect(() => {
-    if (pace === 'you' && !ownCurveAvailable) setPace('p50');
-  }, [pace, ownCurveAvailable]);
 
   const targetHpPerLevel = useMemo(() => {
     const upgrades = targetAssetsQuery.data?.standard_level_up_upgrades as Record<string, unknown> | undefined;
@@ -178,79 +241,69 @@ export default function CreateTab({ initial }: { initial?: BuildInput | null }) 
 
   const onPreset = (preset: StartFromPreset) => {
     setPresetKey(preset.key);
-    draft.loadBuild({ heroId: heroId ?? 0, patch: hero?.patch_id, items: preset.itemIds });
+    loadBuild({ heroId: heroId ?? 0, patch: hero?.patch_id, items: preset.itemIds });
   };
-
-  //§7 then §8: the roster row and the start-from chips ride the creator's hero slot so they sit
-  //above the board, where the design draws them.
-  const boardHeader = (
-    <div className="grid" style={{ gap: 12 }}>
-      <HeroChipRow
-        roster={rosterArt.data ?? []}
-        playable={heroes}
-        heroId={heroId}
-        onHero={(id) => {
-          setPresetKey(null);
-          draft.selectHero(id, heroes.find((h) => h.hero_id === id)?.patch_id);
-        }}
-      />
-      <div className="between" style={{ gap: 10, flexWrap: 'wrap' }}>
-        <div className="flex" style={{ gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span className="label-xs">Start from</span>
-          {presets.map((p) => (
-            <button
-              key={p.key}
-              type="button"
-              className={'tab' + (presetKey === p.key ? ' on' : '')}
-              style={{ padding: '4px 11px', fontSize: 12 }}
-              title={p.hint}
-              disabled={p.itemIds.length === 0}
-              onClick={() => onPreset(p)}
-            >
-              {p.label}
-              <span className="faint tnum" style={{ marginLeft: 6 }}>{p.itemIds.length}</span>
-            </button>
-          ))}
-        </div>
-        <span className="mono tnum amber-c" style={{ fontSize: 12.5 }}>
-          {count(stats.spend.total)} souls · {board.items.length} of 12 slots
-        </span>
-      </div>
-      <p className="faint" style={{ fontSize: 11.5, margin: 0 }}>{PRESET_SOURCE_NOTE}</p>
-    </div>
-  );
 
   return (
     <div className="grid" style={{ gap: 22 }}>
-      <BuildCreator initial={initial} draft={draft} heroControl={boardHeader} />
-
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 22, alignItems: 'start' }}>
-        <TargetPanel
-          targets={heroes}
-          icons={icons}
-          targetId={targetId}
-          onTarget={setTargetId}
-          level={level}
-          onLevel={setLevel}
-          tier={tier}
-          onTier={setTier}
-          targetHpPerLevel={targetHpPerLevel}
-          targetWeaponDps={null}
-          yourStats={stats}
-          yourAbilities={tierRows}
-          spiritPower={mods.spiritPower}
-        />
-        <BoardStatPanels stats={stats} boardCount={board.items.length} />
+      <div className="lab-cols">
+        <div className="lab-col" style={{ gap: 14 }}>
+          <LabBoard
+            heroName={hero?.hero_name ?? null}
+            layout={layout}
+            byId={byId}
+            souls={stats.spend.total}
+            count={board.items.length}
+            presets={presets}
+            activePreset={presetKey}
+            onPreset={onPreset}
+            onRemove={draft.removeItem}
+          />
+          <LabShop
+            catalog={catalog}
+            picked={board.items}
+            boardFull={board.items.length >= TOTAL_SLOTS}
+            isPending={catalogQuery.isPending}
+            isError={catalogQuery.isError}
+            patch={patchQuery.data?.patch_id ?? null}
+            onAdd={draft.addItem}
+            onRemove={draft.removeItem}
+          />
+        </div>
+        <aside className="lab-rail">
+          <TargetPanel
+            targets={heroes}
+            icons={icons}
+            picks={picks}
+            targetId={targetId}
+            onTarget={setTargetId}
+            level={level}
+            onLevel={setLevel}
+            tier={tier}
+            onTier={setTier}
+            targetHpPerLevel={targetHpPerLevel}
+            targetWeaponDps={null}
+            yourStats={stats}
+            yourAbilities={tierRows}
+            spiritPower={mods.spiritPower}
+          />
+          <BoardStatPanels stats={stats} boardCount={board.items.length} />
+        </aside>
       </div>
 
-      <OrderEditor
-        order={order}
-        onOrder={setOrder}
-        abilities={abilities}
-        served={ordersQuery.data?.orders}
-        minMatches={ordersQuery.data?.min_matches ?? null}
-        window={ordersQuery.data?.window ?? null}
-      />
+      {timeline}
+
+      <div className="lab-two">
+        <BoardAbilities rows={tierRows} mods={mods} slots={slots} tier={tier} />
+        <OrderEditor
+          order={order}
+          onOrder={setOrder}
+          abilities={abilities}
+          served={ordersQuery.data?.orders}
+          minMatches={ordersQuery.data?.min_matches ?? null}
+          window={ordersQuery.data?.window ?? null}
+        />
+      </div>
 
       <CompareBoards
         a={stats}
@@ -258,14 +311,6 @@ export default function CreateTab({ initial }: { initial?: BuildInput | null }) 
         options={presets}
         activeKey={compareKey}
         onPick={(p) => setCompareKey(p.key)}
-      />
-
-      <SoulsTimeline
-        rows={timeline}
-        pace={pace}
-        onPace={setPace}
-        ownCurveAvailable={ownCurveAvailable}
-        window={CURVE_WINDOW}
       />
     </div>
   );

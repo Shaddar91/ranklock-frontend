@@ -33,23 +33,20 @@ function delta(row: CompareRow): { text: string; color: string } {
 export default function CompareBoards({ a, b, options, activeKey, onPick }: CompareBoardsProps) {
   const active = options.find((o) => o.key === activeKey) ?? null;
   const rows = b ? compareRows(a, b) : [];
-  const grid = 'minmax(0, 1.4fr) 120px 120px 110px';
 
   return (
-    <section className="grid" style={{ gap: 10 }}>
+    <section>
       <SectionHeader
         kicker="A vs B"
         title="Compare boards"
-        note="A is your board. Board cost inverts — the cheaper board takes the delta."
         action={
-          <div className="flex" style={{ gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span className="label-xs">Board B</span>
+          <span className="lab-pickrow">
+            <span className="label-xs" style={{ letterSpacing: '0.16em' }}>Board B</span>
             {options.map((o) => (
               <button
                 key={o.key}
                 type="button"
-                className={'tab' + (activeKey === o.key ? ' on' : '')}
-                style={{ padding: '4px 10px', fontSize: 12 }}
+                className={'lab-pick' + (activeKey === o.key ? ' on' : '')}
                 title={o.hint}
                 disabled={o.itemIds.length === 0}
                 onClick={() => onPick(o)}
@@ -57,59 +54,48 @@ export default function CompareBoards({ a, b, options, activeKey, onPick }: Comp
                 {o.label}
               </button>
             ))}
-          </div>
+          </span>
         }
       />
 
       {b == null || active == null ? (
-        <p className="faint" style={{ fontSize: 12.5, margin: 0 }}>
-          Pick a served board above to compare against — no served set for this hero means no B column.
+        <p className="lab-note" style={{ marginTop: 0 }}>
+          Pick a served board above to compare against — A is your board, and board cost inverts, so the cheaper
+          board takes the delta.
         </p>
       ) : (
-        <div className="panel" style={{ overflow: 'hidden' }}>
-          <div className="grid" style={{ gridTemplateColumns: grid, gap: 12, padding: '10px 13px 6px' }}>
-            <span className="label-xs">Stat</span>
-            <span className="label-xs" style={{ textAlign: 'right' }}>A · your board</span>
-            <span className="label-xs" style={{ textAlign: 'right' }}>B · {active.label}</span>
-            <span className="label-xs" style={{ textAlign: 'right' }}>Δ</span>
+        <div className="lab-card lab-card-flush">
+          <div className="lab-cmprow lab-cmphead">
+            <span>Stat</span>
+            <span>A · your board</span>
+            <span>B · {active.label}</span>
+            <span>Δ</span>
           </div>
           {rows.map((row) => {
             const d = delta(row);
             return (
-              <div
-                key={row.key}
-                className="grid"
-                style={{
-                  gridTemplateColumns: grid,
-                  gap: 12,
-                  alignItems: 'center',
-                  padding: '7px 13px',
-                  borderTop: '1px solid var(--border)',
-                }}
-              >
-                <span style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{row.label}</span>
-                <span className="mono tnum" style={{ fontSize: 12, fontWeight: 600, textAlign: 'right' }}>{cell(row, row.a)}</span>
-                <span className="mono tnum faint" style={{ fontSize: 12, textAlign: 'right' }}>{cell(row, row.b)}</span>
-                <span className="mono tnum" style={{ fontSize: 12, fontWeight: 600, textAlign: 'right', color: d.color }}>{d.text}</span>
+              <div key={row.key} className="lab-cmprow">
+                <span>{row.label}</span>
+                <span className="a tnum">{cell(row, row.a)}</span>
+                <span className="b tnum">{cell(row, row.b)}</span>
+                <span className="d tnum" style={{ color: d.color }}>{d.text}</span>
               </div>
             );
           })}
-          <div
-            className="grid"
-            style={{ gridTemplateColumns: grid, gap: 12, alignItems: 'center', padding: '7px 13px', borderTop: '1px solid var(--border)' }}
-          >
-            <span style={{ fontSize: 12.5, color: 'var(--text-2)' }}>Win rate · matches</span>
-            <span className="mono faint" style={{ fontSize: 12, textAlign: 'right' }}>{CUSTOM_BOARD}</span>
-            <span className="mono tnum" style={{ fontSize: 12, textAlign: 'right', color: active.rate ? 'var(--cyan-bright)' : 'var(--muted)' }}>
+          <div className="lab-cmprow">
+            <span>30-day win rate · matches</span>
+            <span className="a mono">{CUSTOM_BOARD}</span>
+            <span className="b tnum" style={{ color: active.rate ? 'var(--win)' : 'var(--muted)' }}>
               {active.rate ? `${pct(active.rate.winRate)} · ${count(active.rate.matches)}` : 'no served rate'}
             </span>
-            <span className="mono faint" style={{ fontSize: 12, textAlign: 'right' }}>·</span>
+            <span className="d">·</span>
           </div>
-          <p className="faint" style={{ fontSize: 11.5, margin: 0, padding: '9px 13px', borderTop: '1px solid var(--border)' }}>
+          <p className="lab-tblnote">
             {active.rate
               ? `B's rate: ${active.rate.window}. A custom board carries none — only served sets and published builds do.`
               : 'Neither board carries a win rate: a custom board never does, and this preset is assembled from per-item rows rather than a scored set.'}
-            {' '}{COMPARE_OMITTED}
+            {' '}
+            {COMPARE_OMITTED}
           </p>
         </div>
       )}

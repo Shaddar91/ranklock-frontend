@@ -216,6 +216,16 @@ export function abilitySteps(abilityOrder: unknown): AbilityStep[] {
   return steps;
 }
 
+/** The same step shape from a served ability-order sequence: first spend = unlock, then tiers. */
+export function stepsFromSequence(ids: readonly number[]): AbilityStep[] {
+  const upgrades = new Map<number, number>();
+  return ids.map((abilityId, i) => {
+    const seen = upgrades.get(abilityId) ?? 0;
+    upgrades.set(abilityId, seen + 1);
+    return { pos: i + 1, abilityId, tier: seen === 0 ? null : seen, points: 1 };
+  });
+}
+
 export interface AbilitySummary {
   abilityId: number;
   unlockAt: number | null;

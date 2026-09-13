@@ -165,7 +165,7 @@ export function CommunityBuildsTable({
             <span className="label-xs num">{ranked ? 'Favorites ♥' : 'Weekly ♥'}</span>
             <span className="label-xs">First 4 points</span>
             <span className="label-xs num">Updated</span>
-            {onImport && <span className="label-xs num">Import</span>}
+            {onImport && <span aria-hidden="true" />}
           </div>
           {rows.map((r) => (
             <div className="bp-brow" key={r.key}>

@@ -1,8 +1,10 @@
-//Lab §14 — one row per purchase on a 0–40 minute track. The bar is the editorial slow…fast
-//window, the dot the selected pace. "You" appears only for a signed-in player with a served curve.
+//Lab §14 — one row per purchase on a 0–40 minute track, on every tab. The bar is the editorial
+//slow…fast window, the dot the selected pace. "You" appears only for a signed-in player with a
+//served curve.
 import { GameIcon, ItemHoverCard, SectionHeader } from '../ui/index';
 import { count } from '../../../lib/format';
 import { overlayFromCatalog, type ItemOverlayData } from '../../../lib/itemOverlay';
+import { catClass } from '../../../lib/itemDetail';
 import { PACE_FAST, PACE_SLOW, type AffordableAt } from '../../../lib/labCalc';
 import { TIMELINE_MINUTES, TIMELINE_TICKS, trackPercent, type TimelinePace, type TimelineRow } from './createModel';
 
@@ -45,7 +47,7 @@ function minuteLabel(at: AffordableAt | null): string {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }
 
-function Track({ row }: { row: TimelineRow }) {
+function Track({ row, pace }: { row: TimelineRow; pace: TimelinePace }) {
   const fast = trackPercent(row.fast);
   const slow = trackPercent(row.slow);
   const dot = trackPercent(row.at);
@@ -53,73 +55,44 @@ function Track({ row }: { row: TimelineRow }) {
   const width = slow == null ? (fast == null ? 0 : 100 - left) : Math.max(1, slow - left);
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        height: 18,
-        background: 'repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px 25%)',
-      }}
-    >
+    <div className="lab-tltrack">
       {fast != null && (
         <div
-          style={{
-            position: 'absolute',
-            top: 5,
-            left: `${left}%`,
-            width: `${width}%`,
-            height: 8,
-            borderRadius: 2,
-            background: 'color-mix(in oklab, var(--gold) 45%, transparent)',
-          }}
+          className="lab-tlbar"
+          style={{ left: `${left}%`, width: `${width}%` }}
           title={`Affordable between ${minuteLabel(row.fast)} (fast) and ${minuteLabel(row.slow)} (slow)`}
         />
       )}
       {dot != null && (
         <span
-          style={{
-            position: 'absolute',
-            top: 3,
-            left: `${dot}%`,
-            marginLeft: -6,
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            background: 'var(--cyan-bright)',
-            border: '1px solid var(--ink)',
-          }}
+          className={pace === 'you' ? 'lab-tldot you' : 'lab-tldot'}
+          style={{ left: `${dot}%` }}
           title={minuteLabel(row.at)}
         />
       )}
-      <span
-        className="mono tnum"
-        style={{ position: 'absolute', top: 1, left: `calc(${dot ?? 0}% + 10px)`, fontSize: 11, color: 'var(--text-2)', whiteSpace: 'nowrap' }}
-      >
-        {minuteLabel(row.at)}
-      </span>
+      <span className="lab-tlat" style={{ left: `calc(${dot ?? 0}% + 10px)` }}>{minuteLabel(row.at)}</span>
     </div>
   );
 }
 
 export default function SoulsTimeline({ rows, pace, onPace, ownCurveAvailable, window }: SoulsTimelineProps) {
   const paces = PACES.filter((p) => p.key !== 'you' || ownCurveAvailable);
-  const grid = 'minmax(0, 200px) 86px minmax(0, 1fr)';
 
   if (rows.length === 0) return null;
 
   return (
-    <section className="grid" style={{ gap: 10 }}>
+    <section>
       <SectionHeader
         kicker="When can I buy this"
         title="Souls timeline"
-        note={`Bar = affordable between a fast (×${PACE_FAST} on the cost) and a slow (×${PACE_SLOW}) run at the median curve — both factors are editorial, not measured. Dot = the pace selected.`}
+        note={`Bar = affordable between a fast (×${PACE_FAST} on the cost) and a slow (×${PACE_SLOW}) run · dot = the pace selected`}
         action={
-          <span className="tabs" role="group" aria-label="Farm pace">
+          <span className="lab-seg" role="group" aria-label="Farm pace">
             {paces.map((p) => (
               <button
                 key={p.key}
                 type="button"
-                className={'tab' + (pace === p.key ? ' on' : '')}
-                style={{ padding: '3px 10px', fontSize: 12 }}
+                className={pace === p.key ? 'on' : undefined}
                 title={p.hint}
                 onClick={() => onPace(p.key)}
               >
@@ -129,39 +102,31 @@ export default function SoulsTimeline({ rows, pace, onPace, ownCurveAvailable, w
           </span>
         }
       />
-      <div className="panel" style={{ padding: '4px 13px 12px' }}>
-        <div className="grid" style={{ gridTemplateColumns: grid, gap: 13, padding: '8px 0 6px' }}>
-          <span className="label-xs">Slot</span>
-          <span className="label-xs" style={{ textAlign: 'right' }}>Total souls</span>
-          <span className="between mono tnum faint" style={{ fontSize: 10 }}>
+      <div className="lab-card lab-tlcard">
+        <div className="lab-tlrow lab-tlhead">
+          <span>Slot</span>
+          <span>Total souls</span>
+          <span className="lab-tlticks">
             {TIMELINE_TICKS.map((t) => (
               <span key={t}>{t === TIMELINE_MINUTES ? `${t} min` : t}</span>
             ))}
           </span>
         </div>
         {rows.map((row) => (
-          <div
-            key={`${row.pos}-${row.itemId}`}
-            className="grid"
-            style={{ gridTemplateColumns: grid, gap: 13, alignItems: 'center', padding: '5px 0', borderTop: '1px solid var(--border)' }}
-          >
+          <div key={`${row.pos}-${row.itemId}`} className="lab-tlrow">
             <ItemHoverCard data={row.item ? overlayFromCatalog(row.item) : bareOverlay(row.itemId, row.name)}>
-              <span className="flex" style={{ alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <span className={`lab-tlname lab-itile ${catClass(row.item?.item_slot_type)}`}>
                 <GameIcon kind="item" name={row.name} src={row.item?.icon} size={26} />
-                <span className="display" style={{ fontSize: 12.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {row.name}
-                </span>
+                <span className="nm">{row.name}</span>
               </span>
             </ItemHoverCard>
-            <span className="mono tnum amber-c" style={{ fontSize: 12, textAlign: 'right' }}>{count(row.cum)}</span>
-            <Track row={row} />
+            <span className="lab-tlcum tnum">{count(row.cum)}</span>
+            <Track row={row} pace={pace} />
           </div>
         ))}
-        <p className="faint" style={{ fontSize: 11.5, margin: 0, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+        <p className="lab-tlfoot">
           {window}
-          {ownCurveAvailable
-            ? ' · "You" reads your own per-minute souls curve from your profile.'
-            : ''}
+          {ownCurveAvailable ? ' · "You" reads your own per-minute souls curve from your profile.' : ''}
         </p>
       </div>
     </section>
