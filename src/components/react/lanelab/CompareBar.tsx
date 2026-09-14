@@ -141,7 +141,7 @@ export default function CompareBar({
             <input
               type="search"
               value={raw}
-              placeholder={full ? 'Four players is the limit' : 'Add player — name or Steam ID'}
+              placeholder={full ? 'Four players is the limit' : 'Add player by name or Steam ID'}
               disabled={full}
               onChange={(e) => {
                 setRaw(e.target.value);

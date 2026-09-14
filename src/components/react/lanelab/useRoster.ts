@@ -63,7 +63,6 @@ export function useRoster(): UseRoster {
     setEntries(next.slice(0, ROSTER_MAX));
     setSeeded([]);
     //resolved is a fresh array each render; gating on isPending above is what stops the loop.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seeded, resolved.map((q) => q.status).join(',')]);
 
   //Mirror the roster into the URL without a navigation, so back/forward stay the page's own.

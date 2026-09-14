@@ -316,7 +316,7 @@ export default function CurvePanel({
           <p className="ll-curve-note">
             {series.length === 0
               ? `Reference: ${tierName}. Add a player to draw a line.`
-              : `No ${metricLabel.toLowerCase()} in these players' curves yet — it fills from the next pipeline fold. The ${tierName} band is measured.`}
+              : `No ${metricLabel.toLowerCase()} in these players' curves yet. It fills from the next pipeline fold. The ${tierName} band is measured.`}
           </p>
         )}
       </div>
@@ -344,7 +344,7 @@ export default function CurvePanel({
           : `No ${tierName} minute clears the ${count(RANK_MIN_SAMPLE)} player-game floor.`}{' '}
         Player lines: {matchMode}, {windowLabel.toLowerCase()}.
         {WINDOWLESS_METRICS.has(metric)
-          ? ' This metric has no windowed form — the retained timeline carries no such array, so it always reads all games.'
+          ? ' This metric has no windowed form, because the retained timeline carries no such array, so it always reads all games.'
           : coverage && coverage.matches_total !== coverage.matches_with_timeline
             ? ` ${coverage.matches_with_timeline} of ${coverage.matches_total} games in the window carry a timeline.`
             : ''}

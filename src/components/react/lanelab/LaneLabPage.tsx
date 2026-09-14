@@ -80,7 +80,6 @@ export default function LaneLabPage() {
       out.set(p.account_id, row);
     });
     return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roster, bucket, scorecardQueries.map((q) => q.status).join(','), matchMode, windowKey]);
 
   //Ladder marks are the active metric at the ladder's own instant, in real units.
@@ -107,7 +106,6 @@ export default function LaneLabPage() {
       if (peak > 0) out.set(t, peak);
     });
     return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leagueCurves.map((q) => q.status).join(','), metric]);
 
   const metricLabel = SCORECARD_METRICS.find((m) => m.key === metric)?.label ?? metric;
@@ -136,7 +134,7 @@ export default function LaneLabPage() {
             <h2 className="h-sec">Add a player to start.</h2>
             <p>
               Your own account, a friend, anyone. Up to four players share one axis, in the order you
-              add them. The {LEAGUE_NAMES[tier]} band below is already measured — a line just needs a
+              add them. The {LEAGUE_NAMES[tier]} band below is already measured, so a line just needs a
               player.
             </p>
           </section>

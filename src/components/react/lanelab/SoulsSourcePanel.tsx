@@ -177,7 +177,7 @@ export default function SoulsSourcePanel({
 
       <p className="ll-sc-foot">
         Lane creeps pay everyone on a timer, so the gap opens on neutrals, heroes and objectives. The
-        reference is the lobby-average cohort across every rank — /lane-lab/souls-sources takes a
+        reference is the lobby-average cohort across every rank, because /lane-lab/souls-sources takes a
         lobby band only, so it does not follow the league picked above.
       </p>
     </section>
