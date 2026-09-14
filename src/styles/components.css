@@ -1869,7 +1869,7 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
   min-width: 0;
 }
 .itemcard-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.1;
   color: var(--text);
@@ -1900,11 +1900,11 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
   display: flex;
   gap: 8px;
   align-items: baseline;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-2);
 }
 .itemcard-modv {
-  min-width: 54px;
+  min-width: 56px;
   flex: none;
   font-family: var(--mono);
   font-weight: 600;
@@ -1924,6 +1924,7 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 }
 .itemcard-kind {
   font-family: var(--display);
+  letter-spacing: 0.18em;
   color: var(--cyan-bright);
 }
 .itemcard-cd {
@@ -1933,13 +1934,17 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
   font-size: 11px;
   color: var(--muted);
 }
+.itemcard-cd .tnum {
+  font-family: var(--mono);
+  font-weight: 500;
+}
 .itemcard-imbue {
   color: var(--win);
   font-weight: 600;
 }
 .itemcard-body {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.4;
   color: var(--text-2);
 }
@@ -1963,6 +1968,8 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
 .itemcard-pathlabel {
   flex: none;
   font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 0.14em;
   color: var(--muted);
 }
 .itemcard-pathrefs {

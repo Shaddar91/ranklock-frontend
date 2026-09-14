@@ -175,6 +175,10 @@ Thumbs.db
 .wrangler/
 *.tsbuildinfo
 
+#playwright-cli drops session logs and page snapshots into its cwd; a review run
+#from the repo root leaves this behind and it must never be tracked.
+.playwright-cli/
+
 #Asset-worker art tree: CI (assets-deploy.yml) regenerates this ~233MB mirror every run; never committed.
 /workers/assets/public/
 
