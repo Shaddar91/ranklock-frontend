@@ -3,6 +3,7 @@ title: "Deadlock rank distribution: what a band on RankLock measures"
 description: "A band on RankLock is a match's team-average badge, not a player's rank. Obscurus carries 19.7% of measured matches, Eternus 2.1%, across 4.68 million games."
 pubDate: 2026-09-03
 author: RankLock team
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/sumo_card.png"
 tags: [ranks, method, data]
 liveHeroes: []
 liveItems: []

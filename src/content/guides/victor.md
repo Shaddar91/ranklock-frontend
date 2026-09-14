@@ -29,7 +29,7 @@ He has no losing matchup on his table. The closest anyone comes is Seven at 49.7
 
 ## How to play Victor as an Offensive initiator
 
-Start the fight where the enemy cannot spread out. Aura of Suffering ramps the longer it channels and damages him alongside everyone in it, so it is worth the self-harm only in a space they have to stand in — a doorway, a pit, an objective they cannot abandon. In the open it is a loud way to lose health.
+Start the fight where the enemy cannot spread out. Aura of Suffering ramps the longer it channels and damages him alongside everyone in it, so it is worth the self-harm only in a space they have to stand in: a doorway, a pit, an objective they cannot abandon. In the open it is a loud way to lose health.
 
 Pain Battery is the reason you go first. It charges from damage taken and fires shocking bolts once it is full, so absorbing an enemy opener is not a mistake, it is the setup, and holding the fight one exchange longer is usually what completes the charge.
 

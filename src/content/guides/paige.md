@@ -30,7 +30,7 @@ Her kit is a lane bully wearing a support's coat. Bookwyrm sends a dragon forwar
 
 ## How to play Paige as a Support
 
-Put Plot Armor on whoever is winning, not on whoever is dying. The barrier hands its target weapon damage for as long as it lasts, so it converts a teammate who is already trading into one who wins the trade, while the same cast on a hero at low health buys a few seconds and no fight. Save it for a dive when you know one is coming — the standard read against her is to jump her the moment the barrier is spent somewhere else.
+Put Plot Armor on whoever is winning, not on whoever is dying. The barrier hands its target weapon damage for as long as it lasts, so it converts a teammate who is already trading into one who wins the trade, while the same cast on a hero at low health buys a few seconds and no fight. Save it for a dive when you know one is coming. The standard read against her is to jump her the moment the barrier is spent somewhere else.
 
 The shop agrees about what she is for. Guardian Ward is bought 7.7 times and Rescue Beam 5.9 times more often on Paige than the roster average, which is the widest gap of any purchase on the hero and the clearest statement of who she is playing the game for.
 
@@ -48,7 +48,7 @@ Then take the survival that lets her keep casting. Diviner's Kevlar reads 60.4% 
 
 Paige was not named in this patch and the two items it moved barely touch her. Radiant Regeneration lost heal on cast from 70 to 65 and appears in 3 of her 40 sampled builds; Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in 2. Nothing she buys as a matter of course changed.
 
-One published list has seen the current game. The 31,936-favourite lifetime set from Account 1822792925 was last revised 2026-09-07, and it is the only one of the five updated since the patch. The other lifetime set, 36,255 favourites from Account 429404675, dates from 2026-07-12; the three weekly lists — 11,031 favourites from Account 1183614423, 9,032 from Account 457389205 and 4,491 from Account 88776760 — were all revised between 2026-04-08 and 2026-04-10. Every one of the five publishes its name in a form this page does not reprint, so they are cited here by account and favourites rather than tidied into something friendlier.
+One published list has seen the current game. The 31,936-favourite lifetime set from Account 1822792925 was last revised 2026-09-07, and it is the only one of the five updated since the patch. The other lifetime set, 36,255 favourites from Account 429404675, dates from 2026-07-12. The three weekly lists were all revised between 2026-04-08 and 2026-04-10: 11,031 favourites from Account 1183614423, 9,032 from Account 457389205 and 4,491 from Account 88776760. Every one of the five publishes its name in a form this page does not reprint, so they are cited here by account and favourites rather than tidied into something friendlier.
 
 ## Abilities: what to level and when
 
@@ -56,7 +56,7 @@ Plot Armor first on four of the five lists. That is the barrier being treated as
 
 Captivating Read follows on those same four, and Bookwyrm third. The fifth list inverts the top two and opens on Bookwyrm, which is the read for a lane you expect to hold alone rather than trade in.
 
-Rallying Charge goes last on all five. That is not caution — the ultimate scales on distance travelled, so it is worth a point when there is a second fight somewhere else to reach, and that is a late-match condition rather than an early one.
+Rallying Charge goes last on all five. That is not caution. The ultimate scales on distance travelled, so it is worth a point when there is a second fight somewhere else to reach, and that is a late-match condition rather than an early one.
 
 ## Hard counters, and how to play around them
 
@@ -72,4 +72,4 @@ Her best opponent is her worst partner, and that is worth knowing before the dra
 
 For the item slots, weight the rows by how many games are behind them. Spirit Burn at 59.5% over 1,653,648 and Escalating Exposure at 58.6% over 1,710,327 are the two she can plan around; Echo Shard at 58.7% over 583,176 and Lightning Scroll at 58.3% over 662,908 come next.
 
-Mystic Reverb reads 59.5% across 569,438 games, and Magic Carpet is the thin outlier at 60.9% over 48,679 — a high number on a table small enough that it should change one slot, not the build around it.
+Mystic Reverb reads 59.5% across 569,438 games, and Magic Carpet is the thin outlier at 60.9% over 48,679. That is a high number on a table small enough that it should change one slot, not the build around it.

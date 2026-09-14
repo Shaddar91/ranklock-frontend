@@ -3,6 +3,7 @@ title: "Soul economy in the first ten minutes: what Lane Lab shows"
 description: "Lane Lab tracks the median souls curve: 6,060 souls is the 9-minute median, 8,000 flips the win rate past 60%, 14,000 reaches 87.2%."
 pubDate: 2026-08-26
 author: RankLock team
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/inferno_card.png"
 tags: [fundamentals, economy, lane-lab]
 liveItems: [Improved Spirit]
 ---
@@ -35,12 +36,12 @@ are where the slope of that line gets decided.
 Across roughly 20 million games, [Lane Lab](/lane-lab/) attaches a win
 probability to each 9-minute souls threshold:
 
-- **5,000 souls or more** — 47.0% wins. This is the baseline row, the floor the
+- **5,000 souls or more**: 47.0% wins. This is the baseline row, the floor the
   other thresholds compare against.
-- **6,000 or more** — 51.8%.
-- **8,000 or more** — 60.1%.
-- **10,000 or more** — 69.5%.
-- **14,000 or more** — 87.2%.
+- **6,000 or more**: 51.8%.
+- **8,000 or more**: 60.1%.
+- **10,000 or more**: 69.5%.
+- **14,000 or more**: 87.2%.
 
 Read the jump from the baseline to 8,000 as the headline. Clearing 8,000 souls
 by 9:00 moves the measured win probability from 47.0% to 60.1%, a thirteen

@@ -36,7 +36,7 @@ Heroic Aura is her signature support purchase at 6.0 times the roster average, w
 
 ## How to play McGinnis as an Offensive initiator
 
-Open with the barrage and buy the item that lets you finish it. Heavy Barrage slows her while it fires, which is the whole reason Unstoppable wins 57.2% of 332,305 games on her — the ultimate is a commitment, and an interrupted commitment is a fight you paid for and lost.
+Open with the barrage and buy the item that lets you finish it. Heavy Barrage slows her while it fires, which is the whole reason Unstoppable wins 57.2% of 332,305 games on her. The ultimate is a commitment, and an interrupted commitment is a fight you paid for and lost.
 
 Mark the spot the enemy has to stand in, not the one they are standing in now. The rockets home onto a mark, so the cast is a prediction: put it on the choke your wall just made, or on the objective they cannot walk away from.
 
@@ -46,7 +46,7 @@ Pick the lanes that are already hers. She wins 59.5% of 82,521 matches against S
 
 McGinnis was not named in this patch and nothing she relies on moved. Radiant Regeneration lost heal on cast from 70 to 65 and appears in 5 of the 40 sampled builds; Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in 1. Neither belongs to her core.
 
-Read the weekly lists for order and the lifetime ones for shape. `Enraze's build` from Account 171180825 at 2,976 weekly favourites was last updated 2026-04-10, and the other two weekly sets — 2,221 favourites from Account 457389205 and 1,166 from Account 186091237 — come from the same month and publish their names in characters this page does not reprint. `GunGinnis` from Account 108132325 is the most favourited set on the hero at 241,920 and `Kowz McGinnis Ouchie Turret Build` from Account 8899141 holds 57,998, but both were last touched in 2024, so their purchases are history while their point order still stands.
+Read the weekly lists for order and the lifetime ones for shape. `Enraze's build` from Account 171180825 at 2,976 weekly favourites was last updated 2026-04-10, and the other two weekly sets (2,221 favourites from Account 457389205 and 1,166 from Account 186091237) come from the same month and publish their names in characters this page does not reprint. `GunGinnis` from Account 108132325 is the most favourited set on the hero at 241,920 and `Kowz McGinnis Ouchie Turret Build` from Account 8899141 holds 57,998, but both were last touched in 2024, so their purchases are history while their point order still stands.
 
 ## Abilities: what to level and when
 
@@ -58,12 +58,12 @@ Medicinal Specter second on three of the five. That is the sustain answer, and i
 
 ## Hard counters, and how to play around them
 
-Three heroes beat McGinnis in RankLock's own matches, and a fourth is worse than the matchup table admits. She wins 46.4% of 223,807 matches against Seven, 47.5% of 187,637 against Victor and 49.0% of 298,351 against Graves. Paige reads 50.3% over 184,367 matches, close to even — but the counter endpoint puts that lane at 45.4% over 20,365 games, the worst confirmed row on the hero, so play it as the harder one it is.
+Three heroes beat McGinnis in RankLock's own matches, and a fourth is worse than the matchup table admits. She wins 46.4% of 223,807 matches against Seven, 47.5% of 187,637 against Victor and 49.0% of 298,351 against Graves. Paige reads 50.3% over 184,367 matches, close to even. But the counter endpoint puts that lane at 45.4% over 20,365 games, the worst confirmed row on the hero, so play it as the harder one it is.
 
-Against all of them, do not defend the deployables. She is the hero with 2 stamina; walking back to a turret is how the matchup is lost. Rebuild somewhere else and make them cross a new wall. Kelvin at 49.8% over 106,634 matches is the same problem in another shape — he owns terrain too, and whoever placed first keeps it.
+Against all of them, do not defend the deployables. She is the hero with 2 stamina; walking back to a turret is how the matchup is lost. Rebuild somewhere else and make them cross a new wall. Kelvin at 49.8% over 106,634 matches is the same problem in another shape. He owns terrain too, and whoever placed first keeps it.
 
 ## Items that go well
 
-Buy the amplifier, then the second cast. Spirit Burn tops her table at 59.4% over 632,720 games, Boundless Spirit reads 57.4% over 1,644,546 and Refresher 56.9% over 271,776 — and on a hero whose entire game is placement, a refreshed wall is a second chance to choose the ground.
+Buy the amplifier, then the second cast. Spirit Burn tops her table at 59.4% over 632,720 games, Boundless Spirit reads 57.4% over 1,644,546 and Refresher 56.9% over 271,776. On a hero whose entire game is placement, a refreshed wall is a second chance to choose the ground.
 
-Echo Shard at 56.8% over 485,830 games does the cheaper version of the same trick. Diviner's Kevlar shows 59.1% across only 32,280 games and Frenzy 57.7% across 37,350, so both are leads rather than rules, with Mystic Reverb at 57.7% over 128,465 sitting between them. No ally pairing clears RankLock's reporting floor on her, so there is no partner to plan around — build the position, and whoever arrives gets to use it.
+Echo Shard at 56.8% over 485,830 games does the cheaper version of the same trick. Diviner's Kevlar shows 59.1% across only 32,280 games and Frenzy 57.7% across 37,350, so both are leads rather than rules, with Mystic Reverb at 57.7% over 128,465 sitting between them. No ally pairing clears RankLock's reporting floor on her, so there is no partner to plan around. Build the position, and whoever arrives gets to use it.

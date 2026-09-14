@@ -33,7 +33,7 @@ Her four abilities are one combination in pieces. Pulse Grenade pulses in a wide
 
 Start charging Kinetic Carbine before you have a target. The charge is visible and slow, so a hero who watches you begin it simply breaks sight and the whole cast is spent on a wall; a charge already held when they step out is the one that lands. Everything downstream depends on that shot, because a frozen target is the only reliable way to hit a slow Swap projectile.
 
-Then decide which direction the Swap goes. Pulling an enemy into your team is the obvious version and throwing yourself into theirs is the version that loses games, so cast it standing where you would be happy to be left. Drop Pulse Grenade under where they will land, not where they are now — its radius grows, so the throw is a prediction and the amp it stacks is the payment for getting the prediction right.
+Then decide which direction the Swap goes. Pulling an enemy into your team is the obvious version and throwing yourself into theirs is the version that loses games, so cast it standing where you would be happy to be left. Drop Pulse Grenade under where they will land, not where they are now. Its radius grows, so the throw is a prediction and the amp it stacks is the payment for getting the prediction right.
 
 Time Wall is protecting you from bullets, not from people. It stops what the enemy fires and speeds what your team fires, so it belongs between their gun and your body rather than around the fight, and the silence it hands out on contact is a bonus for whoever walks into it in a hurry.
 
@@ -45,7 +45,7 @@ Nothing on her published lists has seen this patch. The freshest of the five was
 
 The patch itself barely reaches her. Radiant Regeneration lost heal on cast from 70 to 65 and appears in none of her 40 sampled builds; Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in 7 of them, which is the only line of the update she has any exposure to at all.
 
-`Shrimp's Chronobreak` from Account 175991363 is the most favourited set on the hero by a wide margin at 198,211, and it dates from 2024-09-10 — read its point order, ignore its shop. `Karebu's Raid Boss - Paradox` from Account 891695663 at 1,778 weekly favourites was last touched 2024-10-31 and is the one list built around melee range rather than distance. The two 2026 lists — 8,054 weekly favourites from Account 190567340 and 2,832 from Account 1183614423, revised 2026-04-10 and 2026-04-12 — publish their names in forms this page does not reprint, and a 39,995-favourite lifetime set from Account 91640806 sits between them at 2025-01-09.
+`Shrimp's Chronobreak` from Account 175991363 is the most favourited set on the hero by a wide margin at 198,211, and it dates from 2024-09-10. Read its point order, ignore its shop. `Karebu's Raid Boss - Paradox` from Account 891695663 at 1,778 weekly favourites was last touched 2024-10-31 and is the one list built around melee range rather than distance. The two 2026 lists are 8,054 weekly favourites from Account 190567340 and 2,832 from Account 1183614423, revised 2026-04-10 and 2026-04-12. Both publish their names in forms this page does not reprint, and a 39,995-favourite lifetime set from Account 91640806 sits between them at 2025-01-09.
 
 ## Abilities: what to level and when
 
@@ -53,11 +53,11 @@ The split runs along the calendar. The three older lists all open Kinetic Carbin
 
 Take the modern reading unless you have a reason not to. Pulse Grenade first gives you a wave tool and a slow while your gun is still cheap, and the amp it stacks is what makes the Carbine shot worth charging later. Carbine first is the greedier line and it assumes you win the lane, which her early bracket says you usually do not.
 
-Time Wall lands third on four of the five and Paradoxical Swap last on every one. The ultimate is not a damage ability at all — it is a way to move one person, and moving one person is only worth a point once your team can punish where they land.
+Time Wall lands third on four of the five and Paradoxical Swap last on every one. The ultimate is not a damage ability at all. It is a way to move one person, and moving one person is only worth a point once your team can punish where they land.
 
 ## Hard counters, and how to play around them
 
-Graves is the worst row on the hero and the counter list is where it shows. She wins 41.7% of 275,835 matches against him in the matchup table, and the confirmed counter rows put the same lane at 38.9% over 31,846 games — the lowest number anywhere in her data, and nearly three points under what the broader table admits. Seven follows at 41.6% over 306,682 and 42.1% over 24,315, and Ivy at 43.9% over 201,122 and 42.3% over 20,059.
+Graves is the worst row on the hero and the counter list is where it shows. She wins 41.7% of 275,835 matches against him in the matchup table, and the confirmed counter rows put the same lane at 38.9% over 31,846 games. That is the lowest number anywhere in her data, and nearly three points under what the broader table admits. Seven follows at 41.6% over 306,682 and 42.1% over 24,315, and Ivy at 43.9% over 201,122 and 42.3% over 20,059.
 
 Victor is the fourth name and the one the two lists disagree about. He is her worst matchup row at 40.8% over 222,679 matches and does not appear in the counter rows at all, while Kelvin sits at 43.7% over 136,721. Treat the counter rows as the tighter evidence and the matchup table as the wider one; both of them are telling you the same thing about the first twenty minutes.
 

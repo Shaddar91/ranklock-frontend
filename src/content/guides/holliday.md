@@ -46,7 +46,7 @@ Buy the escape that makes an opener survivable. Magic Carpet leads her item tabl
 
 Holliday was not named in this patch, but more than a third of her published builds carry an item it nerfed. Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in 17 of the 40 sampled Holliday builds, so a list carrying it is measurably weaker than it reads. Radiant Regeneration lost heal on cast from 70 to 65 and appears in 2 of the 40.
 
-The two most recent lists are the ones to buy from. `Midknight Holiday` from Account 901696021 at 23,196 favourites was updated 2026-09-02, and build 317832 from Account 1822792925 at 16,665 favourites on 2026-09-07 — the freshest set on the hero; its published name is not reprinted here. The three weekly lists sit at 3,330, 1,993 and 1,882 favourites and were last revised between January and April, so read them for point order.
+The two most recent lists are the ones to buy from. `Midknight Holiday` from Account 901696021 at 23,196 favourites was updated 2026-09-02, and build 317832 from Account 1822792925 at 16,665 favourites on 2026-09-07 is the freshest set on the hero; its published name is not reprinted here. The three weekly lists sit at 3,330, 1,993 and 1,882 favourites and were last revised between January and April, so read them for point order.
 
 ## Abilities: what to level and when
 
@@ -58,10 +58,10 @@ Take Powder Keg first in almost every lane. It is your wave clear, your poke and
 
 Five heroes beat Holliday badly. She wins 41.8% of 236,866 matches against Seven, 41.9% of 169,769 against Victor, 42.7% of 225,912 against Graves, 43.4% of 98,856 against Kelvin and 43.8% of 112,974 against McGinnis. The counter endpoint names a different worst case: Graves at 40.9% over 20,740 games, then Celeste at 44.9% over 22,655 and Lash at 44.9% over 28,635.
 
-The pattern is the same in every one of them. Her damage needs a target to stay put for the length of a fuse, and all seven either leave, out-range her or fill the ground she wanted to place the keg on. Against them, stop opening. Keep the keg for the moment they have already committed, hold Spirit Lasso as a counter-initiation rather than an engage, and take the farm. The lanes that repay pressure are Sinclair at 53.3% over 96,849 matches, Venator at 52.1% over 233,098, Mina at 51.0% over 222,606, Bebop at 51.0% over 287,264 and Silver at 51.0% over 161,629 — all narrow, none of them a free win.
+The pattern is the same in every one of them. Her damage needs a target to stay put for the length of a fuse, and all seven either leave, out-range her or fill the ground she wanted to place the keg on. Against them, stop opening. Keep the keg for the moment they have already committed, hold Spirit Lasso as a counter-initiation rather than an engage, and take the farm. The lanes that repay pressure are Sinclair at 53.3% over 96,849 matches, Venator at 52.1% over 233,098, Mina at 51.0% over 222,606, Bebop at 51.0% over 287,264 and Silver at 51.0% over 161,629. All narrow, none of them a free win.
 
 ## Items that go well
 
 Magic Carpet at 57.5% over 97,856 games and Diviner's Kevlar at 57.1% over 91,880 are the two purchases that answer her real problem, which is being caught after a commitment. Mystic Reverb at 57.1% over 1,079,679 games is the damage item with the deepest sample behind it and the one that pays for grouping enemies around a keg.
 
-Divine Barrier reads 55.6% over 72,526 games and Spirit Burn 54.3% over 2,277,670, the widest sample in her table and the lowest win rate in the top ten — a reminder that a common purchase is not automatically her best one. Buy the top of the list first and let the volume items fill the slots that are left.
+Divine Barrier reads 55.6% over 72,526 games and Spirit Burn 54.3% over 2,277,670, the widest sample in her table and the lowest win rate in the top ten. It is a reminder that a common purchase is not automatically her best one. Buy the top of the list first and let the volume items fill the slots that are left.

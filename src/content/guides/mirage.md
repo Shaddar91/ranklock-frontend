@@ -24,7 +24,7 @@ liveItems: [Diviner's Kevlar, Silencer, Ethereal Shift, Spiritual Overflow, Inhi
 
 ## Who plays Mirage, and why
 
-Pick Mirage when you want a carry who can be anywhere on the map within a cooldown, and be honest with yourself about the first half of the match. He wins 41.6% of games decided under 30 minutes, 43.9% of those running 30 to 45 and 47.5% past 45 — a 6.0-point climb, and the whole hero is built on reaching the far end of it. He carries 730 HP and 3 stamina at 7.0 m/s, and the speed is the part you actually play with.
+Pick Mirage when you want a carry who can be anywhere on the map within a cooldown, and be honest with yourself about the first half of the match. He wins 41.6% of games decided under 30 minutes, 43.9% of those running 30 to 45 and 47.5% past 45. That is a 6.0-point climb, and the whole hero is built on reaching the far end of it. He carries 730 HP and 3 stamina at 7.0 m/s, and the speed is the part you actually play with.
 
 Every ability is a delivery system for one payoff. Fire Scarabs steal life from the target and cut the damage that target deals. Dust Devil is a whirlwind that damages, slows and lifts, and leaving it grants him evasion. Djinn's Mark detonates every stack he has already placed, all at once. Traveler teleports him to a spot on the minimap after a wait, and damage during that wait cancels it.
 
@@ -36,13 +36,13 @@ Fire Scarabs open the lane, because the life they steal is what lets you keep fi
 
 Dust Devil is a disengage wearing a damage ability's clothes. It lifts and slows whatever is inside it and leaving it grants evasion, so the right use is between you and whoever is chasing you, not on top of the target you already marked.
 
-Buy survival first and shred second. Diviner's Kevlar tops his table at 57.5% over 72,207 games and Ethereal Shift reads 54.5% over 74,473, with Silencer behind them at 55.0% over 756,392 — the largest dependable sample on the hero.
+Buy survival first and shred second. Diviner's Kevlar tops his table at 57.5% over 72,207 games and Ethereal Shift reads 54.5% over 74,473, with Silencer behind them at 55.0% over 756,392, the largest dependable sample on the hero.
 
 ## The build on the 2026-08-22 Update patch
 
 This patch missed Mirage almost entirely. Radiant Regeneration lost heal on cast from 70 to 65 and Restorative Locket dropped from 10% Spirit Resistance to 8%, and each of those sits in exactly 1 of his 40 sampled builds. Nothing he actually buys moved.
 
-Take purchases from the two lists revised this season and shape from the rest. The 35,955-favourite lifetime set from Account 29715818 was last updated 2026-09-06 and is the freshest on the hero; the 6,538-favourite weekly set from Account 1183614423 was revised 2026-05-11. Both publish their names in forms this page does not reprint. `Miragepz` from Account 205965823 at 29,722 favourites dates from 2026-04-01 and `dkdion ww` from Account 120623629 at 2,119 weekly favourites from 2026-05-02, while `shhhhh` from Account 81662458 at 2,940 weekly favourites was last touched 2024-11-02 — read that one for structure and nothing else.
+Take purchases from the two lists revised this season and shape from the rest. The 35,955-favourite lifetime set from Account 29715818 was last updated 2026-09-06 and is the freshest on the hero; the 6,538-favourite weekly set from Account 1183614423 was revised 2026-05-11. Both publish their names in forms this page does not reprint. `Miragepz` from Account 205965823 at 29,722 favourites dates from 2026-04-01 and `dkdion ww` from Account 120623629 at 2,119 weekly favourites from 2026-05-02, while `shhhhh` from Account 81662458 at 2,940 weekly favourites was last touched 2024-11-02. Read that one for structure and nothing else.
 
 ## Abilities: what to level and when
 
@@ -56,7 +56,7 @@ Dust Devil lands third on four of the five, and Traveler last on every one. The 
 
 Three heroes beat Mirage in RankLock's own matches, and the counter endpoint names two completely different ones. He wins 41.7% of 176,660 matches against Victor, 42.0% of 205,297 against Graves and 42.1% of 232,187 against Seven, with McGinnis at 43.0% over 111,360 and Kelvin at 43.6% over 102,619 just behind. The counter rows instead report Drifter at 43.5% over 21,051 games and Infernus at 45.7% over 21,757, and neither of those appears in the matchup table's worst five.
 
-Read the gap as two separate problems. The matchup list is heroes who kill him before the mark is worth detonating; the counter list is heroes who catch him after it. Against the first group, farm and refuse the trade. Against the second, stop using Traveler as an escape — damage during the wait cancels the teleport, and both of them deal damage without pausing.
+Read the gap as two separate problems. The matchup list is heroes who kill him before the mark is worth detonating; the counter list is heroes who catch him after it. Against the first group, farm and refuse the trade. Against the second, stop using Traveler as an escape. Damage during the wait cancels the teleport, and both of them deal damage without pausing.
 
 The lanes that go his way barely go his way. Sinclair at 52.6% over 87,246 matches, Venator at 51.6% over 230,968, Bebop at 51.2% over 228,782, Shiv at 50.4% over 194,522 and Mina at 50.1% over 227,698 are the entire list, so treat a good matchup as permission to farm rather than a reason to fight.
 
@@ -66,4 +66,4 @@ Buy Ricochet and Toxic Bullets before the table argues you into anything else. M
 
 Then take the shred with real samples behind it. Spiritual Overflow wins 53.9% of 1,700,605 games on him and Inhibitor 53.2% of 1,421,791, the two largest tables he has. Mercurial Magnum reads 52.3% over 581,754 and Siphon Bullets 53.1% over 399,286.
 
-Spellslinger at 53.9% across 43,515 games and Crippling Headshot at 53.9% across 140,545 are the thin rows — worth a slot, not worth a plan. No ally pairing clears RankLock's reporting floor on him, so there is no duo to build around; Traveler means he arrives wherever he is needed, whoever happens to be standing there.
+Spellslinger at 53.9% across 43,515 games and Crippling Headshot at 53.9% across 140,545 are the thin rows: worth a slot, not worth a plan. No ally pairing clears RankLock's reporting floor on him, so there is no duo to build around; Traveler means he arrives wherever he is needed, whoever happens to be standing there.

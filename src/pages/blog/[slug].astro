@@ -6,6 +6,7 @@ import { breadcrumbJsonLd, SITE_NAME } from '../../lib/seo';
 import { shortDate, readingTime } from '../../lib/format';
 import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
+import { resolveAsset } from '../../lib/assets';
 
 //SSG guide article (requirements §B.11). One prerendered page per post; the
 //markdown body renders to static HTML (SEO), and the "live stats in this guide"
@@ -53,7 +54,7 @@ const hasLive = post.data.liveHeroes.length > 0 || post.data.liveItems.length > 
   title={`${post.data.title} — RankLock`}
   description={post.data.description}
   canonicalPath={canonicalPath}
-  image={post.data.heroImage}
+  image={resolveAsset(post.data.heroImage)}
   ogType="article"
   jsonLd={jsonLd}
   publishedTime={published}

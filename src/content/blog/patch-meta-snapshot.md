@@ -1,9 +1,10 @@
 ---
 title: "Patch meta snapshot: who's rising, who's falling, and what to watch"
-description: "A reading of the current patch's win-rate movers — the heroes trending up, the items falling off, and what to pick before the meta settles."
+description: "A reading of the current patch's win-rate movers: the heroes trending up, the items falling off, and what to pick before the meta settles."
 pubDate: 2026-06-20
 updatedDate: 2026-09-09
 author: RankLock
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/chrono_card.png"
 tags: [meta, patch-notes, picks]
 ---
 
@@ -24,16 +25,16 @@ worth learning are the ones the data is still rewarding more each day.
 
 ## Where the value is hiding
 
-- **Rising heroes** — usually the ones a buff over-corrected. Pick them before the patch settles and the nerf catches up.
-- **Falling staples** — comfort picks that got quietly worse. If your main is on this list, adjust the build before you adjust the blame.
-- **Item shifts** — the least-watched mover. A cost or scaling tweak reshapes build order long before anyone writes about it.
+- **Rising heroes**: usually the ones a buff over-corrected. Pick them before the patch settles and the nerf catches up.
+- **Falling staples**: comfort picks that got quietly worse. If your main is on this list, adjust the build before you adjust the blame.
+- **Item shifts**: the least-watched mover. A cost or scaling tweak reshapes build order long before anyone writes about it.
 
 ## How to use this with the rest of the site
 
 Pair this note with the hero detail pages: each one tracks per-bracket win-rates
 that update every patch, so you can verify a trend at *your* rank instead of
-trusting an aggregate. The fundamentals guides still apply no matter the meta —
-economy and tempo do not get patched out.
+trusting an aggregate. The fundamentals guides still apply no matter the meta. Economy
+and tempo do not get patched out.
 
 Re-check after the next balance pass. The meta is a moving target, and the whole
 point of RankLock is that the numbers move with it.

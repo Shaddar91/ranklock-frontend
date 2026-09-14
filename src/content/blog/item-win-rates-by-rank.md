@@ -4,6 +4,7 @@ description: "Glass Cannon reads 56.38% over 476,959 matches at all ranks and 64
 pubDate: 2026-09-03
 updatedDate: 2026-09-10
 author: RankLock team
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/shiv_card.png"
 tags: [items, method, ranks]
 liveHeroes: [Haze]
 liveItems: [Glass Cannon, Metal Skin, Improved Spirit, Juggernaut]

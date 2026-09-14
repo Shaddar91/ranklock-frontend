@@ -1,17 +1,17 @@
 ---
-title: "Two weeks after the {{PATCH_LABEL}} patch: the builds that stuck"
-description: "Fourteen days of games, one closed window and a sample that has stopped moving. What the {{PATCH_LABEL}} changes did to real builds, across {{SAMPLE_N}} matches."
-pubDate: 2026-10-09
+title: "Two weeks after the 2026-08-22 Update patch: the builds that stuck"
+description: "Fourteen days of games, one closed window and a sample that has stopped moving. What the 2026-08-22 Update changes did to real builds, across 222,569 matches."
+pubDate: 2026-09-14
 author: RankLock team
-heroImage: /assets/heroes/lash_card.png
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/lash_card.png"
 tags: [patch-notes, builds, meta]
 liveHeroes: []
 liveItems: []
-draft: true
+draft: false
 ---
 
 Rebuild your hero pool from this page, not from anything written on release
-night. The {{PATCH_LABEL}} went live at {{PATCH_DATE}} fourteen days ago, and
+night. The 2026-08-22 Update went live at 2026-08-22 21:40 UTC fourteen days ago, and
 nearly everything written about it that night has already been overwritten. This
 is the slow answer: which of those changes are still visible in what people
 build and win with, now that there are two weeks of games to divide by.
@@ -42,7 +42,7 @@ Three tests, in this order, and a row appears only when it passes all three.
 - **The correct window.** Every figure here is counted inside the release's own
   span. That is a different question from the one [the heroes grid](/heroes/) and
   [the item tables](/items/) answer, which is a rolling one measured over the
-  last {{DATA_WINDOW}} and the right question for almost everything except this
+  last 129 days (2026-05-01 → 2026-09-07) and the right question for almost everything except this
   article.
 - **A move bigger than the noise.** Two rates a fraction of a point apart, on
   samples of this size, are the same rate. Only rows that clear that distance
@@ -71,13 +71,32 @@ absent, the honest reading is that its edit never reached the win column, not
 that we left it out. Check the [patch list](/patches/) for the next release date,
 because the window this article measures closes the moment that release lands.
 
-<!-- wave2:start
 ## The builds that stuck
 
-{{MOVERS_TABLE}}
+| Hero | Win rate | Win-rate move | Pick-rate move | Matches |
+|---|---|---|---|---|
+| Warden | 51.9 % | +1.7 pts | +11.4 pts | 78,717 |
+| Mina | 46.1 % | +0.4 pts | +6.1 pts | 84,478 |
+| Paradox | 46.6 % | +0.0 pts | +5.7 pts | 83,500 |
+| Rem | 47.4 % | +0.1 pts | +2.2 pts | 74,956 |
+| Graves | 54.8 % | -0.1 pts | +1.6 pts | 74,501 |
+| Abrams | 50.6 % | -0.4 pts | +1.4 pts | 82,031 |
+| Calico | 51.8 % | +0.2 pts | +1.3 pts | 71,363 |
+| Mo & Krill | 52.4 % | +0.4 pts | +1.2 pts | 86,741 |
+| Victor | 55.9 % | +0.0 pts | +1.2 pts | 73,998 |
+| Venator | 45.1 % | -0.4 pts | +1.0 pts | 66,497 |
+| Celeste | 52.7 % | +0.2 pts | -4.1 pts | 63,316 |
+| Wraith | 51.4 % | -0.1 pts | -3.2 pts | 98,694 |
+| Holliday | 47.7 % | +0.3 pts | -3.1 pts | 44,130 |
+| Billy | 48.6 % | -0.2 pts | -2.7 pts | 75,017 |
+| Lady Geist | 48.0 % | -0.5 pts | -2.7 pts | 58,550 |
+| Infernus | 47.7 % | -0.5 pts | -2.4 pts | 109,704 |
+| Shiv | 47.6 % | -0.3 pts | -2.2 pts | 69,688 |
+| Seven | 54.4 % | +0.1 pts | -2.0 pts | 89,429 |
+| Lash | 52.0 % | +0.0 pts | -1.7 pts | 118,599 |
+| McGinnis | 50.0 % | -0.6 pts | -1.7 pts | 43,127 |
 
-Every row above is counted over {{SAMPLE_N}} matches played since the
+Every row above is counted over 222,569 matches played since the
 patch, inside that release's own window and no other.
-wave2:end -->
 
 Fast numbers are cheap. Two weeks of games are not.

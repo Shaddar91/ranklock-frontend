@@ -75,4 +75,4 @@ Keep moving against the last two of the five, because McGinnis at 46.1% over 119
 
 Start with the two purchases that make him cast more often, then add the ones that make each cast hurt. Mystic Reverb at 57.1% over 953,812 games and Spirit Burn at 55.1% over 1,517,642 are the backbone, Escalating Exposure at 55.9% over 122,385 the amplifier, and Magic Carpet at 58.9% over 46,736 the mobility his doors already suggest he wants.
 
-Answer a spirit team with Diviner's Kevlar at 54.7% over 26,801 games or Witchmail at 54.0% over 147,044. No ally clears the 20,000-game floor on his synergy endpoint, so there is no measured duo to draft around — build him for the fight your team is already trying to have.
+Answer a spirit team with Diviner's Kevlar at 54.7% over 26,801 games or Witchmail at 54.0% over 147,044. No ally clears the 20,000-game floor on his synergy endpoint, so there is no measured duo to draft around. Build him for the fight your team is already trying to have.

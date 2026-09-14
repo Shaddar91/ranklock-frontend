@@ -23,7 +23,7 @@ liveItems: [Mystic Reverb, Diviner's Kevlar, Magic Carpet, Spirit Burn, Cheat De
 
 ## Who plays Sinclair, and why
 
-Draft Sinclair when your team can afford to lose the opening exchanges, and play the lane to reach items rather than to win it. He wins 38.2% of games decided inside 30 minutes, 44.4% of those running 30 to 45 and 47.8% past 45 — a rise of 9.6 points, the steepest in this batch, and the reason a bad first ten minutes is survivable while a bad thirty is not.
+Draft Sinclair when your team can afford to lose the opening exchanges, and play the lane to reach items rather than to win it. He wins 38.2% of games decided inside 30 minutes, 44.4% of those running 30 to 45 and 47.8% past 45. That is a rise of 9.6 points, the steepest in this batch, and the reason a bad first ten minutes is survivable while a bad thirty is not.
 
 Nothing about his body forgives a mistake. On 730 HP at 7.2 m/s with 3 stamina he is the frailest hero here, and his kit answers that with distance and misdirection rather than with resistance. Read the whole hero as a bet on reaching the late game with souls in hand.
 
@@ -31,7 +31,7 @@ Nothing about his body forgives a mistake. On 730 HP at 7.2 m/s with 3 stamina h
 
 Farm at range with Vexing Bolt and treat every cast as two decisions. The bolt grows in damage the further it travels, so the opening angle matters more than the aim, and the recast redirects it, which means a bolt sent down an empty corridor is still a bolt that can turn onto whoever steps out.
 
-Spectral Assistant is the farming button and the escape in the same slot. The summon fires alongside him, which is why every list levels it first, and the recast swaps their positions — so place it where you would like to be standing a moment from now, not where the damage is best this second.
+Spectral Assistant is the farming button and the escape in the same slot. The summon fires alongside him, which is why every list levels it first, and the recast swaps their positions. So place it where you would like to be standing a moment from now, not where the damage is best this second.
 
 Buy for uptime before you buy for size. Echo Shard goes into his builds 2.5 times more often than the roster average and Knockdown 2.3 times, and Magic Carpet reads 54.2% across 643,572 games on him, the second largest table on his page. Mystic Reverb at 55.8% over 579,549 games is the highest number on any sample he owns above half a million.
 

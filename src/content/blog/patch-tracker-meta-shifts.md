@@ -1,9 +1,10 @@
 ---
 title: "How to read the patch tracker after a meta shift"
-description: "RankLock has tracked 123 patches. Each patch page lists pick-rate gainers, losers and win-rate deltas by bracket — read them in this order."
+description: "RankLock has tracked 123 patches. Each patch page lists pick-rate gainers, losers and win-rate deltas by bracket. Read them in this order."
 pubDate: 2026-08-26
 updatedDate: 2026-09-10
 author: RankLock team
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/viscous_card.png"
 tags: [meta, patch-notes]
 ---
 

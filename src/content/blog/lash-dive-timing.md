@@ -1,10 +1,10 @@
 ---
 title: "Lash dive timing: the window that wins teamfights"
-description: "When to commit Lash's Death Slam, how to read enemy cooldowns, and the item timings that make the dive land — with live win-rates that update every patch."
+description: "When to commit Lash's Death Slam, how to read enemy cooldowns, and the item timings that make the dive land, with live win-rates that update every patch."
 pubDate: 2026-06-12
 author: RankLock
 heroSlug: lash
-heroImage: /assets/heroes/lash_card.png
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/lash_card.png"
 tags: [hero-guide, lash, teamfighting]
 liveHeroes: [Lash, Haze]
 liveItems: [Arcane Medallion, Advanced Weaponry]
@@ -26,7 +26,7 @@ spent their movement cooldown in the last six seconds?** If yes, the dive lands.
 If no, you are gambling.
 
 - Hold high ground until the enemy throws a wave-clear ability.
-- Track the support's cooldown — that is the peel that kills you.
+- Track the support's cooldown. That is the peel that kills you.
 - Slam toward your team, never away from it.
 
 ## The item spike that makes it work
@@ -37,7 +37,7 @@ component lets you commit without instantly dying to focus fire.
 
 ## Matchups that flip the timing
 
-Against mobile carries the window shrinks — you dive *reactively*, after they
+Against mobile carries the window shrinks, so you dive *reactively*, after they
 commit. Against grounded heroes you dive *proactively*, opening the fight on your
 terms. The hero detail page tracks these matchups per bracket as the data fills
 in.

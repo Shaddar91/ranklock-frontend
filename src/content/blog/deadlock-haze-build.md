@@ -5,7 +5,7 @@ pubDate: 2026-09-03
 updatedDate: 2026-09-08
 author: RankLock team
 heroSlug: haze
-heroImage: /assets/heroes/haze_card.png
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/haze_card.png"
 tags: [hero-guide, haze, builds, items]
 liveHeroes: [Haze, Graves, Calico]
 liveItems: [Lucky Shot, Glass Cannon, Spiritual Overflow, Frenzy]

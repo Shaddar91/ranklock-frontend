@@ -5,6 +5,7 @@ import { breadcrumbJsonLd, SITE_NAME } from '../../lib/seo';
 import { shortDate } from '../../lib/format';
 import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
+import { resolveAsset } from '../../lib/assets';
 
 //SSG guides index (requirements §B.11) — the icy-veins-style SEO surface, built
 //from the blog content collection. Card grid of published posts, newest first.
@@ -46,7 +47,7 @@ const jsonLd = [
             <Fragment>
               <a class="panel blogcard" href={`/blog/${post.id}/`}>
                 {post.data.heroImage && (
-                  <img class="bc-hero" src={post.data.heroImage} alt="" loading="lazy" decoding="async" />
+                  <img class="bc-hero" src={resolveAsset(post.data.heroImage)} alt="" loading="lazy" decoding="async" />
                 )}
                 <div class="bc-title">{post.data.title}</div>
                 <p class="bc-desc">{post.data.description}</p>

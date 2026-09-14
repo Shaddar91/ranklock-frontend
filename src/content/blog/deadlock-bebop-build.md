@@ -5,7 +5,7 @@ pubDate: 2026-09-03
 updatedDate: 2026-09-08
 author: RankLock team
 heroSlug: bebop
-heroImage: /assets/heroes/bebop_card.png
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bebop_card.png"
 tags: [hero-guide, bebop, builds, items]
 liveHeroes: [Bebop, Mirage, Seven]
 liveItems: [Mystic Reverb, Spirit Burn, Witchmail, Metal Skin]

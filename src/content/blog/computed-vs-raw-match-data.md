@@ -4,6 +4,7 @@ description: "Match pages expose raw scoreboards; tiers, matchup tables, lane cu
 pubDate: 2026-08-26
 updatedDate: 2026-09-10
 author: RankLock team
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/wraith_card.png"
 tags: [meta, data]
 ---
 

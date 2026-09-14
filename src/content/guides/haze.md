@@ -23,7 +23,7 @@ liveItems: [Spirit Burn, Frenzy, Mystic Reverb, Healing Tempo, Cheat Death]
 
 ## Who plays Haze, and why
 
-Take Haze when nobody else on your team turns farm into kills, and give the early game to the camps rather than the trades. She wins 44.1% of matches decided under 30 minutes, 51.8% of those running 30 to 45 and 53.7% past 45 — a 9.7-point climb, and the single largest argument against fighting early. She has 730 HP and only 3 stamina, but moves at 8.2 m/s, which is the resource you actually play with.
+Take Haze when nobody else on your team turns farm into kills, and give the early game to the camps rather than the trades. She wins 44.1% of matches decided under 30 minutes, 51.8% of those running 30 to 45 and 53.7% past 45. That is a 9.7-point climb, and the single largest argument against fighting early. She has 730 HP and only 3 stamina, but moves at 8.2 m/s, which is the resource you actually play with.
 
 Fixation is the passive that decides every fight: bullets stack damage on one target, and headshots stack it twice as fast. Sleep Dagger puts a target to sleep, damage wakes them, and it never breaks stealth. Smoke Bomb makes her invisible and fast, and attacking ends it while items do not. Bullet Dance is a perfect-accuracy flurry at everything nearby. All four assume you are already holding a gun that can afford to keep firing.
 
@@ -47,11 +47,11 @@ Bullet Dance is the button people bring answers for, so check whether the enemy 
 
 Haze was not named in this patch, and neither were the items she leans on. Radiant Regeneration lost heal on cast from 70 to 65 and appears in 1 of the 40 sampled Haze builds; Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in none of them. Nothing in her core moved.
 
-Take the shop from the recent list and the shape from the old one. `Parzelion's Haze Build` from Account 278919272 at 76,092 favourites was last updated 2026-08-22, patch day, and is the freshest set on the hero. `Chrome's Rapid Haze` from Account 203209620 is far more favourited at 388,677 but was last touched 2025-08-08, so read its structure rather than its purchases. The three weekly lists — 17,027 favourites from Account 1183614423, 7,224 from Account 272679564 and 5,807 from Account 1282162845 — were all last revised in March and April, and all three publish their names with handles or characters that are not reprinted here.
+Take the shop from the recent list and the shape from the old one. `Parzelion's Haze Build` from Account 278919272 at 76,092 favourites was last updated 2026-08-22, patch day, and is the freshest set on the hero. `Chrome's Rapid Haze` from Account 203209620 is far more favourited at 388,677 but was last touched 2025-08-08, so read its structure rather than its purchases. The three weekly lists, at 17,027 favourites from Account 1183614423, 7,224 from Account 272679564 and 5,807 from Account 1282162845, were all last revised in March and April, and all three publish their names with handles or characters that are not reprinted here.
 
 ## Abilities: what to level and when
 
-There is nothing to decide. All five published builds level Fixation first, then Sleep Dagger, then Smoke Bomb, then Bullet Dance — the weekly lists at 17,027, 7,224 and 5,807 favourites and both lifetime lists at 388,677 and 76,092. That is unanimous agreement across five authors and two very different item eras, which is as strong as build evidence gets on this roster.
+There is nothing to decide. All five published builds level Fixation first, then Sleep Dagger, then Smoke Bomb, then Bullet Dance: the weekly lists at 17,027, 7,224 and 5,807 favourites and both lifetime lists at 388,677 and 76,092. That is unanimous agreement across five authors and two very different item eras, which is as strong as build evidence gets on this roster.
 
 Play in that order too. Fixation first because it is the only ability that improves every second of every fight. Sleep Dagger second because it is your lane safety and your gank setup at once. Smoke Bomb third because its value is positional and does not scale with points the way the first two do.
 

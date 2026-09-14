@@ -28,7 +28,7 @@ Two of her abilities cost health to cast, and that is the whole design. Essence 
 
 ## How to play Lady Geist as an Offensive initiator
 
-Open the fight at low health on purpose. Two abilities charge you health, one gives it back, and the ultimate hands whatever is left to somebody else, so the sequence that reads as reckless is the one the kit was built around. Bomb, shard, tether — and if it goes badly, swap.
+Open the fight at low health on purpose. Two abilities charge you health, one gives it back, and the ultimate hands whatever is left to somebody else, so the sequence that reads as reckless is the one the kit was built around. Bomb, shard, tether. If it goes badly, swap.
 
 Soul Exchange is a finisher and an escape in one button, and picking which it is today is the only genuinely hard decision on the hero. Swapping onto a full-health enemy while you are nearly dead trades your problem for theirs. Swapping onto one who is already low hands them your bar and your fight, so read the target's health before the tether ends, not after.
 
@@ -38,17 +38,17 @@ Choose the lanes where the opening is free. She wins 56.5% of 113,998 matches ag
 
 Put Malice on the target before the bomb lands, never after. The shards slow and amplify her damage on whatever they hit, so the order decides whether Essence Bomb detonates into an amplified body or a plain one. That is the whole gap between a trade and a kill, and it costs nothing but sequencing.
 
-Buy the amplifiers with the biggest tables behind them. Spirit Burn wins 56.7% of 2,189,500 games on her, Escalating Exposure 55.4% of 2,869,071 and Boundless Spirit 54.5% of 2,114,923 — three of the largest samples on the hero, all pointing the same way. Mystic Reverb reads 55.7% over 1,912,729.
+Buy the amplifiers with the biggest tables behind them. Spirit Burn wins 56.7% of 2,189,500 games on her, Escalating Exposure 55.4% of 2,869,071 and Boundless Spirit 54.5% of 2,114,923. Those are three of the largest samples on the hero, all pointing the same way. Mystic Reverb reads 55.7% over 1,912,729.
 
 Lucky Shot shows 56.4% across only 11,769 games, the smallest sample in her top ten, so it is a lead rather than a rule. The gun half of the build is real regardless: Frenzy wins 54.9% of 420,445 games and Mercurial Magnum 54.5% of 205,966.
 
 ## The build on the 2026-08-22 Update patch
 
-This patch hit the item she leans on hardest. Radiant Regeneration lost heal on cast from 70 to 65, and it sits in 27 of the 40 sampled Lady Geist builds — more than two-thirds of them — while her players already buy it 6.3 times more often than the roster average. Restorative Locket also dropped from 10% Spirit Resistance to 8%, but that one appears in 2 builds and changes nothing.
+This patch hit the item she leans on hardest. Radiant Regeneration lost heal on cast from 70 to 65, and it sits in 27 of the 40 sampled Lady Geist builds, more than two-thirds of them, while her players already buy it 6.3 times more often than the roster average. Restorative Locket also dropped from 10% Spirit Resistance to 8%, but that one appears in 2 builds and changes nothing.
 
 The answer is a smaller sustain package, not a different one. Mystic Regeneration is her other signature purchase at 7.8 times the roster average and it was not touched, so the health you spend still comes back; it comes back slightly slower per cast than the published lists assume.
 
-Take purchases from the weekly lists and shape from the lifetime ones. The three weekly sets — 5,528 favourites from Account 393148161, 4,738 from Account 845417474 and 3,134 from Account 354529981 — were revised between 2026-05-03 and 2026-05-21. Two of them publish names in characters this page does not reprint, and the third names a bombing, so it is cited here as build 301176 and nothing more. `actually good geist build` from Account 28487849 at 48,647 favourites and the 209,202-favourite list from Account 394955797 both date from 2024, so read their point order and skip their shop.
+Take purchases from the weekly lists and shape from the lifetime ones. The three weekly sets were revised between 2026-05-03 and 2026-05-21: 5,528 favourites from Account 393148161, 4,738 from Account 845417474 and 3,134 from Account 354529981. Two of them publish names in characters this page does not reprint, and the third names a bombing, so it is cited here as build 301176 and nothing more. `actually good geist build` from Account 28487849 at 48,647 favourites and the 209,202-favourite list from Account 394955797 both date from 2024, so read their point order and skip their shop.
 
 ## Abilities: what to level and when
 

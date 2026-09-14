@@ -4,6 +4,7 @@ description: "The all-ranks win-rate hides bracket swings: Haze drops 2.6 points
 pubDate: 2026-08-26
 updatedDate: 2026-09-10
 author: RankLock team
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/bull_card.png"
 tags: [fundamentals, ranks, picks]
 liveHeroes: [Lash, Haze]
 ---

@@ -46,7 +46,7 @@ Pair with someone who converts a stationary group. Dynamo wins 52.8% of the 20,1
 
 Dynamo was not named in this patch, and the cooldown core he leans on did not move. Two items in the wider pool did: Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in 3 of the 40 sampled Dynamo builds, and Radiant Regeneration lost heal on cast from 70 to 65 and appears in 1 of them. Neither is worth re-planning around.
 
-Read the recent lists for item order and the old ones for shape only. `DA BIGGEST WAGH` from Account 918074721 at 54,853 favourites was last updated 2026-09-06 and is the freshest set on the hero. `| Gun Gigio Dynamo |` from Account 139182740 sits far higher at 209,089 favourites but was last touched 2024-09-16, several item revisions ago — take its ability order as evidence and leave its purchases alone.
+Read the recent lists for item order and the old ones for shape only. `DA BIGGEST WAGH` from Account 918074721 at 54,853 favourites was last updated 2026-09-06 and is the freshest set on the hero. `| Gun Gigio Dynamo |` from Account 139182740 sits far higher at 209,089 favourites but was last touched 2024-09-16, several item revisions ago. Take its ability order as evidence and leave its purchases alone.
 
 ## Abilities: what to level and when
 

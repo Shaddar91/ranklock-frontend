@@ -4,6 +4,7 @@ description: "A matchup line is a win-rate over a counted sample. Lash beats Beb
 pubDate: 2026-08-26
 updatedDate: 2026-09-10
 author: RankLock team
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/hornet_card.png"
 tags: [fundamentals, matchups]
 liveHeroes: [Lash, Seven, Bebop]
 ---

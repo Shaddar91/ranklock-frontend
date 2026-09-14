@@ -5,7 +5,7 @@ pubDate: 2026-09-03
 updatedDate: 2026-09-08
 author: RankLock team
 heroSlug: warden
-heroImage: /assets/heroes/warden_card.png
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/warden_card.png"
 tags: [meta, patch-notes, warden]
 liveHeroes: [Warden, Celeste, McGinnis]
 liveItems: []

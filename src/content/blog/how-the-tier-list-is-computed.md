@@ -4,6 +4,7 @@ description: "S starts at 52.5% and F is anything below 47.0%. Seven holds seven
 pubDate: 2026-09-03
 updatedDate: 2026-09-10
 author: RankLock team
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/magician_card.png"
 tags: [meta, tier-list, method]
 liveHeroes: [Seven, Haze, Bebop, Sinclair]
 liveItems: []

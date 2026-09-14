@@ -22,7 +22,7 @@ liveItems: [Scourge, Magic Carpet, Spirit Burn, Diviner's Kevlar, Escalating Exp
 
 ## Who plays Graves, and why
 
-Take Graves when your team needs the map to belong to somebody before the halfway mark, and understand that the clock is the enemy she cannot out-farm. She wins 63.6% of matches decided under 30 minutes, 57.4% of those running 30 to 45, and 53.8% past 45 — a 9.9-point slide from her best window to her worst, the shape of a hero who is already ahead and stops gaining. She has 730 HP, moves at 7.0 m/s and holds only 2 stamina, so the pressure has to come from what she leaves on the ground, not from chasing.
+Take Graves when your team needs the map to belong to somebody before the halfway mark, and understand that the clock is the enemy she cannot out-farm. She wins 63.6% of matches decided under 30 minutes, 57.4% of those running 30 to 45, and 53.8% past 45. That is a 9.9-point slide from her best window to her worst, the shape of a hero who is already ahead and stops gaining. She has 730 HP, moves at 7.0 m/s and holds only 2 stamina, so the pressure has to come from what she leaves on the ground, not from chasing.
 
 Jar of Dead banks every death near her and throws the stored Deadheads out to chase a target. Grasping Hands lays a line that pins whoever walks into it and leaves behind a rift and a Ghoul. Essence Theft turns her weapon into a drain that steals weapon damage and spirit resistance over time. Borrowed Decree plants a gravestone that keeps producing ghouls for a long window. Every one of them pays you for standing somewhere on purpose.
 

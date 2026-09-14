@@ -1,10 +1,10 @@
 ---
 title: "What the 2026-08-22 Update patch changed for builds"
-description: "Eleven lines moved, nine of them on one hero. How to tell in a minute whether any of them reaches your build, and what to do until the win rates arrive."
+description: "The 2026-08-22 Update patch touched 11 things. Which of them reach a real build, measured over 222,569 ranked matches, and which are noise."
 pubDate: 2026-09-03
-updatedDate: 2026-09-09
+updatedDate: 2026-09-14
 author: RankLock team
-heroImage: /assets/heroes/haze_card.png
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/haze_card.png"
 tags: [patch-notes, builds, meta]
 liveHeroes: []
 liveItems: []
@@ -130,5 +130,33 @@ sample played before release has fallen far enough for the split to mean
 something. When it lands, this page gains a movers table and a modified date.
 If it never lands, the games were not there, and a missing table is the
 correct outcome rather than a hole we filled with a guess.
+
+## What actually moved
+
+| Hero | Win rate | Win-rate move | Pick-rate move | Matches |
+|---|---|---|---|---|
+| Warden | 51.9 % | +1.7 pts | +11.4 pts | 78,717 |
+| Mina | 46.1 % | +0.4 pts | +6.1 pts | 84,478 |
+| Paradox | 46.6 % | +0.0 pts | +5.7 pts | 83,500 |
+| Rem | 47.4 % | +0.1 pts | +2.2 pts | 74,956 |
+| Graves | 54.8 % | -0.1 pts | +1.6 pts | 74,501 |
+| Abrams | 50.6 % | -0.4 pts | +1.4 pts | 82,031 |
+| Calico | 51.8 % | +0.2 pts | +1.3 pts | 71,363 |
+| Mo & Krill | 52.4 % | +0.4 pts | +1.2 pts | 86,741 |
+| Victor | 55.9 % | +0.0 pts | +1.2 pts | 73,998 |
+| Venator | 45.1 % | -0.4 pts | +1.0 pts | 66,497 |
+| Celeste | 52.7 % | +0.2 pts | -4.1 pts | 63,316 |
+| Wraith | 51.4 % | -0.1 pts | -3.2 pts | 98,694 |
+| Holliday | 47.7 % | +0.3 pts | -3.1 pts | 44,130 |
+| Billy | 48.6 % | -0.2 pts | -2.7 pts | 75,017 |
+| Lady Geist | 48.0 % | -0.5 pts | -2.7 pts | 58,550 |
+| Infernus | 47.7 % | -0.5 pts | -2.4 pts | 109,704 |
+| Shiv | 47.6 % | -0.3 pts | -2.2 pts | 69,688 |
+| Seven | 54.4 % | +0.1 pts | -2.0 pts | 89,429 |
+| Lash | 52.0 % | +0.0 pts | -1.7 pts | 118,599 |
+| McGinnis | 50.0 % | -0.6 pts | -1.7 pts | 43,127 |
+
+Measured over 222,569 ranked matches played since the
+patch went live.
 
 Read the changelog for what changed. Come back for what it did.

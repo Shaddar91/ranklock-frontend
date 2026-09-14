@@ -3,6 +3,7 @@ title: "Souls economy basics: stop losing the game in the first ten minutes"
 description: "How souls-per-minute compounds, where your income actually comes from, and the three habits that close the gap to the rank above you."
 pubDate: 2026-06-05
 author: RankLock
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/kelvin_card.png"
 tags: [fundamentals, economy, laning]
 liveHeroes: [Haze, Wraith]
 liveItems: [Advanced Weaponry, Improved Armor]
@@ -10,17 +11,17 @@ liveItems: [Advanced Weaponry, Improved Armor]
 
 Most matches are decided by an economy gap that opened before the first
 objective. Souls compound: a 10% lead at minute ten is a two-item lead by minute
-twenty. This guide is about closing that gap — not with flashy plays, but with
-the boring habits that every higher-ranked player has internalized.
+twenty. This guide closes that gap with the boring habits every higher-ranked
+player has internalized. Flashy plays are not on the list.
 
 ## Income is three streams, not one
 
 Your souls come from lane creeps, neutrals, and combat. Most players over-index
 on one and ignore the rest:
 
-1. **Lane creeps** — the steady baseline. Never walk past a wave you could last-hit.
-2. **Neutrals** — the multiplier. Clear camps between waves, not instead of them.
-3. **Combat** — the spike. Only worth it when the trade is in your favor.
+1. **Lane creeps**: the steady baseline. Never walk past a wave you could last-hit.
+2. **Neutrals**: the multiplier. Clear camps between waves, not instead of them.
+3. **Combat**: the spike. Only worth it when the trade is in your favor.
 
 The coaching panels on your profile break your income down by source and compare
 it to the rank above you, so you can see *which* stream you are leaking.

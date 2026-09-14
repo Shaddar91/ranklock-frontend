@@ -35,7 +35,7 @@ Throw Flying Cloak where you want to leave from, not where you want to arrive. E
 
 Enchanter's Satchel is the second half of the same idea. It removes him from the fight while the enemy is still looking for him and damages whoever stayed close when he comes out, which makes it both the escape and a reason for them to spread.
 
-The shop confirms which part of the game his players spend souls on. Majestic Leap is bought 7.4 times more often on Pocket than the roster average, the widest gap on the hero by some way, and Cold Front 3.3 times — one buys the arrival, the other punishes the crowd that gathers to answer it.
+The shop confirms which part of the game his players spend souls on. Majestic Leap is bought 7.4 times more often on Pocket than the roster average, the widest gap on the hero by some way, and Cold Front 3.3 times. One buys the arrival, the other punishes the crowd that gathers to answer it.
 
 ## How to play Pocket as a Damage carry
 
@@ -47,9 +47,9 @@ One published list rejects the whole plan and it is worth reading. `Gun pocket t
 
 ## The build on the 2026-08-22 Update patch
 
-Pocket was not named in this patch, and only one of its two lines reaches him at all: Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in 13 of his 40 sampled builds, while Radiant Regeneration's cut from 70 to 65 heal on cast appears in 2. Thirteen lists in forty is a real number — check whether the locket is in your own build before you buy it out of habit.
+Pocket was not named in this patch, and only one of its two lines reaches him at all: Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in 13 of his 40 sampled builds, while Radiant Regeneration's cut from 70 to 65 heal on cast appears in 2. Thirteen lists in forty is a real number. Check whether the locket is in your own build before you buy it out of habit.
 
-None of the five published lists has been revised since the update. The three weekly sets — 3,431 favourites from Account 1462456789, 2,614 from Account 1073383511 and 2,032 from Account 272679564 — were last touched between 2026-04-14 and 2026-04-27, and both lifetime sets are older still: `Carney - Pocket Gaming` from Account 113256308 carries 157,393 favourites from 2024-08-01, and an 87,860-favourite set from Account 394955797 dates to 2024-09-18 and publishes a name this page does not reprint. Take shape from the recent three and nothing else.
+None of the five published lists has been revised since the update. The three weekly sets (3,431 favourites from Account 1462456789, 2,614 from Account 1073383511 and 2,032 from Account 272679564) were last touched between 2026-04-14 and 2026-04-27, and both lifetime sets are older still: `Carney - Pocket Gaming` from Account 113256308 carries 157,393 favourites from 2024-08-01, and an 87,860-favourite set from Account 394955797 dates to 2024-09-18 and publishes a name this page does not reprint. Take shape from the recent three and nothing else.
 
 ## Abilities: what to level and when
 
@@ -61,7 +61,7 @@ Affliction goes last everywhere it is recorded. The ultimate cannot finish anyon
 
 ## Hard counters, and how to play around them
 
-The two RankLock lists disagree about who beats him, and the difference is instructive. His worst matchup rows are Victor at 41.1% over 203,456 matches, Seven at 41.4% over 260,880, Graves at 42.3% over 232,585, McGinnis at 43.2% over 124,985 and Kelvin at 43.8% over 111,170. The confirmed counter rows put Graves first at 39.6% over 24,111 games and Seven second at 40.6% over 21,205 — both lower than the wider table says — and then add a name the matchup five never mentions: Warden, at 42.6% over 22,641.
+The two RankLock lists disagree about who beats him, and the difference is instructive. His worst matchup rows are Victor at 41.1% over 203,456 matches, Seven at 41.4% over 260,880, Graves at 42.3% over 232,585, McGinnis at 43.2% over 124,985 and Kelvin at 43.8% over 111,170. The confirmed counter rows put Graves first at 39.6% over 24,111 games and Seven second at 40.6% over 21,205, both lower than the wider table says, and then add a name the matchup five never mentions: Warden, at 42.6% over 22,641.
 
 Read the overlap as one lesson and the outlier as another. Graves and Seven appear on both lists because they punish a channel that has to hold sight, so against them the fix is to open with the cloak from an angle rather than to start Barrage and hope. Warden appears only where the evidence is tightest, which makes him the lane to respect even though nothing in the broad table warns you about it.
 
@@ -73,4 +73,4 @@ No ally clears RankLock's reporting floor with him, so there is no duo to draft 
 
 Weight the item slots by evidence. Ethereal Shift at 55.2% over 1,057,556 games and Diviner's Kevlar at 56.2% over 849,225 are the two rows with enough behind them to plan around, with Spiritual Overflow at 56.4% over 693,257 and Cheat Death at 56.9% over 601,832 close behind.
 
-Leech at 54.3% over 182,512 games and Crippling Headshot at 53.7% over 175,842 are the honest middle of the table. Spellslinger reads 55.3% across 92,322, Mystic Reverb 54.6% across 55,085, Infuser 53.9% across 56,708 and Silencer 54.6% across 12,775 — the last of those on a table small enough that it should never decide a build.
+Leech at 54.3% over 182,512 games and Crippling Headshot at 53.7% over 175,842 are the honest middle of the table. Spellslinger reads 55.3% across 92,322, Mystic Reverb 54.6% across 55,085, Infuser 53.9% across 56,708 and Silencer 54.6% across 12,775. The last of those sits on a table small enough that it should never decide a build.

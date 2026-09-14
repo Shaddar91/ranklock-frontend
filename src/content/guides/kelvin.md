@@ -23,7 +23,7 @@ liveItems: [Spirit Burn, Mystic Reverb, Witchmail, Diviner's Kevlar, Infuser]
 
 ## Who plays Kelvin, and why
 
-Take Kelvin when your team keeps losing fights it should have won on numbers, and play him as the hero who decides where the next one happens. He is a heavy body — 880 HP, 6.7 m/s, 3 stamina — and his win rate barely moves with match length: 53.5% under 30 minutes, 55.1% from 30 to 45 and 53.2% past 45. There is no clock to beat and no spike to reach, only ground to take.
+Take Kelvin when your team keeps losing fights it should have won on numbers, and play him as the hero who decides where the next one happens. He is a heavy body: 880 HP, 6.7 m/s, 3 stamina. His win rate barely moves with match length: 53.5% under 30 minutes, 55.1% from 30 to 45 and 53.2% past 45. There is no clock to beat and no spike to reach, only ground to take.
 
 Every ability puts something on the floor and makes the enemy walk around it. Frost Grenade heals allies where it lands and damages and slows everyone else. Ice Path lays a floating trail he and his team can ride, and the enemy can ride it too. Arctic Beam is a sustained beam whose slow and fire-rate loss ramp the longer it holds, and it can claim souls. Frozen Shelter is a dome: allies regenerate inside it, enemies slow, and objectives inside it go invulnerable.
 
@@ -55,7 +55,7 @@ The lanes worth opening are the ones the numbers hand you before the fight start
 
 Kelvin was not named in this patch and neither was his core. Two items in the wider pool moved: Radiant Regeneration lost heal on cast from 70 to 65 and sits in 7 of the 40 sampled Kelvin builds, and Restorative Locket dropped from 10% Spirit Resistance to 8% and sits in 4 of them. Neither appears often enough to re-plan around.
 
-Read the recent lists for purchases and the old ones for shape. The three weekly lists — 3,819 favourites from Account 393148161, 3,021 from Account 1310475170 and 2,176 from Account 364343916 — were last revised between 2026-04-20 and 2026-05-02, and two of the three publish their names in characters this page does not reprint. `Anti Global Warming Guy V2` from Account 158389035 is the most favourited set on the hero by a wide margin at 184,921, but it was last touched 2024-08-30, so take its ability order and leave its shop where it is.
+Read the recent lists for purchases and the old ones for shape. The three weekly lists were last revised between 2026-04-20 and 2026-05-02: 3,819 favourites from Account 393148161, 3,021 from Account 1310475170 and 2,176 from Account 364343916. Two of the three publish their names in characters this page does not reprint. `Anti Global Warming Guy V2` from Account 158389035 is the most favourited set on the hero by a wide margin at 184,921, but it was last touched 2024-08-30, so take its ability order and leave its shop where it is.
 
 ## Abilities: what to level and when
 
@@ -77,4 +77,4 @@ The counter endpoint tells the other half of the story: Kelvin's worst confirmed
 
 Buy the two that pay a beam already held on target. Spirit Burn tops his table at 63.3% over 1,221,911 games and Mystic Reverb reads 62.8% over 566,559; both charge per tick rather than per cast. Witchmail follows at 62.2% over 300,934 and Infuser at 61.1% over 598,340.
 
-Scourge at 61.7% over 105,205 games earns a slot when the enemy stacks bodies inside your dome. No ally pairing clears RankLock's reporting floor on him, so there is no partner to plan around — his value comes from the terrain, and that works with whoever is standing on it.
+Scourge at 61.7% over 105,205 games earns a slot when the enemy stacks bodies inside your dome. No ally pairing clears RankLock's reporting floor on him, so there is no partner to plan around. His value comes from the terrain, and that works with whoever is standing on it.

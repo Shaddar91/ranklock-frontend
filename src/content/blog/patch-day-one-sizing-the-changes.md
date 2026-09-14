@@ -3,7 +3,7 @@ title: "Day one of the {{PATCH_LABEL}}: sizing {{CHANGED_COUNT}} changes before 
 description: "Every line the {{PATCH_LABEL}} moved, with a value on both sides, sized against {{SAMPLE_N}} ranked matches, so you can order the edits on release night without a win rate."
 pubDate: 2026-09-08
 author: RankLock team
-heroImage: /assets/heroes/mirage_card.png
+heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/mirage_card.png"
 tags: [patch-notes, builds, meta]
 liveHeroes: []
 liveItems: []
@@ -12,8 +12,8 @@ draft: true
 
 {{PATCH_LABEL}} shipped at {{PATCH_DATE}}. What follows is every line of it that
 carries a value on both sides, and a way to put those lines in order of size
-tonight — hours before any win rate has the games behind it to do the ordering
-for you.
+on day one, hours before any win rate has the games behind it to do the
+ordering for you.
 
 ## The edits, with their before and after
 
@@ -65,7 +65,7 @@ is what the [patch tracker](/patches/) is for once a release has games in it.
   weeks before tonight, which is the only honest thing it can be right now.
 - **[The item tables](/items/)**, for the cost and scaling lines. Those reach you
   through what other players buy, and a buy order turns the day people read the
-  note — long before the win column agrees with them.
+  note, long before the win column agrees with them.
 - **[The tier list](/tier-list/)**, as a photograph of the ordering going in. A
   day-one list is worth more later than it is now: it is the before image that
   the next fortnight gets compared against.
