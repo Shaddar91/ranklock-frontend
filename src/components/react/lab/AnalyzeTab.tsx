@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { computeStats, type BaseStats, type BuildInput } from '../../../lib/computeStats';
 import { useViewer } from '../player/usePlayer';
-import { authorLabel, formatUpdated, isUpdatedThisPatch, signatureSlots } from '../../../lib/buildMeta';
+import { authorLabel, formatUpdated, isUpdatedThisPatch, signatureIcons, signatureSlots } from '../../../lib/buildMeta';
 import { EmptyState } from '../ui/index';
 import { indexCatalog, normalizeCatalog } from '../creator/buildModel';
 import { useHeroRoster } from './HeroBar';
@@ -241,6 +241,7 @@ export default function AnalyzeTab({
     [abilitiesQuery.data],
   );
   const slots = useMemo(() => signatureSlots(abilitiesQuery.data), [abilitiesQuery.data]);
+  const icons = useMemo(() => signatureIcons(abilitiesQuery.data), [abilitiesQuery.data]);
 
   const ownCurve = useMemo(() => ownCurvePoints(ownCurveQuery.data?.you ?? []), [ownCurveQuery.data]);
   const ownCurveAvailable = accountId != null && ownCurve.length > 0;
@@ -384,6 +385,7 @@ export default function AnalyzeTab({
           mods={mods}
           tierAbilities={tierRows}
           slots={slots}
+          icons={icons}
           heroName={active.hero_name}
           level={LAB_LEVEL}
           hasBoard={items.length > 0}

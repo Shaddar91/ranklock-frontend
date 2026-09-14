@@ -3,7 +3,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
-import { signatureSlots } from '../../../lib/buildMeta';
+import { signatureIcons, signatureSlots } from '../../../lib/buildMeta';
 import { EmptyState } from '../ui/index';
 import { CommunityBuildsTable } from '../hero/CommunityBuilds';
 import { useHeroRoster, type RosterSlug } from './HeroBar';
@@ -42,6 +42,7 @@ export default function CommunityTab({ heroId, onImport, timeline }: CommunityTa
   });
 
   const abilitySlots = useMemo(() => signatureSlots(abilitiesQuery.data), [abilitiesQuery.data]);
+  const abilityIcons = useMemo(() => signatureIcons(abilitiesQuery.data), [abilitiesQuery.data]);
   const builds = buildsQuery.data ?? [];
   const nowSeconds = Math.floor(Date.now() / 1000);
 
@@ -71,6 +72,7 @@ export default function CommunityTab({ heroId, onImport, timeline }: CommunityTa
           heroId={active.hero_id}
           initialBuilds={builds}
           abilitySlots={abilitySlots}
+          abilityIcons={abilityIcons}
           patches={patchesQuery.data ?? []}
           nowSeconds={nowSeconds}
           kicker={`Published in-game builds · ${active.hero_name}`}

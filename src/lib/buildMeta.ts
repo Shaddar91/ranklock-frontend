@@ -95,3 +95,12 @@ export function signatureSlots(abilities: readonly { ability_id: number; slot: s
       .map((a, i) => [String(a.ability_id), i + 1]),
   );
 }
+
+//Ability id -> the upstream glyph for the same signature rows, null when upstream serves none.
+export function signatureIcons(
+  abilities: readonly { ability_id: number; slot: string; icon_url?: string | null }[] | undefined,
+): Record<string, string | null> {
+  return Object.fromEntries(
+    (abilities ?? []).filter((a) => a.slot?.startsWith('signature')).map((a) => [String(a.ability_id), a.icon_url ?? null]),
+  );
+}

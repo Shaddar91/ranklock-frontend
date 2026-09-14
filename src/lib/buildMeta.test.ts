@@ -8,6 +8,7 @@ import {
   authorLabel,
   favoriteCounts,
   signatureSlots,
+  signatureIcons,
 } from './buildMeta';
 
 const PATCH = '2026-08-22';
@@ -128,5 +129,11 @@ describe('buildMeta — signature slot map', () => {
   it('an absent roster is an empty map, never a crash', () => {
     expect(signatureSlots(undefined)).toEqual({});
     expect(signatureSlots([])).toEqual({});
+  });
+
+  it('maps the same signature rows to their glyphs, null when upstream serves none', () => {
+    const withArt = rows.map((r) => ({ ...r, icon_url: r.ability_id === 10 ? 'https://x/a.webp' : undefined }));
+    expect(signatureIcons(withArt)).toEqual({ '10': 'https://x/a.webp', '20': null, '40': null, '30': null });
+    expect(signatureIcons(undefined)).toEqual({});
   });
 });

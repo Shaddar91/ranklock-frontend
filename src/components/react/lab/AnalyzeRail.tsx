@@ -2,7 +2,7 @@
 //T1-T3, as the design's three cards. Every theoretical figure prints C24's standing note plus the
 //assumption keys its own calculation raised.
 import { useState } from 'react';
-import { EmptyState } from '../ui/index';
+import { AbilityGlyph, EmptyState } from '../ui/index';
 import { count, DASH, fixed } from '../../../lib/format';
 import { abilitiesWithBuild, ASSUMPTIONS, THEORETICAL_NOTE, type AbilityValue } from '../../../lib/labCalc';
 import { CATEGORIES, CATEGORY_LABEL, type Category } from '../creator/buildModel';
@@ -18,8 +18,9 @@ interface AnalyzeRailProps {
   stats: ComputedStats;
   mods: BuildModifiers;
   tierAbilities: TierAbility[];
-  //ability id → the hero's signature slot 1..4, for the design's numbered key chips.
+  //ability id → the hero's signature slot 1..4 and its glyph, for the design's key chips.
   slots: Record<string, number>;
+  icons: Record<string, string | null>;
   heroName: string | null;
   level: number;
   hasBoard: boolean;
@@ -182,12 +183,14 @@ function AbilitiesCard({
   tierAbilities: rows,
   mods,
   slots,
+  icons,
   tier,
   onTier,
 }: {
   tierAbilities: TierAbility[];
   mods: BuildModifiers;
   slots: Record<string, number>;
+  icons: Record<string, string | null>;
   tier: number;
   onTier: (tier: number) => void;
 }) {
@@ -232,7 +235,9 @@ function AbilitiesCard({
             return (
               <div key={f.abilityId} className="lab-arow">
                 <span className="n">
-                  <span className={`kit-key k${slot || 1}`}>{slot || '?'}</span>
+                  <span className={`kit-key k${slot || 1}`}>
+                    <AbilityGlyph slot={slot} icon={icons[String(f.abilityId)]} />
+                  </span>
                   <span className="nm">{f.name}</span>
                 </span>
                 <span className="d tnum">{abilityCell(f.damage)}</span>
@@ -261,6 +266,7 @@ export default function AnalyzeRail({
   mods,
   tierAbilities,
   slots,
+  icons,
   heroName,
   level,
   hasBoard,
@@ -281,7 +287,7 @@ export default function AnalyzeRail({
     <aside className="lab-rail">
       <InvestmentCard stats={stats} />
       <StatsCard stats={stats} heroName={heroName} level={level} hasBoard={hasBoard} boardCount={boardCount} />
-      <AbilitiesCard tierAbilities={tierAbilities} mods={mods} slots={slots} tier={tier} onTier={onTier} />
+      <AbilitiesCard tierAbilities={tierAbilities} mods={mods} slots={slots} icons={icons} tier={tier} onTier={onTier} />
     </aside>
   );
 }

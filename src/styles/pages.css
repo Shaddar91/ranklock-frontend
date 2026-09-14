@@ -1131,6 +1131,11 @@
   border: 1px solid color-mix(in srgb, var(--ak) 45%, var(--border));
   color: var(--ak);
 }
+.kit-key .kit-art {
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+}
 .k1 {
   --ak: var(--info);
 }

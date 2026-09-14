@@ -17,6 +17,7 @@ export { default as BucketFilter } from './BucketFilter';
 export { default as EmptyState } from './EmptyState';
 export { default as Skeleton } from './Skeleton';
 export { default as GameIcon } from './GameIcon';
+export { default as AbilityGlyph } from './AbilityGlyph';
 export { default as Wordmark } from './Wordmark';
 export { default as AdSlot } from './AdSlot';
 export { default as DataTable, type DataTableColumn } from './DataTable';

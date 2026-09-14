@@ -1,6 +1,6 @@
 //Lab §9 — what the board does to the kit, as the design's one table: Damage / Cooldown / Duration
 /// Range per ability at the selected tier.
-import { SectionHeader } from '../ui/index';
+import { AbilityGlyph, SectionHeader } from '../ui/index';
 import { count, DASH, fixed } from '../../../lib/format';
 import { abilitiesWithBuild, ASSUMPTIONS, THEORETICAL_NOTE, type AbilityValue, type BuildModifiers } from '../../../lib/labCalc';
 import type { TierAbility } from './analyzeModel';
@@ -9,6 +9,7 @@ interface BoardAbilitiesProps {
   rows: TierAbility[];
   mods: BuildModifiers;
   slots: Record<string, number>;
+  icons: Record<string, string | null>;
   tier: number;
 }
 
@@ -20,7 +21,7 @@ function cell(value: AbilityValue | null, unit = ''): string {
   return value == null ? DASH : `${num(value.value)}${unit}`;
 }
 
-export default function BoardAbilities({ rows, mods, slots, tier }: BoardAbilitiesProps) {
+export default function BoardAbilities({ rows, mods, slots, icons, tier }: BoardAbilitiesProps) {
   const folded = abilitiesWithBuild(rows.map((r) => r.baseline), mods);
   const assumed = [...new Set(folded.flatMap((f) => f.assumed))];
   const extra = [...new Set(rows.flatMap((r) => r.notes))];
@@ -50,7 +51,9 @@ export default function BoardAbilities({ rows, mods, slots, tier }: BoardAbiliti
               return (
                 <div key={f.abilityId} className="lab-arow lab-arow-w">
                   <span className="n">
-                    <span className={`kit-key k${slot || 1}`}>{slot || '?'}</span>
+                    <span className={`kit-key k${slot || 1}`}>
+                      <AbilityGlyph slot={slot} icon={icons[String(f.abilityId)]} />
+                    </span>
                     <span className="nm">{f.name}</span>
                   </span>
                   <span className="d tnum">{cell(f.damage)}</span>

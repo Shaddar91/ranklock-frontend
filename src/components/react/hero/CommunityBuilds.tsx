@@ -10,6 +10,7 @@ import { count, DASH } from '../../../lib/format';
 import QueryProvider from '../QueryProvider';
 import SectionHeader from '../ui/SectionHeader';
 import EmptyState from '../ui/EmptyState';
+import AbilityGlyph from '../ui/AbilityGlyph';
 import type { CommunityBuild, Patch, RankedBracketKey, RankedBuildsResponse, TrimmedBuild } from '../../../types/api';
 
 export interface CommunityBuildsProps {
@@ -17,6 +18,8 @@ export interface CommunityBuildsProps {
   initialBuilds: CommunityBuild[];
   //Ability id -> signature slot 1..4, so the first four points render as the hero's own keys.
   abilitySlots: Record<string, number>;
+  //Ability id -> glyph; absent, the chips print the key number.
+  abilityIcons?: Record<string, string | null>;
   patches: Pick<Patch, 'released_at'>[];
   nowSeconds: number;
   //The bracket the page opens on, with its rows baked at build time so the table renders
@@ -47,6 +50,7 @@ interface Row {
   winRate: number | null;
   matches: number | null;
   weekly: number | null;
+  //the first four ability ids of the order
   points: number[];
   updated: string;
   thisPatch: boolean;
@@ -64,6 +68,7 @@ export function CommunityBuildsTable({
   heroId,
   initialBuilds,
   abilitySlots,
+  abilityIcons,
   patches,
   nowSeconds,
   initialSelection = 'weekly',
@@ -98,9 +103,7 @@ export function CommunityBuildsTable({
         winRate,
         matches,
         weekly: ranked ? b.num_favorites : b.num_weekly_favorites,
-        points: abilityOrderSequence(b.ability_order)
-          .slice(0, 4)
-          .map((id) => abilitySlots[String(id)] ?? 0),
+        points: abilityOrderSequence(b.ability_order).slice(0, 4),
         updated,
         thisPatch: updated === 'This patch',
       };
@@ -111,7 +114,7 @@ export function CommunityBuildsTable({
       );
     }
     return (data?.builds ?? []).map((b) => toRow(b, b.win_rate * 100, b.matches, authorLabel(b)));
-  }, [ranked, data, initialBuilds, abilitySlots, patches, nowSeconds]);
+  }, [ranked, data, initialBuilds, patches, nowSeconds]);
 
   const base = ranked
     ? data
@@ -187,11 +190,14 @@ export function CommunityBuildsTable({
                 {r.points.length === 0 ? (
                   <span className="muted">—</span>
                 ) : (
-                  r.points.map((slot, i) => (
-                    <span className={`kit-key k${slot}`} key={i}>
-                      {slot || '?'}
-                    </span>
-                  ))
+                  r.points.map((id, i) => {
+                    const slot = abilitySlots[String(id)] ?? 0;
+                    return (
+                      <span className={`kit-key k${slot}`} key={i}>
+                        <AbilityGlyph slot={slot} icon={abilityIcons?.[String(id)]} />
+                      </span>
+                    );
+                  })
                 )}
               </span>
               <span className={r.thisPatch ? 'bp-upd bp-upd-now' : 'bp-upd'}>{r.updated}</span>

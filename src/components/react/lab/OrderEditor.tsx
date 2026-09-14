@@ -1,6 +1,6 @@
 //Lab §11 — the 16-point ability order as click-to-cycle slot chips. An order is valid only when
 //every ability holds exactly four points; a valid order's rate is a served lookup, never computed.
-import { SectionHeader } from '../ui/index';
+import { AbilityGlyph, SectionHeader } from '../ui/index';
 import { count, pct } from '../../../lib/format';
 import {
   ABILITY_SLOTS,
@@ -56,7 +56,7 @@ export default function OrderEditor({ order, onOrder, abilities, served, minMatc
                   aria-label={`Point ${i + 1}: ${ability?.name ?? `ability ${slot}`}`}
                   onClick={() => onOrder(cycleOrder(order, i))}
                 >
-                  {slot}
+                  <AbilityGlyph slot={slot} icon={ability?.icon_url} />
                 </button>
                 <span className="lab-ab-lvl">{i + 1}</span>
               </span>

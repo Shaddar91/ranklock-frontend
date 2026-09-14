@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { computeStats, type BaseStats, type BuildInput } from '../../../lib/computeStats';
 import { readBuildFromHash } from '../../../lib/buildShare';
-import { signatureSlots } from '../../../lib/buildMeta';
+import { signatureIcons, signatureSlots } from '../../../lib/buildMeta';
 import { indexCatalog, layoutBuild, normalizeCatalog, TOTAL_SLOTS } from '../creator/buildModel';
 import { useBuildDraft } from '../creator/useBuildDraft';
 import { useViewer } from '../player/usePlayer';
@@ -201,6 +201,7 @@ export default function CreateTab({ initial, heroId, onHero, pace, onBoard, time
     [abilitiesQuery.data],
   );
   const slots = useMemo(() => signatureSlots(abilitiesQuery.data), [abilitiesQuery.data]);
+  const abilityIcons = useMemo(() => signatureIcons(abilitiesQuery.data), [abilitiesQuery.data]);
 
   const compareB = presets.find((p) => p.key === compareKey) ?? null;
   const compareStats = useMemo(() => {
@@ -294,7 +295,7 @@ export default function CreateTab({ initial, heroId, onHero, pace, onBoard, time
       {timeline}
 
       <div className="lab-two">
-        <BoardAbilities rows={tierRows} mods={mods} slots={slots} tier={tier} />
+        <BoardAbilities rows={tierRows} mods={mods} slots={slots} icons={abilityIcons} tier={tier} />
         <OrderEditor
           order={order}
           onOrder={setOrder}

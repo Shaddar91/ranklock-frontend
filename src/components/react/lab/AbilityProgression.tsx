@@ -1,7 +1,7 @@
 //Lab §5 — the build's ability points in spend order plus a per-ability summary, drawn as the
-//design's numbered slot chips. The header rate is an exact (or served-prefix) lookup against
-///heroes/:id/ability-orders; no match prints no rate.
-import { SectionHeader } from '../ui/index';
+//design's slot chips carrying the ability art. The header rate is an exact (or served-prefix)
+//lookup against /heroes/:id/ability-orders; no match prints no rate.
+import { AbilityGlyph, SectionHeader } from '../ui/index';
 import { count, pct } from '../../../lib/format';
 import type { AbilityStep, AbilitySummary, OrderMatch } from './analyzeModel';
 import type { HeroAbility } from '../../../types/api';
@@ -63,7 +63,9 @@ export default function AbilityProgression({
                 className="lab-ab"
                 title={`${a?.name ?? `Ability ${s.abilityId}`} — ${stepLabel(s)}`}
               >
-                <span className={`kit-key k${slot || 1}`}>{slot || '?'}</span>
+                <span className={`kit-key k${slot || 1}`}>
+                  <AbilityGlyph slot={slot} icon={a?.icon_url} />
+                </span>
                 <span className="lab-ab-lvl">{s.pos}</span>
               </span>
             );
@@ -75,7 +77,9 @@ export default function AbilityProgression({
             const slot = slotOf(row.abilityId);
             return (
               <div key={row.abilityId}>
-                <span className={`kit-key k${slot || 1}`}>{slot || '?'}</span>
+                <span className={`kit-key k${slot || 1}`}>
+                  <AbilityGlyph slot={slot} icon={a?.icon_url} />
+                </span>
                 <span style={{ minWidth: 0 }}>
                   <span className="lab-abprog-n" style={{ display: 'block' }}>
                     {a?.name ?? `Ability ${row.abilityId}`}
