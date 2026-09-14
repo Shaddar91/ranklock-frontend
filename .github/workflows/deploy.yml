@@ -69,3 +69,10 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             --data '{"purge_everything":true}'
+
+      #Push the live sitemap to Bing, Yandex, Seznam and Naver. Runs after the purge so
+      #the URLs it names serve the deploy that just shipped. Advisory: a submission
+      #outage must never fail a good deploy.
+      - name: Submit URLs to IndexNow
+        continue-on-error: true
+        run: node scripts/indexnow.mjs
