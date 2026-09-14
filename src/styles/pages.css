@@ -1410,7 +1410,8 @@
   gap: 8px;
   min-width: 0;
 }
-.mup-title .display {
+.mup-title .display,
+.mup-title .label-xs {
   white-space: nowrap;
 }
 .mup-row {
