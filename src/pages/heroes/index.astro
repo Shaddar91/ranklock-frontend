@@ -1,14 +1,14 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import DataAgeChip from '../../components/react/DataAgeChip';
 import HeroesTable from '../../components/react/HeroesTable';
+import HeroesFilterBar from '../../components/react/hero/HeroesFilterBar';
+import HeroesSortPresets from '../../components/react/hero/HeroesSortPresets';
 import { publishedGuideSlugs } from '../../lib/guideRoutes';
-import GameModeToggle from '../../components/react/ui/GameModeToggle';
 import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
 import { breadcrumbJsonLd, itemListJsonLd } from '../../lib/seo';
-import { shortDate } from '../../lib/format';
-import type { DataHorizonResponse, HeroSummary } from '../../types/api';
+import { dayDate, shortDate } from '../../lib/format';
+import type { DataHorizonResponse, HeroSummary, Patch } from '../../types/api';
 
 //SSG heroes meta table (requirements §B.2, the most-visited page). Rows are
 //fetched at BUILD time and handed to the island as initialRows, so the island's
@@ -22,6 +22,8 @@ import type { DataHorizonResponse, HeroSummary } from '../../types/api';
 const heroes = await buildFetch(api.getHeroes({ game_mode: 'Normal' }), [] as HeroSummary[]);
 const horizon = await buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null);
 const statsThrough = shortDate(horizon?.max_match_start_time);
+const patches = await buildFetch(api.getPatches(), [] as Patch[]);
+const latestPatch = patches.find((p) => p.is_current)?.patch_id ?? patches[0]?.patch_id ?? null;
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const topNames = [...heroes]
@@ -47,28 +49,35 @@ const path = Astro.url.pathname;
   description={description}
   canonicalPath="/heroes"
   jsonLd={jsonLd}
+  backdrop={false}
 >
-  <main class="container">
-    <div class="page-head">
+  <HeroesFilterBar
+    currentPath={path}
+    patch={latestPatch}
+    through={dayDate(horizon?.max_match_start_time) || null}
+    client:load
+  />
+
+  <main class="container itemsx-main">
+    <div class="page-head itemsx-page-head">
       <div>
         <div class="kicker">The meta</div>
         <h1 class="h-page">Deadlock hero win rates</h1>
+        <p class="itemsx-intro">
+          Every released hero by win rate, pick share and KDA from ranked
+          matches{statsThrough ? ` through ${statsThrough}` : ''}. Pick a rank on the bar to read the table at
+          your own badge; the <a href="/tier-list/">tier list</a> groups the same roster S to F and the
+          <a href="/rank-distribution/">rank distribution</a> shows how the ladder splits.
+        </p>
       </div>
-      {/* Mode filter for this page's mode-separated tables; GameModeToggle documents why it sits here, not the nav. */}
-      <GameModeToggle currentPath={path} client:load />
+      <HeroesSortPresets client:load />
     </div>
-    {/* data-age honesty (Component 11): renders nothing until /meta/data-horizon serves a date */}
-    <DataAgeChip client:load />
-    <p class="page-intro">
-      Every released Deadlock hero ranked by win rate, pick share and KDA, from ranked
-      matches{statsThrough ? ` through ${statsThrough}` : ''}. Pick a rank tier to see the
-      same table at your own badge, from Initiate to Eternus. For the same roster grouped
-      S to F with the cut for each grade printed, see the
-      <a href="/tier-list/">Deadlock tier list</a>, or see how the ranked population itself splits
-      by tier on the <a href="/rank-distribution/">rank distribution</a> page.
-    </p>
-    <div style="margin-top:20px;">
-      <HeroesTable initialRows={heroes} guideSlugs={[...(await publishedGuideSlugs())]} client:load />
-    </div>
+
+    <HeroesTable
+      initialRows={heroes}
+      guideSlugs={[...(await publishedGuideSlugs())]}
+      statsThrough={statsThrough}
+      client:load
+    />
   </main>
 </BaseLayout>

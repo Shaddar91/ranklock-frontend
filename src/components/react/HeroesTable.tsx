@@ -1,76 +1,64 @@
-//Heroes meta table island (mount with client:load on /heroes).
-//
-//SSG-friendly: the page fetches the default ("all ranks") rows at BUILD time and
-//passes them as `initialRows`; React Query is seeded with them as `initialData`,
-//so this island's FIRST (server) render already contains the real table markup —
-//the SEO HTML has hero names + win-rates present without JS (the success
-//criterion). Switching the rank tier then refetches that band client-side
-//(api.getHeroes({ band }), band = badge/10 0..11); `keepPreviousData` avoids a flash.
-import { useMemo, useState } from 'react';
+//Heroes meta table island (mount with client:load on /heroes): the design's list-table card.
+//Rank comes from the sticky bar and sort from the page-head presets or the column heads, both
+//through heroesIndexState. SSG-friendly: the page passes the build-time all-ranks rows as
+//`initialRows`, so the first (server) render already carries the real table.
+import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, isComputing, queryKeys } from '../../lib/apiClient';
 import { computingMessage } from '../../lib/apiStates';
 import { useGameMode } from '../../lib/useGameMode';
+import { activeHeroPreset, useHeroesBracket, useHeroesSort } from '../../lib/heroesIndexState';
 import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, GameIcon, WinBar, TierPill } from './ui/index';
-import BracketFilter, { type BracketValue } from './ui/BracketFilter';
-import { RANKS } from '../../lib/ranks';
+import type { BracketValue } from './ui/BracketFilter';
+import { getRank } from '../../lib/ranks';
 import { heroPath, heroSlug } from '../../lib/heroSlugs';
-import { DASH, fixed, kda, metaTier, pct, pickShare } from '../../lib/format';
+import { count, DASH, fixed, kda, metaTier, pct, pickShare } from '../../lib/format';
 import type { HeroSummary } from '../../types/api';
 
-//The full 12-tier rank ladder (Obscurus…Eternus) drives the rank selector — the SAME ladder
-//Lane Lab uses (lib/ranks RANKS index === tier === badge/10). Heroes previously exposed only the
-//coarse 4-way low/mid/high/top buckets; migration 025's hero_band_mv serves one row per band, so
-//the two selectors now share an identical rank set (ranklock-bug-heroes-page C3).
-const FULL_TIERS: number[] = RANKS.filter((r) => r.tier > 0).map((r) => r.tier);
-
-//A BracketValue → the API's `band` param (undefined for 'all' so the call omits the param and the
-//backend serves the all-ranks hero_summary_mv). Mirrors LaneLabIsland's bandParam.
+//A BracketValue → the API's `band` param (absent for 'all' so the backend serves the all-ranks view).
 const bandParam = (v: BracketValue): number | undefined => (v === 'all' ? undefined : v);
 
-//A roster hero the stats pipeline has never tracked (Component 11, pairs with the backend's
-//roster-complete /heroes C9): the LEFT-JOIN miss serves picks=0 + all-null stats. Rendered as
-//a dashed "no tracked matches yet" row instead of fabricated zeros. The CURRENT (pre-deploy)
-//API serves only stat-ful MV rows — no row matches this, so both API shapes render correctly.
+//A roster hero the stats pipeline has never tracked: picks=0 and every stat null. Rendered as a
+//dimmed "no tracked matches yet" row instead of fabricated zeros.
 const isRosterOnly = (h: HeroSummary): boolean => h.win_rate == null && (h.picks ?? 0) === 0;
 
 function HeroCell({ hero }: { hero: HeroSummary }) {
   const rosterOnly = isRosterOnly(hero);
   return (
-    <a
-      className="flex"
-      href={heroPath(hero.hero_name)}
-      style={{ alignItems: 'center', gap: 10, textDecoration: 'none', opacity: rosterOnly ? 0.55 : 1 }}
-    >
+    <a className="itemsx-item" href={heroPath(hero.hero_name)} style={rosterOnly ? { opacity: 0.55 } : undefined}>
       <GameIcon kind="hero" name={hero.hero_name} src={hero.icon_url} size={30} />
-      <span className="display" style={{ fontWeight: 600, color: 'var(--text)' }}>
-        {hero.hero_name}
+      <span className="itemsx-item-text">
+        <span className="display itemsx-name">{hero.hero_name}</span>
+        {rosterOnly && <span className="itemsx-sub">no tracked matches yet</span>}
       </span>
-      {rosterOnly && (
-        <span className="mono faint" style={{ fontSize: 10.5, whiteSpace: 'nowrap' }}>
-          no tracked matches yet
-        </span>
-      )}
     </a>
   );
 }
 
-function HeroesTableInner({ initialRows, guideSlugs }: { initialRows: HeroSummary[]; guideSlugs: string[] }) {
+interface HeroesTableProps {
+  initialRows: HeroSummary[];
+  guideSlugs: string[];
+  statsThrough?: string | null;
+}
+
+function HeroesTableInner({ initialRows, guideSlugs, statsThrough }: HeroesTableProps) {
   const { mode } = useGameMode();
-  const [band, setBand] = useState<BracketValue>('all');
+  const { bracket } = useHeroesBracket();
+  const { sort, setSort } = useHeroesSort();
 
   const { data, isPending, isError, error } = useQuery({
-    queryKey: queryKeys.heroes({ band: band === 'all' ? 'all' : band, game_mode: mode }),
-    queryFn: () => api.getHeroes({ band: bandParam(band), game_mode: mode }),
-    //The SSG seed is the DEFAULT-mode "all ranks" page — only apply it to that exact
-    //view, so a `?mode=brawl` deep-link never paints Brawl-keyed rows from a Normal seed.
-    initialData: band === 'all' && mode === 'Normal' ? initialRows : undefined,
+    queryKey: queryKeys.heroes({ band: bracket === 'all' ? 'all' : bracket, game_mode: mode }),
+    queryFn: () => api.getHeroes({ band: bandParam(bracket), game_mode: mode }),
+    //The SSG seed is the default-mode all-ranks page; a `?mode=brawl` deep link never paints
+    //Brawl-keyed rows from a Normal seed.
+    initialData: bracket === 'all' && mode === 'Normal' ? initialRows : undefined,
     placeholderData: keepPreviousData,
   });
 
   const rows = data ?? [];
   const totalPicks = useMemo(() => rows.reduce((sum, h) => sum + (h.picks ?? 0), 0), [rows]);
+  const tracked = useMemo(() => rows.filter((h) => !isRosterOnly(h)).length, [rows]);
 
   const guides = useMemo(() => new Set(guideSlugs), [guideSlugs]);
   const columns = useMemo<DataTableColumn<HeroSummary>[]>(() => {
@@ -92,17 +80,11 @@ function HeroesTableInner({ initialRows, guideSlugs }: { initialRows: HeroSummar
         sortValue: (h) => h.win_rate,
         render: (h) => (h.win_rate == null ? <span className="faint">{DASH}</span> : <WinBar wr={h.win_rate} />),
       },
-      // NOTE: the "7d" (delta_win_rate_7d, 7-day win-rate momentum) column was removed — the backend
-      // never populates that field yet (the win-rate-history snapshot it needs isn't built), so it was
-      // always a cryptic, empty "—". Re-add with a clear "7-day Δ" header + tooltip once the momentum
-      // producer exists. (Delta import kept for when it returns.)
       {
         key: 'pick',
-        header: 'Pick %',
+        header: 'Pick rate',
         numeric: true,
         sortValue: (h) => h.picks,
-        //An untracked roster row's picks=0 is "never measured", not a measured 0.0% — dash it
-        //like its other stat cells (tier/WR/KDA dash via their own null handling).
         render: (h) =>
           isRosterOnly(h) ? (
             <span className="faint">{DASH}</span>
@@ -118,10 +100,17 @@ function HeroesTableInner({ initialRows, guideSlugs }: { initialRows: HeroSummar
         render: (h) => <span className="tnum">{fixed(kda(h.avg_kills, h.avg_deaths, h.avg_assists))}</span>,
       },
       {
+        key: 'games',
+        header: 'Games',
+        numeric: true,
+        sortValue: (h) => h.picks,
+        render: (h) =>
+          isRosterOnly(h) ? <span className="faint">{DASH}</span> : <span className="tnum itemsx-dim">{count(h.picks)}</span>,
+      },
+      {
         key: 'play',
         header: '',
         //Guide-gated route: a hero with no guide file gets an empty cell, never a link to a 404.
-        //Every linked row's text is identical, so the hero name rides in the label.
         render: (h) =>
           guides.has(heroSlug(h.hero_name)) ? (
             <a className="kicker" href={`${heroPath(h.hero_name)}guide/`} aria-label={`How to play ${h.hero_name}`}>
@@ -133,40 +122,51 @@ function HeroesTableInner({ initialRows, guideSlugs }: { initialRows: HeroSummar
     return guides.size > 0 ? cols : cols.filter((c) => c.key !== 'play');
   }, [totalPicks, guides]);
 
+  const rankLabel = bracket === 'all' ? 'All ranks' : getRank(bracket).name;
+  const sortLabel = activeHeroPreset(sort)?.label ?? 'column';
+
   return (
-    <div>
-      <div className="between" style={{ marginBottom: 14, gap: 16, flexWrap: 'wrap' }}>
-        <span className="label-xs">Meta at your rank</span>
-        <BracketFilter value={band} onChange={setBand} tiers={FULL_TIERS} />
+    <>
+      <div className="itemsx-card">
+        <div className="itemsx-head">
+          <span className="display itemsx-title">{rankLabel}</span>
+          <span className="mono itemsx-meta">
+            {tracked} heroes · {mode === 'Normal' ? 'Normal' : 'Brawl'} · sorted by {sortLabel}
+          </span>
+        </div>
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={(h) => h.hero_id}
+          loading={isPending}
+          sort={sort}
+          onSortChange={setSort}
+          caption="Hero meta — win rate, pick rate, KDA and games by rank tier"
+          emptyTitle={
+            isComputing(error) ? 'Hero meta is computing' : isError ? 'Hero meta unavailable' : 'No heroes for this rank yet'
+          }
+          emptyMessage={
+            isComputing(error)
+              ? computingMessage('the hero meta table is being generated', error)
+              : isError
+                ? 'The stats API is offline — the meta table fills in when it comes back online.'
+                : 'No data for this rank tier yet. Try another rank or check back after the next refresh. Low ranks are sampled thinly.'
+          }
+        />
       </div>
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(h) => h.hero_id}
-        loading={isPending}
-        initialSort={{ key: 'wr', dir: -1 }}
-        caption="Hero meta — win rate, pick rate and KDA by rank tier"
-        emptyTitle={
-          //202 = healthy, deliberately gating — "offline" is reserved for real
-          //network/5xx failure (B3).
-          isComputing(error) ? 'Hero meta is computing' : isError ? 'Hero meta unavailable' : 'No heroes for this rank yet'
-        }
-        emptyMessage={
-          isComputing(error)
-            ? computingMessage('the hero meta table is being generated', error)
-            : isError
-              ? 'The stats API is offline — the meta table fills in when it comes back online.'
-              : 'No data for this rank tier yet. Try another rank or check back after the next refresh. Low ranks are sampled thinly.'
-        }
-      />
-    </div>
+      <p className="itemsx-foot">
+        Win rate, pick rate and KDA: RankLock public matches, ranked, the rank bar's tier
+        {statsThrough ? `, through ${statsThrough}` : ''}. Tier is RankLock's own cut on win rate. Rank means badge
+        tier, never an MMR number.
+      </p>
+    </>
   );
 }
 
-export default function HeroesTable({ initialRows, guideSlugs }: { initialRows: HeroSummary[]; guideSlugs: string[] }) {
+export default function HeroesTable(props: HeroesTableProps) {
   return (
     <QueryProvider>
-      <HeroesTableInner initialRows={initialRows} guideSlugs={guideSlugs} />
+      <HeroesTableInner {...props} />
     </QueryProvider>
   );
 }
