@@ -18,6 +18,7 @@ import {
   originValue,
   peakPlayerMatches,
   playerSeriesByMinute,
+  metricHasRateView,
 } from './laneCurve';
 import type { LaneCurvePoint, LaneCurveResponse, PlayerCurvePoint } from '../types/api';
 
@@ -105,6 +106,38 @@ describe('laneSeriesByMinute', () => {
 
   it('returns an empty map for an undefined curve', () => {
     expect(laneSeriesByMinute(undefined, 1000, 'total', 'last_hits').size).toBe(0);
+  });
+});
+
+describe('rate view differences the mean, never a stepping median', () => {
+  const curve = {
+    points: [
+      { t_seconds: 180, p50: 0, mean: 0.3, sample_players: 100 },
+      { t_seconds: 360, p50: 0, mean: 0.9, sample_players: 100 },
+      { t_seconds: 540, p50: 1, mean: 1.5, sample_players: 100 },
+    ],
+  };
+  it('rate mode uses mean when the payload carries it', () => {
+    const m = laneSeriesByMinute(curve, 1, 'rate', 'kills');
+    expect(m.get(3)).toBeCloseTo(0.1);
+    expect(m.get(6)).toBeCloseTo(0.2);
+    expect(m.get(9)).toBeCloseTo(0.2);
+  });
+  it('total mode still plots the median', () => {
+    const m = laneSeriesByMinute(curve, 1, 'total', 'kills');
+    expect([...m.values()]).toEqual([0, 0, 1]);
+  });
+  it('falls back to the median on a payload without mean', () => {
+    const legacy = { points: curve.points.map(({ mean: _m, ...p }) => p) };
+    const m = laneSeriesByMinute(legacy, 1, 'rate', 'kills');
+    expect(m.get(9)).toBeCloseTo(1 / 3);
+  });
+  it('accuracy and level have no per-minute view; every other metric does', () => {
+    expect(metricHasRateView('accuracy')).toBe(false);
+    expect(metricHasRateView('level')).toBe(false);
+    for (const m of ['souls', 'last_hits', 'kills', 'deaths', 'assists', 'damage', 'damage_taken', 'player_healing', 'damage_mitigated']) {
+      expect(metricHasRateView(m)).toBe(true);
+    }
   });
 });
 
@@ -451,19 +484,19 @@ describe('leagueSampleCaption (both sample sizes + the lobby-average naming)', (
         { name: 'Ritualist', n: 369986 },
         { name: 'Ascendant', n: 17010 },
       ]),
-    ).toBe('n = 369,986 Ritualist · 17,010 Ascendant players');
+    ).toBe('n = 369,986 Ritualist · 17,010 Ascendant player-games');
   });
 
   it('a single shown league prints alone; null and zero-n entries drop out', () => {
     expect(leagueSampleCaption('player_rank', [{ name: 'Ritualist', n: 369986 }, null])).toBe(
-      'n = 369,986 Ritualist players',
+      'n = 369,986 Ritualist player-games',
     );
     expect(
       leagueSampleCaption('player_rank', [
         { name: 'Ascendant', n: 0 },
         { name: 'Ritualist', n: 10 },
       ]),
-    ).toBe('n = 10 Ritualist players');
+    ).toBe('n = 10 Ritualist player-games');
   });
 
   it('team_average names the lobby-average league and says whose lobbies they are', () => {

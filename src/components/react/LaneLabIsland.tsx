@@ -28,6 +28,7 @@ import {
   laneSeriesByMinute,
   leagueSampleCaption,
   mergeEconSeriesByMinute,
+  metricHasRateView,
   peakPlayerMatches,
   playerCurveParamsFor,
   playerSeriesByMinute,
@@ -396,7 +397,9 @@ function CurvePanel({
   //The active skin's series color words — re-renders the caption when the skin flips,
   //keeping the words in lockstep with the CSS-var line colors that re-skin live.
   const econWords = useEconSeriesWords();
-  const [viewMode, setViewMode] = useState<ViewMode>('rate');
+  const [viewChoice, setViewMode] = useState<ViewMode>('rate');
+  //A running ratio (accuracy) or level has no per-minute reading: those metrics stay cumulative.
+  const viewMode: ViewMode = metricHasRateView(metric) ? viewChoice : 'total';
   const [xWindow, setXWindow] = useState<XWindow>('early');
   const xDomain: [number, number] | undefined =
     xWindow === 'early' ? [0, EARLY_GAME_MAX_MIN] : undefined;
@@ -562,7 +565,7 @@ function CurvePanel({
     : noTierA
       ? 'Player rank has no cohort for Obscurus or "All ranks" — pick a league (Initiate–Eternus) above, or switch to Team average.'
       : thinA
-        ? `Only ${count(nA)} players sampled at this rank — Lane Lab needs at least ${RANK_MIN_SAMPLE} to draw a per-rank curve. Try "All divisions" or Team average.`
+        ? `Only ${count(nA)} player-games sampled at this rank — Lane Lab needs at least ${RANK_MIN_SAMPLE} to draw a per-rank curve. Try "All divisions" or Team average.`
         : leagueA.show && activeA.isError
           ? laneAheadMessage(activeA.error)
           : `No ${metricLower} data for this selection yet — try another league${cohort === 'player_rank' ? ', a wider division, or Team average' : ' or "All"'}.`;
@@ -573,7 +576,7 @@ function CurvePanel({
       <span className="corner br" />
       <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
         <div>
-          <div className="kicker" style={{ marginBottom: 4 }}>{kicker}</div>
+          <div className="kicker" style={{ marginBottom: 4 }}>{metricLabel} — {kicker}</div>
           {/* Honest label tracks the data: the rate view IS souls earned per minute, so it
               says "per minute"; the total view is cumulative net worth over the match. */}
           <h2 className="h-sec" style={{ fontSize: 17 }}>
@@ -583,7 +586,7 @@ function CurvePanel({
         {(nA > 0 || nB > 0) && (
           <span className="mono faint" style={{ fontSize: 12 }}>
             {thinA ? (
-              <>n = {count(nA)} players sampled — below the {RANK_MIN_SAMPLE} floor for a per-rank curve</>
+              <>n = {count(nA)} player-games sampled — below the {RANK_MIN_SAMPLE} floor for a per-rank curve</>
             ) : sampleCaption ? (
               <>
                 {sampleCaption}
@@ -597,12 +600,14 @@ function CurvePanel({
       {/* View toggle (per-minute RATE vs cumulative TOTAL) always shows; the metric toggle
           shows only when the panel serves more than one metric. */}
       <div className="flex" style={{ marginBottom: 12, gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <MetricToggle
-          metrics={VIEW_MODES}
-          value={viewMode}
-          onChange={(m) => setViewMode(m as ViewMode)}
-          ariaLabel="Curve view — per-minute rate or cumulative total"
-        />
+        {metricHasRateView(metric) && (
+          <MetricToggle
+            metrics={VIEW_MODES}
+            value={viewMode}
+            onChange={(m) => setViewMode(m as ViewMode)}
+            ariaLabel="Curve view — per-minute rate or cumulative total"
+          />
+        )}
         <MetricToggle
           metrics={X_WINDOWS}
           value={xWindow}
@@ -643,7 +648,7 @@ function CurvePanel({
                 <>
                   The <b style={{ color: econSeriesColor.you }}>{econWords.you}</b> area is the{' '}
                   {isRate ? (
-                    <>{metricLower} a <b style={{ color: econSeriesColor.you }}>{leagueA.name}</b> player earns <b>each minute</b></>
+                    <>average {metricLower} a <b style={{ color: econSeriesColor.you }}>{leagueA.name}</b> player earns <b>each minute</b></>
                   ) : (
                     <>median {metricLower} a <b style={{ color: econSeriesColor.you }}>{leagueA.name}</b> player has by each minute of the game; the shaded band is that league&rsquo;s middle half (p25–p75)</>
                   )}
@@ -663,7 +668,7 @@ function CurvePanel({
               {!effA && effB && leagueB && (
                 <>
                   The <b style={{ color: econSeriesColor.cohort }}>{econWords.cohort} dashed</b> line is the{' '}
-                  {metricLower} a <b style={{ color: econSeriesColor.cohort }}>{leagueB.name}</b> player{' '}
+                  {isRate ? 'average ' : 'median '}{metricLower} a <b style={{ color: econSeriesColor.cohort }}>{leagueB.name}</b> player{' '}
                   {isRate ? <>earns <b>each minute</b></> : <>has by each minute of the game</>}.
                 </>
               )}
@@ -733,10 +738,15 @@ function CurvePanel({
                 </>
               ) : p1Curve.isFetching ? (
                 <>Loading <b>{labelP1}</b>&rsquo;s {metricLower} curve…</>
+              ) : p1Curve.isError ? (
+                <>
+                  Per-player {metricLower} lines are not served by this build yet, so <b>{labelP1}</b>&rsquo;s
+                  line is not drawn.
+                </>
               ) : (
                 <>
-                  No per-minute {metricLower} data for <b>{labelP1}</b> yet — no match timeline is
-                  loaded for this metric, so there&rsquo;s no line to draw.
+                  No per-minute {metricLower} data for <b>{labelP1}</b> yet — none of their folded games carry it,
+                  so there&rsquo;s no line to draw.
                   {p1.overlay ? <> Their per-game averages are in the stat-line above.</> : null}
                 </>
               )}
@@ -768,10 +778,15 @@ function CurvePanel({
                 </>
               ) : p2Curve.isFetching ? (
                 <>Loading <b>{labelP2}</b>&rsquo;s {metricLower} curve…</>
+              ) : p2Curve.isError ? (
+                <>
+                  Per-player {metricLower} lines are not served by this build yet, so <b>{labelP2}</b>&rsquo;s
+                  line is not drawn.
+                </>
               ) : (
                 <>
-                  No per-minute {metricLower} data for <b>{labelP2}</b> yet — no match timeline is loaded for
-                  this metric, so there&rsquo;s no second line to draw.
+                  No per-minute {metricLower} data for <b>{labelP2}</b> yet — none of their folded games carry it,
+                  so there&rsquo;s no second line to draw.
                   {p2.overlay ? <> Their per-game averages are in the stat-line above.</> : null}
                 </>
               )}
@@ -1617,7 +1632,7 @@ function LaneLabInner() {
         queryKeyFor={queryKeys.laneEconomyCurve}
         metrics={econMetricsFor(cohort)}
         defaultMetric="souls"
-        kicker="Souls per minute — the comparison set, league vs league vs players"
+        kicker="the comparison set, league vs league vs players"
         sampleWindow={sampleWindow}
       />
 
@@ -1628,11 +1643,15 @@ function LaneLabInner() {
         queryKeyFor={queryKeys.laneFarmCurve}
         metrics={FARM_METRICS}
         defaultMetric="last_hits"
-        kicker="Last-hits per minute — the comparison set, league vs league vs players"
+        kicker="the farm curve, league vs league vs players"
         sampleWindow={sampleWindow}
       />
 
-      <VerdictPanel band={band} playerOverlay={liveOverlay} playerId={pickedId} />
+      {/* The verdict reads the lobby-average (team-average) table only — under Player rank it would
+          label a different cohort than the curves above, so it is not shown there. */}
+      {cohort === 'team_average' && (
+        <VerdictPanel band={band} playerOverlay={liveOverlay} playerId={pickedId} />
+      )}
     </div>
   );
 }
