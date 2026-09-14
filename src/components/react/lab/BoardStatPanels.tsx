@@ -3,7 +3,7 @@
 import { count, DASH, fixed } from '../../../lib/format';
 import { CATEGORIES, CATEGORY_LABEL, type Category } from '../creator/buildModel';
 import { investmentBonusText } from './analyzeModel';
-import type { ComputedStats, StatLine } from '../../../lib/computeStats';
+import type { ComputedStats, DerivedRow, StatLine } from '../../../lib/computeStats';
 
 function num(n: number): string {
   return Number.isInteger(n) ? count(n) : fixed(n, 1);
@@ -11,6 +11,13 @@ function num(n: number): string {
 
 function lineValue(line: StatLine): string {
   return line.unit === 'percent' ? `${line.value > 0 ? '+' : ''}${num(line.value)}%` : num(line.value);
+}
+
+export function derivedValue(n: number, unit: DerivedRow['unit']): string {
+  if (unit === 'per_second') return `${num(n)}/s`;
+  if (unit === 'seconds') return `${num(n)}s`;
+  if (unit === 'dps') return count(Math.round(n));
+  return num(n);
 }
 
 function Row({ label, base, value, accent }: { label: string; base: string; value: string; accent?: string }) {
@@ -31,6 +38,7 @@ export default function BoardStatPanels({ stats, boardCount }: { stats: Computed
         const lines = stats[cat];
         const invest = stats.investment?.[cat] ?? null;
         const bonus = invest ? investmentBonusText(invest) : null;
+        const gun = cat === 'weapon' ? (stats.weaponDps?.rows ?? []) : [];
         return (
           <section key={cat} className={`lab-cp cat-${cat}`}>
             <div className="lab-cp-h">
@@ -46,7 +54,10 @@ export default function BoardStatPanels({ stats, boardCount }: { stats: Computed
                 accent="var(--win)"
               />
             )}
-            {lines.length === 0 ? (
+            {gun.map((row) => (
+              <Row key={row.key} label={row.label} base={derivedValue(row.base, row.unit)} value={derivedValue(row.value, row.unit)} />
+            ))}
+            {lines.length === 0 && gun.length === 0 ? (
               <p className="lab-note">Nothing on this board changes a {CATEGORY_LABEL[cat].toLowerCase()} stat.</p>
             ) : (
               lines.map((line) => (

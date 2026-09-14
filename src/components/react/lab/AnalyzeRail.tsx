@@ -7,6 +7,7 @@ import { count, DASH, fixed } from '../../../lib/format';
 import { abilitiesWithBuild, ASSUMPTIONS, THEORETICAL_NOTE, type AbilityValue } from '../../../lib/labCalc';
 import { CATEGORIES, CATEGORY_LABEL, type Category } from '../creator/buildModel';
 import { investmentBonusText, type TierAbility } from './analyzeModel';
+import { derivedValue } from './BoardStatPanels';
 import type { BuildModifiers } from '../../../lib/labCalc';
 import type { ComputedStats } from '../../../lib/computeStats';
 
@@ -117,6 +118,7 @@ function StatsCard({
   const [tab, setTab] = useState<Category>('weapon');
   const lines = stats[tab];
   const investRow = stats.investment?.[tab] ?? null;
+  const gun = tab === 'weapon' ? (stats.weaponDps?.rows ?? []) : [];
 
   return (
     <section className="lab-card">
@@ -157,7 +159,15 @@ function StatsCard({
               <span className="v tnum" style={{ color: 'var(--win)' }}>{investmentBonusText(investRow)}</span>
             </div>
           )}
-          {lines.length === 0 ? (
+          {gun.map((row) => (
+            <div key={row.key} className="lab-srow">
+              <span>{row.label}</span>
+              <span className="b tnum">{derivedValue(row.base, row.unit)}</span>
+              <span className="g">→</span>
+              <span className="v tnum">{derivedValue(row.value, row.unit)}</span>
+            </div>
+          ))}
+          {lines.length === 0 && gun.length === 0 ? (
             <p className="lab-note">Nothing on this board changes a {CATEGORY_LABEL[tab].toLowerCase()} stat.</p>
           ) : (
             lines.map((line) => (
