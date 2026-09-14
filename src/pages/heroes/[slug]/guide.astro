@@ -273,10 +273,14 @@ const jsonLd = breadcrumbJsonLd(origin, [
       )
     }
 
-    <section class="panel panel-pad gp-body" style="margin-bottom:24px;">
+    <div class="gp-cols">
+    <div class="gp-main">
+    <section class="panel panel-pad gp-body">
       <div class="prose"><Content /></div>
     </section>
+    </div>
 
+    <aside class="gp-rail">
     {
       hasLive && (
         <div class="panel panel-pad" style="margin-bottom:24px;">
@@ -458,6 +462,8 @@ const jsonLd = breadcrumbJsonLd(origin, [
       For win rate, matchups and duo partners see <a href={heroUrl}>{name}'s stats page</a>; for the
       measured item sets and buy order see <a href={buildUrl}>{name}'s build page</a>.
     </p>
+    </aside>
+    </div>
   </main>
 </BaseLayout>
 
@@ -471,5 +477,28 @@ const jsonLd = breadcrumbJsonLd(origin, [
   }
   .gp-body :global(h2) {
     scroll-margin-top: 84px;
+  }
+  /* the guide reads in a main column with its numbers, build and counters in a rail, as the item page does */
+  .gp-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(300px, 5fr);
+    gap: 22px;
+    align-items: start;
+  }
+  .gp-rail {
+    display: grid;
+    gap: 22px;
+    min-width: 0;
+  }
+  .gp-rail > :global(*) {
+    margin-bottom: 0 !important;
+  }
+  .gp-body :global(.prose) {
+    max-width: 100%;
+  }
+  @media (max-width: 960px) {
+    .gp-cols {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 </style>

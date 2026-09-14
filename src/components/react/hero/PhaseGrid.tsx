@@ -45,7 +45,7 @@ function Grid({ phases, catalog }: PhaseGridProps) {
                     <span className="phase-sub">{it.slotTier}</span>
                   </span>
                   <span className="mono tnum phase-min">{minuteClock(it.minute)}</span>
-                  <span className="mono tnum" style={{ color: it.winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}>
+                  <span className="mono tnum wr" style={{ color: it.winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}>
                     {it.winRate.toFixed(1)}%
                   </span>
                 </a>

@@ -46,7 +46,7 @@ export default function AbilityProgression({
         kicker="What to level"
         title="Ability progression"
         action={
-          <span className="mono tnum" style={{ fontSize: 12, color: rate ? 'var(--text-2)' : 'var(--muted)' }}>
+          <span className="mono tnum" style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)' }}>
             {rate ??
               `no served rate for this exact order${minMatches == null ? '' : ` — orders are floored at ${count(minMatches)} matches`}`}
           </span>

@@ -38,9 +38,7 @@ function Row({ row }: { row: PanelRow }) {
         <span className="display mup-name">{row.name}</span>
       </span>
       <span className="mup-wr">
-        <span className="tnum" style={{ color: good ? 'var(--win)' : 'var(--loss)' }}>
-          {row.winRate.toFixed(1)}%
-        </span>
+        <span className="tnum">{row.winRate.toFixed(1)}%</span>
         <span className="wbar">
           <i style={{ width: `${fill}%`, background: good ? 'var(--win)' : 'var(--loss)' }} />
         </span>
@@ -57,10 +55,12 @@ function Panel({ title, rows, accent }: { title: string; rows: PanelRow[]; accen
   return (
     <div className="panel mup-panel">
       <div className="mup-head">
-        <span className="display" style={{ color: accent, fontWeight: 600, fontSize: 14 }}>
-          {title}
+        <span className="mup-title">
+          <span className="display" style={{ color: accent, fontWeight: 600, fontSize: 14 }}>
+            {title}
+          </span>
+          <span className="label-xs">Win rate</span>
         </span>
-        <span className="label-xs">Win rate</span>
         <span className="label-xs mup-delta">Δ exp.</span>
         <span className="label-xs mup-games">Games</span>
       </div>

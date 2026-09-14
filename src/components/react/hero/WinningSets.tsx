@@ -62,7 +62,7 @@ function Table({ sets, catalog, abilitySlots, abilityIcons }: WinningSetsProps) 
             )}
           </span>
           <span className="mono tnum num muted">{count(s.games)}</span>
-          <span className="mono tnum num" style={{ color: s.winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}>
+          <span className="mono tnum num wr" style={{ color: s.winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}>
             {s.winRate.toFixed(1)}%
           </span>
           <span className="mono tnum num muted">{s.wilson.toFixed(1)}%</span>

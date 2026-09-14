@@ -148,7 +148,7 @@ export default function HeroItemTables({
                   <span className="tnum num muted">
                     {minuteClock(r.avg_buy_time_s == null ? null : r.avg_buy_time_s / 60)}
                   </span>
-                  <span className="tnum num" style={{ color: wr >= 50 ? 'var(--win)' : 'var(--loss)' }}>
+                  <span className="tnum num wr" style={{ color: wr >= 50 ? 'var(--win)' : 'var(--loss)' }}>
                     {wr.toFixed(1)}%
                   </span>
                 </div>
@@ -170,7 +170,7 @@ export default function HeroItemTables({
             winRateRows.slice(0, rows).map((r) => (
               <div className="itbl-row itbl-cols-wr" key={r.itemId}>
                 <ItemCell id={r.itemId} name={r.name} icon={meta(r.itemId).icon} />
-                <span className="tnum num" style={{ color: r.winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}>
+                <span className="tnum num wr" style={{ color: r.winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}>
                   {r.winRate.toFixed(1)}%
                 </span>
                 <span className="tnum num muted">{r.wilson.toFixed(1)}%</span>

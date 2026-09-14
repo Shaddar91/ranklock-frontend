@@ -179,7 +179,7 @@ export function CommunityBuildsTable({
                 </span>
               </span>
               <span
-                className="tnum num"
+                className="tnum num wr"
                 style={r.winRate == null ? undefined : { color: r.winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}
               >
                 {r.winRate == null ? DASH : `${r.winRate.toFixed(1)}%`}

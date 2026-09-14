@@ -116,7 +116,7 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
                           </span>
                         </span>
                         <span className="mono tnum phase-min">{minuteClock(it.minute)}</span>
-                        <span className="mono tnum" style={wrColor(it.winRate)}>
+                        <span className="mono tnum wr" style={wrColor(it.winRate)}>
                           {it.winRate.toFixed(1)}%
                         </span>
                         <span className="mono tnum muted bp-phase-games">{count(it.games)}</span>
