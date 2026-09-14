@@ -83,6 +83,7 @@ export function preferWebp(url: string | null | undefined, base?: string): strin
 //caller (an API icon_url) keeps its exact nullability.
 export function resolveAsset(url: string): string;
 export function resolveAsset(url: string | null): string | null;
+export function resolveAsset(url: string | undefined): string | undefined;
 export function resolveAsset(url: string | null | undefined): string | null | undefined;
 export function resolveAsset(url: string | null | undefined): string | null | undefined {
   return preferWebp(rewriteAssetUrl(url, ASSETS_BASE), ASSETS_BASE);

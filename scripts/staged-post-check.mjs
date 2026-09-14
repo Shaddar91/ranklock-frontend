@@ -9,9 +9,9 @@ const BLOG_DIR = join(REPO_ROOT, 'src/content/blog');
 const SENTINEL = /{{[A-Z_]{3,}}}/;
 const PATCH_PHRASE = /since the patch|after the update|after the patch|this patch/i;
 const ALLOWLIST = new Set([
-  'patch-tracker-meta-shifts.md:20',
-  'patch-tracker-meta-shifts.md:24',
-  'welcome-to-the-ranklock-blog.md:22',
+  'patch-tracker-meta-shifts.md:21',
+  'patch-tracker-meta-shifts.md:25',
+  'welcome-to-the-ranklock-blog.md:23',
 ]);
 const OVERLAP_LIMIT = 0.45;
 
