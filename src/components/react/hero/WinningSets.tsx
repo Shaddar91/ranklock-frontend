@@ -5,6 +5,7 @@ import { count } from '../../../lib/format';
 import type { SetRow } from '../../../lib/heroBuild';
 import QueryProvider from '../QueryProvider';
 import GameIcon from '../ui/GameIcon';
+import AbilityGlyph from '../ui/AbilityGlyph';
 import EmptyState from '../ui/EmptyState';
 import ItemHoverCard from '../ui/ItemHoverCard';
 
@@ -13,6 +14,8 @@ export interface WinningSetsProps {
   catalog: Record<string, OverlayMeta>;
   //Ability id -> signature slot 1..4: an ability point in a set renders as the hero's key chip.
   abilitySlots: Record<string, number>;
+  //Ability id -> its glyph; the chip shows the key number when a hero serves none.
+  abilityIcons?: Record<string, string | null>;
 }
 
 export default function WinningSets(props: WinningSetsProps) {
@@ -23,7 +26,7 @@ export default function WinningSets(props: WinningSetsProps) {
   );
 }
 
-function Table({ sets, catalog, abilitySlots }: WinningSetsProps) {
+function Table({ sets, catalog, abilitySlots, abilityIcons }: WinningSetsProps) {
   if (sets.length === 0) {
     return (
       <EmptyState tone="cold" title="Computing" message="No set has been folded for this hero yet. This block refreshes hourly." />
@@ -53,7 +56,7 @@ function Table({ sets, catalog, abilitySlots }: WinningSetsProps) {
                   title={`${e.name} — ability point`}
                   key={j}
                 >
-                  {abilitySlots[String(e.itemId)] || '?'}
+                  <AbilityGlyph slot={abilitySlots[String(e.itemId)] ?? 0} icon={abilityIcons?.[String(e.itemId)]} />
                 </span>
               ),
             )}

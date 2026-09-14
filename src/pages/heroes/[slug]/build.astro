@@ -17,7 +17,8 @@ import { dataHorizon, soulsCurve } from '../../../lib/buildIndexes';
 import { breadcrumbJsonLd } from '../../../lib/seo';
 import { count, dayDate, pickShare, shortDate } from '../../../lib/format';
 import { catalogIndex, DEFAULT_RANKED_BRACKET, situationalGroups, winningSets } from '../../../lib/heroBuild';
-import { signatureSlots } from '../../../lib/buildMeta';
+import { signatureIcons, signatureSlots } from '../../../lib/buildMeta';
+import { resolveAsset } from '../../../lib/assets';
 import { heroArt } from '../../../lib/heroArt';
 import { publishedGuideSlugs } from '../../../lib/guideRoutes';
 import { heroPath, slugRoster } from '../../../lib/heroSlugs';
@@ -90,6 +91,11 @@ const tileCatalog = Object.fromEntries(
 //§5: the two orders the Overview legend explains, recapped here without the legend and
 //without a cold gate (design 01 §Build §5).
 const slotOfAbility = signatureSlots(abilityRows);
+const abilityIcons = signatureIcons(abilityRows);
+//Key slot 1..4 -> the ability's own glyph, for the skill-order recap chips.
+const iconBySlot = new Map(
+  Object.entries(abilityIcons).map(([id, icon]) => [slotOfAbility[id] ?? 0, icon ? resolveAsset(icon) : null]),
+);
 const orders = abilityOrders?.orders ?? [];
 const mostPlayed = orders.reduce<(typeof orders)[number] | null>((best, o) => (best && best.matches >= o.matches ? best : o), null);
 const bestWinRate = orders.reduce<(typeof orders)[number] | null>((best, o) => (best && best.win_rate >= o.win_rate ? best : o), null);
@@ -179,7 +185,13 @@ const jsonLd = breadcrumbJsonLd(origin, [
           title="Winning six-item sets"
           note={setsNote}
         />
-        <WinningSets client:visible sets={sets} catalog={tileCatalog} abilitySlots={slotOfAbility} />
+        <WinningSets
+          client:visible
+          sets={sets}
+          catalog={tileCatalog}
+          abilitySlots={slotOfAbility}
+          abilityIcons={abilityIcons}
+        />
       </div>
 
       <div>
@@ -199,6 +211,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
       initialSelection={DEFAULT_RANKED_BRACKET}
       initialRanked={rankedBuilds}
       abilitySlots={slotOfAbility}
+      abilityIcons={abilityIcons}
       patches={patches}
       nowSeconds={Math.floor(Date.now() / 1000)}
     />
@@ -227,7 +240,13 @@ const jsonLd = breadcrumbJsonLd(origin, [
                 </div>
                 <div class="skill-chips">
                   {row.chips.map((slot) => (
-                    <span class={`kit-key k${slot}`}>{slot || '?'}</span>
+                    <span class={`kit-key k${slot}`}>
+                      {iconBySlot.get(slot) ? (
+                        <img class="kit-art" src={iconBySlot.get(slot)!} alt="" loading="lazy" decoding="async" />
+                      ) : (
+                        slot || '?'
+                      )}
+                    </span>
                   ))}
                 </div>
               </div>
