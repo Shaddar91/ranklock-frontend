@@ -8,6 +8,7 @@ import { useGameMode } from '../../../lib/useGameMode';
 import { bracketBucket, servedBandLabel, useHeroBracket } from '../../../lib/heroBracket';
 import { duoRows, matchupRows, mergeMatchups, type DuoRow, type MatchupRow } from '../../../lib/heroOverview';
 import { count } from '../../../lib/format';
+import { heroArt } from '../../../lib/heroArt';
 import SectionHeader from '../ui/SectionHeader';
 import EmptyState from '../ui/EmptyState';
 import type { HeroSummary, MatchupEntry } from '../../../types/api';
@@ -22,18 +23,23 @@ export interface MatchupPanelsProps {
 
 type PanelRow = { id: number; name: string; iconUrl: string | null; winRate: number; matches: number; delta: number | null };
 
-//The design's row identity is a monogram medallion, not the hero card: at 26px the
-//portrait art reads as an empty disc.
+//The medallion carries the hero's 128px square portrait. The monogram stays as the
+//fallback for a roster row that arrives without art.
 const monogram = (name: string) => name.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase();
 
 function Row({ row }: { row: PanelRow }) {
+  const art = heroArt(row.iconUrl);
   const good = row.winRate >= 50;
   const fill = Math.max(0, Math.min(100, ((row.winRate - 30) / 40) * 100));
   return (
     <div className="mup-row">
       <span className="mup-hero">
         <span className="mup-mono display" title={row.name}>
-          {monogram(row.name)}
+          {art?.small ? (
+            <img src={art.small} alt="" loading="lazy" decoding="async" />
+          ) : (
+            monogram(row.name)
+          )}
         </span>
         <span className="display mup-name">{row.name}</span>
       </span>
