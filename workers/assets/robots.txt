@@ -1,0 +1,5 @@
+# assets.ranklock.app is the Deadlock art mirror, not a content surface. It sits inside
+# the sc-domain:ranklock.app Search Console property, so every image a crawler pulls here
+# spends the same budget the hero guides need. Nothing on this host belongs in an index.
+User-agent: *
+Disallow: /

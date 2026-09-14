@@ -42,6 +42,7 @@ jobs:
           rm -rf public && mkdir public
           cp -a scripts/deadlock/. public/
           cp _headers public/_headers
+          cp robots.txt public/robots.txt
 
       #Refuse to ship an empty/broken bundle over the live one (upstream outage etc.).
       - name: Sanity-check bundle
