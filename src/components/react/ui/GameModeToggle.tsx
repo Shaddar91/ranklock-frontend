@@ -46,7 +46,7 @@ export default function GameModeToggle({ currentPath = '' }: { currentPath?: str
   }
 
   return (
-    <div className="brkfilter gm-toggle" role="group" aria-label="Game mode">
+    <div className="brkfilter gm-toggle gm-seg" role="group" aria-label="Game mode">
       <button
         type="button"
         className={'minitog' + (mode === 'Normal' ? ' on' : '')}

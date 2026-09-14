@@ -671,6 +671,27 @@ textarea {
 .gm-toggle .minitog {
   padding: 5px 10px;
 }
+/* .gm-seg is the Normal/Brawl switch's own marker: .gm-toggle and .minitog are shared
+   segmented-control vocabulary (Matches, Players, Lane Lab), so the design's bordered
+   group hangs off this class alone. Values measured off the design's overview page. */
+.gm-toggle.gm-seg {
+  gap: 0;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+.gm-seg .minitog {
+  border-radius: 0;
+  padding: 7px 12px;
+  letter-spacing: 0.04em;
+}
+.gm-seg .minitog.on {
+  background: var(--overlay);
+  color: var(--text);
+  box-shadow: none;
+}
 /* Normal-only routes (Lane Lab): the control is a locked indicator, not a switch. */
 .gm-toggle--locked {
   opacity: 0.75;
