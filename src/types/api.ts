@@ -739,6 +739,10 @@ export interface PlayerEconomyCurveResponse {
   //that hero (the no-games guard input). 0 ⇒ the player never played the hero here — `you` is
   //served EMPTY (never a silent all-heroes fallback) and the UI must not draw their series.
   player_hero_games?: number;
+  //Both serialized ONLY for a windowed request (last_games / last_days / from+to). coverage says
+  //how much of the window actually carries a timeline — a 50-game window often has far fewer.
+  window?: { kind: 'all' | 'games' | 'days' | 'range'; n: number | null; from?: string; to?: string };
+  coverage?: { matches_with_timeline: number; matches_total: number };
 }
 
 export interface SoulsCohortPoint {

@@ -804,3 +804,227 @@
     margin-left: 0;
   }
 }
+
+/* ---- page shell ---- */
+.ll-page {
+  display: grid;
+  gap: 36px;
+  margin-top: 28px;
+}
+.ll-first {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 22px 24px;
+  display: grid;
+  gap: 6px;
+  max-width: 640px;
+}
+.ll-first p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+}
+.ll-foot {
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.ll-at-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: -24px;
+}
+.ll-at-label {
+  font: 600 11px var(--display);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ll-at-tabs button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 8px 12px;
+  font: 600 14px var(--display);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+}
+.ll-at-tabs button.on {
+  color: var(--text);
+  border-bottom-color: var(--cyan-bright);
+}
+
+/* ---- the curve ---- */
+.ll-curve-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ll-tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.ll-tabs button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 8px 10px;
+  font: 600 13px var(--display);
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+.ll-tabs button:hover {
+  color: var(--text);
+}
+.ll-tabs button.on {
+  color: var(--text);
+  border-bottom-color: var(--cyan-bright);
+}
+.ll-plot {
+  position: relative;
+}
+.ll-plot svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  font-family: var(--mono);
+}
+.ll-hover {
+  position: absolute;
+  top: 8px;
+  background: var(--ink);
+  border: 1px solid var(--brass-3);
+  border-radius: 6px;
+  padding: 8px 10px;
+  pointer-events: none;
+  display: grid;
+  gap: 3px;
+  min-width: 200px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 50%);
+}
+.ll-hover strong {
+  font: 600 12px var(--mono);
+}
+.ll-hover span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font: 500 12px var(--mono);
+}
+.ll-hover em {
+  font-style: normal;
+}
+.ll-hover small {
+  font: 400 11px var(--mono);
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 3px;
+  margin-top: 2px;
+}
+.ll-curve-note {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  background: var(--ink);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-2);
+  max-width: 520px;
+  text-align: center;
+  text-wrap: pretty;
+}
+.ll-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 10px;
+}
+.ll-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 500 12px var(--display);
+  color: var(--text-2);
+}
+.ll-legend i {
+  width: 18px;
+  height: 0;
+  border-top: 2px solid var(--text-2);
+}
+.ll-legend i.dashed {
+  border-top-style: dashed;
+}
+
+/* ---- 9-minute verdict ---- */
+.ll-verdict-scroll {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 16px 14px 14px;
+  overflow-x: auto;
+}
+.ll-verdict-marks {
+  position: relative;
+  height: 34px;
+  min-width: 660px;
+}
+.ll-verdict-marks span {
+  position: absolute;
+  transform: translateX(-50%);
+  font: 600 11px var(--mono);
+  white-space: nowrap;
+}
+.ll-verdict-cells {
+  display: grid;
+  gap: 4px;
+  min-width: 660px;
+}
+.ll-verdict-cells > div {
+  height: 56px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+}
+.ll-verdict-cells strong {
+  font: 600 15px var(--mono);
+  color: var(--text);
+}
+.ll-verdict-cells small {
+  font: 500 10px var(--mono);
+  color: var(--muted);
+}
+.ll-verdict-lines {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.ll-verdict-lines li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
