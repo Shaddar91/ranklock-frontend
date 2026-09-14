@@ -63,11 +63,21 @@ export interface PercentileCurveLike {
     p25?: number | null;
     p50: number | null;
     p75?: number | null;
+    mean?: number | null;
     sample_players: number;
   }>;
 }
 
-//Convert a lane curve's p50 series into {game-minute → value}, honoring the view mode.
+//Cumulative ratios and levels have no meaningful "per minute": accuracy is a running hit%, level a
+//running count that reads as a total. These metrics render the cumulative view only.
+const NO_RATE_VIEW: ReadonlySet<string> = new Set(['accuracy', 'level']);
+export function metricHasRateView(metric: string): boolean {
+  return !NO_RATE_VIEW.has(metric);
+}
+
+//Convert a lane curve into {game-minute → value}, honoring the view mode: 'total' plots the median,
+//'rate' differences the MEAN (a discrete median steps by whole units, so its delta saws 0/1/0) and
+//falls back to the median only on a payload that predates `mean`.
 export function laneSeriesByMinute(
   curve: PercentileCurveLike | null | undefined,
   scale: number,
@@ -86,7 +96,7 @@ export function laneSeriesByMinute(
   return ratePoints(
     pts,
     (p) => p.t_seconds,
-    (p) => (p.p50 as number) * scale,
+    (p) => (p.mean ?? (p.p50 as number)) * scale,
     metric,
   );
 }
@@ -259,8 +269,8 @@ export function leagueSampleCaption(
   const live = leagues.filter((l): l is LeagueSampleLine => l != null && l.n > 0);
   if (live.length === 0) return '';
   if (cohort === 'team_average') {
-    const parts = live.map((l) => `${count(l.n)} players in lobbies whose average rank is ${l.name}`);
+    const parts = live.map((l) => `${count(l.n)} player-games in lobbies whose average rank is ${l.name}`);
     return `n = ${parts.join(' · ')} — lobby-average league${live.length > 1 ? 's' : ''}`;
   }
-  return `n = ${live.map((l) => `${count(l.n)} ${l.name}`).join(' · ')} players`;
+  return `n = ${live.map((l) => `${count(l.n)} ${l.name}`).join(' · ')} player-games`;
 }

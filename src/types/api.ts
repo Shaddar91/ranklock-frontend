@@ -623,6 +623,9 @@ export interface LaneCurvePoint {
   p25: number | null;
   p50: number | null;
   p75: number | null;
+  //the cohort's average at this minute — the series the per-minute view differences (absent on
+  //a build that predates it; null with the median when the bin cannot resolve it).
+  mean?: number | null;
 }
 export type RankCohort = 'player_rank' | 'team_average';
 export interface LaneCurveResponse {
@@ -684,6 +687,7 @@ export interface PlayerCurveComparisonPoint {
   p25: number | null;
   p50: number | null;
   p75: number | null;
+  mean?: number | null;
   sample_players: number;
 }
 export interface PlayerCurveComparison {
