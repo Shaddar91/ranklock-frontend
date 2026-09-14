@@ -41,6 +41,7 @@ import type {
   Patch,
   PatchDetail,
   PatchMovers,
+  PercentilesResponse,
   PerformanceResponse,
   PlayerEconomy,
   PlayerEconomyCurveResponse,
@@ -268,6 +269,7 @@ export const queryKeys = {
   laneEconomyCurve: (params?: Query) => ['lane-lab', 'economy-curve', params ?? {}] as const,
   laneFarmCurve: (params?: Query) => ['lane-lab', 'farm-curve', params ?? {}] as const,
   laneEarlyEconVerdict: (params?: Query) => ['lane-lab', 'early-econ-verdict', params ?? {}] as const,
+  lanePercentiles: (params?: Query) => ['lane-lab', 'percentiles', params ?? {}] as const,
   //Souls-by-source (migration 048): the tier cohort curve + the player's own line. band/hero and
   //match_mode fold into params so each rank/hero/track caches separately.
   laneSoulsSources: (params?: Query) => ['lane-lab', 'souls-sources', params ?? {}] as const,
@@ -462,6 +464,18 @@ export const api = {
   }) => laneLabFetch<LaneCurveResponse>('/lane-lab/farm-curve', { query: params }),
   getLaneEarlyEconVerdict: (params?: { band?: number; game_mode?: GameMode }) =>
     laneLabFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
+  //The scorecard's percentile cells: one call carries every player's value for one metric at one
+  //minute. `minute` is the curve's own minute_bucket (wall seconds = minute * 180, so 12:00 = 4);
+  //`values` are real units, comma-joined in the caller's player order, at most 8.
+  getLanePercentiles: (params: {
+    minute: number;
+    values: string;
+    metric?: string;
+    band?: number;
+    rank?: number;
+    tier?: number;
+    division?: number;
+  }) => laneLabFetch<PercentilesResponse>('/lane-lab/percentiles', { query: params }),
   //Cohort souls-by-source (migration 048) — the tier half of the "you vs tier" stack. `band` is the
   //rank tier (badge/10, 0..11; omit to aggregate all bands); `metric_group` narrows to one source
   //(unknown ⇒ all six). RICH_ANALYTICS-gated (501 off, 202 until the first fold); `match_mode` per 047.

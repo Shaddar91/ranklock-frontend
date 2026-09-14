@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   SOULS_GROUPS,
+  compositionAt,
   SOULS_STACK_GROUPS,
   buildSoulsSourceSeries,
   displaySign,
@@ -157,5 +158,46 @@ describe('hasCohortSouls', () => {
     expect(hasCohortSouls(null)).toBe(false);
     expect(hasCohortSouls(cohort(Object.fromEntries(SOULS_GROUPS.map((g) => [g, []]))))).toBe(false);
     expect(hasCohortSouls(cohort({ lane_creeps: [cPt(1, 1000)] }))).toBe(true);
+  });
+});
+
+describe('compositionAt', () => {
+  const resp = {
+    groups: [
+      { souls_group: 'lane_creeps', points: [{ t_seconds: 2160, souls_avg: 15333 }] },
+      { souls_group: 'neutrals', points: [{ t_seconds: 2160, souls_avg: 3690 }] },
+      { souls_group: 'heroes', points: [{ t_seconds: 2160, souls_avg: 6719 }] },
+      { souls_group: 'objectives', points: [{ t_seconds: 2160, souls_avg: 4391 }] },
+      { souls_group: 'denies', points: [{ t_seconds: 2160, souls_avg: 241 }] },
+      { souls_group: 'losses', points: [{ t_seconds: 2160, souls_avg: 842 }] },
+    ],
+  };
+
+  it('reads the instant off the 180s bucket, not the minute', () => {
+    //bucket 12 is t_seconds 2160, i.e. 36:00
+    const c = compositionAt(resp, 12);
+    expect(c.segments.map((s) => s.group)).toEqual([
+      'lane_creeps',
+      'neutrals',
+      'heroes',
+      'objectives',
+      'denies',
+      'losses',
+    ]);
+    expect(c.segments[0]?.souls).toBe(15333);
+  });
+
+  it('nets losses out of the total but keeps their own bar length', () => {
+    const c = compositionAt(resp, 12);
+    //gained 15333+3690+6719+4391+241 = 30374, kept = 30374 - 842
+    expect(c.total).toBe(29532);
+    const span = 30374 + 842;
+    expect(c.segments.at(-1)?.share).toBeCloseTo(842 / span, 10);
+  });
+
+  it('drops empty groups and a bucket with no sample', () => {
+    expect(compositionAt(resp, 4).segments).toEqual([]);
+    expect(compositionAt(resp, 4).total).toBe(0);
+    expect(compositionAt(null, 12).segments).toEqual([]);
   });
 });

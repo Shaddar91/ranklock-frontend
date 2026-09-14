@@ -54,6 +54,44 @@ function sideByMinute(resp: SoulsGroupsCarrier | null | undefined): Map<SoulsGro
   return maps;
 }
 
+//One side's souls split at ONE instant — the composition bar's model. `souls` is the raw magnitude
+//(losses are NOT negated here: a loss bar segment is drawn on its own length), `share` its fraction
+//of the bar. total sums the five stacking sources minus losses, i.e. the souls actually kept.
+export interface SoulsSegment {
+  group: SoulsGroup;
+  souls: number;
+  share: number;
+}
+export interface SoulsComposition {
+  total: number;
+  segments: SoulsSegment[];
+}
+
+export function compositionAt(
+  resp: SoulsGroupsCarrier | null | undefined,
+  bucket: number,
+): SoulsComposition {
+  const at = bucket * 180;
+  const raw = new Map<SoulsGroup, number>();
+  for (const series of resp?.groups ?? []) {
+    const group = series.souls_group as SoulsGroup;
+    if (!SOULS_GROUPS.includes(group)) continue;
+    const point = (series.points ?? []).find((p) => p.t_seconds === at);
+    if (point?.souls_avg == null) continue;
+    raw.set(group, Math.abs(point.souls_avg));
+  }
+  const gained = SOULS_STACK_GROUPS.reduce((a, g) => a + (raw.get(g) ?? 0), 0);
+  const span = gained + (raw.get(SOULS_LOSS_GROUP) ?? 0);
+  return {
+    total: gained - (raw.get(SOULS_LOSS_GROUP) ?? 0),
+    segments: SOULS_GROUPS.filter((g) => (raw.get(g) ?? 0) > 0).map((g) => ({
+      group: g,
+      souls: raw.get(g) ?? 0,
+      share: span > 0 ? (raw.get(g) ?? 0) / span : 0,
+    })),
+  };
+}
+
 //Merge the player line (`you`) and tier cohort (`tier`) into rows; either side may be absent.
 export function buildSoulsSourceSeries(
   player: PlayerSoulsResponse | null | undefined,

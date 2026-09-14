@@ -12,6 +12,7 @@
                  skeleton, empty-state, theme-switcher)
     pages      → composition styles for the SEO surface (C4): nav/footer chrome,
                  search dropdown, entry cards, podium, hero-entity, blog prose
+    lanelab    → the Lane Lab comparison surface (own file: pages.css is 3.6k lines)
 ============================================================================*/
 @import './fonts.css';
 @import './tokens.css';
@@ -19,3 +20,4 @@
 @import './base.css';
 @import './components.css';
 @import './pages.css';
+@import './lanelab.css';

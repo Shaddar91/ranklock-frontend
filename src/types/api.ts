@@ -638,6 +638,27 @@ export interface LaneCurveResponse {
   points: LaneCurvePoint[];
 }
 
+//GET /lane-lab/percentiles?tier=&minute=&metric=&values=  — the inverse of the curve: where each
+//given value sits inside the cohort at ONE minute. below_share is 0..1, the share of the cohort's
+//player-games strictly below the value; null when the instant carries no sample. Deaths are NOT
+//inverted server-side — flip them at render.
+export interface PercentileResult {
+  value: number;
+  below_share: number | null;
+}
+export interface PercentilesResponse {
+  band: number | null;
+  cohort: RankCohort;
+  rank: number | null;
+  tier: number | null;
+  division: number | null;
+  metric: string;
+  minute_bucket: number;
+  t_seconds: number;
+  sample_players: number;
+  results: PercentileResult[];
+}
+
 //GET /lane-lab/early-econ-verdict?band=  (VerdictResponse). Per-9-min-souls-bucket
 //win rate (wins/games, 0..1) — "does your 9-minute economy predict the win?".
 //souls_floor = souls_bucket_9min * 1000 (the bucket's lower souls edge).
@@ -670,6 +691,8 @@ export interface PlayerEconomy {
   avg_assists: number | null;
   avg_denies: number | null;
   avg_player_damage: number | null;
+  //avg_player_damage divided by the summed match duration — the rate the Lane Lab tile shows.
+  damage_per_min: number | null;
 }
 
 export interface PlayerCurvePoint {
