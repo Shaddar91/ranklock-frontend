@@ -1425,6 +1425,9 @@
   font-family: var(--mono);
   font-weight: 500;
 }
+.mup-row .tnum.mup-games {
+  font-weight: 400;
+}
 .mup-wr .tnum {
   color: var(--text);
 }
@@ -1517,6 +1520,9 @@
 }
 .itbl-row .tnum.wr {
   font-weight: 600;
+}
+.itbl-row .tnum.num.muted {
+  font-weight: 400;
 }
 .itbl-item {
   display: flex;
