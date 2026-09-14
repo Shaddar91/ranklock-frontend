@@ -17,6 +17,7 @@ import { publishedGuideSlugs } from '../../lib/guideRoutes';
 import { releasedRoster } from '../../lib/heroRoster';
 import { heroPath, slugRoster } from '../../lib/heroSlugs';
 import { abilityCards, baseStatRows, perLevelRows, weaponRows } from '../../lib/heroKit';
+import { fetchHeroWeapons, weaponInfoRows, type WeaponInfo } from '../../lib/heroWeapon';
 import { buildPhases, duoRows, matchupRows, mergeMatchups, phaseCandidates, readingTheNumbers } from '../../lib/heroOverview';
 import { itemTierNumeral } from '../../lib/itemTiers';
 import type {
@@ -111,7 +112,11 @@ const pickRate = pickShare(hero?.picks, totalPicks);
 const kit = abilityCards(abilityRows, assets);
 const baseRows = baseStatRows((baseStats?.stats ?? assets?.starting_stats) as Record<string, unknown> | null);
 const levelRows = perLevelRows(assets?.standard_level_up_upgrades);
-const weaponStats = weaponRows((baseStats?.stats ?? assets?.starting_stats) as Record<string, unknown> | null);
+const heroWeapons = hero ? await buildFetch(fetchHeroWeapons(), new Map<number, WeaponInfo>(), 20000) : new Map<number, WeaponInfo>();
+const upstreamWeapon = weaponInfoRows(hero ? heroWeapons.get(hero.hero_id) : null);
+const weaponStats = upstreamWeapon.length
+  ? upstreamWeapon
+  : weaponRows((baseStats?.stats ?? assets?.starting_stats) as Record<string, unknown> | null);
 const kitPatch = baseStats?.patch_id ?? patches.find((p) => p.is_current)?.patch_id ?? '';
 const kitNote = [
   `Numbers from the ${kitPatch || 'current'} client`,

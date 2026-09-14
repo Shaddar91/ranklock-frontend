@@ -10,6 +10,7 @@ import { CURVE_WINDOW } from '../../lib/labCalc';
 import QueryProvider from './QueryProvider';
 import AnalyzeTab from './lab/AnalyzeTab';
 import CreateTab from './lab/CreateTab';
+import type { WeaponTable } from '../../lib/heroWeapon';
 import CommunityTab from './lab/CommunityTab';
 import LabHeroRow from './lab/LabHeroRow';
 import LabShareLink from './lab/LabShareLink';
@@ -38,7 +39,7 @@ const TABS: { value: Tab; label: string }[] = [
   { value: 'community', label: 'Community builds' },
 ];
 
-function BuildLabInner({ roster }: { roster: RosterSlug[] }) {
+function BuildLabInner({ roster, weapons }: { roster: RosterSlug[]; weapons: WeaponTable }) {
   const [tab, setTab] = useState<Tab>('analyze');
   const [heroId, setHeroId] = useState<number | null>(null);
   const [handover, setHandover] = useState<BuildInput | null>(null);
@@ -117,6 +118,7 @@ function BuildLabInner({ roster }: { roster: RosterSlug[] }) {
       {tab === 'analyze' && (
         <AnalyzeTab
           heroId={heroId}
+          weapons={weapons}
           onHero={setHeroId}
           pace={pace}
           onBoard={setBoard}
@@ -133,6 +135,7 @@ function BuildLabInner({ roster }: { roster: RosterSlug[] }) {
         <CreateTab
           initial={handover}
           heroId={heroId}
+          weapons={weapons}
           onHero={setHeroId}
           pace={pace}
           onBoard={setBoard}
@@ -146,10 +149,10 @@ function BuildLabInner({ roster }: { roster: RosterSlug[] }) {
   );
 }
 
-export default function BuildLabIsland({ roster }: { roster: RosterSlug[] }) {
+export default function BuildLabIsland({ roster, weapons = {} }: { roster: RosterSlug[]; weapons?: WeaponTable }) {
   return (
     <QueryProvider>
-      <BuildLabInner roster={roster} />
+      <BuildLabInner roster={roster} weapons={weapons} />
     </QueryProvider>
   );
 }

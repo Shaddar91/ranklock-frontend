@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { computeStats, type BaseStats, type BuildInput } from '../../../lib/computeStats';
+import { weaponBaselineOf, type WeaponTable } from '../../../lib/heroWeapon';
 import { useViewer } from '../player/usePlayer';
 import { authorLabel, formatUpdated, isUpdatedThisPatch, signatureIcons, signatureSlots } from '../../../lib/buildMeta';
 import { EmptyState } from '../ui/index';
@@ -69,6 +70,7 @@ const PACE_LABEL: Record<TimelinePace, string> = {
 
 interface AnalyzeTabProps {
   heroId: number | null;
+  weapons?: WeaponTable;
   onHero: (id: number) => void;
   pace: TimelinePace;
   onBoard: (board: LabBoard) => void;
@@ -86,6 +88,7 @@ function catalogEntries(ids: readonly number[], category: string): BuildEntry[] 
 
 export default function AnalyzeTab({
   heroId,
+  weapons = {},
   onHero,
   pace,
   onBoard,
@@ -218,9 +221,11 @@ export default function AnalyzeTab({
     () => ({ heroId: hero ?? 0, patch: active?.patch_id, items }),
     [hero, active, items],
   );
+  const weapon = useMemo(() => weaponBaselineOf(hero == null ? null : weapons[String(hero)]), [hero, weapons]);
   const stats = useMemo(
-    () => computeStats(active?.stats ?? NO_BASE, catalog, buildInput, { assets: assetsQuery.data ?? null, level: LAB_LEVEL }),
-    [active, catalog, buildInput, assetsQuery.data],
+    () =>
+      computeStats(active?.stats ?? NO_BASE, catalog, buildInput, { assets: assetsQuery.data ?? null, level: LAB_LEVEL, weapon }),
+    [active, catalog, buildInput, assetsQuery.data, weapon],
   );
   const mods = useMemo(() => buildModifiers(stats, items, byId), [stats, items, byId]);
   const tierRows = useMemo(() => tierAbilities(assetsQuery.data?.abilities, tier), [assetsQuery.data, tier]);

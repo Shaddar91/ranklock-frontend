@@ -6,6 +6,7 @@ import { api } from '../lib/apiClient';
 import { buildFetch } from '../lib/buildData';
 import { releasedRoster } from '../lib/heroRoster';
 import { slugRoster } from '../lib/heroSlugs';
+import { fetchHeroWeapons, type WeaponInfo } from '../lib/heroWeapon';
 import { publishedGuideSlugs } from '../lib/guideRoutes';
 import { ASSUMPTIONS, CURVE_WINDOW, THEORETICAL_NOTE } from '../lib/labCalc';
 import type { HeroSummary, Patch } from '../types/api';
@@ -28,6 +29,10 @@ const roster = slugRoster(
 
 //Design Lab §16 — the calculator contract; the catalog patch is page-level.
 const catalogPatch = (await buildFetch(api.getCurrentPatch(), null as Patch | null))?.patch_id ?? null;
+//Every hero's primary gun, so the lab's DPS and time-to-kill panels have a baseline to fold the board into.
+const weapons = Object.fromEntries(
+  [...(await buildFetch(fetchHeroWeapons(), new Map<number, WeaponInfo>(), 20000))].map(([id, w]) => [String(id), w]),
+);
 const labFootnote = [
   'Calculators run in the browser over served payloads: hero base stats and level scaling, ability numbers from the game client, the shop\'s investment table, and item modifiers from the item catalog' +
     (catalogPatch ? ` (patch ${catalogPatch})` : '') +
@@ -61,7 +66,7 @@ const labFootnote = [
       <div id="lab-share" class="lab-share-slot"></div>
     </div>
 
-    <BuildLabIsland client:load roster={roster} />
+    <BuildLabIsland client:load roster={roster} weapons={weapons} />
 
     <p class="hero-footnote">{labFootnote}</p>
   </main>

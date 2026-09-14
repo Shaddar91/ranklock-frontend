@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { computeStats, type BaseStats, type BuildInput } from '../../../lib/computeStats';
+import { weaponBaselineOf, type WeaponTable } from '../../../lib/heroWeapon';
 import { readBuildFromHash } from '../../../lib/buildShare';
 import { signatureIcons, signatureSlots } from '../../../lib/buildMeta';
 import { indexCatalog, layoutBuild, normalizeCatalog, TOTAL_SLOTS } from '../creator/buildModel';
@@ -53,13 +54,14 @@ const DEFAULT_COMPARE = 'winning-set';
 interface CreateTabProps {
   initial?: BuildInput | null;
   heroId: number | null;
+  weapons?: WeaponTable;
   onHero: (id: number) => void;
   pace: TimelinePace;
   onBoard: (board: LabBoardState) => void;
   timeline: ReactNode;
 }
 
-export default function CreateTab({ initial, heroId, onHero, pace, onBoard, timeline }: CreateTabProps) {
+export default function CreateTab({ initial, heroId, weapons = {}, onHero, pace, onBoard, timeline }: CreateTabProps) {
   const draft = useBuildDraft();
   const { heroes } = useHeroRoster();
   const [level, setLevel] = useState(DEFAULT_LEVEL);
@@ -190,9 +192,10 @@ export default function CreateTab({ initial, heroId, onHero, pace, onBoard, time
 
   const board = draft.build;
   const layout = useMemo(() => layoutBuild(board.items, byId), [board.items, byId]);
+  const weapon = useMemo(() => weaponBaselineOf(heroId == null ? null : weapons[String(heroId)]), [heroId, weapons]);
   const stats = useMemo(
-    () => computeStats(hero?.stats ?? NO_BASE, catalog, board, { assets: assetsQuery.data ?? null, level }),
-    [hero, catalog, board, assetsQuery.data, level],
+    () => computeStats(hero?.stats ?? NO_BASE, catalog, board, { assets: assetsQuery.data ?? null, level, weapon }),
+    [hero, catalog, board, assetsQuery.data, level, weapon],
   );
   const mods = useMemo(() => buildModifiers(stats, board.items, byId), [stats, board.items, byId]);
   const tierRows = useMemo(() => tierAbilities(assetsQuery.data?.abilities, tier), [assetsQuery.data, tier]);
@@ -207,8 +210,8 @@ export default function CreateTab({ initial, heroId, onHero, pace, onBoard, time
   const compareStats = useMemo(() => {
     if (compareB == null || compareB.itemIds.length === 0) return null;
     const input: BuildInput = { heroId: heroId ?? 0, patch: hero?.patch_id, items: compareB.itemIds };
-    return computeStats(hero?.stats ?? NO_BASE, catalog, input, { assets: assetsQuery.data ?? null, level });
-  }, [compareB, hero, heroId, catalog, assetsQuery.data, level]);
+    return computeStats(hero?.stats ?? NO_BASE, catalog, input, { assets: assetsQuery.data ?? null, level, weapon });
+  }, [compareB, hero, heroId, catalog, assetsQuery.data, level, weapon]);
 
   const entries = useMemo<BuildEntry[]>(
     () => board.items.map((itemId) => ({ itemId, category: byId.get(itemId)?.item_slot_type ?? 'Board' })),
@@ -239,6 +242,15 @@ export default function CreateTab({ initial, heroId, onHero, pace, onBoard, time
     const raw = upgrades?.['MODIFIER_VALUE_BASE_HEALTH_FROM_LEVEL'];
     return typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
   }, [targetAssetsQuery.data]);
+
+  //The target's gun with no items on it, at the chosen level: the same derivation as yours.
+  const targetWeaponDps = useMemo(() => {
+    const target = heroes.find((h) => h.hero_id === targetId) ?? null;
+    const baseline = weaponBaselineOf(targetId == null ? null : weapons[String(targetId)]);
+    if (!target || !baseline) return null;
+    const bare: BuildInput = { heroId: target.hero_id, patch: target.patch_id, items: [] };
+    return computeStats(target.stats ?? NO_BASE, catalog, bare, { assets: targetAssetsQuery.data ?? null, level, weapon: baseline }).weaponDps;
+  }, [heroes, targetId, weapons, catalog, targetAssetsQuery.data, level]);
 
   const onPreset = (preset: StartFromPreset) => {
     setPresetKey(preset.key);
@@ -283,7 +295,7 @@ export default function CreateTab({ initial, heroId, onHero, pace, onBoard, time
             tier={tier}
             onTier={setTier}
             targetHpPerLevel={targetHpPerLevel}
-            targetWeaponDps={null}
+            targetWeaponDps={targetWeaponDps}
             yourStats={stats}
             yourAbilities={tierRows}
             spiritPower={mods.spiritPower}
