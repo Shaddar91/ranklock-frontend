@@ -27,7 +27,7 @@ If no, you are gambling.
 
 - Hold high ground until the enemy throws a wave-clear ability.
 - Track the support's cooldown. That is the peel that kills you.
-- Slam toward your team, never away from it.
+- Slam toward your team.
 
 ## The item spike that makes it work
 

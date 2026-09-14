@@ -63,7 +63,7 @@ Two current weekly lists sit behind it, both with names this page does not print
 
 Pick your first point from the lane you drew. Three of his five lists open on Splatter and two open on Puddle Punch, and that is a real choice rather than noise: Splatter first is the safer lane, clearing troopers and holding ground from range, while Puddle Punch first is the aggressive one that needs a teammate to punish what you knock up.
 
-Take The Cube second or third, never last. Two lists put it second and three put it third, and all five leave Goo Ball for the ultimate points because the roll is a tool you use once a fight.
+Take The Cube second or third. Two lists put it second and three put it third, and all five leave Goo Ball for the ultimate points because the roll is a tool you use once a fight.
 
 ## Hard counters, and how to play around them
 

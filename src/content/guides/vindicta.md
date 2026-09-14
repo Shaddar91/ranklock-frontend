@@ -45,7 +45,7 @@ The update never names Vindicta, and the two item lines it does carry barely rea
 
 Start from the current weekly lists, because her weekly leaders are all from this year. `One Shot Assassinate` holds 6,076 weekly favourites and was last revised 2026-04-12; it opens on High-Velocity Rounds and Extra Spirit, spends the first big purchase on Rapid Recharge, and its author flags that spike as the moment the hero starts working. The most favourited list of the week sits at 6,639 and shares that 2026-04-12 revision, and its name is one this page does not print.
 
-The two lifetime lists are older and read that way. The larger, at 419,945 favourites, was last touched 2024-09-05 and also publishes a name that stays off this page; it is still the clearest weapon skeleton she has, built on Long Range, Sharpshooter and Lucky Shot. The 70,560-favourite list from 2024-10-02 records no point order at all, so take its items and get the levelling from somewhere current. Account 1183614423's third weekly list, 5,382 favourites on 2026-04-09, tiers everything by souls and is the easiest of the five to read mid-match.
+The two lifetime lists are older and read that way. The larger, at 419,945 favourites, was last touched 2024-09-05 and also publishes a name that stays off this page; it is still the clearest weapon skeleton she has, built on Long Range, Sharpshooter and Lucky Shot. The 70,560-favourite list from 2024-10-02 records no point order at all, so take its items and get the levelling from somewhere current. The third weekly list, 5,382 favourites on 2026-04-09, tiers everything by souls and is the easiest of the five to read mid-match.
 
 ## Abilities: what to level and when
 

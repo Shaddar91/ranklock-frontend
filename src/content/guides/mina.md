@@ -31,7 +31,7 @@ The kit compounds if you let it. Rake is a cone of spirit damage that pays a bon
 
 Shoot the same target for longer than feels comfortable. Love Bites builds per target and the ultimate keeps every bite you land, so spraying across a fight throws away the only mechanic on the hero that compounds. Pick a body, stack it, and let the bat count do the arithmetic.
 
-Rake goes on the hurt one, never the healthy one. It hits harder against missing health and heals her when it finishes a unit, so it is a finisher and a sustain button at once; opening with it spends both halves for nothing.
+Rake goes on the hurt one. It hits harder against missing health and heals her when it finishes a unit, so it is a finisher and a sustain button at once; opening with it spends both halves for nothing.
 
 Buy survival before damage, which is not the usual advice for a carry. Cheat Death wins 55.8% of 305,259 games on her, Ethereal Shift 54.6% of 1,548,492 and Diviner's Kevlar 54.8% of 179,059. On a hero with 660 HP whose payoff arrives late, the item that keeps you alive is the item that deals damage.
 

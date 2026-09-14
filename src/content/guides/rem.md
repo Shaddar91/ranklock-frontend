@@ -80,4 +80,4 @@ The two heroes who beat her hardest are the two she most wants on her own team, 
 
 That is a drafting instruction. If either of them is already on your team, Rem gains more than she gives up; if either is on theirs, the lane you are about to take is the worst one on her page.
 
-For the slots themselves, buy Cheat Death at 57.4% over 290,950 games and Silencer at 57.6% over 130,667 as the two dependable rows, then Lucky Shot at 56.2% over 149,510. Frenzy at 58.2% over 13,092, Spellslinger at 56.9% over 19,581 and Diviner's Kevlar at 57.5% over 39,581 are the thin ones. They are worth a slot when the game asks for it, never worth building toward.
+For the slots themselves, buy Cheat Death at 57.4% over 290,950 games and Silencer at 57.6% over 130,667 as the two dependable rows, then Lucky Shot at 56.2% over 149,510. Frenzy at 58.2% over 13,092, Spellslinger at 56.9% over 19,581 and Diviner's Kevlar at 57.5% over 39,581 are the thin ones. They are worth a slot when the game asks for it, and worth building toward only then.

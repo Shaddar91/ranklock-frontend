@@ -66,6 +66,7 @@ const stripComments = (src) => {
 const CONTENT_ONLY = [
   { re: /[^.\n]{8,90}, not (?!every|all|any|much|enough|once)[^.,\n]{2,45}\./, label: 'aphorism ", not X."' },
   { re: /[^.\n]{8,90} rather than [^.,\n]{2,45}\./, label: 'aphorism "rather than X."' },
+  { re: /[^.\n]{8,90}, never (?!mind\b|[a-z]+s\b|[a-z]+ed\b)[^.,\n]{2,45}\./, label: 'aphorism ", never X."' },
   { re: /\bAccounts? \d{3,}/, label: 'names a player by account id' },
   { re: /[\u0400-\u04FF\u0370-\u03FF\u0590-\u05FF\u0600-\u06FF\u3040-\u30FF\u3400-\u9FFF]/, label: 'non-Latin author text' },
 ];

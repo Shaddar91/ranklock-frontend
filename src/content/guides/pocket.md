@@ -25,7 +25,7 @@ liveItems: [Cheat Death, Spiritual Overflow, Diviner's Kevlar, Ethereal Shift, L
 
 ## Who plays Pocket, and why
 
-Draft Pocket when your team can afford to lose a lane and needs somebody who can walk into a back line later, then spend the early game farming. He wins 41.5% of games decided under 30 minutes, 44.9% of those running 30 to 45 and 49.2% past 45, a climb of 7.7 points, so nothing before the half-hour mark is supposed to look like it is working. He has 780 HP and moves at 7.2 m/s on 3 stamina, which is enough to leave a fight and never enough to stand in one.
+Draft Pocket when your team can afford to lose a lane and needs somebody who can walk into a back line later, then spend the early game farming. He wins 41.5% of games decided under 30 minutes, 44.9% of those running 30 to 45 and 49.2% past 45, a climb of 7.7 points, so nothing before the half-hour mark is supposed to look like it is working. He has 780 HP and moves at 7.2 m/s on 3 stamina, which is enough to leave a fight and short of what it takes to stand in one.
 
 The kit is built for arriving and leaving. Barrage is a channel that grows: every hero it hits stacks his damage for the rest of it. Flying Cloak throws a cloak he can teleport to. Enchanter's Satchel hides him inside a suitcase, and whatever is nearby when he steps out takes the damage. Affliction ticks passively on enemies near him and cannot land the kill itself.
 

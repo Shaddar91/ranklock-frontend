@@ -1,5 +1,5 @@
 ---
-title: "Venator guide: pick the target before the fight, not during it"
+title: "Venator guide: pick the target before the fight starts"
 description: "Play Venator as a hero with no escape and one very good opener. Where the Snap Trap goes, why Gutshot wants a wall, and how to survive the three matchups that decide most of his games."
 hero: Venator
 heroSlug: venator
@@ -26,7 +26,7 @@ liveItems: [Lucky Shot, Silencer, Frenzy, Healing Tempo, Siphon Bullets]
 
 Choose your ground before you choose your target, because Venator has no way out of a position he should not have taken. He owns no dash, no leap and no blink, and his win rate says the game never rescues him either: 47.3% of matches decided inside 30 minutes, 44.9% of those running 30 to 45 and 46.2% past 45, a drift of 1.0 across the whole match.
 
-That flat curve is the argument for playing him greedily early. On 820 HP at 6.4 m/s with 3 stamina he is durable enough to hold an angle and too slow to leave one, so the souls he wants are the ones he can take from cover, from high ground, and from a lane he has already pushed. Every one of his abilities scales off the gun, which is why the shopping is a weapon list and never a spirit one.
+That flat curve is the argument for playing him greedily early. On 820 HP at 6.4 m/s with 3 stamina he is durable enough to hold an angle and too slow to leave one, so the souls he wants are the ones he can take from cover, from high ground, and from a lane he has already pushed. Every one of his abilities scales off the gun, which is why the shopping is a weapon list.
 
 ## How to play Venator as a Damage carry
 
@@ -42,7 +42,7 @@ Set the trap before anyone is looking at you. Hex-Lined Snap Trap immobilises an
 
 Gutshot is a two-different-abilities button. On its own it is a shotgun blast that pushes; fired at someone with a wall behind them it stuns and hits harder. Learn which corners of an objective give you that wall, because a Venator who fights in the open is throwing away half his opener.
 
-Then close with the ultimate. Ira Domini throws three heavy stakes and the last one executes a low-health target, so the sequence that kills is trap, wall stun, stakes, and it works on exactly one target. Choose that target in the draft screen and again before the fight, never halfway through it.
+Then close with the ultimate. Ira Domini throws three heavy stakes and the last one executes a low-health target, so the sequence that kills is trap, wall stun, stakes, and it works on exactly one target. Choose that target in the draft screen, then confirm it before the fight starts.
 
 Consecrating Grenade is the setup nobody credits. It bounces, then ignites; whoever is burning spreads damage to the people near them and heals for less, which is what makes the execute land against a team that would otherwise top the target back up.
 

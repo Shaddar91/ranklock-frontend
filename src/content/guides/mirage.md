@@ -30,7 +30,7 @@ Every ability is a delivery system for one payoff. Fire Scarabs steal life from 
 
 ## How to play Mirage as a Damage carry
 
-Stack with the gun, kill with the button. Djinn's Mark is not a cast you aim, it is a detonation of everything your bullets have already put on the enemy, so the fight is decided by how many rounds you land before you press it. Shoot first, detonate second, and never open on the detonation.
+Stack with the gun, kill with the button. Djinn's Mark is not a cast you aim, it is a detonation of everything your bullets have already put on the enemy, so the fight is decided by how many rounds you land before you press it. Shoot first and detonate second. Opening on the detonation wastes it.
 
 Fire Scarabs open the lane, because the life they steal is what lets you keep firing. That is also why the two are levelled together on nearly every published list: the sustain buys the bullets and the bullets build the mark.
 
