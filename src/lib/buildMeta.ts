@@ -5,8 +5,8 @@
 export type BuildSort = 'weekly' | 'favorites';
 
 export const SORT_MODES: { value: BuildSort; label: string; hint: string }[] = [
-  { value: 'weekly', label: 'Trending', hint: 'Weekly favorites, recency-weighted — the server default' },
-  { value: 'favorites', label: 'All-time', hint: 'Lifetime favorites (stale-biased — a 2024 build can top it)' },
+  { value: 'weekly', label: 'Trending', hint: 'Weekly favorites, recency-weighted. The server default' },
+  { value: 'favorites', label: 'All-time', hint: 'Lifetime favorites (stale-biased: a 2024 build can top it)' },
 ];
 
 export function sortLabel(sort: BuildSort): string {

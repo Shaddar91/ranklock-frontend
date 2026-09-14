@@ -40,19 +40,19 @@ function match(over: Partial<MatchDetail> = {}): MatchDetail {
 
 describe('matchPageTitle', () => {
   it('sums team kills into an Amber-then-Sapphire score with the winner', () => {
-    expect(matchPageTitle(match())).toBe('Match #103213386 — Amber 13–1 Sapphire, Amber win');
+    expect(matchPageTitle(match())).toBe('Match #103213386 | Amber 13-1 Sapphire, Amber win');
   });
 
   it('names Sapphire when it won', () => {
-    expect(matchPageTitle(match({ winning_team: 1 }))).toBe('Match #103213386 — Amber 13–1 Sapphire, Sapphire win');
+    expect(matchPageTitle(match({ winning_team: 1 }))).toBe('Match #103213386 | Amber 13-1 Sapphire, Sapphire win');
   });
 
   it('omits the result when the winner is unknown', () => {
-    expect(matchPageTitle(match({ winning_team: null }))).toBe('Match #103213386 — Amber 13–1 Sapphire');
+    expect(matchPageTitle(match({ winning_team: null }))).toBe('Match #103213386 | Amber 13-1 Sapphire');
   });
 
   it('titles by the served match_id, not a caller-supplied one', () => {
-    expect(matchPageTitle(match({ match_id: 42 }))).toBe('Match #42 — Amber 13–1 Sapphire, Amber win');
+    expect(matchPageTitle(match({ match_id: 42 }))).toBe('Match #42 | Amber 13-1 Sapphire, Amber win');
   });
 
   it('falls back when the fetch missed', () => {
@@ -67,6 +67,6 @@ describe('matchPageTitle', () => {
 
   it('scores a shutout as 0 rather than falling back', () => {
     const shutout = match({ players: [player(0, 4, 1), player(1, 0, 3)], winning_team: 0 });
-    expect(matchPageTitle(shutout)).toBe('Match #103213386 — Amber 4–0 Sapphire, Amber win');
+    expect(matchPageTitle(shutout)).toBe('Match #103213386 | Amber 4-0 Sapphire, Amber win');
   });
 });

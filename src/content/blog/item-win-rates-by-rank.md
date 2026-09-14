@@ -95,7 +95,7 @@ curve on [Improved Spirit's](/items/7409189/) and
 
 Read the match count before the rate. Prefer the bracket you actually play
 in, as long as it clears a few thousand matches. Treat any row under that
-floor as a question rather than an answer, especially at the top bracket,
+floor as a question, especially at the top bracket,
 where a single lucky week of pub games can carry a win rate eight points in
 either direction, and just as easily carry one sixteen points the other way.
 None of that makes the top bracket useless, only narrow: it is still the

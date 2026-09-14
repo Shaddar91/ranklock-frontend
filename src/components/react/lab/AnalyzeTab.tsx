@@ -181,7 +181,7 @@ export default function AnalyzeTab({
   }, [imported, heroId, onHero]);
 
   useEffect(() => {
-    if (importQuery.isError) setImportError('No build with that id — check the number and try again.');
+    if (importQuery.isError) setImportError('No build with that id. Check the number and try again.');
   }, [importQuery.isError]);
 
   useEffect(() => {

@@ -34,7 +34,7 @@ describe('statsThroughDate (the chip date)', () => {
 
 describe('datasetWindowLabel (the band-caption sample window)', () => {
   it('renders the economy-curve lineage window as a date span', () => {
-    expect(datasetWindowLabel(horizon(), ECONOMY_CURVE_DATASET)).toBe('Apr 1, 2026 – Jun 1, 2026');
+    expect(datasetWindowLabel(horizon(), ECONOMY_CURVE_DATASET)).toBe('Apr 1, 2026 to Jun 1, 2026');
   });
 
   it('is null when the dataset has no lineage entry', () => {

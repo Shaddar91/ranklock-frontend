@@ -25,13 +25,13 @@ liveItems: [Refresher, Spirit Burn, Scourge, Escalating Exposure, Diviner's Kevl
 
 Take Yamato when you want to choose which enemy dies and you are willing to work for it. She is a demanding hero to pilot and her record says so: 46.8% of matches decided under 30 minutes, 47.9% of those running 30 to 45 and 48.7% past 45, a rise of 2.0 that never turns into a comfortable lead. What she offers instead is control over where the fight happens, which is worth more than a win rate in a match your team is already choosing to take.
 
-Use the movement, because it is the best thing she has. At 8.2 m/s on 730 HP with 3 stamina she is quick enough to choose her fights, so the plan is to arrive on somebody isolated rather than to trade in a crowd where the health pool runs out first.
+Use the movement, because it is the best thing she has. At 8.2 m/s on 730 HP with 3 stamina she is quick enough to choose her fights, so the plan is to arrive on somebody isolated. In a crowd her health pool runs out first.
 
 ## How to play Yamato as a Damage carry
 
 Charge Power Slash where they cannot see you doing it. A full charge is a different ability from an early release, and the tell is loud, so the charge belongs behind a corner, above the fight or during the seconds the enemy is looking at somebody else. Release early only to finish a hero already walking away.
 
-Heal off Crimson Slash rather than off items. The frontal slash cuts the fire rate of everyone it hits and heals her for each hero it lands on, which makes a two-target slash both her sustain and her damage reduction, and it is the reason a fight against two enemies can go better than a fight against one.
+Heal off Crimson Slash and leave the healing items alone. The frontal slash cuts the fire rate of everyone it hits and heals her for each hero it lands on, which makes a two-target slash both her sustain and her damage reduction, and it is the reason a fight against two enemies can go better than a fight against one.
 
 Buy spirit first, in the order her players buy it. Spirit Strike goes into her builds 5.3 times more often than the roster average and Mystic Shot 4.5 times, both cheap purchases that make the abilities she presses every cooldown hit hard enough to matter in the lane.
 
@@ -41,15 +41,15 @@ Enter with Flying Slash and know your exit before you press it. The grapple pull
 
 Spend Shadow Transformation on the middle of the fight. It makes her invincible and status-immune, refreshes her abilities and speeds them up by 60% while it runs, so the moment to press it is when the enemy has committed their crowd control, and the payoff is a second full rotation of slashes with nothing able to stop it.
 
-Leave through it, not after it. Enemies who know the hero will hold their burst for the instant the transformation ends, so the last seconds of the ultimate are for repositioning to somewhere they have to walk to, rather than for one more slash on a target that was already dead.
+Leave while it is still running. Enemies who know the hero will hold their burst for the instant the transformation ends, so the last seconds of the ultimate are for repositioning to somewhere they have to walk to. One more slash on a target that was already dead costs you the exit.
 
 ## The build on the 2026-08-22 Update patch
 
 No line in the update names Yamato, and both of its item changes land on her lists harder than on anyone else on this page. Restorative Locket's Spirit Resistance dropped from 10% to 8% and appears in 9 of her 40 sampled builds, and Radiant Regeneration's heal on cast dropped from 70 to 65 and appears in 6. Neither changes what she does, and both shave a little off the early sustain her lane items were written around, so check whichever list you copy for the ones it still recommends.
 
-Her three current lists are all spirit builds and they agree on the shape. `sw1rl spirit yamato` by Account 398308198 holds 4,711 weekly favourites from 2026-03-30 and opens on Restorative Shot and Melee Lifesteal before committing to Spirit Strike and Mystic Shot. `BANKAI` by Account 1442864960 carries 2,328 favourites from 2026-04-03 and reaches the same mid game through Cold Front instead, buying the farm and the slow in one purchase. Account 1183614423's list, 3,344 favourites from 2026-03-27, sorts the same items by tier and withholds its name here.
+Her three current lists are all spirit builds and they agree on the shape. `sw1rl spirit yamato` holds 4,711 weekly favourites from 2026-03-30 and opens on Restorative Shot and Melee Lifesteal before committing to Spirit Strike and Mystic Shot. `BANKAI` carries 2,328 favourites from 2026-04-03 and reaches the same mid game through Cold Front instead, buying the farm and the slow in one purchase. The third list, 3,344 favourites from 2026-03-27, sorts the same items by tier and withholds its name here.
 
-The two lifetime lists are from an older game and read as a different hero. Account 90177645's, 227,876 favourites from 2024-09-26, is a weapon build that spends its mid game on Kinetic Dash and Point Blank, and Account 152862641's, 50,604 favourites from 2024-10-04, splits the difference. Both keep their names off this page, and both are worth reading only once you know why the current lists moved away from them.
+The two lifetime lists are from an older game and read as a different hero. One, 227,876 favourites from 2024-09-26, is a weapon build that spends its mid game on Kinetic Dash and Point Blank, and the other, 50,604 favourites from 2024-10-04, splits the difference. Both keep their names off this page, and both are worth reading only once you know why the current lists moved away from them.
 
 ## Abilities: what to level and when
 
@@ -57,7 +57,7 @@ Max Crimson Slash first if you are learning her now. All three of her current li
 
 Her two older lists open on Power Slash instead, which is the aggressive version and still works if your lane opponent gives you the space to charge it. Four of the five put Flying Slash third, and every one of them leaves Shadow Transformation for the ultimate points.
 
-Take the grapple later than instinct suggests. Points in it shorten the wait rather than improve the entrance, and the early game where she gets punished is the one where she used it to start a fight she had no items for.
+Take the grapple later than instinct suggests. Points in it shorten the wait and do nothing for the entrance. The early game where she gets punished is the one where she used it to start a fight she had no items for.
 
 ## Hard counters, and how to play around them
 
@@ -73,4 +73,4 @@ Buy anti-heal and treat it as core. Scourge reads 57.1% across 597,380 games on 
 
 Spend the mid game on repetition. Refresher sits at 59.4% over 1,232,391 games, the second-largest table she has, and it does the obvious thing on a hero whose ultimate already refreshes her abilities once. Escalating Exposure at 57.5% over 547,860 and Diviner's Kevlar at 58.2% over 353,578 round out the middle purchases, one adding damage that grows through a long fight and the other keeping her alive inside it.
 
-Read her top rows carefully before copying them. Spellslinger shows 60.2% but across 36,828 games, Silencer 59.2% across 12,515, Lucky Shot 58.5% across 15,358, Crippling Headshot 58.1% across 17,297 and Frenzy 57.5% across 14,575, all small tables next to the anti-heal purchases below them, so buy those five for a reason you can name rather than for the number beside them.
+Read her top rows carefully before copying them. Spellslinger shows 60.2% but across 36,828 games, Silencer 59.2% across 12,515, Lucky Shot 58.5% across 15,358, Crippling Headshot 58.1% across 17,297 and Frenzy 57.5% across 14,575, all small tables next to the anti-heal purchases below them, so buy those five only when you can name the reason.

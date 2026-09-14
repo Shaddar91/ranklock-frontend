@@ -38,9 +38,8 @@ value is front-loaded. He wins 58.0% of matches decided under 30 minutes,
 52.6% of those running 30 to 45 and 49.1% of those past 45, a fall of 8.8
 points end to end, so every objective you take early is worth more on him than
 the same objective twenty minutes later. Play him as the hero who closes
-games rather than the one who survives them, and read [how to play
-Warden](/heroes/warden/guide/) for the ability order and the buys that go with
-that plan.
+games, and read [how to play Warden](/heroes/warden/guide/) for the ability
+order and the buys that go with that plan.
 
 ## Read the changelog before you credit it
 
@@ -66,7 +65,7 @@ had just been cut in ten places and whose results held up anyway. Nothing in
 the same notes explains Warden's rise, and the honest answer is that the two
 shapes sit on one release without a documented line connecting them.
 
-Widen the search and the gap gets harder to explain rather than easier.
+Widen the search and the gap gets harder to explain.
 Warden's name is absent from the 2026-08-12 changelog too, and from the one
 before that on 2026-07-28. Three consecutive releases without a single logged
 change to the hero, and the pick rate still climbed 8.6 points on the third.

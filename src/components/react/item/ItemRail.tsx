@@ -181,7 +181,7 @@ function RailBlocks({
         <p className="itemd-railfoot">
           {discount == null
             ? 'This item has no components in the catalog, so there is no upgrade discount to state.'
-            : `Owning the component is assumed to discount the upgrade to ${count(discount)} souls — the shop’s pay-the-difference arithmetic is in no patch note or asset field.`}
+            : `Owning the component is assumed to discount the upgrade to ${count(discount)} souls. The shop’s pay-the-difference arithmetic is in no patch note or asset field.`}
           {buildsInto.length === 0 && ` Nothing builds from ${itemName}.`}
         </p>
       </section>
@@ -265,7 +265,7 @@ function RailBlocks({
                   </span>
                   <span
                     className="mono tnum muted"
-                    title={t.thin ? `Under ${count(byRank.thin_below)} matches — noise, not a reading` : undefined}
+                    title={t.thin ? `Under ${count(byRank.thin_below)} matches: noise, not a reading` : undefined}
                   >
                     {count(t.matches)}
                   </span>

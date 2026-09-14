@@ -270,7 +270,7 @@ export function leagueSampleCaption(
   if (live.length === 0) return '';
   if (cohort === 'team_average') {
     const parts = live.map((l) => `${count(l.n)} player-games in lobbies whose average rank is ${l.name}`);
-    return `n = ${parts.join(' · ')} — lobby-average league${live.length > 1 ? 's' : ''}`;
+    return `n = ${parts.join(' · ')}, lobby-average league${live.length > 1 ? 's' : ''}`;
   }
   return `n = ${live.map((l) => `${count(l.n)} ${l.name}`).join(' · ')} player-games`;
 }

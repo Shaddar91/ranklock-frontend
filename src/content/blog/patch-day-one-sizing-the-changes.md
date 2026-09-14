@@ -21,11 +21,10 @@ ordering for you.
 
 {{CHANGED_COUNT}} lines cleared the filter. A line clears it when it names an
 entity, the field that moved, the value it left and the value it arrived at.
-Anything written as prose is left out here rather than summarised: a summary of
-a balance note is a judgement, and judgements are what the rest of the internet
-will supply tonight.
+Anything written as prose is left out here. Summarising a balance note is a
+judgement, and judgements are what the rest of the internet will supply tonight.
 
-## Order them by ratio, not by their place in the notes
+## Order them by ratio
 
 Release notes are ordered by whoever wrote them, which usually means by hero and
 then by ability. That ordering says nothing about how far anything moved. Divide
@@ -50,7 +49,7 @@ tables and the build pages is counted over a rolling window of {{DATA_WINDOW}}.
 Divide wins by games across a span that long a few hours into a release and the
 sum is almost entirely games played on the old values. The division is correct
 and the population is wrong, so whatever movement shows up in it belongs to last
-month's play rather than to the lines listed above.
+month's play. The lines listed above have nothing to do with it.
 
 Waiting longer on that same rolling number does not fix it either, because the
 old games leave the window one day at a time. The fix is a different
@@ -80,8 +79,8 @@ it up than about the edit itself.
 This page gets a second pass once the release has enough games of its own to
 divide by, and once the share of the sample played before it shipped has fallen
 far enough for the split to mean something. That pass adds a table and a
-modified date. If the games never arrive, no table appears, and an absent table
-is the correct outcome rather than a gap filled with a guess.
+modified date. If the games never arrive, no table appears, and that absence is
+the correct outcome. We will not fill the gap with a guess.
 
 <!-- wave2:start
 ## What the games said in the end

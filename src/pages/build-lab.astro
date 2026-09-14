@@ -36,12 +36,12 @@ const weapons = Object.fromEntries(
 const labFootnote = [
   'Calculators run in the browser over served payloads: hero base stats and level scaling, ability numbers from the game client, the shop\'s investment table, and item modifiers from the item catalog' +
     (catalogPatch ? ` (patch ${catalogPatch})` : '') +
-    '. The application order — base × scale, then flat adds — is locked by golden tests.',
+    '. The application order is locked by golden tests: base × scale, then flat adds.',
   THEORETICAL_NOTE,
-  'Time to kill, burst and their time to kill you render as ranges; effective HP and the per-ability numbers are single figures — neither has a measured band to widen. Every one carries its assumptions beside it.',
+  'Time to kill, burst and their time to kill you render as ranges; effective HP and the per-ability numbers are single figures. Neither has a measured band to widen. Every one carries its assumptions beside it.',
   `Affordable-at and the souls timeline: ${CURVE_WINDOW}.`,
   ASSUMPTIONS['pace-factors'],
-  'A custom board has no win rate — only served purchase sets and published builds carry one. An imported build keeps its in-game id and its author. Rank means badge tier, never an MMR number.',
+  'A custom board has no win rate. Only served purchase sets and published builds carry one. An imported build keeps its in-game id and its author. Rank means badge tier, never an MMR number.',
 ].join(' ');
 ---
 

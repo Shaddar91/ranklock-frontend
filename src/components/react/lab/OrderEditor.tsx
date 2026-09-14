@@ -36,7 +36,7 @@ export default function OrderEditor({ order, onOrder, abilities, served, minMatc
           color: 'var(--win)',
         }
       : {
-          text: minMatches == null ? 'No served rate — no rate shown' : `Under ${count(minMatches)} matches · no rate shown`,
+          text: minMatches == null ? 'No served rate · no rate shown' : `Under ${count(minMatches)} matches · no rate shown`,
           color: 'var(--muted)',
         };
 
@@ -52,7 +52,7 @@ export default function OrderEditor({ order, onOrder, abilities, served, minMatc
                 <button
                   type="button"
                   className={`kit-key k${slot}`}
-                  title={`Point ${i + 1} — ${ability?.name ?? `ability ${slot}`} · click to cycle`}
+                  title={`Point ${i + 1}: ${ability?.name ?? `ability ${slot}`} · click to cycle`}
                   aria-label={`Point ${i + 1}: ${ability?.name ?? `ability ${slot}`}`}
                   onClick={() => onOrder(cycleOrder(order, i))}
                 >

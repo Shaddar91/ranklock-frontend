@@ -30,23 +30,23 @@ The rest of the kit exists to punish whoever you dragged. Exploding Uppercut kno
 
 Hook from somewhere they cannot see the arm coming. The line is blocked by the first thing it touches, so a Trooper wave, a pillar or a friendly body between you and the target eats the shot, and the best angles are the ones with nothing in them: a rooftop, a zipline drop, the mouth of a juke room. Pull, uppercut so they cannot walk out of the follow-up, then let your team collect.
 
-Grapple Arm takes allies too, and that pull often wins more than an enemy pull would. Pulling a carry out of a lost fight is worth more than a pull you force into an enemy who is standing next to three friends. The two leading weekly builds, build 433490 from Account 1206811165 at 14,841 weekly favourites and build 334667 from Account 1183614423 at 11,358, both level Exploding Uppercut before anything else, which tells you what they expect to do the moment the pull connects.
+Grapple Arm takes allies too, and that pull often wins more than an enemy pull would. Pulling a carry out of a lost fight is worth more than a pull you force into an enemy who is standing next to three friends. The two leading weekly builds, build 433490 at 14,841 weekly favourites and build 334667 at 11,358, both level Exploding Uppercut before anything else, which tells you what they expect to do the moment the pull connects.
 
 ## How to play Bebop as a Damage carry
 
-Bomb heroes on purpose, from the first minute. Sticky Bomb only banks its permanent bonus damage on hero hits, so a bomb spent on a wave is a bomb that never pays interest. Stick it before a trade rather than after one, and treat every lane exchange as a chance to add to the number instead of a chance to win the exchange.
+Bomb heroes on purpose, from the first minute. Sticky Bomb only banks its permanent bonus damage on hero hits, so a bomb spent on a wave is a bomb that never pays interest. Stick it before a trade starts, and treat every lane exchange as a chance to add to the number instead of a chance to win the exchange.
 
-The gun version of the hero exists and it is not fringe. The most-favourited Bebop build of all time, `KING OF FIRE RATE. UltraGUNBOP.` from Account 1241173601 at 273,226 favourites, levels Grapple Arm first and buys weapon items out of lane, and the item table has room for it, with Frenzy winning 59.1% of the 68,956 Bebop games it appears in and Lucky Shot 56.9% of 89,258. That build was last updated 2025-03-08, so read its shape rather than copying its list.
+The gun version of the hero exists and it is not fringe. The most-favourited Bebop build of all time, `KING OF FIRE RATE. UltraGUNBOP.` at 273,226 favourites, levels Grapple Arm first and buys weapon items out of lane, and the item table has room for it, with Frenzy winning 59.1% of the 68,956 Bebop games it appears in and Lucky Shot 56.9% of 89,258. That build was last updated 2025-03-08, so read its shape and do not copy the list.
 
 ## The build on the 2026-08-22 Update patch
 
 Nothing in this patch names Bebop, and almost nothing in it reaches him. Radiant Regeneration lost heal on cast from 70 to 65 and appears in 5 of his 40 sampled builds; Restorative Locket lost Spirit Resistance from 10% to 8% and appears in 3. A build written before 2026-08-22 still describes the hero you are playing.
 
-His most distinctive purchases are Spirit Strike, bought 3.8 times more often on him than across the field, and Echo Shard at 2.8 times. Echo Shard is the one that changes how the hero plays, because a second Sticky Bomb doubles the stack you are trying to grow rather than adding a burst you use once.
+His most distinctive purchases are Spirit Strike, bought 3.8 times more often on him than across the field, and Echo Shard at 2.8 times. Echo Shard is the one that changes how the hero plays, because a second Sticky Bomb doubles the stack you are trying to grow, which is worth more than one extra burst.
 
 ## Abilities: what to level and when
 
-Two of the three leading weekly builds go Exploding Uppercut, then Sticky Bomb, then Grapple Arm, then Hyper Beam. The third, build 369057 from Account 220899179 at 10,764 favourites, opens on Sticky Bomb, then Grapple Arm, then Exploding Uppercut, then Hyper Beam, and the all-time leader starts on Grapple Arm instead.
+Two of the three leading weekly builds go Exploding Uppercut, then Sticky Bomb, then Grapple Arm, then Hyper Beam. The third, build 369057 at 10,764 favourites, opens on Sticky Bomb, then Grapple Arm, then Exploding Uppercut, then Hyper Beam, and the all-time leader starts on Grapple Arm instead.
 
 Level for the lane you drew. Exploding Uppercut first is the safe pick when you expect to be dived, since the knockback buys you the distance you need. Sticky Bomb first is the pick when you can reach the enemy laner freely and want the permanent damage growing from minute one. Hold Hyper Beam for a fight your team has already tipped, because it is a channel and any stun, silence or wall between you and the target ends it early.
 
@@ -58,6 +58,6 @@ Against all five the answer is the same and it is unglamorous. Stop hunting for 
 
 ## Items that go well
 
-Spend your first big purchase on Spellslinger, which wins 59.9% of the 160,542 Bebop games it appears in, and Frenzy at 59.1% over 68,956 sits just behind it. Both reward a hero who commits to one long exchange rather than trading in pieces. Diviner's Kevlar at 56.8% over 66,430 and Colossus at 55.6% over 98,658 are the two that keep a Hyper Beam channel alive long enough to finish.
+Spend your first big purchase on Spellslinger, which wins 59.9% of the 160,542 Bebop games it appears in, and Frenzy at 59.1% over 68,956 sits just behind it. Both reward a hero who commits to one long exchange. Diviner's Kevlar at 56.8% over 66,430 and Colossus at 55.6% over 98,658 are the two that keep a Hyper Beam channel alive long enough to finish.
 
 Then pick your allies as carefully as your items. Bebop wins 53.6% of the 23,037 games he shares with Victor and 52.1% of the 24,293 he shares with Seven, the same two heroes that beat him hardest across from the lane. A hook is only as good as whatever is standing behind you when it lands.

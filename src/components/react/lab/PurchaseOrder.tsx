@@ -68,8 +68,8 @@ function Row({ row }: { row: PurchaseRow }) {
 
 export default function PurchaseOrder({ groups, total, owned, phased, band }: PurchaseOrderProps) {
   const foot = phased
-    ? `Paid pays the upgrade difference when a component is already owned — the build states no upgrade route, so that is assumed. Phase = the band holding the minute a median-farming lobby affords the running total (RankLock public matches p50, all heroes, ${band}); the build carries no timings of its own.`
-    : 'Paid pays the upgrade difference when a component is already owned — the build states no upgrade route, so that is assumed. No economy curve is served right now, so the rows are not split into phases.';
+    ? `Paid pays the upgrade difference when a component is already owned. The build states no upgrade route, so that is assumed. Phase = the band holding the minute a median-farming lobby affords the running total (RankLock public matches p50, all heroes, ${band}); the build carries no timings of its own.`
+    : 'Paid pays the upgrade difference when a component is already owned. The build states no upgrade route, so that is assumed. No economy curve is served right now, so the rows are not split into phases.';
 
   return (
     <section>

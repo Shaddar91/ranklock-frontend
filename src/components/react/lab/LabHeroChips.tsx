@@ -43,7 +43,7 @@ export default function LabHeroChips({ label, heroes, enabled, heroId, onHero, l
             role="radio"
             aria-checked={h.hero_id === heroId}
             disabled={!usable}
-            title={usable ? h.hero_name : `${h.hero_name} — no base-stats row in this patch's capture`}
+            title={usable ? h.hero_name : `${h.hero_name}: no base-stats row in this patch's capture`}
             className={'lab-hchip' + (size < 26 ? ' lab-hchip-sm' : '') + (h.hero_id === heroId ? ' on' : '')}
             onClick={() => usable && onHero(h.hero_id)}
           >

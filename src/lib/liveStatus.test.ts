@@ -7,7 +7,7 @@ import { liveStatusLine } from './liveStatus';
 
 const err = (status: number) => new ApiError(status, 'https://api.test/health', `${status}`);
 const netErr = () => new ApiError(0, 'https://api.test/health', 'Network request failed');
-const OFFLINE = 'API unavailable (offline) — the site renders without it.';
+const OFFLINE = 'API unavailable (offline). The site renders without it.';
 
 describe('liveStatusLine', () => {
   it('pending → checking', () => {
@@ -15,7 +15,7 @@ describe('liveStatusLine', () => {
   });
   it('ok → reachable, carries the health status', () => {
     expect(liveStatusLine({ phase: 'ok', hasSnapshot: true, status: 'ok' })).toEqual({
-      text: 'API reachable — status: ok',
+      text: 'API reachable. Status: ok',
       className: 'ok',
     });
   });

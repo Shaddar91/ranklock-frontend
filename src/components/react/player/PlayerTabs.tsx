@@ -210,7 +210,7 @@ export function PerformancePanel({ id }: { id: number }) {
           Where you rank within each bracket
         </h2>
         <p className="faint" style={{ fontSize: 12, marginBottom: 12 }}>
-          Percentile among players of the same bracket — higher is better; 87th = better than 87% of them.
+          Percentile among players of the same bracket. Higher is better; 87th = better than 87% of them.
         </p>
         {isPending ? (
           <p className="muted">Loading percentiles…</p>
@@ -360,7 +360,7 @@ const TARGET_OPTIONS: ReadonlyArray<readonly [string, string]> = [
   ['same', 'Your rank'],
   ['one_up', 'One rank up'],
   ['two_up', 'Two ranks up'],
-  ['top', `Best — ${RANKS[11]!.name}`],
+  ['top', `Best: ${RANKS[11]!.name}`],
 ];
 
 //---- compare to a specific player (optional, behind the rank selector) ------
@@ -392,7 +392,7 @@ export function PairCompareView({
       return (
         <EmptyState
           title="No games to compare"
-          message={notFoundMessage ?? `${vsName} has no matches in this mode yet — pick another player.`}
+          message={notFoundMessage ?? `${vsName} has no matches in this mode yet. Pick another player.`}
           icon="users"
         />
       );
@@ -565,7 +565,7 @@ function ComparePlayerPicker({ id }: { id: number }) {
               </div>
             ) : results.length === 0 ? (
               selfOnly ? (
-                <div className="search-note muted">That is you — search for a different player to compare.</div>
+                <div className="search-note muted">That is you. Search for a different player to compare.</div>
               ) : (
                 <div className="search-note muted">No players found for &ldquo;{q}&rdquo;.</div>
               )
@@ -727,7 +727,7 @@ export function ComparePanel({ id }: { id: number }) {
           <h2 className="h-sec" style={{ fontSize: 17 }}>
             You ({data.you.tier_name}) vs {data.cohort.tier_name}{' '}
             <span className="faint" style={{ fontWeight: 400, fontSize: 13 }}>
-              (badges {data.cohort.badge_lo}–{data.cohort.badge_hi}, n={count(data.cohort.sample_size)})
+              (badges {data.cohort.badge_lo} to {data.cohort.badge_hi}, n={count(data.cohort.sample_size)})
             </span>
           </h2>
         </div>
@@ -745,7 +745,7 @@ export function ComparePanel({ id }: { id: number }) {
       )}
       {data.cohort.sample_size === 0 && (
         <p className="faint" style={{ fontSize: 11, marginBottom: 10 }}>
-          No {data.cohort.tier_name} players on {data.hero_name} in the dataset yet — the tier column is empty.
+          No {data.cohort.tier_name} players on {data.hero_name} in the dataset yet. The tier column is empty.
         </p>
       )}
       <table className="dt">

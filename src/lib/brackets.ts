@@ -32,11 +32,11 @@ export interface RankBucket {
 //Items: the exact 0–5 integer buckets the backend maps to badge ranges.
 export const ITEM_BUCKETS: readonly RankBucket[] = [
   { key: 0, label: 'All ranks', short: 'All', tiers: [] },
-  { key: 1, label: 'Initiate – Alchemist', short: 'Initiate+', tiers: [1, 2, 3] },
-  { key: 2, label: 'Arcanist – Ritualist', short: 'Arcanist+', tiers: [4, 5] },
-  { key: 3, label: 'Emissary – Archon', short: 'Emissary+', tiers: [6, 7] },
-  { key: 4, label: 'Oracle – Phantom', short: 'Oracle+', tiers: [8, 9] },
-  { key: 5, label: 'Ascendant – Eternus', short: 'Ascendant+', tiers: [10, 11] },
+  { key: 1, label: 'Initiate to Alchemist', short: 'Initiate+', tiers: [1, 2, 3] },
+  { key: 2, label: 'Arcanist to Ritualist', short: 'Arcanist+', tiers: [4, 5] },
+  { key: 3, label: 'Emissary to Archon', short: 'Emissary+', tiers: [6, 7] },
+  { key: 4, label: 'Oracle to Phantom', short: 'Oracle+', tiers: [8, 9] },
+  { key: 5, label: 'Ascendant to Eternus', short: 'Ascendant+', tiers: [10, 11] },
 ];
 
 //An item bucket key → the API's integer bracket (0 = all).

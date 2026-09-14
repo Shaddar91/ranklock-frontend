@@ -36,10 +36,10 @@ const jsonLd = [websiteJsonLd(origin), orgJsonLd(origin)];
 
 const entries = [
   { href: '/heroes/', icon: 'flame', title: 'Hero meta', blurb: 'Win-rates, tiers and pick rates by rank bracket.' },
-  { href: '/items/', icon: 'coins', title: 'Item win-rates', blurb: 'What wins at your rank — labelled by badge tier, not MMR.' },
+  { href: '/items/', icon: 'coins', title: 'Item win-rates', blurb: 'What wins at your rank, labelled by badge tier, not MMR.' },
   { href: '/leaderboard/', icon: 'trophy', title: 'Leaderboard', blurb: 'The global ranked ladder, top to bottom.' },
   { href: '/matches/', icon: 'swords', title: 'Recent matches', blurb: 'Fresh games with team economy and scoreboards.' },
-  { href: '/blog/', icon: 'book', title: 'Guides', blurb: 'Strategy with the current patch\'s win-rates embedded.' },
+  { href: '/guides/', icon: 'book', title: 'How to play', blurb: 'One page per hero, with the current patch\'s win-rates embedded.' },
   { href: '/support/', icon: 'spark', title: 'Support', blurb: 'Back the project.' },
 ] as const;
 ---
@@ -53,7 +53,7 @@ const entries = [
   <main class="container">
     <div class="fresh-banner">
       <span class="flex" style="align-items:center; gap:8px;">
-        <span class="livedot"></span> Live Deadlock stats — refreshed every patch
+        <span class="livedot"></span> Live Deadlock stats, refreshed every patch
       </span>
       <span>Hero & item win-rates · player profiles · coaching</span>
     </div>

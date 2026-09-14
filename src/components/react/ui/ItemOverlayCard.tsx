@@ -109,7 +109,7 @@ export default function ItemOverlayCard({
       )}
 
       {data.brawl ? (
-        <div className="itemcard-foot">Street Brawl shop only — its tier and souls cost are placeholders.</div>
+        <div className="itemcard-foot">Street Brawl shop only. Its tier and souls cost are placeholders.</div>
       ) : (
         footer && <div className="itemcard-foot">{footer}</div>
       )}

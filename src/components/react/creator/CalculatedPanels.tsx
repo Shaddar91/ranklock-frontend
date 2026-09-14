@@ -101,7 +101,7 @@ export default function CalculatedPanels({ stats, abilities, hasItems }: Calcula
     return (
       <EmptyState
         title="Nothing calculated yet"
-        message="Add items to the build — the Weapon, Vitality and Spirit panels fill in from the live item modifiers."
+        message="Add items to the build. The Weapon, Vitality and Spirit panels fill in from the live item modifiers."
         icon="chart"
       />
     );

@@ -34,13 +34,13 @@ He is built for it. Flawless Advance is a held lunge that pays out most on a cle
 
 ## How to play Apollo as a Damage carry
 
-Farm to Mystic Reverb and then start hunting. It is his single most distinctive purchase, bought 3.7 times more often on him than across the field, and it wins 59.4% of the 1,492,066 Apollo games it appears in, the best rate on his table by a clear margin. Spirit Burn follows at 57.4% over 2,617,469 games and Escalating Exposure at 57.4% over 1,202,343, so the spine of the damage build is spirit, not weapon.
+Farm to Mystic Reverb and then start hunting. It is his single most distinctive purchase, bought 3.7 times more often on him than across the field, and it wins 59.4% of the 1,492,066 Apollo games it appears in, the best rate on his table by a clear margin. Spirit Burn follows at 57.4% over 2,617,469 games and Escalating Exposure at 57.4% over 1,202,343, so the spine of the damage build is spirit.
 
-Your damage comes out in one committed sequence, which means the target selection matters more than the aim. Open on somebody standing away from their own team, hold Flawless Advance for the full release rather than tapping it, and finish with Itani Lo Sahn on a target that is already frozen in place by the slash. If the enemy support is close enough to peel, pick someone else. The most-favourited weekly build, build 419436 from Account 393148161 at 7,452 weekly favourites, levels Flawless Advance first for exactly this reason.
+Your damage comes out in one committed sequence, which means the target selection matters more than the aim. Open on somebody standing away from their own team, hold Flawless Advance for the full release, and finish with Itani Lo Sahn on a target that is already frozen in place by the slash. If the enemy support is close enough to peel, pick someone else. The most-favourited weekly build, build 419436 at 7,452 weekly favourites, levels Flawless Advance first for exactly this reason.
 
 ## How to play Apollo as an Offensive initiator
 
-Start the fight from a flank and make Riposte a read rather than a button. It deflects the next attack, so the way it wins fights is by being active at the moment a predictable ability lands: a charge, a hook, a channelled ultimate. Fire it too early and the recovery is the window your opponent wanted. The second and third weekly builds, build 458666 from Account 1183614423 at 6,931 favourites and `data | Absolute Demon` from Account 354529981 at 4,953, both level Disengaging Sigil first, which is the more forgiving opening if you plan to enter fights before you have items.
+Start the fight from a flank and press Riposte only on a read. It deflects the next attack, so the way it wins fights is by being active at the moment a predictable ability lands: a charge, a hook, a channelled ultimate. Fire it too early and the recovery is the window your opponent wanted. The second and third weekly builds, build 458666 at 6,931 favourites and `data | Absolute Demon` at 4,953, both level Disengaging Sigil first, which is the more forgiving opening if you plan to enter fights before you have items.
 
 Enter with the Sigil pointed at your escape route. The leap travels backwards off the explosion, so placing it correctly turns a dive into a two-way trip. Against a team with more than one source of damage, the read you are making is worth less than the ground you are standing on, since a defence aimed at one attacker does nothing about crossfire.
 
@@ -48,7 +48,7 @@ Enter with the Sigil pointed at your escape route. The leap travels backwards of
 
 Apollo was not named in this patch, but he was hit by it. Restorative Locket lost Spirit Resistance, from 10% down to 8%, and it is his second most distinctive buy at 3.6 times the roster rate and it sits in 23 of his 40 sampled builds. Radiant Regeneration lost heal on cast from 70 to 65 and appears in 13 of those 40. More than half of the published Apollo builds therefore carry at least one item that is worth slightly less than it was before 2026-08-22.
 
-Take your item order from a list that has been touched since. `TOP 1 FENCER NA - SHMUCK`, build 448546 from Account 157629394 at 30,427 favourites, was updated 2026-09-05. `New Apollo Build` from Account 102016987 at 30,671 favourites was last updated 2026-03-15 and reads like the older item economy it was written in.
+Take your item order from a list that has been touched since. `TOP 1 FENCER NA - SHMUCK`, build 448546 at 30,427 favourites, was updated 2026-09-05. `New Apollo Build` at 30,671 favourites was last updated 2026-03-15 and reads like the older item economy it was written in.
 
 ## Abilities: what to level and when
 
@@ -66,4 +66,4 @@ What they share is that none of them offers you the single readable attack Ripos
 
 Mystic Reverb first, then whichever of Spirit Burn or Escalating Exposure the fight length calls for. Witchmail wins 57.3% of 583,805 Apollo games and Scourge 56.7% of 348,358, and Colossus at 57.7% over 69,738 is the buy when you are being forced into fights you cannot leave.
 
-The rest of the table is smaller and more situational. Berserker sits at 56.5% over 56,890 games, Echo Shard at 56.1% over 84,753 and Spellslinger at 56.4% over 28,164, and Diviner's Kevlar at 56.5% over 28,720 is the answer to a team whose damage arrives as spirit rather than bullets.
+The rest of the table is smaller and more situational. Berserker sits at 56.5% over 56,890 games, Echo Shard at 56.1% over 84,753 and Spellslinger at 56.4% over 28,164, and Diviner's Kevlar at 56.5% over 28,720 is the answer to a team whose damage arrives as spirit.

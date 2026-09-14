@@ -12,8 +12,8 @@ const CONTACT = 'privacy@ranklock.app';
 //Analytics rows are first-party, set only after the banner grant; Ads rows are
 //set by Google under its own consent message.
 const cookies = [
-  ['_pk_id', 'Analytics', 'Matomo', "Persistent visitor ID — groups your visits so repeat visits don't count as new visitors", '13 months'],
-  ['_pk_ses', 'Analytics', 'Matomo', 'Active-session marker — tells Matomo the current visit is still ongoing', '30 minutes'],
+  ['_pk_id', 'Analytics', 'Matomo', "Persistent visitor ID: groups your visits so repeat visits don't count as new visitors", '13 months'],
+  ['_pk_ses', 'Analytics', 'Matomo', 'Active-session marker: tells Matomo the current visit is still ongoing', '30 minutes'],
   ['_pk_ref', 'Analytics', 'Matomo', 'Remembers which referrer originally brought you to the site', '6 months'],
   ['__gads', 'Ads', 'Google AdSense', 'Ad delivery, frequency capping and aggregated ad reporting', 'up to 13 months'],
   ['__gpi', 'Ads', 'Google AdSense', 'Stores an ad-personalization identifier used by Google', 'up to 13 months'],
@@ -21,7 +21,7 @@ const cookies = [
 ---
 
 <BaseLayout
-  title="Privacy & cookies — RankLock"
+  title="Privacy & cookies | RankLock"
   description="What RankLock collects, why, how long it is kept, and how to change or withdraw your consent at any time. Self-hosted analytics, GDPR + Serbian ZZPL."
   canonicalPath="/privacy"
 >
@@ -52,11 +52,11 @@ const cookies = [
       <h2>2. What data is collected</h2>
       <p>With <strong>analytics</strong> consent enabled, a self-hosted Matomo instance records:</p>
       <ul>
-        <li><strong>Pageviews</strong> — which pages you opened and in what order</li>
-        <li><strong>Referrers</strong> — the link or search result that sent you here (if any)</li>
-        <li><strong>Country</strong> — derived from an anonymized IP (the last two bytes are stripped before storage)</li>
-        <li><strong>Device basics</strong> — screen size, browser name, operating-system family</li>
-        <li><strong>Session duration</strong> — how long the visit lasted</li>
+        <li><strong>Pageviews</strong>: which pages you opened and in what order</li>
+        <li><strong>Referrers</strong>: the link or search result that sent you here (if any)</li>
+        <li><strong>Country</strong>: derived from an anonymized IP (the last two bytes are stripped before storage)</li>
+        <li><strong>Device basics</strong>: screen size, browser name, operating-system family</li>
+        <li><strong>Session duration</strong>: how long the visit lasted</li>
       </ul>
       <p>
         Google AdSense may serve ads and set its own cookies (section 4) to deliver, cap and
@@ -67,11 +67,11 @@ const cookies = [
 
       <h2>3. What is NOT collected</h2>
       <ul>
-        <li><strong>No names, email addresses, or user accounts</strong> — there are no logins on the stats surface</li>
-        <li><strong>No analytics before you consent</strong> — Matomo loads and sets cookies only after you accept analytics on the banner</li>
-        <li><strong>No selling or sharing of analytics data</strong> — Matomo data stays on our own server and is never handed to third parties</li>
+        <li><strong>No names, email addresses, or user accounts</strong>: there are no logins on the stats surface</li>
+        <li><strong>No analytics before you consent</strong>: Matomo loads and sets cookies only after you accept analytics on the banner</li>
+        <li><strong>No selling or sharing of analytics data</strong>: Matomo data stays on our own server and is never handed to third parties</li>
         <li><strong>No heatmaps, session replay, or fingerprinting</strong></li>
-        <li><strong>No analytics signal to Google</strong> — Google Consent Mode's <code>analytics_storage</code> is left denied; ad consent signals are managed by Google's consent message</li>
+        <li><strong>No analytics signal to Google</strong>: Google Consent Mode's <code>analytics_storage</code> is left denied; ad consent signals are managed by Google's consent message</li>
       </ul>
 
       <h2>4. Cookies used</h2>
@@ -118,7 +118,7 @@ const cookies = [
             Data Protection (Zakon o zaštiti podataka o ličnosti). You can withdraw consent at
             any time using the controls in section 7, and withdrawal is as easy as giving it.
           </p>
-          <div class="dc-cite"><b>Art. 12 ZZPL</b> — consent</div>
+          <div class="dc-cite"><b>Art. 12 ZZPL</b>: consent</div>
         </div>
         <div class="dualcard">
           <div class="dc-label">Visitors in the EU / EEA</div>
@@ -127,24 +127,24 @@ const cookies = [
             consent under the GDPR. The same withdrawal controls apply, and withdrawing
             consent does not affect the lawfulness of processing before the withdrawal.
           </p>
-          <div class="dc-cite"><b>Art. 6(1)(a) GDPR</b> — consent</div>
+          <div class="dc-cite"><b>Art. 6(1)(a) GDPR</b>: consent</div>
         </div>
       </div>
 
       <h2>6. Your rights</h2>
       <p>Under both the GDPR and the Serbian ZZPL you have the right to:</p>
       <ul>
-        <li><strong>Access</strong> — ask what data, if any, is tied to your visitor ID</li>
-        <li><strong>Rectification</strong> — correct inaccurate data</li>
-        <li><strong>Deletion</strong> — ask that records tied to your visitor ID be removed</li>
-        <li><strong>Restriction</strong> — ask that processing of your records be paused</li>
-        <li><strong>Objection</strong> — object to the processing described here</li>
-        <li><strong>Data portability</strong> — receive your records in a machine-readable export</li>
-        <li><strong>Withdrawal of consent</strong> — revoke consent at any time (section 7)</li>
+        <li><strong>Access</strong>: ask what data, if any, is tied to your visitor ID</li>
+        <li><strong>Rectification</strong>: correct inaccurate data</li>
+        <li><strong>Deletion</strong>: ask that records tied to your visitor ID be removed</li>
+        <li><strong>Restriction</strong>: ask that processing of your records be paused</li>
+        <li><strong>Objection</strong>: object to the processing described here</li>
+        <li><strong>Data portability</strong>: receive your records in a machine-readable export</li>
+        <li><strong>Withdrawal of consent</strong>: revoke consent at any time (section 7)</li>
       </ul>
       <p>
         To exercise any of these, email <a href={`mailto:${CONTACT}`}>{CONTACT}</a>. Because
-        analytics data is pseudonymous — tied to a cookie-held visitor ID, not a name — please
+        analytics data is pseudonymous, tied to a cookie-held visitor ID, not a name, please
         include the value of your <code>_pk_id</code> cookie so the right records can be found.
         Under GDPR Art. 11 (and the ZZPL equivalent) we are not required to collect extra
         identifying data just to answer a request; clearing your <code>_pk_*</code> cookies
@@ -154,7 +154,7 @@ const cookies = [
       <h2 id="consent">7. Your choices</h2>
       <p>
         Turn analytics on or off at any time, and erase the data already stored about this
-        browser. Changes take effect immediately — no reload needed. Ads personalization is
+        browser. Changes take effect immediately. No reload needed. Ads personalization is
         managed in Google's consent message, not on this page.
       </p>
       <ConsentManager client:load />
@@ -177,15 +177,15 @@ const cookies = [
 
       <h2>9. Retention periods</h2>
       <ul>
-        <li><strong>Raw analytics logs</strong> — deleted after <strong>12 months</strong>; the Matomo server auto-removes raw visit rows at that age</li>
-        <li><strong>Aggregated reports</strong> — retained for <strong>24 months</strong>; anonymous traffic summaries with no record-level detail</li>
-        <li><strong>Consent records</strong> — kept for the duration of your consent plus <strong>2 years</strong>, so a regulator asking "did you have consent on date X" can be answered</li>
-        <li><strong>Ad cookies</strong> — governed by Google's retention for the cookies in section 4; cleared when you change your choice in Google's consent message or clear cookies</li>
+        <li><strong>Raw analytics logs</strong>: deleted after <strong>12 months</strong>; the Matomo server auto-removes raw visit rows at that age</li>
+        <li><strong>Aggregated reports</strong>: retained for <strong>24 months</strong>; anonymous traffic summaries with no record-level detail</li>
+        <li><strong>Consent records</strong>: kept for the duration of your consent plus <strong>2 years</strong>, so a regulator asking "did you have consent on date X" can be answered</li>
+        <li><strong>Ad cookies</strong>: governed by Google's retention for the cookies in section 4; cleared when you change your choice in Google's consent message or clear cookies</li>
       </ul>
 
       <h2>10. Where the data lives</h2>
       <ul>
-        <li><strong>Analytics stored in the EU/EEA</strong> on self-operated infrastructure (Hetzner, Germany) — no managed-analytics SaaS</li>
+        <li><strong>Analytics stored in the EU/EEA</strong> on self-operated infrastructure (Hetzner, Germany). No managed-analytics SaaS</li>
         <li><strong>Ad serving by Google</strong> under its own terms and its own consent message; see Google's privacy &amp; ads policies</li>
         <li><strong>Encrypted backups</strong> are GPG-encrypted locally before upload, so the storage provider never sees plaintext</li>
         <li><strong>No transfer of analytics data to third parties</strong> beyond the infrastructure provider</li>

@@ -14,13 +14,13 @@ objective. Souls compound: a 10% lead at minute ten is a two-item lead by minute
 twenty. This guide closes that gap with the boring habits every higher-ranked
 player has internalized. Flashy plays are not on the list.
 
-## Income is three streams, not one
+## Income is three streams
 
 Your souls come from lane creeps, neutrals, and combat. Most players over-index
 on one and ignore the rest:
 
 1. **Lane creeps**: the steady baseline. Never walk past a wave you could last-hit.
-2. **Neutrals**: the multiplier. Clear camps between waves, not instead of them.
+2. **Neutrals**: the multiplier. Clear camps in the gaps between waves.
 3. **Combat**: the spike. Only worth it when the trade is in your favor.
 
 The coaching panels on your profile break your income down by source and compare

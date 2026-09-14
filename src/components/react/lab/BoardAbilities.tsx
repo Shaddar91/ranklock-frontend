@@ -35,7 +35,7 @@ export default function BoardAbilities({ rows, mods, slots, icons, tier }: Board
       <div className="lab-card lab-card-flush">
         {rows.length === 0 ? (
           <p className="lab-tblnote" style={{ borderTop: 0 }}>
-            This hero's assets payload carries no per-ability numerics — nothing to fold a board into.
+            This hero's assets payload carries no per-ability numerics. Nothing to fold a board into.
           </p>
         ) : (
           <>

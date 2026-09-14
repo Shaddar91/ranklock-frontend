@@ -60,7 +60,7 @@ export default function CompareBoards({ a, b, options, activeKey, onPick }: Comp
 
       {b == null || active == null ? (
         <p className="lab-note" style={{ marginTop: 0 }}>
-          Pick a served board above to compare against — A is your board, and board cost inverts, so the cheaper
+          Pick a served board above to compare against. A is your board, and board cost inverts, so the cheaper
           board takes the delta.
         </p>
       ) : (
@@ -92,7 +92,7 @@ export default function CompareBoards({ a, b, options, activeKey, onPick }: Comp
           </div>
           <p className="lab-tblnote">
             {active.rate
-              ? `B's rate: ${active.rate.window}. A custom board carries none — only served sets and published builds do.`
+              ? `B's rate: ${active.rate.window}. A custom board carries none: only served sets and published builds do.`
               : 'Neither board carries a win rate: a custom board never does, and this preset is assembled from per-item rows rather than a scored set.'}
             {' '}
             {COMPARE_OMITTED}

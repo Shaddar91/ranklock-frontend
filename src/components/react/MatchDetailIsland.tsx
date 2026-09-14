@@ -178,7 +178,7 @@ function EconomyTab({ match }: { match: MatchDetail }) {
         </Chip>
       </div>
       <p className="muted" style={{ fontSize: 13, margin: '0 0 12px' }}>
-        Final team net worth — Amber <b className="amber-c mono">{count(amberNw)}</b> vs Sapphire{' '}
+        Final team net worth: Amber <b className="amber-c mono">{count(amberNw)}</b> vs Sapphire{' '}
         <b className="sap-c mono">{count(sapphireNw)}</b> souls.
       </p>
 
@@ -187,7 +187,7 @@ function EconomyTab({ match }: { match: MatchDetail }) {
       {!isPending && (isError || !inspect) && (
         <EmptyState
           title="Economy timeline unavailable"
-          message="The per-minute net-worth series couldn't be loaded — the final totals above are live."
+          message="The per-minute net-worth series couldn't be loaded. The final totals above are live."
           icon="chart"
         />
       )}
@@ -244,7 +244,7 @@ function MatchDetailInner() {
     return isNotFound(error) ? (
       <EmptyState title={`No data for match ${id}`} message="This match isn't in RankLock's data, or the id is wrong." icon="inbox" />
     ) : (
-      <EmptyState title="Couldn't load this match" message="The stats API is unreachable right now — try again shortly." icon="inbox" />
+      <EmptyState title="Couldn't load this match" message="The stats API is unreachable right now. Try again shortly." icon="inbox" />
     );
   }
 

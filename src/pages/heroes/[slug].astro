@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { api } from '../../lib/apiClient';
 import { buildFetch } from '../../lib/buildData';
-import { breadcrumbJsonLd } from '../../lib/seo';
+import { breadcrumbJsonLd, SITE_NAME } from '../../lib/seo';
 import { count, dayDate, pickShare, shortDate } from '../../lib/format';
 import { AD_SLOTS } from '../../config/artDirection';
 import AdSlot from '../../components/react/ui/AdSlot';
@@ -53,19 +53,52 @@ const { hero, roster } = Astro.props as { hero: HeroSummary | null; roster: Hero
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const name = hero?.hero_name ?? 'Hero';
-const title = hero ? `${name} Deadlock win rate and matchups | RankLock` : 'Hero — RankLock';
+const title = hero ? `${name} Deadlock win rate and matchups | RankLock` : 'Hero | RankLock';
 const description = hero
   ? `${name} in Deadlock: win rate, pick rate and KDA, its kit, skill order, the items that win on it, and its best and worst matchups.`
   : 'Deadlock hero detail.';
 const canonicalPath = hero ? heroPath(hero.hero_name) : '/heroes';
 const hasGuide = (await publishedGuideSlugs()).has(Astro.params.slug as string);
-const jsonLd = breadcrumbJsonLd(origin, [
-  { name: 'Home', path: '/' },
-  { name: 'Heroes', path: '/heroes' },
-  { name, path: canonicalPath },
-]);
-
 const art = heroArt(hero?.icon_url);
+
+//Entity markup: name the hero as a thing inside Deadlock so this page can be attached to
+//both entities, and point at the how-to-play article when one is published.
+const jsonLd = [
+  breadcrumbJsonLd(origin, [
+    { name: 'Home', path: '/' },
+    { name: 'Heroes', path: '/heroes' },
+    { name, path: canonicalPath },
+  ]),
+  ...(hero
+    ? [
+        {
+          '@type': 'WebPage',
+          name: title,
+          description,
+          url: new URL(canonicalPath, origin).toString(),
+          inLanguage: 'en',
+          isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: origin },
+          primaryImageOfPage: art?.card,
+          about: {
+            '@type': 'Thing',
+            name,
+            description: `${name} is a playable hero in Deadlock.`,
+            url: new URL(canonicalPath, origin).toString(),
+            ...(art?.card ? { image: art.card } : {}),
+            subjectOf: hasGuide
+              ? { '@type': 'Article', name: `How to play ${name}`, url: new URL(`${canonicalPath}guide/`, origin).toString() }
+              : undefined,
+          },
+          mentions: {
+            '@type': 'VideoGame',
+            name: 'Deadlock',
+            publisher: { '@type': 'Organization', name: 'Valve' },
+            gamePlatform: 'PC',
+          },
+        },
+      ]
+    : []),
+];
 
 const [
   matchupRowsRaw,
@@ -328,7 +361,7 @@ const tabs = [
               <div class="panel panel-pad">
                 <div class="kit-panel-head">
                   <span class="display">Weapon</span>
-                  <span class="muted">DPS at 0–25m, no items</span>
+                  <span class="muted">DPS at 0 to 25m, no items</span>
                 </div>
                 {weaponStats.length === 0 ? (
                   <EmptyState

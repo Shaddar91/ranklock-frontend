@@ -55,7 +55,7 @@ function statValue(stats: ComputedStats, key: string): number | null {
 }
 
 function countRange(lo: number, hi: number): string {
-  return lo === hi ? count(lo) : `${count(lo)}–${count(hi)}`;
+  return lo === hi ? count(lo) : `${count(lo)} to ${count(hi)}`;
 }
 
 function baseValue(hero: HeroBaseStats | null, key: string): number | null {
@@ -68,7 +68,7 @@ function baseValue(hero: HeroBaseStats | null, key: string): number | null {
 function rangeText(r: Ranged, unit: string, dp = 1): string {
   const lo = fixed(r.lo, dp);
   const hi = fixed(r.hi, dp);
-  return lo === hi ? `${lo}${unit}` : `${lo}–${hi}${unit}`;
+  return lo === hi ? `${lo}${unit}` : `${lo} to ${hi}${unit}`;
 }
 
 function Card({
@@ -229,9 +229,9 @@ export default function TargetPanel({
           beside={
             hp == null
               ? undefined
-              : `${count(hp)} HP · DPS ${dps ? `${fixed(dps.sustainedDps, 0)}–${fixed(dps.burstDps, 0)}` : ''}`
+              : `${count(hp)} HP · DPS ${dps ? `${fixed(dps.sustainedDps, 0)} to ${fixed(dps.burstDps, 0)}` : ''}`
           }
-          sub={`at level ${level}, every bullet hits, 0–25 m`}
+          sub={`at level ${level}, every bullet hits, 0 to 25 m`}
           gap={NO_WEAPON_BASELINE}
         />
         <Card
@@ -245,7 +245,7 @@ export default function TargetPanel({
           sub={`at T${tier} · ${fixed(spiritPower, 0)} spirit power · no resists`}
           gap={
             yourAbilities.length === 0
-              ? "This hero's assets payload carries no per-ability numerics — no burst to add up."
+              ? "This hero's assets payload carries no per-ability numerics. No burst to add up."
               : 'None of this hero’s served abilities carries a damage value at this tier.'
           }
         />
@@ -255,7 +255,7 @@ export default function TargetPanel({
             label="Your effective HP"
             value={ehp.vsBullets ? count(Math.round(ehp.vsBullets.ehp)) : null}
             sub={`vs bullets · ${ehp.vsSpirit ? count(Math.round(ehp.vsSpirit.ehp)) : '—'} vs spirit`}
-            gap="Add items with health or resists — an empty board has no effective HP to state."
+            gap="Add items with health or resists. An empty board has no effective HP to state."
           />
           <Card
             small

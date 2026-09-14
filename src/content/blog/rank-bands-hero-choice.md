@@ -9,7 +9,7 @@ tags: [fundamentals, ranks, picks]
 liveHeroes: [Lash, Haze]
 ---
 
-Pick for your own bracket, not the average lobby's. The first number you meet
+Pick for your own bracket. The first number you meet
 on any hero page is the all-ranks win-rate, one figure measured across every
 bracket in the data window. It is the number most players check first, and for
 pick decisions it is the one most likely to mislead you. The [heroes

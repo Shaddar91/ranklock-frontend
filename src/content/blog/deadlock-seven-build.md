@@ -26,13 +26,13 @@ down a line and slows what it damages, Static Charge stuns and damages the
 ground under whoever it is stuck to, Power Surge puts shock damage on the
 bullets that bounces off the body they hit, and Storm Cloud expands around
 Seven and needs line of sight to reach anything. All four scale with spirit,
-radius and duration, which is why his table is a list of those three rather
-than a list of gun items. His line on the [Seven hero page](/heroes/seven/)
+radius and duration, which is why his table is a list of those three and
+hardly any gun items. His line on the [Seven hero page](/heroes/seven/)
 reads 6.3 kills, 6.9 deaths and 13.1 assists a game across the window, 45,804
 souls of average net worth and an average match of 37:41. Fewer kills than
-Haze, more assists, more souls: he gets paid for being near fights rather than
-for finishing them. Where to stand while you cast is the [Seven
-guide](/heroes/seven/guide/).
+Haze, more assists, more souls: he gets paid for being near fights, and the
+kill itself can go to somebody else. Where to stand while you cast is the
+[Seven guide](/heroes/seven/guide/).
 
 ## The default build is already a winning build
 
@@ -60,8 +60,8 @@ Greater Expansion at 58.3% over 3,116,091 and Spiritual Overflow at 58.2% over
 
 The best line beats the hero's own rate by 5.6 points, the narrowest gap in
 this batch, because the baseline is already high. A Seven who reaches Spirit
-Burn is a Seven whose game ran long enough to afford it, so part of that 61.5%
-is the lead that bought the item rather than the item itself. That caveat
+Burn is a Seven whose game ran long enough to afford it, so the lead earned
+part of that 61.5% and the item is getting the credit. That caveat
 applies to every late buy on every hero and bites least here, with a floor of
 55.9% before anything late goes in.
 
@@ -86,8 +86,8 @@ a weak hero is the ordinary outcome of being a strong hero.
 
 Sinclair is the other row shaped that way, 60.2% over 149,018 matches where
 61.2% was predicted. Infernus lands on the same rounded gap two hundredths of
-a point away, so treat Venator and Sinclair as a pair rather than a ranking.
-The positive rows are Mo & Krill at 56.1% against a predicted 54.8% over
+a point away, so treat Venator and Sinclair as a pair with no order between
+them. The positive rows are Mo & Krill at 56.1% against a predicted 54.8% over
 205,055 matches and [Graves](/heroes/graves/) at 51.9% against 50.7% over
 380,830. All four gaps are under 1.3 points across the five brackets summed,
 with a floor of 9,736 matches that 37 opponents clear, so none of them is a
@@ -118,11 +118,10 @@ Eternus; Seven loses nothing.
 ## The one slot the published builds leave open
 
 Three published Seven builds reach RankLock's list, and they disagree about a
-single late item. The most favorited, at 10,705 weekly favorites by Account
-371328371, carries a name with profanity in it, and the third, at 8,247 by
-Account 1183614423, carries a streaming handle, so both are cited here by
-author and favorites. The second, "Кошмар электрика Виталия" by Account
-457310025 at 8,260, is printed as published.
+single late item. The most favorited, at 10,705 weekly favorites, carries a
+name with profanity in it, and the third, at 8,247, carries a streaming handle,
+so both are cited here by their favorite counts. The second, at 8,260,
+publishes its name in characters this page does not reprint.
 
 Lane on the top build and you buy Monster Rounds, Opening Rounds, Extra
 Spirit, Enchanter's Emblem, Spirit Shredder Bullets, Intensifying Magazine,

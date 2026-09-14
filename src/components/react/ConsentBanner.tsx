@@ -70,7 +70,7 @@ export default function ConsentBanner() {
           <div className="consent-cats">
             <ConsentRow
               title="Analytics"
-              desc="Self-hosted Matomo. Pageviews & referrers, first-party only — never shared or sold."
+              desc="Self-hosted Matomo. Pageviews & referrers, first-party only. Never shared or sold."
               checked={analytics}
               onChange={setAnalytics}
             />

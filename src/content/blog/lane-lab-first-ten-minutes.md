@@ -52,10 +52,10 @@ phase at 69.5%.
 
 The sample behind the table is the other reason to trust it. Twenty million
 games is large enough that these percentages are measurements of the game as it
-is played, not streaks or anecdotes.
+is played.
 
 One caution on the reading: these are associations measured across a population
-of games, not promises. A player at 8,500 souls can still throw the match, and
+of games. No row is a promise. A player at 8,500 souls can still throw the match, and
 a player at 5,500 can still carry it. The thresholds tell you what the early
 economy was worth across millions of recorded games. They cannot play yours.
 

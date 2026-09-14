@@ -73,7 +73,7 @@ export default function ThemeSwitcher({ compact = false }: ThemeSwitcherProps) {
         type="button"
         className="themesw-opt"
         aria-pressed={pressed}
-        title={`${label} — ${blurb}`}
+        title={`${label}: ${blurb}`}
         onClick={() => choose(id)}
         style={cssVars({ '--bc': swatch })}
       >

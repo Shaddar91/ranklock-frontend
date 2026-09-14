@@ -17,7 +17,7 @@ moved 11 lines that carry a value on both sides. Nine belong to Celeste, and
 the other two are items: Radiant Regeneration's heal on cast at 70 to 65, and
 Restorative Locket's Spirit Resistance at 10% to 8%. If Celeste is not your
 pick and neither item sits in your set, nothing here changed your game, and
-that answer is worth having tonight rather than in a fortnight.
+that answer is worth having tonight.
 
 ## What changed
 
@@ -74,7 +74,7 @@ Re-read your point order too. Dazzling Trick costs two more seconds between
 casts, 32s to 34s, and its tier-three refund got deeper, -18s to -20s, so the
 tier is doing more of the work than the base ability is. The silence on that
 same tier is a quarter of a second shorter, +1.5s to +1.25s, which is the one
-line here you will feel in a fight rather than in a spreadsheet. Any community
+line here you will feel in a fight. Any community
 Celeste build written before 2026-08-22 rates her on numbers she no longer
 has; [how to play Celeste](/heroes/celeste/guide/) is written against the
 current ones.
@@ -86,7 +86,7 @@ match data runs about 21 hours behind live play, and the lag is the smaller
 half of the problem. The window is the larger half.
 
 Every win rate on the heroes grid, the item tables and the build pages is
-computed over one long span of matches, months of play rather than days.
+computed over one long span of matches, months of play.
 Divide a hero's wins by its games across that span a few hours into a balance
 change and almost every match in the sum was played under the old values. The
 arithmetic is right and the population is wrong. A tenth of a point of
@@ -129,7 +129,7 @@ have been played on the new values to divide by and once the share of the
 sample played before release has fallen far enough for the split to mean
 something. When it lands, this page gains a movers table and a modified date.
 If it never lands, the games were not there, and a missing table is the
-correct outcome rather than a hole we filled with a guess.
+correct outcome. We will not fill the hole with a guess.
 
 ## What actually moved
 

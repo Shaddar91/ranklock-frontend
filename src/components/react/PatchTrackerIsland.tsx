@@ -51,7 +51,7 @@ function MoversColumn({
   //"No gainers for this bracket" implies other brackets differ; on the OLDEST
   //tracked patch the truth is structural — nothing earlier exists to diff (B8).
   const emptyLine = oldestPatch
-    ? 'First tracked patch — no earlier patch to compare against.'
+    ? 'First tracked patch: no earlier patch to compare against.'
     : `No ${tone === 'win' ? 'gainers' : 'losers'} for this bracket.`;
   return (
     <div className="panel" style={{ padding: '14px 16px' }}>
@@ -239,13 +239,13 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
           oldestSelected ? (
             <EmptyState
               title="First tracked patch"
-              message="No earlier patch to compare against — pick-rate movers start with the second tracked patch."
+              message="No earlier patch to compare against. Pick-rate movers start with the second tracked patch."
               icon="chart"
             />
           ) : (
             <EmptyState
               title="No movers for this patch yet"
-              message="Pick-rate gainers and losers need an earlier patch with hero stats to diff against — none is available yet."
+              message="Pick-rate gainers and losers need an earlier patch with hero stats to diff against. None is available yet."
               icon="chart"
             />
           )
@@ -280,7 +280,7 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
             isComputing(detailQ.error)
               ? computingMessage('patch hero stats are being generated', detailQ.error)
               : detailQ.isError
-                ? 'The stats API is offline — patch hero stats fill in when it comes back.'
+                ? 'The stats API is offline. Patch hero stats fill in when it comes back.'
                 : 'No data for this patch and bracket yet. Try another bracket or check back after the next refresh.'
           }
         />

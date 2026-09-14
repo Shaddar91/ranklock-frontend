@@ -30,7 +30,7 @@ That flat curve is the argument for playing him greedily early. On 820 HP at 6.4
 
 ## How to play Venator as a Damage carry
 
-Fight from where you already are. His crossbow wants distance and his body cannot make any, so the correct habit is to pick the firing position first and let the fight come to it, rather than repositioning mid-exchange like a hero with stamina to spare.
+Fight from where you already are. His crossbow wants distance and his body cannot make any, so the correct habit is to pick the firing position first and let the fight come to it. Repositioning mid-exchange is for heroes with stamina to spare.
 
 Weighted Shots goes into his builds 4.6 times more often than the roster average and Recharging Rush 4.1 times, and the item table backs the same plan. Lucky Shot reads 54.0% across 1,021,467 games on him, Silencer 53.2% over 2,655,561, his largest sample by a distance, and Siphon Bullets 52.1% over 1,945,604. Those three are the spine of a gun build that never stops paying.
 
@@ -38,7 +38,7 @@ Healing Tempo at 54.8% over 264,015 games is the highest rate on his page with a
 
 ## How to play Venator as an Offensive initiator
 
-Set the trap before anyone is looking at you. Hex-Lined Snap Trap immobilises and reveals the first enemy it touches, so it belongs on the path into an objective rather than under a fight already happening, and a visible trap that the enemy clears has still bought you the information that they cleared it.
+Set the trap before anyone is looking at you. Hex-Lined Snap Trap immobilises and reveals the first enemy it touches, so it belongs on the path into an objective, and a visible trap that the enemy clears has still bought you the information that they cleared it.
 
 Gutshot is a two-different-abilities button. On its own it is a shotgun blast that pushes; fired at someone with a wall behind them it stuns and hits harder. Learn which corners of an objective give you that wall, because a Venator who fights in the open is throwing away half his opener.
 
@@ -50,11 +50,11 @@ Consecrating Grenade is the setup nobody credits. It bounces, then ignites; whoe
 
 The patch does not name Venator and barely touches his shopping. Radiant Regeneration's heal on cast fell from 70 to 65 and appears in 1 of his 40 sampled builds; Restorative Locket's Spirit Resistance fell from 10% to 8% and appears in 5. Read his lists for order and take the purchases from the item table as usual, but nothing here has expired.
 
-Two lifetime lists sit almost level in favourites and both were revised after the patch. `TOP 1 PRIEST NA - SHMUCK` from Account 157629394 carries 46,693 favourites and was revised 2026-09-05; the other, from Account 1300093274 at 46,706 favourites and revised 2026-09-04, publishes its name in a form this page does not reprint. The three weekly sets are all from spring and all withhold their names for the same reason: 4,641 favourites from Account 1183614423 on 2026-05-07, 4,477 from Account 393148161 on 2026-05-03 and 3,190 from Account 910924536 on 2026-05-06.
+Two lifetime lists sit almost level in favourites and both were revised after the patch. `TOP 1 PRIEST NA - SHMUCK` carries 46,693 favourites and was revised 2026-09-05; the other, at 46,706 favourites and revised 2026-09-04, publishes its name in a form this page does not reprint. The three weekly sets are all from spring and all withhold their names for the same reason: 4,641 favourites on 2026-05-07, 4,477 on 2026-05-03 and 3,190 on 2026-05-06.
 
 ## Abilities: what to level and when
 
-The lists split on the first point, and the split is worth understanding rather than averaging. All three weekly sets open Consecrating Grenade; both lifetime sets open Gutshot. Grenade first is the laning answer, because the burn clears waves and makes trades one-sided without asking you to move. Gutshot first is the fighting answer, because the wall stun is the part of him that wins a 1v1.
+The lists split on the first point, and the split is worth understanding. All three weekly sets open Consecrating Grenade; both lifetime sets open Gutshot. Grenade first is the laning answer, because the burn clears waves and makes trades one-sided without asking you to move. Gutshot first is the fighting answer, because the wall stun is the part of him that wins a 1v1.
 
 Everyone agrees on the rest: Hex-Lined Snap Trap third and Ira Domini last. The trap does its work with a single point, and the ultimate is a finisher whose damage matters less than the timing of the execute.
 
@@ -62,7 +62,7 @@ Everyone agrees on the rest: Hex-Lined Snap Trap third and Ira Domini last. The 
 
 Graves is the matchup that ends games. Venator wins 38.1% of 36,139 games against him on the counter endpoint and 40.2% of 420,983 in the wider matchup sample, the worst pairing on either list. Victor follows at 39.0% over 30,611 games and Paige at 40.4% over 26,225.
 
-All three win by closing the distance he cannot restore. Once any of them is inside his range he has no button that resets the fight, so the play is to hold a longer angle than usual, spend the trap on the approach rather than on the target, and give up ground early instead of paying for it later.
+All three win by closing the distance he cannot restore. Once any of them is inside his range he has no button that resets the fight, so the play is to hold a longer angle than usual, spend the trap on the approach they have to walk, and give up ground early instead of paying for it later.
 
 Expect the same problem from the rest of the five. Seven at 40.6% over 544,910 games is his largest matchup sample anywhere, and Kelvin at 41.9% over 195,969 and McGinnis at 42.0% over 214,141 finish the list. His best row is Sinclair at 51.3% over 167,726 games, the only matchup he wins outright, followed by Mina at 49.4% over 446,540, Silver at 49.0% over 336,551, Bebop at 48.9% over 472,130 and Viscous at 48.4% over 222,191.
 

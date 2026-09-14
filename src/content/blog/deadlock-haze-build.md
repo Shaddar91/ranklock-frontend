@@ -27,7 +27,7 @@ Bullet Dance all exist to buy the seconds those stacks need. The [Haze hero
 page](/heroes/haze/) reads 9.1 kills, 7.1 deaths and 10.8 assists a game
 across the window, with 44,867 souls of average net worth and an average match
 of 37:27. Nine kills a game is the highest figure on the roster and it arrives
-from the mid game onward, not out of lane. Sequencing the abilities is the
+from the mid game onward. Sequencing the abilities is the
 [Haze guide](/heroes/haze/guide/); what you are sequencing toward is the item
 table.
 
@@ -49,7 +49,7 @@ late item's rate carries some of the lead that paid for it. Lucky Shot's 62.2%
 over 1.4 million games is real, and it also describes Haze players who were
 already ahead.
 
-## Change the second half of your build, not the first
+## Change the second half of your build
 
 The buy list and the win list are different lists, and only one of them is
 worth editing. Sorted by games, Haze's four most-bought items in the window
@@ -68,7 +68,7 @@ that is the slot to reconsider first.
 
 ## Which lanes pay for the early kill
 
-Play the lane for tempo, not for the draft. Sorting Haze's matchup table by
+Play the lane for tempo. Sorting Haze's matchup table by
 raw win rate names Sinclair at 58.3% as her best lane and Victor at 47.0% as
 her worst, and both readings mislead, because they mostly repeat that Sinclair
 is a weak hero and Victor a strong one. RankLock's build page instead compares
@@ -81,8 +81,8 @@ By that gap she does best into [Graves](/heroes/graves/), winning 49.0% of
 predicted 53.7% over 317,287 matches. The two lanes with the least room are
 [Calico](/heroes/calico/), 50.9% against a predicted 51.7% over 242,184
 matches, and Pocket, 54.6% against 55.3% over 239,028. Pocket sits within two
-hundredths of a point of two other heroes, so read it and Calico as a pair
-rather than a ranking.
+hundredths of a point of two other heroes, so read it and Calico as a pair,
+with no order between them.
 
 None of those four gaps reaches two points, so none of them should change your
 pick. They change the plan. Into Graves and Celeste the lane gives more than
@@ -112,10 +112,9 @@ lock in.
 Take the order from the published lists and the purchases from the table,
 because the two part company at the end. Three published Haze builds reach
 RankLock's list from the public build feed. Two of them are versions 34 and 27
-of the same build by the same author, Account 1183614423, at 17,027 and 16,147
-weekly favorites; the third is "ww dkdion" by Account 120623629 at 11,100. The
-top build's name carries a streaming handle, so it is cited here by author and
-favorite count.
+of the same build by the same author, at 17,027 and 16,147 weekly favorites;
+the third is "ww dkdion" at 11,100. The top build's name carries a streaming
+handle, so it is cited here by its favorite count.
 
 Its early block is Active Reload, Rapid Rounds, Swift Striker, Extra Health,
 Extra Spirit, Surge of Power, Extra Stamina and Kinetic Dash, which is the

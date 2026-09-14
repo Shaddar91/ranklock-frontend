@@ -13,8 +13,16 @@ export const GET: APIRoute = () => {
   const body = `User-agent: *
 Allow: /
 
-# Dev/demo surface — never indexed.
+# Dev/demo surface. Never indexed.
 Disallow: /styleguide
+
+# Per-entity shells. They are noindex and Google has crawled them for months, so the
+# directive is already known; blocking them now stops 80% of the crawl budget draining
+# into rotating ids. The INDEX pages stay crawlable via the $-anchored Allow.
+Allow: /matches/$
+Disallow: /matches/
+Allow: /players/$
+Disallow: /players/
 
 Sitemap: ${SITE_ORIGIN}/sitemap.xml
 `;

@@ -1,6 +1,6 @@
 ---
 title: "Deadlock rank distribution: what a band on RankLock measures"
-description: "A band on RankLock is a match's team-average badge, not a player's rank. Obscurus carries 19.7% of measured matches, Eternus 2.1%, across 4.68 million games."
+description: "A band on RankLock is a match's team-average badge. It is not a player's rank. Obscurus carries 19.7% of measured matches, Eternus 2.1%, across 4.68 million games."
 pubDate: 2026-09-03
 author: RankLock team
 heroImage: "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/sumo_card.png"
@@ -30,13 +30,13 @@ Obscurus through Eternus. That division powers the rank filter on the
 [heroes grid](/heroes/): set it to Archon and the page recomputes every
 win rate using only matches whose team-average badge landed there. Because
 the badge describes a match rather than a person, a band is a bucket of
-matches, not a bucket of players. A player whose own rank sits at Archon
+matches. A player whose own rank sits at Archon
 can still appear inside a lower or higher band on any given night,
 depending on who filled the other five slots.
 
 The same badge also drives a coarser, five-way split used on the item
-tables, All ranks through Ascendant-Eternus, rather than the twelve-band
-split used here. Both groupings read the same underlying number; they just
+tables, All ranks through Ascendant-Eternus. This page uses the
+twelve-band split. Both groupings read the same underlying number; they just
 draw the lines at different widths. [Item win rates by rank](/blog/item-win-rates-by-rank/)
 covers that five-way version and what a thin bracket does to a win rate.
 
@@ -65,7 +65,7 @@ per-player one would show. Take a hypothetical lobby of three Obscurus
 players and three Seeker players instead: the average badge lands at
 Initiate, a band with none of the six actual players in it.
 Run that pattern across millions of matches and both ends of the ladder read
-smaller than the players sitting there would suggest, not just the top.
+smaller than the players sitting there would suggest.
 
 Eternus's 2.1% share of matches is a floor on how many Eternus players exist
 in the data, not a count of them, and the same logic holds at the other end
@@ -83,8 +83,8 @@ working surface is the [leaderboard](/leaderboard/), which orders players by
 their own latest match badge, requires at least five matches to qualify, and
 sorts from the top down. That five-match floor is the one place on the site
 where a player-level minimum sample requirement shows up at all; everywhere
-else, the match count that matters is the one behind the band, not the one
-behind the person. When per-player rank lands in the pipeline, the same
+else, the match count that matters is the one behind the band. When
+per-player rank lands in the pipeline, the same
 band selector
 starts describing players instead of lobbies, and every share quoted above
 needs measuring again under the new definition. [Leaderboard, badges, and

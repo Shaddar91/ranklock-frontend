@@ -61,14 +61,14 @@ function NormalOnlyNote({ what }: { what: string }) {
   if (mode !== 'StreetBrawl') return null;
   return (
     <p className="faint" style={{ fontSize: 11, margin: '8px 0 0', lineHeight: 1.4 }}>
-      {what} use <b>Normal</b>-mode data — Brawl has no laning/coaching cohort.
+      {what} use <b>Normal</b>-mode data. Brawl has no laning/coaching cohort.
     </p>
   );
 }
 
 //Translate a build-ahead query error into the right empty-state copy.
-export function buildAheadMessage(error: unknown, fallback = 'Not computed yet — check back after the next refresh.'): string {
-  if (isComputing(error)) return 'Computing now — the first result is being generated. Check back shortly.';
+export function buildAheadMessage(error: unknown, fallback = 'Not computed yet. Check back after the next refresh.'): string {
+  if (isComputing(error)) return 'Computing now. The first result is being generated. Check back shortly.';
   if (isDisabled(error)) return 'This part of the stats service is switched off right now.';
   if (isNotFound(error)) return 'No analytics for this player yet.';
   return fallback;
@@ -193,13 +193,13 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
             </p>
           ) : picked && noGames ? (
             <p className="muted" style={{ fontSize: 12.5, margin: '6px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
-              {picked.steam_name} has no games in this mode yet — pick another player.
+              {picked.steam_name} has no games in this mode yet. Pick another player.
             </p>
           ) : (
             <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
               {caption}
               {!youZero && shownServed < shownAxes.length
-                ? ` Partial — ${shownServed} of ${shownAxes.length} axes shown; the rest fill in as more matches land.`
+                ? ` Partial: ${shownServed} of ${shownAxes.length} axes shown; the rest fill in as more matches land.`
                 : ''}
             </p>
           )}
@@ -240,7 +240,7 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
                     ) : results.length === 0 ? (
                       selfOnly ? (
                         <div className="search-note muted">
-                          That is you — search for another player to overlay.
+                          That is you. Search for another player to overlay.
                         </div>
                       ) : (
                         <div className="search-note muted">No players found for &ldquo;{q}&rdquo;.</div>
@@ -473,29 +473,29 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
             <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
               The <b style={{ color: sigSeriesColor.you }}>{sigWords.you}</b> line is your{' '}
               <b style={{ color: sigSeriesColor.you }}>gap</b> to{' '}
-              <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b> — how many {noun} you&rsquo;re{' '}
+              <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b>: how many {noun} you&rsquo;re{' '}
               <b style={{ color: 'var(--win)' }}>ahead</b> (above the baseline) or{' '}
               <b style={{ color: 'var(--loss)' }}>behind</b> (below it) at each minute. The{' '}
               <b style={{ color: sigSeriesColor.comparison }}>dashed baseline</b> is the cohort median; the shaded band
-              is their middle 50% (25th–75th percentile), so riding above the band means you&rsquo;re beating
+              is their middle 50% (25th to 75th percentile), so riding above the band means you&rsquo;re beating
               three-quarters of them. Re-pick the league or hero and the gap is re-measured against that cohort.
             </p>
           ) : (
             <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
               The <b style={{ color: sigSeriesColor.you }}>{sigWords.you}</b> line is{' '}
-              <b style={{ color: sigSeriesColor.you }}>you</b> — your real per-minute {noun}, and it stays put when you
+              <b style={{ color: sigSeriesColor.you }}>you</b>: your real per-minute {noun}, and it stays put when you
               switch league or hero.{' '}
               {cmpLabel ? (
                 <>
                   The <b style={{ color: sigSeriesColor.comparison }}>{sigWords.comparison} dashed</b> line is{' '}
-                  <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b>
-                   — the cohort you picked; the shaded
-                  band is their 25th–75th percentile. Only this line moves when you change the selectors.
+                  <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b>:{' '}
+                  the cohort you picked; the shaded
+                  band is their 25th to 75th percentile. Only this line moves when you change the selectors.
                 </>
               ) : (
                 <>
                   Pick a league to overlay the cohort you&rsquo;re chasing
-                  {effBand != null ? ` — ${tierName}'s cohort has no per-minute sample yet` : ''}.
+                  {effBand != null ? `. ${tierName}'s cohort has no per-minute sample yet` : ''}.
                 </>
               )}
             </p>
@@ -504,9 +504,9 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
             <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '8px 0 0', lineHeight: 1.5 }}>
               At <b className="mono">{marker.min}:00</b> you had{' '}
               <b className="mono" style={{ color: sigSeriesColor.you }}>{count(marker.you)}</b> {noun}; {cmpLabel} was{' '}
-              <b className="mono" style={{ color: sigSeriesColor.comparison }}>{count(marker.cmp)}</b> —{' '}
+              <b className="mono" style={{ color: sigSeriesColor.comparison }}>{count(marker.cmp)}</b>.{' '}
               <b style={{ color: marker.gap >= 0 ? 'var(--win)' : 'var(--loss)' }}>
-                you&rsquo;re {count(Math.abs(marker.gap))} {noun} {marker.gap >= 0 ? 'ahead' : 'behind'}
+                You&rsquo;re {count(Math.abs(marker.gap))} {noun} {marker.gap >= 0 ? 'ahead' : 'behind'}
               </b>
               .
             </p>
@@ -533,7 +533,7 @@ function SoulsSourcePanel({ id, band }: { id: number; band?: number }) {
   return (
     <div>
       <div className="label-xs" style={{ marginBottom: 12 }}>
-        Souls source — you vs tier
+        Souls source: you vs tier
       </div>
       {player.isPending ? (
         <Loading label="Loading your souls sources" />
@@ -556,7 +556,7 @@ function SoulsSourcePanel({ id, band }: { id: number; band?: number }) {
         <>
           <SoulsSourceChart data={rows} showTier={cohortHas} />
           <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
-            Each colour is a souls source stacked into your net worth at that minute — <b>solid bars are you</b>,
+            Each colour is a souls source stacked into your net worth at that minute: <b>solid bars are you</b>,
             {cohortHas ? ' faded bars your tier' : ' your tier fills in after the next refresh'}. Souls{' '}
             <b style={{ color: 'var(--loss)' }}>lost to deaths</b> are the line below zero, never mixed into the stack.
             {matchMode === 'Ranked' ? ' Ranked matches only.' : ''}
@@ -740,11 +740,11 @@ export function CategorizedSection({ id }: { id: number }) {
         <p className="faint" style={{ fontSize: 11, margin: '-4px 0 12px' }}>
           {cmp.data
             ? cmp.data.cohort.sample_size === 0
-              ? `No ${cmp.data.cohort.tier_name} sample for this hero yet — the compare columns are empty.`
+              ? `No ${cmp.data.cohort.tier_name} sample for this hero yet. The compare columns are empty.`
               : `Compared to ${cmp.data.cohort.tier_name} (n=${count(cmp.data.cohort.sample_size)})${
                   cmp.data.cohort.sample_size < LOW_SAMPLE ? ' · small sample' : ''
                 }`
-            : 'Compared to your tier — loading…'}
+            : 'Compared to your tier. Loading…'}
         </p>
       )}
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' }}>

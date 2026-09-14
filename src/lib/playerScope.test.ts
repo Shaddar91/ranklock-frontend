@@ -34,7 +34,7 @@ describe('windowLabel', () => {
 describe('sideScopeText', () => {
   it('prints count and date span for a side with games', () => {
     const t = sideScopeText('You', { matches: 10, span_from: '2026-08-12T10:00:00Z', span_to: '2026-08-29T18:23:20Z' }, DEFAULT_SCOPE);
-    expect(t).toBe('You 10 games (Aug 12–Aug 29)');
+    expect(t).toBe('You 10 games (Aug 12 to Aug 29)');
   });
   it('states a 0-game days side in the last-N-days phrasing', () => {
     const t = sideScopeText('You', { matches: 0 }, { kind: 'days', n: 30, hero_id: 0 });
@@ -52,7 +52,7 @@ describe('scopeCaption', () => {
       scope: { kind: 'games', n: 10, hero_id: 0 },
       you: { matches: 10, span_from: '2026-08-12T10:00:00Z', span_to: '2026-08-29T18:23:20Z' },
     });
-    expect(c).toBe('All heroes · last 10 games · You 10 games (Aug 12–Aug 29)');
+    expect(c).toBe('All heroes · last 10 games · You 10 games (Aug 12 to Aug 29)');
   });
   it('prints both sides when a player is picked', () => {
     const c = scopeCaption({
@@ -61,7 +61,7 @@ describe('scopeCaption', () => {
       themLabel: 'Sleep64',
       them: { matches: 111, span_from: '2026-05-06T20:57:44Z', span_to: '2026-08-20T15:45:15Z' },
     });
-    expect(c).toBe('All heroes · all loaded · You 26 games (May 24–Jul 6) · Sleep64 111 games (May 6–Aug 20)');
+    expect(c).toBe('All heroes · all loaded · You 26 games (May 24 to Jul 6) · Sleep64 111 games (May 6 to Aug 20)');
   });
   it('keeps a 0-game side in the caption instead of dropping it', () => {
     const c = scopeCaption({

@@ -29,7 +29,7 @@ export const IMPORT_PLACEHOLDER = 'Paste a build id or a RankLock share link';
 //02 could not verify the in-game Build Browser code format and the repo carries no decoder,
 //so the field says what it cannot read rather than failing silently on a pasted code.
 export const IMPORT_CODE_NOTE =
-  'In-game Build Browser codes cannot be read here — their format is undocumented. Paste the build id (the number in the build’s link) or a RankLock share link.';
+  'In-game Build Browser codes cannot be read here. Their format is undocumented. Paste the build id (the number in the build’s link) or a RankLock share link.';
 
 const SHARE_MARK = 'b1:';
 const ID_PATTERNS = [/\/builds?\/(\d+)/i, /[?&]build(?:_id)?=(\d+)/i];
@@ -43,7 +43,7 @@ export function parseImport(raw: string): ImportRef {
     const build = decodeBuild(input.slice(share));
     return build
       ? { kind: 'board', build }
-      : { kind: 'error', message: 'That RankLock link is malformed — copy it again from the Share button.' };
+      : { kind: 'error', message: 'That RankLock link is malformed. Copy it again from the Share button.' };
   }
   if (/^\d+$/.test(input)) return { kind: 'id', buildId: Number(input) };
   for (const re of ID_PATTERNS) {
@@ -181,7 +181,7 @@ export function slotNote(owned: number): string {
   if (owned <= TOTAL_SLOTS) {
     return `needs ${flex} flex slot${flex === 1 ? '' : 's'} (${flex} enemy Walker${flex === 1 ? '' : 's'} down)`;
   }
-  return `${owned} items — ${owned - TOTAL_SLOTS} past the 12-slot board, a shopping list rather than one loadout`;
+  return `${owned} items: ${owned - TOTAL_SLOTS} past the 12-slot board, a shopping list rather than one loadout`;
 }
 
 //---- §5 ability progression ---------------------------------------------------
@@ -316,7 +316,7 @@ function applyUpgrades(
       const hits = (hitsThisTier.get(up.name) ?? 0) + 1;
       hitsThisTier.set(up.name, hits);
       if (hits === 2) {
-        notes.push(`T${t.tier} lists two upgrades on ${up.name} and upstream does not say which is the scaling one — both are added.`);
+        notes.push(`T${t.tier} lists two upgrades on ${up.name} and upstream does not say which is the scaling one. Both are added.`);
       }
     }
   }

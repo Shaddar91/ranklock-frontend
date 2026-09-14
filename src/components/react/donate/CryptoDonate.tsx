@@ -82,7 +82,7 @@ export default function CryptoDonate() {
         <div className="donate-msg err" role="alert">
           <Icon name="lock" size={15} />
           <span>
-            Crypto donations aren’t configured yet — the receive address is unset. (Set{' '}
+            Crypto donations aren’t configured yet. The receive address is unset. (Set{' '}
             <code>PUBLIC_DONATION_ADDRESS</code> or <code>DONATION_ADDRESS</code> in{' '}
             <code>src/config/donation.ts</code>.)
           </span>
@@ -241,7 +241,7 @@ export default function CryptoDonate() {
         <div className="donate-msg ok" role="status">
           <Icon name="up" size={15} />
           <span>
-            Transaction sent — thank you! Hash <code>{txHash.slice(0, 10)}…{txHash.slice(-6)}</code>
+            Transaction sent. Thank you! Hash <code>{txHash.slice(0, 10)}…{txHash.slice(-6)}</code>
           </span>
         </div>
       )}

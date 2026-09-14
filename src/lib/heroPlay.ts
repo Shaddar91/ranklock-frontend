@@ -251,12 +251,21 @@ export function itemsThatGoWell(
 //§1.7 build-name gate: a streaming handle, a URL or an obscenity suppresses the name.
 const BUILD_NAME_HANDLE = /\b[\w-]+\.(?:tv|gg|com)\b|\bttv\b|https?:\/\/|www\./i;
 const BUILD_NAME_OBSCENE =
-  /\b(?:fuck\w*|shit\w*|bitch\w*|cunt\w*|whore\w*|slut\w*|pussy\w*|nigg\w*|fag\w*|porn\w*|hentai\w*)\b|ебак|жоп|хуй|ху[ёе]|пизд|бляд|блят|мудак|сука/i;
+  /\b(?:fuck\w*|shit\w*|bitch\w*|cunt\w*|whore\w*|slut\w*|pussy\w*|nigg\w*|fag\w*|porn\w*|hentai\w*)\b|[ёе]б[аклнн]|уёб|наёб|въеб|жоп|хуй|ху[ёе]|пизд|бляд|блят|мудак|сука/i;
+//These pages are English. Author text in another script prints as noise next to our own copy,
+//so any non-Latin run suppresses it the same way an obscenity does.
+const NON_LATIN = /[\u0400-\u04FF\u0370-\u03FF\u0590-\u05FF\u0600-\u06FF\u0E00-\u0E7F\u3040-\u30FF\u3400-\u9FFF\uAC00-\uD7AF]/;
 
 /** True when a player-authored build name is plain enough to print on a page under ad review. */
 export function printableBuildName(name: string): boolean {
   const n = name.trim();
-  return n !== '' && !BUILD_NAME_HANDLE.test(n) && !BUILD_NAME_OBSCENE.test(n);
+  return n !== '' && !BUILD_NAME_HANDLE.test(n) && !BUILD_NAME_OBSCENE.test(n) && !NON_LATIN.test(n);
+}
+
+/** Same gate for an author-authored item-set section label, which prints beside our own headings. */
+export function printableSectionLabel(label: string): boolean {
+  const n = label.trim().replace(/[.:]+$/, '');
+  return n !== '' && printableBuildName(n);
 }
 
 /** Served builds in weekly order, the ones the guide cites by hero_build_id hoisted first. */

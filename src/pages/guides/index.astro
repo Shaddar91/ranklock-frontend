@@ -1,0 +1,113 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { breadcrumbJsonLd, SITE_NAME } from '../../lib/seo';
+import { shortDate } from '../../lib/format';
+import { resolveAsset } from '../../lib/assets';
+
+//The index the 38 per-hero guides never had: every /heroes/<slug>/guide/ page in one
+//grid, with the written posts listed under it so /blog/ keeps an inbound link.
+const guides = (await getCollection('guides', ({ data }) => !data.draft)).sort((a, b) =>
+  a.data.hero.localeCompare(b.data.hero),
+);
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
+  .slice(0, 8);
+
+const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
+const jsonLd = [
+  breadcrumbJsonLd(origin, [
+    { name: 'Home', path: '/' },
+    { name: 'How to play', path: '/guides' },
+  ]),
+  {
+    '@type': 'ItemList',
+    name: `${SITE_NAME} how-to-play pages`,
+    numberOfItems: guides.length,
+    itemListElement: guides.map((guide, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: guide.data.hero,
+      url: new URL(`/heroes/${guide.id}/guide/`, origin).toString(),
+    })),
+  },
+];
+---
+
+<BaseLayout
+  title="How to play every Deadlock hero | RankLock"
+  description={`How to play all ${guides.length} Deadlock heroes: point order, the buys that carry, and the lanes that beat you, each one carrying win rates pulled live from the current patch.`}
+  canonicalPath="/guides"
+  jsonLd={jsonLd}
+>
+  <main class="container">
+    <div class="kicker">One page per hero, fused with live stats</div>
+    <h1 class="h-page">How to play every Deadlock hero</h1>
+    <p class="page-intro">
+      How to play every one of the {guides.length} heroes: which ability to take first, the buys that carry the
+      match, and the lanes that beat you. Every number is pulled from the current patch rather than quoted from
+      a screenshot that ages. The tables behind them live on the <a href="/heroes/">hero win rates</a> page.
+    </p>
+
+    <div class="blog-grid" style="margin-top:20px;">
+      {
+        guides.map((guide) => (
+          <a class="panel blogcard" href={`/heroes/${guide.id}/guide/`}>
+            {guide.data.heroImage && (
+              <img
+                class="bc-hero"
+                src={resolveAsset(guide.data.heroImage)}
+                alt={guide.data.hero}
+                loading="lazy"
+                decoding="async"
+              />
+            )}
+            <div class="bc-title">{guide.data.hero}</div>
+            <p class="bc-desc">{guide.data.description}</p>
+            <div class="between" style="margin-top:auto;">
+              <span class="label-xs" style="font-size:10px;">{guide.data.patchLabel}</span>
+              <div class="blog-tags">
+                {guide.data.roles.slice(0, 2).map((role) => (
+                  <span class="blog-tag">{role}</span>
+                ))}
+              </div>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+
+    <h2 class="h-sec" style="margin-top:36px;">Meta and fundamentals</h2>
+    <p class="page-intro">
+      The written side: how the tier list is graded, what a rank band measures, where souls actually come from.
+      <a href="/blog/">All posts</a>.
+    </p>
+    <div class="blog-grid" style="margin-top:16px;">
+      {
+        posts.map((post) => (
+          <a class="panel blogcard" href={`/blog/${post.id}/`}>
+            {post.data.heroImage && (
+              <img
+                class="bc-hero"
+                src={resolveAsset(post.data.heroImage)}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            )}
+            <div class="bc-title">{post.data.title}</div>
+            <p class="bc-desc">{post.data.description}</p>
+            <div class="between" style="margin-top:auto;">
+              <span class="label-xs" style="font-size:10px;">{shortDate(post.data.pubDate.toISOString())}</span>
+              <div class="blog-tags">
+                {post.data.tags.slice(0, 2).map((t) => (
+                  <span class="blog-tag">{t}</span>
+                ))}
+              </div>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </main>
+</BaseLayout>

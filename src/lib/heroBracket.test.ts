@@ -18,9 +18,9 @@ describe('bracketBucket — a picked tier resolves to the band the routes serve'
 
 describe('servedBandLabel — names the band off the pinned ladder', () => {
   it('states the tiers a pick actually covers', () => {
-    expect(servedBandLabel(3)).toBe('Initiate – Acolyte');
-    expect(servedBandLabel(5)).toBe('Sentinel – Mystic');
-    expect(servedBandLabel(11)).toBe('Ascendant – Eternus');
+    expect(servedBandLabel(3)).toBe('Initiate to Acolyte');
+    expect(servedBandLabel(5)).toBe('Sentinel to Mystic');
+    expect(servedBandLabel(11)).toBe('Ascendant to Eternus');
     expect(servedBandLabel('all')).toBe('All ranks');
   });
 

@@ -24,17 +24,17 @@ liveItems: [Silencer, Frenzy, Lucky Shot, Phantom Strike, Inhibitor]
 
 ## Who plays Silver, and why
 
-Play the first half hour to survive and everything after it to decide the game. Silver wins 43.2% of matches settled inside 30 minutes, 44.3% of those running 30 to 45 and 47.1% past 45, a climb of 3.9 points that says her worst period is the one you have to walk through, not the one you build for.
+Play the first half hour to survive and everything after it to decide the game. Silver wins 43.2% of matches settled inside 30 minutes, 44.3% of those running 30 to 45 and 47.1% past 45, a climb of 3.9 points. Her worst period is the one you have to walk through on the way to the game you build for.
 
 She carries 830 HP at 6.7 m/s on 2 stamina, the thinnest movement budget in this batch, so every dodge she makes has to be worth the charge. What she gets back is a second kit: Lycan Curse fires itself once Bloodlust fills, replacing everything she was holding a moment earlier. Deciding which of the two heroes is on the field is most of what playing her well means.
 
 ## How to play Silver as a Damage carry
 
-Hold the rifle form at range and let Slam Fire pay for it. The reload is instant, the fire rate goes up and the damage scales with health, at the price of accuracy, so it wants a target close enough to miss forgivingly and a lane you have already pushed. Fire it into a committed enemy, not a fleeing one.
+Hold the rifle form at range and let Slam Fire pay for it. The reload is instant, the fire rate goes up and the damage scales with health, at the price of accuracy, so it wants a target close enough to miss forgivingly and a lane you have already pushed. Fire it into an enemy who has already committed.
 
-Buy for the moment she is already good at rather than for the moment she is not. Silencer reads 55.8% across 1,020,882 games on her and Frenzy 55.0% over 1,344,909, the two biggest tables she owns, and Inhibitor sits at 54.0% over 1,045,202. All three win the mid-game fight, which is where the curve says her win rate turns.
+Buy for the moment she is already good at. Silencer reads 55.8% across 1,020,882 games on her and Frenzy 55.0% over 1,344,909, the two biggest tables she owns, and Inhibitor sits at 54.0% over 1,045,202. All three win the mid-game fight, which is where the curve says her win rate turns.
 
-Two entries deserve a second look before you copy them. Spellslinger is the highest number on the page at 56.1%, but only 85,277 games back it, and Glass Cannon's 54.0% comes from 68,677 against tables ten times the size. Read them as evidence about what her damage wants, not as a shopping order.
+Two entries deserve a second look before you copy them. Spellslinger is the highest number on the page at 56.1%, but only 85,277 games back it, and Glass Cannon's 54.0% comes from 68,677 against tables ten times the size. Read them as evidence about what her damage wants before you turn either into a shopping order.
 
 ## How to play Silver as a Tank
 
@@ -46,9 +46,9 @@ Do not confuse durability with immobility. On 2 stamina she cannot dash out of a
 
 ## How to play Silver as an Offensive initiator
 
-Lock the target first. Entangling Bola deals spirit damage, slows, and takes away movement abilities and stamina, which is the only reason a hero this slow ever catches anyone. Throw it at the enemy who would otherwise leave, not the one already in your face.
+Lock the target first. Entangling Bola deals spirit damage, slows, and takes away movement abilities and stamina, which is the only reason a hero this slow ever catches anyone. Throw it at the enemy who would otherwise leave.
 
-Boot Kick is the follow-up, not the opener. It dashes, damages and marks what it hits for whatever comes next, so the sequence that kills is the bola landing, the kick closing, and the transform arriving into a target that cannot walk away. Phantom Strike at 54.2% over 924,161 games is the item that makes that chain reach further.
+Boot Kick is the follow-up. It dashes, damages and marks what it hits for whatever comes next, so the sequence that kills is the bola landing, the kick closing, and the transform arriving into a target that cannot walk away. Phantom Strike at 54.2% over 924,161 games is the item that makes that chain reach further.
 
 Pick your dive by what happens if it fails. Nothing in her kit resets a bad opener, and the enemy answer is to make her spend Bola or Boot Kick on nothing before the real fight starts.
 
@@ -56,13 +56,13 @@ Pick your dive by what happens if it fails. Nothing in her kit resets a bad open
 
 The patch does not name Silver, and it barely touches her. Radiant Regeneration's heal on cast fell from 70 to 65 and appears in none of her 40 sampled builds; Restorative Locket's Spirit Resistance dropped from 10% to 8% and appears in 7. Her ordinary shopping is untouched, which is rarer than it sounds.
 
-One list of the five was revised on the day the update landed. `Parzelion's Silver Build` from Account 278919272 carries 31,294 favourites and is dated 2026-08-22, making it the only set here written with the current numbers in front of its author. The other lifetime list, from Account 210185343 at 31,897 favourites, is months older at 2026-05-02 and publishes its name in a form this page does not reprint. `MKC7R l AGGRESIVE TANK BUILD l NEW PATCH` from Account 257722388 holds 2,060 weekly favourites from 2026-04-12, and the two most-favourited weekly sets, 6,268 from Account 1183614423 on 2026-04-09 and 3,486 from Account 393148161 on 2026-04-12, both withhold their names here for the same reason.
+One list of the five was revised on the day the update landed. `Parzelion's Silver Build` carries 31,294 favourites and is dated 2026-08-22, making it the only set here written with the current numbers in front of its author. The other lifetime list, at 31,897 favourites, is months older at 2026-05-02 and publishes its name in a form this page does not reprint. `MKC7R l AGGRESIVE TANK BUILD l NEW PATCH` holds 2,060 weekly favourites from 2026-04-12, and the two most-favourited weekly sets, 6,268 on 2026-04-09 and 3,486 on 2026-04-12, both withhold their names here for the same reason.
 
 ## Abilities: what to level and when
 
 Four of the five lists open Slam Fire, then Boot Kick, then Entangling Bola, with Lycan Curse last. The one exception takes Boot Kick first, and it is the list that calls itself a tank build. Take the kick early when you intend to be in melee range from the first minute.
 
-Leave the ultimate for last regardless. Lycan Curse casts itself off Bloodlust rather than off a level, so an early point in it changes nothing about how often you transform.
+Leave the ultimate for last regardless. Lycan Curse casts itself off Bloodlust, so an early point in it changes nothing about how often you transform.
 
 ## Hard counters, and how to play around them
 
@@ -76,4 +76,4 @@ Look at the other end before you write the pick off. Ivy at 43.6% over 201,407 g
 
 Buy Silencer and Frenzy first among the late purchases, on 1,020,882 and 1,344,909 games at 55.8% and 55.0%, then add Inhibitor at 54.0% over 1,045,202 when the enemy carry is the problem. Lucky Shot reads 55.1% over 136,126 games and Diviner's Kevlar 53.6% over 336,431 if the damage coming back at you is spirit.
 
-Pick your ally by feel, not by the table. No teammate reaches the 20,000-game floor her synergy endpoint needs, so there is no measured duo to build a draft around.
+Pick your ally by feel. No teammate reaches the 20,000-game floor her synergy endpoint needs, so there is no measured duo to build a draft around.

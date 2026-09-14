@@ -47,7 +47,7 @@ export function startFromPresets(
     {
       key: 'most-bought',
       label: 'Most bought',
-      hint: 'The items bought most often on this hero — RankLock public matches',
+      hint: 'The items bought most often on this hero: RankLock public matches',
       itemIds: shop(byGames.map((r) => r.item_id)),
       //a buy-order row's rate is per ITEM, never the set's — so the assembled board carries none.
       rate: null,
@@ -55,7 +55,7 @@ export function startFromPresets(
     {
       key: 'best-wr',
       label: 'Best-WR items',
-      hint: 'Highest Wilson-lower win rate among the same buys — RankLock public matches',
+      hint: 'Highest Wilson-lower win rate among the same buys: RankLock public matches',
       itemIds: shop(byWilson.map((r) => r.item_id)),
       rate: null,
     },
@@ -76,7 +76,7 @@ export function startFromPresets(
   ];
 }
 
-export const PRESET_SOURCE_NOTE = `Set rates: ${SET_WINDOW}. Buy-order presets carry no set rate — ${BUY_WINDOW} scores one item at a time.`;
+export const PRESET_SOURCE_NOTE = `Set rates: ${SET_WINDOW}. Buy-order presets carry no set rate. ${BUY_WINDOW} scores one item at a time.`;
 
 //---- §11 ability-order editor
 

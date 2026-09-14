@@ -10,8 +10,8 @@ liveItems: []
 draft: false
 ---
 
-Rebuild your hero pool from this page, not from anything written on release
-night. The 2026-08-22 Update went live at 2026-08-22 21:40 UTC fourteen days ago, and
+Rebuild your hero pool from this page. The 2026-08-22 Update went live at
+2026-08-22 21:40 UTC fourteen days ago, and
 nearly everything written about it that night has already been overwritten. This
 is the slow answer: which of those changes are still visible in what people
 build and win with, now that there are two weeks of games to divide by.
@@ -24,7 +24,7 @@ the first time. A fortnight on, the same fraction is computed over people who
 have stopped experimenting, and the gap between those two measurements is
 routinely wider than the balance edit that set them off.
 
-The second reason is arithmetic rather than judgement. A release window opens at
+The second reason is arithmetic. A release window opens at
 midnight on the day the build shipped, so its first hours hold games played by
 people who had not downloaded the change yet. Those hours are most of the sample
 on the first evening. By day fourteen they are about six percent of it. The rows
@@ -34,8 +34,8 @@ further down are measured on a window that has stopped moving underneath them.
 
 Three tests, in this order, and a row appears only when it passes all three.
 
-- **Enough games.** A rate computed on a handful of matches is left out rather
-  than printed. Where a hero or an item has not accumulated enough games at a
+- **Enough games.** A rate computed on a handful of matches is left out.
+  Where a hero or an item has not accumulated enough games at a
   given rank, the row says there are not enough games yet. It never prints a zero
   and it never prints a dash, because both of those read as a real measurement of
   nothing.
@@ -67,8 +67,8 @@ players believe, immediately. The other measures whether the belief paid.
 A two-week read is the one worth rebuilding a hero pool around, and being late is
 the whole of its value. If a hero listed further down is one you play, the edit
 has survived long enough to be worth practice hours. If a hero you expected is
-absent, the honest reading is that its edit never reached the win column, not
-that we left it out. Check the [patch list](/patches/) for the next release date,
+absent, the honest reading is that its edit never reached the win column.
+Nothing was held back. Check the [patch list](/patches/) for the next release date,
 because the window this article measures closes the moment that release lands.
 
 ## The builds that stuck

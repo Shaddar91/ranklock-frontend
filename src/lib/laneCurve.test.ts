@@ -501,13 +501,13 @@ describe('leagueSampleCaption (both sample sizes + the lobby-average naming)', (
 
   it('team_average names the lobby-average league and says whose lobbies they are', () => {
     const one = leagueSampleCaption('team_average', [{ name: 'Ritualist', n: 662990 }]);
-    expect(one).toBe('n = 662,990 player-games in lobbies whose average rank is Ritualist — lobby-average league');
+    expect(one).toBe('n = 662,990 player-games in lobbies whose average rank is Ritualist, lobby-average league');
     const two = leagueSampleCaption('team_average', [
       { name: 'Ritualist', n: 662990 },
       { name: 'Ascendant', n: 17010 },
     ]);
     expect(two).toBe(
-      'n = 662,990 player-games in lobbies whose average rank is Ritualist · 17,010 player-games in lobbies whose average rank is Ascendant — lobby-average leagues',
+      'n = 662,990 player-games in lobbies whose average rank is Ritualist · 17,010 player-games in lobbies whose average rank is Ascendant, lobby-average leagues',
     );
   });
 

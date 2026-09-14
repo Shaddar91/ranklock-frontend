@@ -117,7 +117,7 @@ export default function PlayerHeader({ player, heroes, formWins, topPercentile, 
               {formWins.length > 0 && <FormDots form={formWins} />}
               {form.total > 0 && (
                 <Chip tone={FORM_TONE[form.label] ?? 'neutral'} title={`Last ${form.total} games`}>
-                  Recent form: {form.wins}W–{form.losses}L · {form.label}
+                  Recent form: {form.wins}W {form.losses}L · {form.label}
                 </Chip>
               )}
             </div>

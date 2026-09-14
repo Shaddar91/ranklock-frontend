@@ -82,7 +82,7 @@ export function CatPanel({ title, icon, rows, more = [], compare, emptyMessage }
         </>
       ) : (
         <div style={{ padding: 12 }}>
-          <EmptyState title="Not available yet" message={emptyMessage ?? 'Not computed yet — check back after the next refresh.'} icon="chart" />
+          <EmptyState title="Not available yet" message={emptyMessage ?? 'Not computed yet. Check back after the next refresh.'} icon="chart" />
         </div>
       )}
     </div>

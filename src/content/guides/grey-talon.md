@@ -22,21 +22,21 @@ liveItems: [Lucky Shot, Diviner's Kevlar, Spiritual Overflow, Mystic Reverb, Esc
 
 ## Who plays Grey Talon, and why
 
-Take Grey Talon when your team can protect a farm lane for twenty minutes, and treat the first half of the match as something to get through rather than something to win. He wins 42.1% of matches decided under 30 minutes, 48.0% of those running 30 to 45, and 50.4% past 45. That 8.3-point climb says the hero you queued is the one who exists at the end. He carries 780 HP, moves at 6.3 m/s and holds 4 stamina, so the survival budget is in the jumps, not in the health bar.
+Take Grey Talon when your team can protect a farm lane for twenty minutes, and treat the first half of the match as something to get through. He wins 42.1% of matches decided under 30 minutes, 48.0% of those running 30 to 45, and 50.4% past 45. That 8.3-point climb says the hero you queued is the one who exists at the end. He carries 780 HP, moves at 6.3 m/s and holds 4 stamina, so the survival budget is in the jumps.
 
 Charged Shot is a held shot that pierces whatever line it is fired down. Rain of Arrows lifts him into a glide with bonus weapon damage and multishot. Spirit Snare arms a trap that curses, slows, silences and disarms whoever trips it, and cuts them off from their items while it lasts. Guided Owl is a piloted bird that explodes for damage and a stun, and every kill it takes banks permanent Spirit. That last clause is the hero's whole growth curve: his ultimate is also his farm.
 
 ## How to play Grey Talon as a Damage carry
 
-Buy the sightline before you buy the damage. Charged Shot pierces, so the shot you want is down a lane, a corridor or a zip line where two bodies stack behind one another, and the whole build is about being allowed to hold that angle. Lucky Shot leads the item table at 59.3% over 174,764 games and Spiritual Overflow follows at 56.8% over 519,693, both of which pay per shot landed rather than per fight won.
+Buy the sightline before you buy the damage. Charged Shot pierces, so the shot you want is down a lane, a corridor or a zip line where two bodies stack behind one another, and the whole build is about being allowed to hold that angle. Lucky Shot leads the item table at 59.3% over 174,764 games and Spiritual Overflow follows at 56.8% over 519,693, both of which pay per shot landed.
 
-Sharpshooter is the purchase that separates his players from everyone else's. Grey Talon buys it 7.1 times more often than the roster average, the widest gap in his shop, and Surge of Power 2.4 times. Take that as instruction, not trivia: the hero is bought as a long-range weapon first.
+Sharpshooter is the purchase that separates his players from everyone else's. Grey Talon buys it 7.1 times more often than the roster average, the widest gap in his shop, and Surge of Power 2.4 times. Take that as instruction: the hero is bought as a long-range weapon first.
 
 Farm the Guided Owl kills you can get safely. Because every one banks permanent Spirit, an owl spent on a low wave or a retreating enemy is worth more than an owl held for a fight that never happens, and the compounding is the reason his late numbers look nothing like his early ones.
 
 ## How to play Grey Talon as an Offensive initiator
 
-Start fights with the trap, not with the arrow. Spirit Snare takes items away from whoever walks into it, which is a harder opener than the damage suggests: a silenced, disarmed enemy in a doorway is a kill your team can walk to. Place it on the retreat path rather than the approach, so it catches them after they have already spent something.
+Start fights with the trap and save the arrow for after. Spirit Snare takes items away from whoever walks into it, which is a harder opener than the damage suggests: a silenced, disarmed enemy in a doorway is a kill your team can walk to. Place it on the retreat path, so it catches them after they have already spent something.
 
 Rain of Arrows is an opener and a liability in the same button. The glide gives you the angle nobody can contest and a burst of weapon damage while you hold it, but it also puts you in the air with 4 stamina and no cover, so use it when the enemy has already committed a stun and not before. Ethereal Shift wins 56.4% of the 55,010 games it is bought in on the hero and is the cleanest answer to being caught mid-glide.
 
@@ -46,11 +46,11 @@ Guided Owl closes what the trap starts. The stun on detonation is the only relia
 
 Grey Talon was not named in this patch. One item he carries did move: Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in 6 of the 40 sampled Grey Talon builds. Radiant Regeneration lost heal on cast from 70 to 65 and appears in none of them, so the change costs him nothing.
 
-Take the item order from the recent lists. `SN|P3R : Spirit Godshot` from Account 29715818 at 64,414 favourites was updated 2026-07-30 and is the freshest set on the hero. `Gray Talon (YelizarSkik) Arrow Killer` from Account 145178441 is by far the most favourited at 316,418 but was last touched 2024-11-05, and its early block is built out of gun items from a different era of the shop. Read its point order, not its purchases.
+Take the item order from the recent lists. `SN|P3R : Spirit Godshot` at 64,414 favourites was updated 2026-07-30 and is the freshest set on the hero. `Gray Talon (YelizarSkik) Arrow Killer` is by far the most favourited at 316,418 but was last touched 2024-11-05, and its early block is built out of gun items from a different era of the shop. Read its point order and skip its purchases.
 
 ## Abilities: what to level and when
 
-Four of the five published builds open Charged Shot, then Rain of Arrows, then Spirit Snare, then Guided Owl. Build 465317 from Account 227298737 at 7,246 weekly favourites, build 267850 from Account 1183614423 at 3,383, `spirit talon` from Account 481494386 at 2,663 and the lifetime leader all take that order. `SN|P3R : Spirit Godshot` is the exception, taking Rain of Arrows first.
+Four of the five published builds open Charged Shot, then Rain of Arrows, then Spirit Snare, then Guided Owl. Build 465317 at 7,246 weekly favourites, build 267850 at 3,383, `spirit talon` at 2,663 and the lifetime leader all take that order. `SN|P3R : Spirit Godshot` is the exception, taking Rain of Arrows first.
 
 Choose between the two on how the lane is going. Charged Shot first is the default because it is your wave clear and your only safe damage. Rain of Arrows first is the answer when you are being pushed onto the Guardian and need the vertical escape more than the poke, and it is the one change worth making before the first back. Spirit Snare stays third in every list; it is a utility button, and its value does not scale with points the way the first two do.
 

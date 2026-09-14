@@ -34,7 +34,7 @@ const faqs = [
   },
   {
     q: 'How is pick-rate calculated, and why can it pass 100%?',
-    a: `On patch pages, pick-rate divides a hero's appearances by the number of distinct matches in the group. Both teams can pick the same hero in one match and each pick counts, so the scale runs from 0 to 2 — a hero picked by both teams in every match would show 200%.`,
+    a: `On patch pages, pick-rate divides a hero's appearances by the number of distinct matches in the group. Both teams can pick the same hero in one match and each pick counts, so the scale runs from 0 to 2. A hero picked by both teams in every match would show 200%.`,
   },
   {
     q: `Why is a hero's patch win-rate sometimes missing?`,
@@ -42,19 +42,19 @@ const faqs = [
   },
   {
     q: 'How does RankLock decide which patch a match belongs to?',
-    a: `By start time. A match belongs to the patch that was live when it began — its start time falls inside that patch's release-to-end window. One patch is open at a time and covers matches up to the present, and a match never moves to another patch retroactively.`,
+    a: `By start time. A match belongs to the patch that was live when it began. Its start time falls inside that patch's release-to-end window. One patch is open at a time and covers matches up to the present, and a match never moves to another patch retroactively.`,
   },
   {
     q: 'What do the rank brackets on matchup pages mean?',
-    a: `Five badge ranges — 11–36, 41–56, 61–76, 81–96 and 101–116 — plus an all-ranks view. The API labels them with the game's rank names, from Initiate–Alchemist at the bottom to Ascendant–Eternus at the top. Filtering matchups by bracket constrains the badge of the hero you are viewing from, not the opponent's.`,
+    a: `Five badge ranges: 11 to 36, 41 to 56, 61 to 76, 81 to 96 and 101 to 116, plus an all-ranks view. The API labels them with the game's rank names. The lowest runs Initiate to Alchemist, the highest Ascendant to Eternus. Filtering matchups by bracket constrains the badge of the hero you are viewing from, not the opponent's.`,
   },
   {
     q: 'How often do the stats update?',
-    a: `In bursts, when the aggregation pipeline runs. Each run covers the window from the last completed run to the current hour — there is no fixed daily or weekly recompute. The six-hour timer behind it is currently switched on by hand. Every analytics response carries an <code>X-Data-Fresh-As-Of</code> header, and the <a href="https://api.ranklock.app/api/meta/data-horizon" target="_blank" rel="noopener noreferrer">data horizon endpoint</a> shows the newest match in the database.`,
+    a: `In bursts, when the aggregation pipeline runs. Each run covers the window from the last completed run to the current hour. There is no fixed daily or weekly recompute. The six-hour timer behind it is currently switched on by hand. Every analytics response carries an <code>X-Data-Fresh-As-Of</code> header, and the <a href="https://api.ranklock.app/api/meta/data-horizon" target="_blank" rel="noopener noreferrer">data horizon endpoint</a> shows the newest match in the database.`,
   },
   {
     q: 'Why does a page sometimes say "computing" or warn that data is stale?',
-    a: `A route whose dataset has never been computed answers "computing" rather than inventing a number. Data that is older than its freshness threshold — twelve hours for matchup stats, 48 hours for daily and lane datasets — is flagged with an <code>X-Data-Stale: true</code> response header instead of being passed off as fresh.`,
+    a: `A route whose dataset has never been computed answers "computing" rather than inventing a number. Data that is older than its freshness threshold, twelve hours for matchup stats and 48 hours for daily and lane datasets, is flagged with an <code>X-Data-Stale: true</code> response header instead of being passed off as fresh.`,
   },
   {
     q: 'What does the rank distribution page count?',
@@ -62,7 +62,7 @@ const faqs = [
   },
   {
     q: 'Where do item stats, counters and synergies come from?',
-    a: `Two different places. All-ranks item win-rates are computed by RankLock from its own match data. Item stats by bracket, hero counters and hero synergies are proxied from deadlock-api's analytics service, not computed from RankLock data. Per-rank item win-rates are not published at all — the read returns empty rather than a fabricated number.`,
+    a: `Two different places. All-ranks item win-rates are computed by RankLock from its own match data. Item stats by bracket, hero counters and hero synergies are proxied from deadlock-api's analytics service, not computed from RankLock data. Per-rank item win-rates are not published at all. The read returns empty rather than a fabricated number.`,
   },
   {
     q: 'Can I compare my economy against higher-ranked players?',

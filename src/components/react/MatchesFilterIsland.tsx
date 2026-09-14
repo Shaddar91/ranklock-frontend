@@ -118,7 +118,7 @@ function MatchesInner({ initialRows, initialTotal }: MatchesIslandProps) {
   const offset = offsetFromPage(page);
   const rangeLabel =
     rows.length > 0
-      ? `Matches ${count(offset + 1)}–${count(offset + rows.length)} of ${total !== null ? count(total) : '…'}`
+      ? `Matches ${count(offset + 1)} to ${count(offset + rows.length)} of ${total !== null ? count(total) : '…'}`
       : DASH;
 
   //Numbered frame renders as soon as rows exist — before X-Total-Count lands `last` is
@@ -165,7 +165,7 @@ function MatchesInner({ initialRows, initialTotal }: MatchesIslandProps) {
             {isPending
               ? 'Loading matches…'
               : isError
-                ? 'Matches are unavailable — the stats API is offline.'
+                ? 'Matches are unavailable. The stats API is offline.'
                 : 'No matches for this filter.'}
           </p>
         ) : (

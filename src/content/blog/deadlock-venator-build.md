@@ -69,7 +69,7 @@ the habit is. Battle Vest is the most-bought Venator item at 7,333,694 games
 and wins 45.8% of them, with Bullet Lifesteal next at 7,269,965 games and
 46.1%.
 
-## The opponent changes your pace, not your build
+## The opponent changes your pace
 
 Expect the same crossbow build against everyone. Venator loses 59.5% of his
 454,553 matches against Seven, the worst raw row on the hero, and it is one of
@@ -85,10 +85,10 @@ hero on the roster.
 His largest gap is [Vindicta](/heroes/vindicta/), 47.1% against a predicted
 45.8% over 240,725 matches, 1.3 points. Wraith and Celeste sit within six
 hundredths of a point of the Seven row, so read Seven as one positive row
-among several rather than the second best. The negative side is the
-shallowest of the four most-picked heroes: Pocket at 47.6% against a predicted
-48.1% over 203,841 matches, and The Doorman at 44.6% against 45.0% over
-210,107. Neither reaches half a point.
+among several. Its place in that order is not meaningful. The negative side
+is the shallowest of the four most-picked heroes: Pocket at 47.6% against a
+predicted 48.1% over 203,841 matches, and The Doorman at 44.6% against 45.0%
+over 210,107. Neither reaches half a point.
 
 Almost no matchup structure survives that, so the build does not change with
 the opponent on this hero. The pace does. Into Vindicta and Seven the numbers
@@ -116,8 +116,8 @@ only for a hero you play far better than the field. Near the top you get
 
 Two published Venator builds reach RankLock's list, the fewest of the four
 heroes, and they split on one late slot. Thirty-one weekly favorites separate
-them: 12,272 for the build by Account 1183614423, version 34, and 12,241 for
-the build by Account 393148161, version 31. Both names carry the same
+them: 12,272 for the build, version 34, and 12,241 for
+the build, version 31. Both names carry the same
 streaming handle, so both are cited by author and favorites, and the shared
 handle also means the two cannot be read as independent opinions.
 

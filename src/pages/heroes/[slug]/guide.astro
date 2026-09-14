@@ -10,7 +10,7 @@ import GuideLiveStats from '../../../components/react/GuideLiveStats';
 import { getCollection, getEntry, render } from 'astro:content';
 import { api } from '../../../lib/apiClient';
 import { buildFetch } from '../../../lib/buildData';
-import { breadcrumbJsonLd } from '../../../lib/seo';
+import { breadcrumbJsonLd, SITE_NAME } from '../../../lib/seo';
 import { count, shortDate } from '../../../lib/format';
 import { abilityOrderSequence, favoriteCounts, formatUpdated } from '../../../lib/buildMeta';
 import { isPublicItem, itemMeta } from '../../../lib/itemCatalog';
@@ -26,6 +26,7 @@ import {
   type AbilityDescription,
   type GuideMeta,
   type HeroRole,
+  printableSectionLabel,
 } from '../../../lib/heroPlay';
 import type {
   DataHorizonResponse,
@@ -181,8 +182,8 @@ const builds = play.builds.map(({ build, author, cited, name: printName }) => ({
   cited,
   updated: formatUpdated(build.last_updated_timestamp, nowSeconds),
   favorites: favoriteCounts(build),
-  categories: build.categories.map((c) => ({
-    label: c.name,
+  categories: build.categories.map((c, i) => ({
+    label: printableSectionLabel(c.name) ? c.name : `Section ${i + 1}`,
     items: c.items.flatMap((i) => {
       const meta = isPublicItem(i.item_id) ? itemMeta(i.item_id) : undefined;
       return meta ? [{ id: i.item_id as number, name: meta.name, icon: meta.icon }] : [];
@@ -222,12 +223,45 @@ const description = entry.data.description;
 const written = shortDate((entry.data.updatedDate ?? entry.data.pubDate).toISOString());
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
-const jsonLd = breadcrumbJsonLd(origin, [
-  { name: 'Home', path: '/' },
-  { name: 'Heroes', path: '/heroes' },
-  { name, path: heroUrl },
-  { name: 'How to play', path: canonicalPath },
-]);
+const pageUrl = new URL(canonicalPath, origin).toString();
+//Entity markup: the page is an Article ABOUT a named hero inside a named game, so a search
+//engine can attach it to both entities instead of reading 2,000 words of loose text.
+const jsonLd = [
+  breadcrumbJsonLd(origin, [
+    { name: 'Home', path: '/' },
+    { name: 'Heroes', path: '/heroes' },
+    { name, path: heroUrl },
+    { name: 'How to play', path: canonicalPath },
+  ]),
+  {
+    '@type': 'Article',
+    headline: title,
+    description,
+    datePublished: entry.data.pubDate.toISOString(),
+    dateModified: (entry.data.updatedDate ?? entry.data.pubDate).toISOString(),
+    author: { '@type': 'Organization', name: entry.data.author },
+    publisher: { '@type': 'Organization', name: SITE_NAME, url: origin },
+    mainEntityOfPage: pageUrl,
+    inLanguage: 'en',
+    ...(art?.card ? { image: art.card } : {}),
+    keywords: [`${name} guide`, `how to play ${name}`, `${name} build`, 'Deadlock'].join(', '),
+    about: [
+      {
+        '@type': 'VideoGame',
+        name: 'Deadlock',
+        publisher: { '@type': 'Organization', name: 'Valve' },
+        gamePlatform: 'PC',
+      },
+      {
+        '@type': 'Thing',
+        name,
+        url: new URL(heroUrl, origin).toString(),
+        description: `${name} is a playable hero in Deadlock.`,
+      },
+    ],
+    isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: origin },
+  },
+];
 ---
 
 <BaseLayout
@@ -235,6 +269,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
   description={description}
   canonicalPath={canonicalPath}
   jsonLd={jsonLd}
+  image={art?.card ?? entry.data.heroImage}
   backdropHero={art?.cls}
 >
   <main class="container">
@@ -242,6 +277,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
       <a href="/heroes/" style="color:var(--muted);">← All heroes</a>
       <a href={heroUrl} style="color:var(--muted);">{name} stats</a>
       <a href={buildUrl} style="color:var(--muted);">{name} build</a>
+      <a href="/guides/" style="color:var(--muted);">All hero guides</a>
     </nav>
 
     <div class="entity-head">

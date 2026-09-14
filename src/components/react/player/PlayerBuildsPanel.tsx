@@ -27,7 +27,7 @@ export default function PlayerBuildsPanel({ id }: { id: number }) {
     return isNotFound(error) ? (
       <EmptyState title="No published builds" message="This player hasn't published any in-game builds." icon="book" />
     ) : (
-      <EmptyState title="Couldn't load builds" message="The builds API is unreachable right now — try again shortly." icon="inbox" />
+      <EmptyState title="Couldn't load builds" message="The builds API is unreachable right now. Try again shortly." icon="inbox" />
     );
   }
   const builds = data ?? [];

@@ -118,8 +118,8 @@ export interface PhaseBand {
 
 //Editorial bands, ours — not a game concept. Stated as such wherever they render.
 export const PHASE_BANDS: readonly PhaseBand[] = [
-  { name: 'Laning', range: '0–10 min', from: 0, to: 10 },
-  { name: 'Mid game', range: '10–22 min', from: 10, to: 22 },
+  { name: 'Laning', range: '0 to 10 min', from: 0, to: 10 },
+  { name: 'Mid game', range: '10 to 22 min', from: 10, to: 22 },
   { name: 'Late game', range: '22+ min', from: 22, to: Infinity },
 ];
 
@@ -208,7 +208,7 @@ export function readingTheNumbers(input: ReadingInput): string[] {
     const last = names.pop() as string;
     const listed = names.length > 0 ? `${names.join(', ')} and ${last}` : last;
     out.push(
-      `Its hardest lanes are ${listed} — the worst of them holds it to ${n(input.worstMatchups[input.worstMatchups.length - 1]?.winRate ?? 0)}%.`,
+      `Its hardest lanes are ${listed}. The worst of them holds it to ${n(input.worstMatchups[input.worstMatchups.length - 1]?.winRate ?? 0)}%.`,
     );
   }
   if (input.mostBoughtItem) {

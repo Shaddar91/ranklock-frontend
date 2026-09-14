@@ -4,7 +4,7 @@
 import { MAX_LEVEL, clampLevel } from './computeStats';
 
 export const THEORETICAL_NOTE =
-  'Theoretical: no ability resists, no damage falloff, no missed shots; weapon DPS at 0–25 m.';
+  'Theoretical: no ability resists, no damage falloff, no missed shots; weapon DPS at 0 to 25 m.';
 
 export const CURVE_WINDOW = 'RankLock public matches · souls curve, all heroes, all ranks · lobby-average cohort';
 
@@ -18,10 +18,10 @@ export type AssumptionKey =
 
 export const ASSUMPTIONS: Record<AssumptionKey, string> = {
   'spirit-scaling': "Spirit scaling uses upstream's factor in an assumed base + spirit × scale shape.",
-  'spirit-scaling-missing': 'This ability serves no spirit-scaling factor — the figure excludes your spirit power.',
+  'spirit-scaling-missing': 'This ability serves no spirit-scaling factor. The figure excludes your spirit power.',
   'resists-multiplicative': 'Resists are assumed to stack multiplicatively.',
   'enemy-dps-band': 'The ±12 % enemy-DPS band is editorial, not measured.',
-  'channel-window': 'The channelled part is shown over a 1.00–1.25× window (editorial).',
+  'channel-window': 'The channelled part is shown over a 1.00 to 1.25× window (editorial).',
   'pace-factors': 'The slow / fast pace window (×1.2 / ×0.85) is editorial, not measured.',
 };
 

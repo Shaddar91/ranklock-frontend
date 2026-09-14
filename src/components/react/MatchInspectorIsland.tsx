@@ -186,7 +186,7 @@ function MatchInspectorInner() {
           </div>
           {inspectPending && <p className="muted" style={{ fontSize: 13 }}>Loading builds…</p>}
           {!inspectPending && (inspectError || !inspect) && (
-            <EmptyState title="Item builds unavailable" message="The per-player build detail couldn't be loaded — try again shortly." icon="book" />
+            <EmptyState title="Item builds unavailable" message="The per-player build detail couldn't be loaded. Try again shortly." icon="book" />
           )}
           {!inspectPending && inspect && !inspect.in_window && (
             <EmptyState

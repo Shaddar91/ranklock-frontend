@@ -133,8 +133,8 @@ const bandParam = (v: BracketValue): number | undefined => (v === 'all' ? undefi
 //copy (mirrors AnalyticsPanels.buildAheadMessage, re-stated so the island is
 //self-contained). 501/202 are the EXPECTED pre-data states, not failures.
 function laneAheadMessage(error: unknown): string {
-  if (isDisabled(error)) return 'Coming soon — this part of the stats service is switched off right now.';
-  if (isComputing(error)) return 'Computing now — the lane curves are being generated. Check back shortly.';
+  if (isDisabled(error)) return 'Coming soon. This part of the stats service is switched off right now.';
+  if (isComputing(error)) return 'Computing now. The lane curves are being generated. Check back shortly.';
   return 'Per-minute lane curves are not computed yet. Check back after the next refresh.';
 }
 
@@ -323,7 +323,7 @@ function ComparisonSetChips({
   return (
     <div className="panel" style={{ padding: '12px 16px' }}>
       <div className="label-xs" style={{ marginBottom: 8 }}>
-        In the chart — uncheck an entity to hide its series (its setup is kept)
+        In the chart: uncheck an entity to hide its series (its setup is kept)
       </div>
       <div className="flex" style={{ gap: 8, flexWrap: 'wrap' }}>
         {entries.map((e) => (
@@ -351,14 +351,14 @@ function ComparisonSetChips({
             {e.checked ? '✓ ' : ''}
             {e.label}
             {e.note && (
-              <span style={{ color: 'var(--loss)', marginLeft: 6, fontSize: 11 }}>— {e.note}</span>
+              <span style={{ color: 'var(--loss)', marginLeft: 6, fontSize: 11 }}>· {e.note}</span>
             )}
           </button>
         ))}
       </div>
       {leagueB == null && (
         <p className="muted faint" style={{ fontSize: 11.5, margin: '8px 0 0', lineHeight: 1.4 }}>
-          No League B in the set — League A is {selection.leagueA.name === 'All ranks' ? '"All ranks"' : 'the top league'}, so
+          No League B in the set. League A is {selection.leagueA.name === 'All ranks' ? '"All ranks"' : 'the top league'}, so
           the auto default (one league above it) has nothing to point at. Pick League B explicitly to compare two leagues.
         </p>
       )}
@@ -561,14 +561,14 @@ function CurvePanel({
     (p2 != null && p2.show && p2Curve.isLoading);
   const nothingChecked = !leagueA.show && !(leagueB?.show ?? false) && !(p1?.show ?? false) && !(p2?.show ?? false);
   const emptyMessage = nothingChecked
-    ? 'Everything is unchecked — toggle a league or player back into the chart in the comparison set above.'
+    ? 'Everything is unchecked. Toggle a league or player back into the chart in the comparison set above.'
     : noTierA
-      ? 'Player rank has no cohort for Obscurus or "All ranks" — pick a league (Initiate–Eternus) above, or switch to Team average.'
+      ? 'Player rank has no cohort for Obscurus or "All ranks". Pick a league (Initiate to Eternus) above, or switch to Team average.'
       : thinA
-        ? `Only ${count(nA)} player-games sampled at this rank — Lane Lab needs at least ${RANK_MIN_SAMPLE} to draw a per-rank curve. Try "All divisions" or Team average.`
+        ? `Only ${count(nA)} player-games sampled at this rank. Lane Lab needs at least ${RANK_MIN_SAMPLE} to draw a per-rank curve. Try "All divisions" or Team average.`
         : leagueA.show && activeA.isError
           ? laneAheadMessage(activeA.error)
-          : `No ${metricLower} data for this selection yet — try another league${cohort === 'player_rank' ? ', a wider division, or Team average' : ' or "All"'}.`;
+          : `No ${metricLower} data for this selection yet. Try another league${cohort === 'player_rank' ? ', a wider division, or Team average' : ' or "All"'}.`;
 
   return (
     <div className="brass-frame" style={{ padding: '18px 20px' }}>
@@ -576,7 +576,7 @@ function CurvePanel({
       <span className="corner br" />
       <div className="between" style={{ marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
         <div>
-          <div className="kicker" style={{ marginBottom: 4 }}>{metricLabel} — {kicker}</div>
+          <div className="kicker" style={{ marginBottom: 4 }}>{metricLabel}: {kicker}</div>
           {/* Honest label tracks the data: the rate view IS souls earned per minute, so it
               says "per minute"; the total view is cumulative net worth over the match. */}
           <h2 className="h-sec" style={{ fontSize: 17 }}>
@@ -586,7 +586,7 @@ function CurvePanel({
         {(nA > 0 || nB > 0) && (
           <span className="mono faint" style={{ fontSize: 12 }}>
             {thinA ? (
-              <>n = {count(nA)} player-games sampled — below the {RANK_MIN_SAMPLE} floor for a per-rank curve</>
+              <>n = {count(nA)} player-games sampled, below the {RANK_MIN_SAMPLE} floor for a per-rank curve</>
             ) : sampleCaption ? (
               <>
                 {sampleCaption}
@@ -605,14 +605,14 @@ function CurvePanel({
             metrics={VIEW_MODES}
             value={viewMode}
             onChange={(m) => setViewMode(m as ViewMode)}
-            ariaLabel="Curve view — per-minute rate or cumulative total"
+            ariaLabel="Curve view: per-minute rate or cumulative total"
           />
         )}
         <MetricToggle
           metrics={X_WINDOWS}
           value={xWindow}
           onChange={(w) => setXWindow(w as XWindow)}
-          ariaLabel="Curve window — early game or full match"
+          ariaLabel="Curve window: early game or full match"
         />
         {metrics.length > 1 && (
           <>
@@ -650,7 +650,7 @@ function CurvePanel({
                   {isRate ? (
                     <>average {metricLower} a <b style={{ color: econSeriesColor.you }}>{leagueA.name}</b> player earns <b>each minute</b></>
                   ) : (
-                    <>median {metricLower} a <b style={{ color: econSeriesColor.you }}>{leagueA.name}</b> player has by each minute of the game; the shaded band is that league&rsquo;s middle half (p25–p75)</>
+                    <>median {metricLower} a <b style={{ color: econSeriesColor.you }}>{leagueA.name}</b> player has by each minute of the game; the shaded band is that league&rsquo;s middle half (p25 to p75)</>
                   )}
                 </>
               )}
@@ -675,7 +675,7 @@ function CurvePanel({
               {effA && !effB && <>.</>}
               {heroScopedLeagues && hero ? (
                 <>
-                  {' '}Both league curves are scoped to <b>{hero.name}</b> — medians of players on that hero in that league, not the all-hero curve
+                  {' '}Both league curves are scoped to <b>{hero.name}</b>: medians of players on that hero in that league, not the all-hero curve
                   {(cmpA == null && effA) || (cmpB == null && effB) ? (
                     <> (a league with no folded sample on this hero yet is simply not drawn)</>
                   ) : null}
@@ -683,35 +683,35 @@ function CurvePanel({
                 </>
               ) : hero != null ? (
                 <>
-                  {' '}The <b>{hero.name}</b> filter is NOT applied to the league curves yet — hero-scoped league
+                  {' '}The <b>{hero.name}</b> filter is NOT applied to the league curves yet. Hero-scoped league
                   medians are computed through a picked player&rsquo;s request, so add a player to the set to
                   hero-scope them. Shown all-heroes.
                 </>
               ) : null}
-              {' '}These are league-typical curves across all sampled players — not one player&rsquo;s matches.
+              {' '}These are league-typical curves across all sampled players, not one player&rsquo;s matches.
             </p>
           )}
           {leagueA.show && !effA && (
             <p className="muted" style={{ fontSize: 12, margin: '6px 0 0', lineHeight: 1.45, color: 'var(--loss)' }}>
               <b>League A</b>{' '}
               {noTierA
-                ? <>has no per-player-rank cohort for Obscurus or &ldquo;All ranks&rdquo; — pick Initiate–Eternus above, or switch to Team average.</>
-                : <>is too thin at this rank ({count(nA)} sampled, floor {RANK_MIN_SAMPLE}) — its line is not drawn. Try {leagueA.division != null ? '"All divisions" or ' : ''}Team average.</>}
+                ? <>has no per-player-rank cohort for Obscurus or &ldquo;All ranks&rdquo;. Pick Initiate to Eternus above, or switch to Team average.</>
+                : <>is too thin at this rank ({count(nA)} sampled, floor {RANK_MIN_SAMPLE}). Its line is not drawn. Try {leagueA.division != null ? '"All divisions" or ' : ''}Team average.</>}
             </p>
           )}
           {leagueB && leagueB.show && !effB && (
             <p className="muted" style={{ fontSize: 12, margin: '6px 0 0', lineHeight: 1.45, color: 'var(--loss)' }}>
               <b>League B</b>{' '}
               {noTierB
-                ? <>has no per-player-rank cohort for Obscurus or &ldquo;All ranks&rdquo; — pick Initiate–Eternus above, or switch to Team average.</>
-                : <>is too thin at this rank ({count(nB)} sampled, floor {RANK_MIN_SAMPLE}) — its line is not drawn. Try {leagueB.division != null ? '"All divisions" or ' : ''}Team average.</>}
+                ? <>has no per-player-rank cohort for Obscurus or &ldquo;All ranks&rdquo;. Pick Initiate to Eternus above, or switch to Team average.</>
+                : <>is too thin at this rank ({count(nB)} sampled, floor {RANK_MIN_SAMPLE}). Its line is not drawn. Try {leagueB.division != null ? '"All divisions" or ' : ''}Team average.</>}
             </p>
           )}
           {p1 && p1.show && (
             <p className="muted" style={{ fontSize: 12, margin: '6px 0 0', lineHeight: 1.45 }}>
               {p1NoGames && p1.hero ? (
                 <>
-                  <b>{p1.name}</b> has <b>no games on {p1.hero.name}</b> here — nothing to compare, so their line
+                  <b>{p1.name}</b> has <b>no games on {p1.hero.name}</b> here. Nothing to compare, so their line
                   is not drawn. Change their hero scope (or the Hero selector) to bring them back.
                 </>
               ) : hasP1Curve ? (
@@ -723,7 +723,7 @@ function CurvePanel({
                   {p1.overlay ? <>, averaged across {count(p1.overlay.matches)} games</> : null}
                   {/* the n THIS LINE rests on — the curve payload's per-bucket `matches` peak,
                       not the per-game aggregate count (B6 sample-size disclosure). */}
-                  {' '}(their line: n = {count(p1PeakN)} games) —{' '}
+                  {' '}(their line: n = {count(p1PeakN)} games),{' '}
                   {isRate ? (
                     <>earned <b>each minute</b>, so you can see the minutes they out- or under-farm the leagues on the chart.</>
                   ) : (
@@ -732,7 +732,7 @@ function CurvePanel({
                   {p1Thin ? (
                     <>
                       {' '}<b>Thin sample:</b> fewer than {THIN_SAMPLE_MIN_MATCHES} of their games reach these
-                      minutes, so the line is drawn faint — read it as an anecdote, not a trend.
+                      minutes, so the line is drawn faint. Read it as an anecdote, not a trend.
                     </>
                   ) : null}
                 </>
@@ -745,7 +745,7 @@ function CurvePanel({
                 </>
               ) : (
                 <>
-                  No per-minute {metricLower} data for <b>{labelP1}</b> yet — none of their folded games carry it,
+                  No per-minute {metricLower} data for <b>{labelP1}</b> yet. None of their folded games carry it,
                   so there&rsquo;s no line to draw.
                   {p1.overlay ? <> Their per-game averages are in the stat-line above.</> : null}
                 </>
@@ -756,7 +756,7 @@ function CurvePanel({
             <p className="muted" style={{ fontSize: 12, margin: '6px 0 0', lineHeight: 1.45 }}>
               {p2NoGames && p2.hero ? (
                 <>
-                  <b>{p2.name}</b> has <b>no games on {p2.hero.name}</b> here — nothing to compare, so their line
+                  <b>{p2.name}</b> has <b>no games on {p2.hero.name}</b> here. Nothing to compare, so their line
                   is not drawn. Change their hero scope (or the Hero selector) to bring them back.
                 </>
               ) : hasP2Curve ? (
@@ -767,12 +767,12 @@ function CurvePanel({
                   {isRate ? <><b>per minute</b></> : <><b>over the game</b></>}
                   {p2.overlay ? <>, averaged across {count(p2.overlay.matches)} games</> : null}
                   {/* same B6 disclosure for the second line — its own per-bucket `matches` peak. */}
-                  {' '}(their line: n = {count(p2PeakN)} games) — the <b>second</b> player in the set, so you can
+                  {' '}(their line: n = {count(p2PeakN)} games), the <b>second</b> player in the set, so you can
                   read both players against the leagues at once.
                   {p2Thin ? (
                     <>
                       {' '}<b>Thin sample:</b> fewer than {THIN_SAMPLE_MIN_MATCHES} of their games reach these
-                      minutes, so the line is drawn faint — read it as an anecdote, not a trend.
+                      minutes, so the line is drawn faint. Read it as an anecdote, not a trend.
                     </>
                   ) : null}
                 </>
@@ -785,7 +785,7 @@ function CurvePanel({
                 </>
               ) : (
                 <>
-                  No per-minute {metricLower} data for <b>{labelP2}</b> yet — none of their folded games carry it,
+                  No per-minute {metricLower} data for <b>{labelP2}</b> yet. None of their folded games carry it,
                   so there&rsquo;s no second line to draw.
                   {p2.overlay ? <> Their per-game averages are in the stat-line above.</> : null}
                 </>
@@ -860,7 +860,7 @@ function VerdictPanel({
         Does your 9-minute economy predict the win?
       </h2>
       <p className="muted" style={{ fontSize: 12.5, margin: '0 0 14px', lineHeight: 1.45 }}>
-        Win rate by net worth at the 9-minute mark, for League A — find your souls bar and read how often that
+        Win rate by net worth at the 9-minute mark, for League A. Find your souls bar and read how often that
         early lead converts.
       </p>
       {verdict.isPending ? (
@@ -890,7 +890,7 @@ function VerdictPanel({
                   }}
                 >
                   <span className="mono" style={{ width: 78, flex: 'none', fontSize: 12, color: 'var(--text-2)' }}>
-                    {count(b.souls_floor / 1000)}k–{count(b.souls_floor / 1000 + 1)}k
+                    {count(b.souls_floor / 1000)}k to {count(b.souls_floor / 1000 + 1)}k
                   </span>
                   <div style={{ flex: 1, height: 16, background: 'var(--border-soft)', borderRadius: 4, overflow: 'hidden' }}>
                     <div
@@ -924,11 +924,11 @@ function VerdictPanel({
           {isMeasured ? (
             <>
               The <b style={{ color: 'var(--amber-acc)' }}>◆</b> bar is where <b>{playerOverlay.label}</b> lands:{' '}
-              <b>{count(souls9)} souls at 9:00</b>, measured — the average of their own games&rsquo; 9:00 net worth.
+              <b>{count(souls9)} souls at 9:00</b>, measured as the average of their own games&rsquo; 9:00 net worth.
             </>
           ) : (
             <>
-              The <b style={{ color: 'var(--amber-acc)' }}>◆</b> bar is where <b>{playerOverlay.label}</b> lands — an{' '}
+              The <b style={{ color: 'var(--amber-acc)' }}>◆</b> bar is where <b>{playerOverlay.label}</b> lands, an{' '}
               <b>estimate</b> (~{count(souls9)} souls at 9:00) projected from their{' '}
               {playerOverlay.souls_per_min != null ? count(playerOverlay.souls_per_min) : '—'} souls/min average,{' '}
               <b>not</b> a measured value: their per-minute line is not available yet.
@@ -951,7 +951,7 @@ function overlayEmptyMessage(source: OverlaySource, error: unknown): string {
   }
   if (isNotFound(error)) return `${source.player.steam_name} is private or has no ranked economy data yet.`;
   if (isDisabled(error)) return 'The per-player overlay is not available yet.';
-  if (isComputing(error)) return 'Computing now — check back shortly.';
+  if (isComputing(error)) return 'Computing now. Check back shortly.';
   return `No economy data for ${source.player.steam_name} yet.`;
 }
 
@@ -998,10 +998,10 @@ function OverlaySummary({
         ))}
       </div>
       <p className="muted faint" style={{ fontSize: 11.5, margin: '10px 0 0', lineHeight: 1.45 }}>
-        {data.label}&rsquo;s per-game averages across {count(data.matches)} games — an aggregate, not per-minute.{' '}
+        {data.label}&rsquo;s per-game averages across {count(data.matches)} games, an aggregate, not per-minute.{' '}
         {isMe ? (
           <>
-            The account overlay carries <b>averages only</b> (they feed the 9-minute verdict marker below) — search
+            The account overlay carries <b>averages only</b> (they feed the 9-minute verdict marker below). Search
             your player by name to draw your own per-minute curve on the chart.
           </>
         ) : (
@@ -1184,7 +1184,7 @@ function PlayerOverlayPicker({
               aria-label={`Hero scope for ${overlay.player.steam_name}'s line`}
             >
               <option value="global">
-                Follow the Hero selector{globalHero ? ` — ${globalHero.name}` : ' — all heroes'}
+                Follow the Hero selector{globalHero ? `: ${globalHero.name}` : ': all heroes'}
               </option>
               <option value="all">All heroes (ignore the Hero selector)</option>
               {heroOptions.map((h) => (
@@ -1196,7 +1196,7 @@ function PlayerOverlayPicker({
           </label>
           {noGamesHero && (
             <span className="mono" style={{ fontSize: 11.5, color: 'var(--loss)' }}>
-              No games on {noGamesHero} — this player&rsquo;s line is excluded until the hero scope changes.
+              No games on {noGamesHero}. This player&rsquo;s line is excluded until the hero scope changes.
             </span>
           )}
         </div>
@@ -1206,14 +1206,14 @@ function PlayerOverlayPicker({
         <p className="muted faint" style={{ fontSize: 12, margin: '12px 0 0', lineHeight: 1.45, maxWidth: 480 }}>
           {accent === 'player' ? (
             <>
-              Add any player to the comparison set — their per-game <b>averages</b> in the stat-line, plus their own{' '}
+              Add any player to the comparison set: their per-game <b>averages</b> in the stat-line, plus their own{' '}
               <b>economy curve over the game</b> drawn in{' '}
               <b style={{ color: econSeriesColor[accent] }}>{econWords[accent]}</b> whenever their match timeline
               is loaded. Scope them to one hero to compare hero-vs-hero.
             </>
           ) : (
             <>
-              Pick a <b>second</b> player — their own <b>economy curve over the game</b> draws in{' '}
+              Pick a <b>second</b> player. Their own <b>economy curve over the game</b> draws in{' '}
               <b style={{ color: econSeriesColor[accent] }}>{econWords[accent]}</b> alongside the first player
               and the selected leagues.
             </>
@@ -1462,14 +1462,14 @@ function LaneLabInner() {
               setCohortTouched(true);
               setCohort(c as RankCohort);
             }}
-            ariaLabel="Cohort — compare against per-player rank or the team-average badge"
+            ariaLabel="Cohort: compare against per-player rank or the team-average badge"
           />
           <span className="mono faint" style={{ fontSize: 12 }}>{cohortCaption(cohort)}</span>
         </div>
         <p className="muted faint" style={{ fontSize: 11.5, margin: '6px 0 0', maxWidth: 620, lineHeight: 1.4 }}>
           {cohort === 'player_rank'
-            ? 'Player rank compares players at their OWN Valve display rank — no team-average blur. Ranked matches only, since Aug 7, 2026; recent history is still backfilling, so a league may read empty until it does.'
-            : 'Team average is the lobby-average league — it compares by the match’s average badge across both teams: every match ever loaded, but an Emissary player in an Oracle-average match reads as Oracle here.'}
+            ? 'Player rank compares players at their OWN Valve display rank, no team-average blur. Ranked matches only, since Aug 7, 2026; recent history is still backfilling, so a league may read empty until it does.'
+            : 'Team average is the lobby-average league. It compares by the match’s average badge across both teams: every match ever loaded, but an Emissary player in an Oracle-average match reads as Oracle here.'}
         </p>
       </div>
 
@@ -1492,7 +1492,7 @@ function LaneLabInner() {
                 style={{ width: 'auto', padding: '6px 10px', fontSize: 12.5 }}
                 value={divisionA ?? ''}
                 onChange={(e) => setDivisionA(e.target.value === '' ? undefined : Number(e.target.value))}
-                aria-label="League A division — narrows the player-rank cohort to one exact display rank"
+                aria-label="League A division: narrows the player-rank cohort to one exact display rank"
               >
                 {DIVISION_OPTIONS.map((d) => (
                   <option key={d.label} value={d.value ?? ''}>
@@ -1504,8 +1504,8 @@ function LaneLabInner() {
           )}
           <p className="muted faint" style={{ fontSize: 11.5, margin: '6px 0 0', maxWidth: 380, lineHeight: 1.4 }}>
             {cohort === 'player_rank'
-              ? 'Obscurus and "All ranks" have no per-player-rank cohort — pick Initiate–Eternus. Low/thin ranks may read empty below the 500-sample floor.'
-              : 'Lane curves are Normal-mode only — Brawl has no laning data. Low ranks are sampled thinly, so their curves may be sparse or empty until more lane data lands.'}
+              ? 'Obscurus and "All ranks" have no per-player-rank cohort. Pick Initiate to Eternus. Low/thin ranks may read empty below the 500-sample floor.'
+              : 'Lane curves are Normal-mode only. Brawl has no laning data. Low ranks are sampled thinly, so their curves may be sparse or empty until more lane data lands.'}
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end', minWidth: 0, maxWidth: '100%' }}>
@@ -1516,10 +1516,10 @@ function LaneLabInner() {
               style={{ width: 'auto', minWidth: 0, maxWidth: '100%', padding: '7px 10px', fontSize: 12.5 }}
               value={bandB === 'auto' ? 'auto' : String(bandB)}
               onChange={(e) => setBandB(e.target.value === 'auto' ? 'auto' : Number(e.target.value))}
-              aria-label="Choose League B — the second league to compare"
+              aria-label="Choose League B: the second league to compare"
             >
               <option value="auto">
-                Auto — one league above A{leagueBName && bandB === 'auto' ? ` (${leagueBName})` : band === 'all' || band === TOP_BAND ? ' (none)' : ''}
+                Auto: one league above A{leagueBName && bandB === 'auto' ? ` (${leagueBName})` : band === 'all' || band === TOP_BAND ? ' (none)' : ''}
               </option>
               {RANKS.map((r) => (
                 <option key={r.tier} value={r.tier}>
@@ -1536,7 +1536,7 @@ function LaneLabInner() {
                 style={{ width: 'auto', minWidth: 0, maxWidth: '100%', padding: '6px 10px', fontSize: 12.5 }}
                 value={divisionB ?? ''}
                 onChange={(e) => setDivisionB(e.target.value === '' ? undefined : Number(e.target.value))}
-                aria-label="League B division — narrows the player-rank cohort to one exact display rank"
+                aria-label="League B division: narrows the player-rank cohort to one exact display rank"
               >
                 {DIVISION_OPTIONS.map((d) => (
                   <option key={d.label} value={d.value ?? ''}>
@@ -1572,7 +1572,7 @@ function LaneLabInner() {
               </>
             ) : (
               <>
-                Showing <b style={{ color: econSeriesColor.you }}>{leagueAName}</b> — pick League B to compare two
+                Showing <b style={{ color: econSeriesColor.you }}>{leagueAName}</b>. Pick League B to compare two
                 leagues.
               </>
             )}

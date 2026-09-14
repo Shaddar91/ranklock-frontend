@@ -22,7 +22,7 @@ export default function HeroChipRow({ roster, playable, heroId, onHero }: HeroCh
   if (heroes.length === 0) {
     return (
       <p className="faint" style={{ fontSize: 12.5, margin: 0 }}>
-        The hero roster has not been served yet — nothing to pick.
+        The hero roster has not been served yet. Nothing to pick.
       </p>
     );
   }
@@ -51,7 +51,7 @@ export default function HeroChipRow({ roster, playable, heroId, onHero }: HeroCh
               role="radio"
               aria-checked={on}
               disabled={!usable}
-              title={usable ? h.hero_name : `${h.hero_name} — no base-stats row in this patch's capture`}
+              title={usable ? h.hero_name : `${h.hero_name}: no base-stats row in this patch's capture`}
               className="tile flex"
               style={{
                 alignItems: 'center',

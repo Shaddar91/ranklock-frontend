@@ -80,7 +80,7 @@ function HeroCard({ card }: { card: CardState }) {
   return (
     <div className="panel" style={{ padding: '14px 16px' }}>
       <h3 className="h-sec" style={{ fontSize: 14, marginBottom: 10 }}>
-        Your {card.hero.hero_name} — {count(card.hero.matches_played)} matches
+        Your {card.hero.hero_name}: {count(card.hero.matches_played)} matches
       </h3>
       {card.kind === 'loading' ? (
         <p className="muted" style={{ padding: '10px 2px' }}>Loading…</p>
@@ -149,7 +149,7 @@ export default function MatchupsPanel({ id }: { id: number }) {
         </label>
       </div>
       <p className="faint" style={{ fontSize: 11, margin: '0 0 14px', lineHeight: 1.45 }}>
-        Lowest win rates for your three most-played heroes at the selected rank. Rates are all players&rsquo; games on that hero at that rank — not this player&rsquo;s record.
+        Lowest win rates for your three most-played heroes at the selected rank. Rates are all players&rsquo; games on that hero at that rank, not this player&rsquo;s record.
         {through ? ` Data through ${through}.` : ''}
       </p>
 

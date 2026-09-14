@@ -1,6 +1,6 @@
 ---
 title: "Haze guide: farm early, then take the fight"
-description: "Play Haze as the hero who buys her power and spends it in one flurry. Where Fixation stacks come from, when Smoke Bomb is an opener rather than an escape, and the three heroes who beat her to the trade."
+description: "Play Haze as the hero who buys her power and spends it in one flurry. Where Fixation stacks come from, why Smoke Bomb is an opener, and the three heroes who beat her to the trade."
 hero: Haze
 heroSlug: haze
 heroId: 13
@@ -23,7 +23,7 @@ liveItems: [Spirit Burn, Frenzy, Mystic Reverb, Healing Tempo, Cheat Death]
 
 ## Who plays Haze, and why
 
-Take Haze when nobody else on your team turns farm into kills, and give the early game to the camps rather than the trades. She wins 44.1% of matches decided under 30 minutes, 51.8% of those running 30 to 45 and 53.7% past 45. That is a 9.7-point climb, and the single largest argument against fighting early. She has 730 HP and only 3 stamina, but moves at 8.2 m/s, which is the resource you actually play with.
+Take Haze when nobody else on your team turns farm into kills, and give the early game to the camps. She wins 44.1% of matches decided under 30 minutes, 51.8% of those running 30 to 45 and 53.7% past 45. That is a 9.7-point climb, and the single largest argument against fighting early. She has 730 HP and only 3 stamina, but moves at 8.2 m/s, which is the resource you actually play with.
 
 Fixation is the passive that decides every fight: bullets stack damage on one target, and headshots stack it twice as fast. Sleep Dagger puts a target to sleep, damage wakes them, and it never breaks stealth. Smoke Bomb makes her invisible and fast, and attacking ends it while items do not. Bullet Dance is a perfect-accuracy flurry at everything nearby. All four assume you are already holding a gun that can afford to keep firing.
 
@@ -33,11 +33,11 @@ Pick one target and stay on it. Fixation only pays if the same body keeps taking
 
 The purchase pattern is fire rate before burst. Haze players buy Active Reload 8.1 times more often than the roster average and Swift Striker 4.9 times, which is a whole build philosophy in two numbers: keep the magazine turning over. From there, Lucky Shot wins 62.2% of the 1,456,555 games it appears in on her, Frenzy 62.0% of 432,983 and Glass Cannon 61.8% of 843,525.
 
-Then buy the item that keeps you in the fight rather than another one that shortens it. Healing Tempo reads 60.7% over 354,594 games and Cheat Death 60.6% over 114,884, and on a hero with 3 stamina, surviving the two seconds after your flurry ends is worth more than the extra damage that would have gone into a corpse.
+Then buy the item that keeps you in the fight. Healing Tempo reads 60.7% over 354,594 games and Cheat Death 60.6% over 114,884, and on a hero with 3 stamina, surviving the two seconds after your flurry ends is worth more than the extra damage that would have gone into a corpse.
 
 ## How to play Haze as an Offensive initiator
 
-Use Smoke Bomb to arrive, not to leave. Items still work while it holds, so the correct sequence is to walk into position with it up, come out already inside the enemy line, and spend Bullet Dance where it touches more than one person. Coming out of smoke to escape means you spent the whole ability on a retreat.
+Use Smoke Bomb on the way in. Items still work while it holds, so the correct sequence is to walk into position with it up, come out already inside the enemy line, and spend Bullet Dance where it touches more than one person. Coming out of smoke to escape means you spent the whole ability on a retreat.
 
 Sleep Dagger is the opener that makes the flurry safe. Sleep the second-closest enemy, kill the closest, and the fight is a duel you have already won on stacks. Do not shoot the sleeping one; damage wakes them, and a woken target arrives on you in the middle of Bullet Dance.
 
@@ -47,7 +47,7 @@ Bullet Dance is the button people bring answers for, so check whether the enemy 
 
 Haze was not named in this patch, and neither were the items she leans on. Radiant Regeneration lost heal on cast from 70 to 65 and appears in 1 of the 40 sampled Haze builds; Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in none of them. Nothing in her core moved.
 
-Take the shop from the recent list and the shape from the old one. `Parzelion's Haze Build` from Account 278919272 at 76,092 favourites was last updated 2026-08-22, patch day, and is the freshest set on the hero. `Chrome's Rapid Haze` from Account 203209620 is far more favourited at 388,677 but was last touched 2025-08-08, so read its structure rather than its purchases. The three weekly lists, at 17,027 favourites from Account 1183614423, 7,224 from Account 272679564 and 5,807 from Account 1282162845, were all last revised in March and April, and all three publish their names with handles or characters that are not reprinted here.
+Take the shop from the recent list and the shape from the old one. `Parzelion's Haze Build` at 76,092 favourites was last updated 2026-08-22, patch day, and is the freshest set on the hero. `Chrome's Rapid Haze` is far more favourited at 388,677 but was last touched 2025-08-08, so read its structure and skip its purchases. The three weekly lists, at 17,027 favourites, 7,224 and 5,807, were all last revised in March and April, and all three publish their names with handles or characters that are not reprinted here.
 
 ## Abilities: what to level and when
 
@@ -63,6 +63,6 @@ In those lanes, take the safe farm and refuse the trade. You are the hero on the
 
 ## Items that go well
 
-Spirit Burn tops her table at 62.9% over 71,068 games and Mystic Reverb reads 62.1% over 25,014, both of which reward the flurry landing on several bodies at once rather than one. Spiritual Overflow follows at 61.3% over 1,808,014 games, a sample large enough to trust on its own.
+Spirit Burn tops her table at 62.9% over 71,068 games and Mystic Reverb reads 62.1% over 25,014, both of which reward the flurry landing on several bodies at once. Spiritual Overflow follows at 61.3% over 1,808,014 games, a sample large enough to trust on its own.
 
-Escalating Exposure shows 61.4% but across only 28,715 games, so it is a lead rather than a rule. Play beside someone who holds a target still while your stacks build: Haze wins 52.8% of the 23,973 games she shares with Mo & Krill, 52.1% of 20,875 with Lash and 51.8% of 20,913 with Abrams, and each of those three arrives with a stun rather than a request.
+Escalating Exposure shows 61.4% but across only 28,715 games, so treat it as a lead until the sample grows. Play beside someone who holds a target still while your stacks build: Haze wins 52.8% of the 23,973 games she shares with Mo & Krill, 52.1% of 20,875 with Lash and 51.8% of 20,913 with Abrams, and each of those three arrives with a stun.

@@ -21,7 +21,7 @@ export default function LabShareLink({ build }: { build: BuildInput | null }) {
     }
     clip.writeText(url).then(
       () => setStatus('Link copied.'),
-      () => setStatus('Copy failed — try again.'),
+      () => setStatus('Copy failed. Try again.'),
     );
   }, [build]);
 

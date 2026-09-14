@@ -80,7 +80,7 @@ function Tile({
         className={`shoptile cat-${cat}` + (picked ? ' on' : '')}
         aria-pressed={picked}
         disabled={blocked}
-        title={blocked ? 'Every slot is filled — remove an item first' : undefined}
+        title={blocked ? 'Every slot is filled. Remove an item first' : undefined}
         onClick={onClick}
       >
         {body}
@@ -194,7 +194,7 @@ export default function ItemPicker({
 
       {brawlView && (
         <p className="muted" style={{ fontSize: 12, margin: '0 0 10px' }}>
-          Street Brawl shop set — reference only. The catalog prices them at a placeholder 9,999 souls, so they can't join a build.
+          Street Brawl shop set: reference only. The catalog prices them at a placeholder 9,999 souls, so they can't join a build.
         </p>
       )}
 

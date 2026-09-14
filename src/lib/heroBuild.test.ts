@@ -174,7 +174,7 @@ describe('winningSets — the folded purchase sets, abilities flagged not filter
 describe('RANKED_BRACKETS — the served keys stay spelled by the pinned ladder', () => {
   it('names every bracket from ranks.ts, so a ladder rename cannot desync the key', () => {
     for (const option of RANKED_BRACKETS) {
-      const slug = rankedBracketLabel(option).toLowerCase().replace(/\s–\s/, '-');
+      const slug = rankedBracketLabel(option).toLowerCase().replace(/\sto\s/, '-');
       expect(slug).toBe(option.key);
     }
   });

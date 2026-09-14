@@ -34,7 +34,7 @@ async function nameRank(id: string | undefined): Promise<{ name: string; rank: s
 const [pa, pb] = await Promise.all([nameRank(a), nameRank(b)]);
 
 const named = pa && pb;
-const title = named ? `${pa.name} vs ${pb.name} — Player compare` : 'Player compare — RankLock';
+const title = named ? `${pa.name} vs ${pb.name} | Player compare` : 'Player compare | RankLock';
 //undefined → BaseLayout/Seo fall back to the generic site description.
 const description = named ? `${pa.name} (${pa.rank}) vs ${pb.name} (${pb.rank}) on RankLock` : undefined;
 

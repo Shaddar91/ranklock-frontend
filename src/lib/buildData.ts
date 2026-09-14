@@ -62,7 +62,7 @@ export async function buildFetchNonEmpty<T>(
     import.meta.env?.ALLOW_EMPTY_STATS_BUILD === '1';
   if (rows.length === 0 && !allowEmpty) {
     throw new Error(
-      `[bake-empty guard] ${label} baked 0 rows — the origin was cold, slow (>${ms}ms) or erroring at build time. ` +
+      `[bake-empty guard] ${label} baked 0 rows. The origin was cold, slow (>${ms}ms) or erroring at build time. ` +
         `Refusing to ship empty prerendered pages over the last-good deploy. ` +
         `Set ALLOW_EMPTY_STATS_BUILD=1 to build empty on purpose.`,
     );

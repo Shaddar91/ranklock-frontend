@@ -79,7 +79,7 @@ export default function LabShop({
         <p className="lab-note" style={{ marginTop: 0 }}>Loading the item catalog…</p>
       ) : isError || rows.length === 0 ? (
         <p className="lab-note" style={{ marginTop: 0 }}>
-          The item catalog has not been served — nothing to shop from.
+          The item catalog has not been served. Nothing to shop from.
         </p>
       ) : (
         rows.map((row) => (
@@ -99,7 +99,7 @@ export default function LabShop({
                       aria-pressed={owned}
                       disabled={!owned && boardFull}
                       className={`lab-sitem cat-${category}` + (owned ? ' on' : '')}
-                      title={owned ? `${name} — on the board` : name}
+                      title={owned ? `${name}: on the board` : name}
                       onClick={() => (owned ? onRemove(item.item_id) : onAdd(item.item_id))}
                     >
                       <GameIcon kind="item" name={name} src={item.icon} size={24} />

@@ -112,7 +112,7 @@ export default function BuildCreator({ initial, draft: hostDraft, heroControl }:
   const heroName = hero?.hero_name ?? null;
   useEffect(() => {
     if (!sharedLoaded || typeof document === 'undefined' || !heroName) return;
-    document.title = `${heroName} build — RankLock`;
+    document.title = `${heroName} build | RankLock`;
   }, [sharedLoaded, heroName]);
 
   if (roster.isPending) {
@@ -147,7 +147,7 @@ export default function BuildCreator({ initial, draft: hostDraft, heroControl }:
           <label
             className="flex"
             style={{ alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--muted)' }}
-            title="Count every item flagged conditional. Off excludes them whole — no uptime is simulated."
+            title="Count every item flagged conditional. Off excludes them whole: no uptime is simulated."
           >
             <input
               type="checkbox"

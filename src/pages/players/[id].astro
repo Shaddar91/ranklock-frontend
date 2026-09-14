@@ -53,8 +53,8 @@ const to = q.get(PLAYER_TO_PARAM);
 const windowLabel = from && to ? `${from} to ${to}` : null;
 const selection = [windowLabel, heroName ? `on ${heroName}` : null].filter(Boolean).join(' ');
 
-const title = player ? `${player.name}${selection ? ` — ${selection}` : ''} | RankLock` : 'Player profile — RankLock';
-const description = player ? `${player.name} (${player.rank})${selection ? ` — ${selection}` : ''} on RankLock` : undefined;
+const title = player ? `${player.name}${selection ? `, ${selection}` : ''} | RankLock` : 'Player profile | RankLock';
+const description = player ? `${player.name} (${player.rank})${selection ? `, ${selection}` : ''} on RankLock` : undefined;
 
 //Translate the site's selection params -> the OG card's PlayerSelection query names
 //(mirror compare/[a]/[b].astro) so the card renders the same hero/window/league/metric/mode

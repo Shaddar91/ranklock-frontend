@@ -92,7 +92,7 @@ export default function BuildToolbar({ build, canShare, onLoad }: BuildToolbarPr
         <span className="label-xs">Saved drafts</span>
         {drafts.length === 0 ? (
           <p className="faint" style={{ fontSize: 12, margin: '6px 0 0' }}>
-            None yet — “Save draft” keeps a build in this browser.
+            None yet. “Save draft” keeps a build in this browser.
           </p>
         ) : (
           <ul style={{ listStyle: 'none', margin: '6px 0 0', padding: 0 }}>

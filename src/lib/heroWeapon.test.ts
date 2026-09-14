@@ -29,7 +29,7 @@ describe('weaponInfoRows — the design\'s seven Weapon rows from upstream weapo
       { k: 'Rounds per second', v: '9.5' },
       { k: 'Clip', v: '25' },
       { k: 'Reload', v: '2.4s' },
-      { k: 'Falloff', v: '20–46m' },
+      { k: 'Falloff', v: '20-46m' },
     ]);
   });
 

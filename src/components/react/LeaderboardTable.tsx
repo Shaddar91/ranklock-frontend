@@ -34,12 +34,12 @@ type RankedEntry = LeaderboardEntry & { rank: number };
 //Leaderboard-specific bands: top players cluster in the upper tiers, so the
 //filter offers All + the meaningful high/top bands (rank-emblem labelled).
 const LEADERBOARD_BUCKETS: readonly RankBucket[] = [
-  { key: 'all',      label: 'All ranks',           short: 'All',      tiers: []         },
-  { key: 'initiate', label: 'Initiate – Alchemist', short: 'Initiate', tiers: [1, 2, 3] },
-  { key: 'arcanist', label: 'Arcanist – Ritualist', short: 'Arcanist', tiers: [4, 5]    },
-  { key: 'emissary', label: 'Emissary – Archon',    short: 'Emissary', tiers: [6, 7]    },
-  { key: 'high',     label: 'Oracle – Phantom',     short: 'High',     tiers: [8, 9]    },
-  { key: 'top',      label: 'Ascendant – Eternus',  short: 'Top',      tiers: [10, 11]  },
+  { key: 'all',      label: 'All ranks',             short: 'All',      tiers: []         },
+  { key: 'initiate', label: 'Initiate to Alchemist', short: 'Initiate', tiers: [1, 2, 3] },
+  { key: 'arcanist', label: 'Arcanist to Ritualist', short: 'Arcanist', tiers: [4, 5]    },
+  { key: 'emissary', label: 'Emissary to Archon',    short: 'Emissary', tiers: [6, 7]    },
+  { key: 'high',     label: 'Oracle to Phantom',     short: 'High',     tiers: [8, 9]    },
+  { key: 'top',      label: 'Ascendant to Eternus',  short: 'Top',      tiers: [10, 11]  },
 ];
 
 const MEDAL = ['var(--gold)', '#cfd6df', '#c08457'];
@@ -225,8 +225,8 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
 
   const ranksLabel = ranked.length > 0
     ? total !== null
-      ? `Ranks ${count(offset + 1)}–${count(offset + ranked.length)} of ${count(total)}`
-      : `Ranks ${count(offset + 1)}–${count(offset + ranked.length)} of …`
+      ? `Ranks ${count(offset + 1)} to ${count(offset + ranked.length)} of ${count(total)}`
+      : `Ranks ${count(offset + 1)} to ${count(offset + ranked.length)} of …`
     : DASH;
 
   //Render the numbered pager frame the instant rows exist — before the X-Total-Count header lands `last`
@@ -278,9 +278,9 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
   return (
     <div>
       <div className="between" style={{ marginBottom: 12, gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        <MatchModeToggle ariaLabel="Leaderboard ladder — Unranked or Ranked" />
+        <MatchModeToggle ariaLabel="Leaderboard ladder: Unranked or Ranked" />
         {matchMode === 'Ranked' && (
-          <span className="label-xs">Ranked ladder (Normal only) — a separate competitive track from Unranked.</span>
+          <span className="label-xs">Ranked ladder (Normal only): a separate competitive track from Unranked.</span>
         )}
       </div>
       <div className="between" style={{ marginBottom: 16, gap: 16, flexWrap: 'wrap' }}>
@@ -302,7 +302,7 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
           isComputing(error)
             ? computingMessage('the ladder is being generated', error)
             : isError
-              ? 'The stats API is offline — the ladder fills in when it comes back online.'
+              ? 'The stats API is offline. The ladder fills in when it comes back online.'
               : 'No ranked players for this band yet. Try another bracket or check back after the next data refresh.'
         }
       />

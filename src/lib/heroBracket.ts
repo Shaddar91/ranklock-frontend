@@ -46,5 +46,5 @@ export function servedBandLabel(value: BracketValue): string {
   const tiers = BANDS[bucket - 1] as readonly number[];
   const lo = getRank(tiers[0] as number).name;
   const hi = getRank(tiers[tiers.length - 1] as number).name;
-  return `${lo} – ${hi}`;
+  return `${lo} to ${hi}`;
 }

@@ -287,9 +287,9 @@ export default function Styleguide() {
             rowKey={(h) => h.id}
             loading={loadingTable}
             initialSort={{ key: 'wr', dir: -1 }}
-            caption="Hero meta — win rate, pick rate, KDA by rank bracket"
+            caption="Hero meta: win rate, pick rate, KDA by rank bracket"
             emptyTitle="No heroes match"
-            emptyMessage="No data for this bracket yet — try another filter."
+            emptyMessage="No data for this bracket yet. Try another filter."
           />
         </div>
       </Section>
@@ -343,8 +343,8 @@ export default function Styleguide() {
           <AdSlot kind="rect" />
         </div>
         <p className="faint" style={{ fontSize: 12, marginTop: 10 }}>
-          The AdSense fill loads once a publisher/slot id is configured — ads consent is
-          gathered by Google's own CMP. Otherwise this gaslamp placeholder shows — never a
+          The AdSense fill loads once a publisher/slot id is configured. Ads consent is
+          gathered by Google's own CMP. Otherwise this gaslamp placeholder shows, never a
           network call.
         </p>
       </Section>

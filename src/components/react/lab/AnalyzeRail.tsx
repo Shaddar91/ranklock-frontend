@@ -55,7 +55,7 @@ function InvestmentCard({ stats }: { stats: ComputedStats }) {
       </div>
       {!investment ? (
         <p className="lab-note" style={{ marginTop: 0 }}>
-          This hero's assets payload carries no investment track — nothing to show.
+          This hero's assets payload carries no investment track. Nothing to show.
         </p>
       ) : (
         <>
@@ -148,7 +148,7 @@ function StatsCard({
         <span>With build</span>
       </div>
       {!hasBoard ? (
-        <p className="lab-note">Import a build or start from a served set — these rows read the board it fills.</p>
+        <p className="lab-note">Import a build or start from a served set. These rows read the board it fills.</p>
       ) : (
         <>
           {investRow?.applied && (
@@ -229,7 +229,7 @@ function AbilitiesCard({
       </div>
       {rows.length === 0 ? (
         <p className="lab-note" style={{ marginTop: 0 }}>
-          This hero's assets payload carries no per-ability numerics — nothing to fold a build into.
+          This hero's assets payload carries no per-ability numerics. Nothing to fold a build into.
         </p>
       ) : (
         <>

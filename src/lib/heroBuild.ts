@@ -34,7 +34,7 @@ export const RANKED_BRACKETS: readonly RankedBracketOption[] = [
 export const DEFAULT_RANKED_BRACKET: RankedBracketKey = 'oracle-phantom';
 
 export function rankedBracketLabel(option: RankedBracketOption): string {
-  return `${getRank(option.tiers[0]).name} – ${getRank(option.tiers[1]).name}`;
+  return `${getRank(option.tiers[0]).name} to ${getRank(option.tiers[1]).name}`;
 }
 
 export interface CatalogEntry {

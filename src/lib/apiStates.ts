@@ -38,5 +38,5 @@ export function retryAfterLabel(seconds: number | null): string | null {
 //the 202 body carried one.
 export function computingMessage(what: string, error?: unknown): string {
   const hint = retryAfterLabel(retryAfterSeconds(error));
-  return `Computing now — ${what}. ${hint ? `Check back in ${hint}.` : 'Check back shortly.'}`;
+  return `Computing now: ${what}. ${hint ? `Check back in ${hint}.` : 'Check back shortly.'}`;
 }

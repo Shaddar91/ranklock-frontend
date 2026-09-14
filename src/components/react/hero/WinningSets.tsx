@@ -53,7 +53,7 @@ function Table({ sets, catalog, abilitySlots, abilityIcons }: WinningSetsProps) 
               ) : (
                 <span
                   className={`kit-key k${abilitySlots[String(e.itemId)] ?? 0}`}
-                  title={`${e.name} — ability point`}
+                  title={`${e.name}: ability point`}
                   key={j}
                 >
                   <AbilityGlyph slot={abilitySlots[String(e.itemId)] ?? 0} icon={abilityIcons?.[String(e.itemId)]} />

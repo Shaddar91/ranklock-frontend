@@ -3,7 +3,7 @@
 import type { MatchDetail } from '../types/api';
 import { TEAM, teamKills, teamPlayers } from './match';
 
-export const GENERIC_MATCH_TITLE = 'Match — RankLock';
+export const GENERIC_MATCH_TITLE = 'Match | RankLock';
 
 export function matchPageTitle(match: MatchDetail | null | undefined): string {
   if (!match?.players?.length) return GENERIC_MATCH_TITLE;
@@ -11,8 +11,8 @@ export function matchPageTitle(match: MatchDetail | null | undefined): string {
   const sapphire = teamPlayers(match, TEAM.sapphire);
   if (amber.length === 0 || sapphire.length === 0) return GENERIC_MATCH_TITLE;
 
-  const score = `Amber ${teamKills(amber)}–${teamKills(sapphire)} Sapphire`;
+  const score = `Amber ${teamKills(amber)}-${teamKills(sapphire)} Sapphire`;
   const winner =
     match.winning_team === TEAM.amber ? 'Amber' : match.winning_team === TEAM.sapphire ? 'Sapphire' : null;
-  return `Match #${match.match_id} — ${score}${winner ? `, ${winner} win` : ''}`;
+  return `Match #${match.match_id} | ${score}${winner ? `, ${winner} win` : ''}`;
 }

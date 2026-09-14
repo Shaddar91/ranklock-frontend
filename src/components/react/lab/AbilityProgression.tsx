@@ -48,7 +48,7 @@ export default function AbilityProgression({
         action={
           <span className="mono tnum" style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)' }}>
             {rate ??
-              `no served rate for this exact order${minMatches == null ? '' : ` — orders are floored at ${count(minMatches)} matches`}`}
+              `no served rate for this exact order${minMatches == null ? '' : `: orders are floored at ${count(minMatches)} matches`}`}
           </span>
         }
       />
@@ -61,7 +61,7 @@ export default function AbilityProgression({
               <span
                 key={s.pos}
                 className="lab-ab"
-                title={`${a?.name ?? `Ability ${s.abilityId}`} — ${stepLabel(s)}`}
+                title={`${a?.name ?? `Ability ${s.abilityId}`}: ${stepLabel(s)}`}
               >
                 <span className={`kit-key k${slot || 1}`}>
                   <AbilityGlyph slot={slot} icon={a?.icon_url} />
@@ -98,7 +98,7 @@ export default function AbilityProgression({
           })}
         </div>
         <p className="lab-note">
-          {served ? "This hero's most-played served order — import a build to read its own." : ''}
+          {served ? "This hero's most-played served order. Import a build to read its own." : ''}
           {window ? ` Served rates: ${window}.` : ''}
         </p>
       </div>

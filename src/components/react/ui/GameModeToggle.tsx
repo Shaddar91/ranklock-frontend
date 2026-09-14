@@ -36,8 +36,8 @@ export default function GameModeToggle({ currentPath = '' }: { currentPath?: str
       <div
         className="brkfilter gm-toggle gm-toggle--locked"
         role="group"
-        aria-label="Game mode — Normal only on this page"
-        title="Lane analytics are Normal-only — Brawl has no laning data."
+        aria-label="Game mode: Normal only on this page"
+        title="Lane analytics are Normal-only. Brawl has no laning data."
       >
         <span className="minitog on" aria-current="true">Normal</span>
         <span className="gm-only">only</span>

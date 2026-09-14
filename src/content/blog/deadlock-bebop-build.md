@@ -16,8 +16,8 @@ Reverb](/items/3577481646/) wins 56.3% of the 3,542,289 Bebop games it was
 bought in and [Spirit Burn](/items/343572757/) 55.4% of 2,396,712, on a hero
 who wins 46.5% of his 2,067,938 games in the 2026-05-01 to 2026-09-03 window.
 Nearly ten points of separation on samples that size is the clearest direction
-any of the four most-picked heroes hands a player, and it is a spending plan
-rather than an argument about the pick.
+any of the four most-picked heroes hands a player. It is a spending plan.
+Whether to pick him is a separate question.
 
 ## What the hook is buying you
 
@@ -66,7 +66,7 @@ Disarming Hex sits in the same place for the same reason.
 
 ## When to go hunting for the early pull
 
-Read the matchup rows for pace rather than for a pick. Bebop's worst raw row
+Read the matchup rows for pace. Bebop's worst raw row
 is Seven at 40.4% over 372,839 matches and it tells you almost nothing,
 because Seven wins 55.9% of everything. RankLock's build page compares each
 row to what the two win rates predict, 50% plus Bebop's rate minus the
@@ -80,7 +80,7 @@ Krill is the other positive row at 46.3% against a predicted 45.4% over
 247,608 matches. The tightest rows are [Mirage](/heroes/mirage/) at 48.0%
 against a predicted 49.2% over 186,645 matches and Silver at 49.1% against
 50.0% over 251,185. Mina lands two hundredths of a point from Silver, so read
-those two as one answer rather than a ranked pair.
+those two as one answer.
 
 Every gap sits under 1.3 points, so none of these lanes is a counter-pick and
 none of them changes who you take. They change when you start looking for the
@@ -108,10 +108,10 @@ guide](/blog/rank-bands-hero-choice/) covers the habit worth building.
 
 Eight published Bebop builds reach RankLock's list, more than any hero in the
 top four, and they agree about the spine. The most favorited, at 14,841 weekly
-favorites by Account 1206811165, carries a name that does not read well under
-ad review, so it is cited here by its author and its items. "w bebop(puzo)" by
-Account 1681161871 follows at 12,038, and "REVERSE BEBOP V2" by Account
-1893991285 at 5,502 is the one gun build in a list of spirit builds.
+favorites, carries a name that does not read well under
+ad review, so it is cited here by its standing and its items. "w bebop(puzo)"
+follows at 12,038, and "REVERSE BEBOP V2" at 5,502 is the one gun build in a
+list of spirit builds.
 
 Lane on the top build's block and you buy Mystic Burst, Sprint Boots, Extra
 Spirit, Trophy Collector, Improved Spirit, Mystic Expansion, Compress Cooldown

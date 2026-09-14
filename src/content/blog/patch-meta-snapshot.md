@@ -14,14 +14,15 @@ who adjust first bank free win-rate while everyone else runs last patch's
 plan. Use this snapshot as a starting point, then let the live chips on each
 guide confirm whether the trend held at your bracket.
 
-## Read movement, not snapshots
+## Read which way a rate is moving
 
 A single win-rate is a photo; the *direction* it is moving is the story. A hero
 whose rate is still climbing is a better pick than a higher one already sliding,
 because you are buying into momentum instead of a peak that is already deflating.
 
-When you scan the meta, sort by change-over-patch, not by raw rate. The picks
-worth learning are the ones the data is still rewarding more each day.
+When you scan the meta, sort by change-over-patch. The raw-rate column will not
+tell you which way a pick is heading. The picks worth learning are the ones the
+data is still rewarding more each day.
 
 ## Where the value is hiding
 

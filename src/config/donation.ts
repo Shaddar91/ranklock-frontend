@@ -171,14 +171,14 @@ export const NON_EVM_CHAINS: NonEvmChain[] = [
     name: 'Solana',
     address: '',
     nativeSymbol: 'SOL',
-    note: 'send SOL or any SPL token (e.g., USDC) — very cheap',
+    note: 'send SOL or any SPL token (e.g., USDC), very cheap',
   },
   {
     family: 'tron',
     name: 'Tron',
     address: '',
     nativeSymbol: 'TRX',
-    note: 'send TRX or USDT (TRC-20) — very cheap',
+    note: 'send TRX or USDT (TRC-20), very cheap',
   },
 ];
 

@@ -42,5 +42,5 @@ export function datasetWindowLabel(
   const lo = shortDate(entry.window_lo);
   const hi = shortDate(entry.window_hi);
   if (lo === '' || hi === '') return null;
-  return `${lo} – ${hi}`;
+  return `${lo} to ${hi}`;
 }

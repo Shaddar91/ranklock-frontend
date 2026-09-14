@@ -34,21 +34,21 @@ Every banked kill makes the next one cheaper, which is why the first isolated he
 
 ## How to play Drifter as an Offensive initiator
 
-Eternal Night manufactures the condition your passive wants rather than adding damage to a fight. Blinded enemies count as isolated, so a team fight under the darkness breaks into separate duels you are already winning, and the correct moment to press it is when the enemy team is grouped and your team is ready to spread into them rather than when you need an escape.
+Eternal Night manufactures the condition your passive wants. It adds no damage of its own. Blinded enemies count as isolated, so a team fight under the darkness breaks into separate duels you are already winning, and the correct moment to press it is when the enemy team is grouped and your team is ready to spread into them.
 
-Before that, your opener is the teleport. Stalker's Mark puts you behind the target, which is the side their team is not watching and the side their own escape points away from. The published builds mostly delay the passive to get that opener online sooner, and four of the five leading lists go Rend, then Stalker's Mark, then Bloodscent, then Eternal Night, and only the most-favourited weekly build, build 493049 from Account 1123344384 at 10,650 weekly favourites, takes Bloodscent second instead.
+Before that, your opener is the teleport. Stalker's Mark puts you behind the target, which is the side their team is not watching and the side their own escape points away from. The published builds mostly delay the passive to get that opener online sooner, and four of the five leading lists go Rend, then Stalker's Mark, then Bloodscent, then Eternal Night, and only the most-favourited weekly build, build 493049 at 10,650 weekly favourites, takes Bloodscent second instead.
 
 ## The build on the 2026-08-22 Update patch
 
 Drifter came out of this patch untouched, and so did his item list. Restorative Locket dropped from 10% to 8% Spirit Resistance and appears in 2 of his 40 sampled builds; Radiant Regeneration lost heal on cast from 70 to 65 and appears in 1. A list written before 2026-08-22 still describes the hero you are playing.
 
-The two most-favourited lifetime builds are also the most usable. `eido build` from Account 1676299122 at 44,789 favourites, updated 2026-03-18, front-loads sustain and duration items before the weapon spine. `devilish` from Account 882001781 at 39,772 favourites, updated 2026-07-05, is the leaner version: a short early block, then Burst Fire, Lucky Shot, Crippling Headshot and Glass Cannon in order. `Hank J. Wimbleton` from Account 1187363553 at 3,978 weekly favourites is the third shape, splitting its early block by whether the lane forces you into spirit purchases.
+The two most-favourited lifetime builds are also the most usable. `eido build` at 44,789 favourites, updated 2026-03-18, front-loads sustain and duration items before the weapon spine. `devilish` at 39,772 favourites, updated 2026-07-05, is the leaner version: a short early block, then Burst Fire, Lucky Shot, Crippling Headshot and Glass Cannon in order. `Hank J. Wimbleton` at 3,978 weekly favourites is the third shape, splitting its early block by whether the lane forces you into spirit purchases.
 
 ## Abilities: what to level and when
 
 Rend is first in all five published builds, weekly and lifetime. After that, four of them go Stalker's Mark, then Bloodscent, then Eternal Night.
 
-Take the standard order unless your lane is safe. Rend first pays every wave, because it clears Troopers and doubles as your damage in any melee exchange. Stalker's Mark second gives you the teleport early, and the teleport is what converts a lane advantage into a kill instead of a shove. Bloodscent second is the greedy line the leading weekly build takes, and it is correct when you already expect to be roaming and finishing kills in other lanes rather than fighting for your own. Eternal Night goes in when it unlocks and gets held for a grouped enemy team.
+Take the standard order unless your lane is safe. Rend first pays every wave, because it clears Troopers and doubles as your damage in any melee exchange. Stalker's Mark second gives you the teleport early, and the teleport is what converts a lane advantage into a kill instead of a shove. Bloodscent second is the greedy line the leading weekly build takes, and it is correct when you already expect to be roaming and finishing kills in other lanes. Eternal Night goes in when it unlocks and gets held for a grouped enemy team.
 
 ## Hard counters, and how to play around them
 

@@ -28,7 +28,7 @@ The kit is four things you place and then defend. Mini Turret drops a turret tha
 
 ## How to play McGinnis as a Support
 
-Place the wall before the fight, not during it. Spectral Wall splits terrain, which means it decides how many enemies your team has to face at once, and that decision is worth more than the damage the eruption deals. Four of the five published lists take it first for exactly this reason.
+Place the wall before the fight starts. Spectral Wall splits terrain, which means it decides how many enemies your team has to face at once, and that decision is worth more than the damage the eruption deals. Four of the five published lists take it first for exactly this reason.
 
 Then heal from behind your own geometry. Medicinal Specter is a deployable, so the right spot is the one your team falls back into and the enemy has to come around the wall to reach. Healing Tempo wins 57.2% of the 1,406,678 games it appears in on her and Superior Duration 57.0% of 1,071,416; both buy the same thing, which is more seconds of the ground you already made.
 
@@ -38,7 +38,7 @@ Heroic Aura is her signature support purchase at 6.0 times the roster average, w
 
 Open with the barrage and buy the item that lets you finish it. Heavy Barrage slows her while it fires, which is the whole reason Unstoppable wins 57.2% of 332,305 games on her. The ultimate is a commitment, and an interrupted commitment is a fight you paid for and lost.
 
-Mark the spot the enemy has to stand in, not the one they are standing in now. The rockets home onto a mark, so the cast is a prediction: put it on the choke your wall just made, or on the objective they cannot walk away from.
+Mark the spot the enemy has to stand in. The rockets home onto a mark, so the cast is a prediction: put it on the choke your wall just made, or on the objective they cannot walk away from.
 
 Pick the lanes that are already hers. She wins 59.5% of 82,521 matches against Sinclair, 58.0% of 214,141 against Venator, 58.0% of 188,966 against Mina, 57.0% of 111,360 against Mirage and 56.8% of 180,706 against Shiv.
 
@@ -46,7 +46,7 @@ Pick the lanes that are already hers. She wins 59.5% of 82,521 matches against S
 
 McGinnis was not named in this patch and nothing she relies on moved. Radiant Regeneration lost heal on cast from 70 to 65 and appears in 5 of the 40 sampled builds; Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in 1. Neither belongs to her core.
 
-Read the weekly lists for order and the lifetime ones for shape. `Enraze's build` from Account 171180825 at 2,976 weekly favourites was last updated 2026-04-10, and the other two weekly sets (2,221 favourites from Account 457389205 and 1,166 from Account 186091237) come from the same month and publish their names in characters this page does not reprint. `GunGinnis` from Account 108132325 is the most favourited set on the hero at 241,920 and `Kowz McGinnis Ouchie Turret Build` from Account 8899141 holds 57,998, but both were last touched in 2024, so their purchases are history while their point order still stands.
+Read the weekly lists for order and the lifetime ones for shape. `Enraze's build` at 2,976 weekly favourites was last updated 2026-04-10, and the other two weekly sets (2,221 favourites and 1,166) come from the same month and publish their names in characters this page does not reprint. `GunGinnis` is the most favourited set on the hero at 241,920 and `Kowz McGinnis Ouchie Turret Build` holds 57,998, but both were last touched in 2024, so their purchases are history while their point order still stands.
 
 ## Abilities: what to level and when
 
@@ -54,7 +54,7 @@ Spectral Wall first on four of the five lists; the exception, the 2,221-favourit
 
 Take the wall first when the lane is a fight, because the wall is the only thing you own that changes where that fight happens. Turret first is the farming read: it clears faster and it holds ground you are not standing on.
 
-Medicinal Specter second on three of the five. That is the sustain answer, and it is correct whenever the trade you are losing is a slow one rather than a burst.
+Medicinal Specter second on three of the five. That is the sustain answer, and it is correct whenever the trade you are losing is a slow one. Burst is a different problem.
 
 ## Hard counters, and how to play around them
 
@@ -66,4 +66,4 @@ Against all of them, do not defend the deployables. She is the hero with 2 stami
 
 Buy the amplifier, then the second cast. Spirit Burn tops her table at 59.4% over 632,720 games, Boundless Spirit reads 57.4% over 1,644,546 and Refresher 56.9% over 271,776. On a hero whose entire game is placement, a refreshed wall is a second chance to choose the ground.
 
-Echo Shard at 56.8% over 485,830 games does the cheaper version of the same trick. Diviner's Kevlar shows 59.1% across only 32,280 games and Frenzy 57.7% across 37,350, so both are leads rather than rules, with Mystic Reverb at 57.7% over 128,465 sitting between them. No ally pairing clears RankLock's reporting floor on her, so there is no partner to plan around. Build the position, and whoever arrives gets to use it.
+Echo Shard at 56.8% over 485,830 games does the cheaper version of the same trick. Diviner's Kevlar shows 59.1% across only 32,280 games and Frenzy 57.7% across 37,350, so both are leads worth testing, with Mystic Reverb at 57.7% over 128,465 sitting between them. No ally pairing clears RankLock's reporting floor on her, so there is no partner to plan around. Build the position, and whoever arrives gets to use it.

@@ -141,7 +141,7 @@ function HeroesTableInner({ initialRows, guideSlugs, statsThrough }: HeroesTable
           loading={isPending}
           sort={sort}
           onSortChange={setSort}
-          caption="Hero meta — win rate, pick rate, KDA and games by rank tier"
+          caption="Hero meta: win rate, pick rate, KDA and games by rank tier"
           emptyTitle={
             isComputing(error) ? 'Hero meta is computing' : isError ? 'Hero meta unavailable' : 'No heroes for this rank yet'
           }
@@ -149,7 +149,7 @@ function HeroesTableInner({ initialRows, guideSlugs, statsThrough }: HeroesTable
             isComputing(error)
               ? computingMessage('the hero meta table is being generated', error)
               : isError
-                ? 'The stats API is offline — the meta table fills in when it comes back online.'
+                ? 'The stats API is offline. The meta table fills in when it comes back online.'
                 : 'No data for this rank tier yet. Try another rank or check back after the next refresh. Low ranks are sampled thinly.'
           }
         />

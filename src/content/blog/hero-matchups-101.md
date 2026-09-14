@@ -50,9 +50,9 @@ not](/blog/computed-vs-raw-match-data/) walks through that pipeline in full.
 
 That origin explains both the table's strength and its limits. The strength is
 sample size: 430,906 matches behind the Seven row and 465,892 behind the Bebop
-row are large enough that the measured rates are stable quantities, not streaks.
-The limit is aggregation: the count knows nothing about why those games went
-the way they did.
+row are large enough that the measured rates are stable quantities. A streak
+cannot move a sample that size. The limit is aggregation: the count knows
+nothing about why those games went the way they did.
 
 ## The count is the trust signal
 
@@ -84,7 +84,7 @@ discipline.
   for in the lane; it rarely justifies abandoning the pick.
 - **Pair the table with your band.** Matchups shift with bracket the same way
   win-rates do, so read them alongside the [rank band
-  guide](/blog/rank-bands-hero-choice/) rather than off the all-ranks page.
+  guide](/blog/rank-bands-hero-choice/). The all-ranks page flattens the shift.
 - **Re-check after patches.** A balance pass rewrites matchup math, and the
   tables move with the data window. The [patch tracker](/patches/) tells you
   when to look again.

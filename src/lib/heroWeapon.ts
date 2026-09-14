@@ -82,7 +82,7 @@ export function weaponInfoRows(w: WeaponInfo | null | undefined): StatRow[] {
     { k: 'Rounds per second', v: one(w.shots_per_second) },
     { k: 'Clip', v: String(w.clip_size) },
     { k: 'Reload', v: `${one(w.reload_duration)}s` },
-    { k: 'Falloff', v: `${metres(w.damage_falloff_start_range)}–${metres(w.damage_falloff_end_range)}m` },
+    { k: 'Falloff', v: `${metres(w.damage_falloff_start_range)}-${metres(w.damage_falloff_end_range)}m` },
   ];
 }
 

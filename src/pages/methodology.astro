@@ -56,18 +56,18 @@ const jsonLd = breadcrumbJsonLd(origin, [
       <p>The badge drives three groupings, depending on the page:</p>
       <ul>
         <li>
-          <strong>A 12-band ladder</strong> — band = badge &divide; 10, giving bands
+          <strong>A 12-band ladder</strong>: band = badge &divide; 10, giving bands
           0 to 11. This powers the rank selector on hero pages.
         </li>
         <li>
-          <strong>Five brackets</strong> — badge ranges 11&ndash;36, 41&ndash;56,
-          61&ndash;76, 81&ndash;96 and 101&ndash;116, plus an &ldquo;all
-          ranks&rdquo; view. The API labels them with the game's rank names, from
-          Initiate&ndash;Seeker at the bottom to Ascendant&ndash;Eternus at the
+          <strong>Five brackets</strong>: badge ranges 11 to 36, 41 to 56,
+          61 to 76, 81 to 96 and 101 to 116, plus an &ldquo;all
+          ranks&rdquo; view. The API labels them with the game's rank names,
+          Initiate to Seeker at the bottom, Ascendant to Eternus at the
           top. Matchup stats use this grouping.
         </li>
         <li>
-          <strong>A 4-way bracket</strong> — low (below 80), mid (below 100), high
+          <strong>A 4-way bracket</strong>: low (below 80), mid (below 100), high
           (below 116) and top (116 and up). Hero pages offer this as a simpler
           filter.
         </li>
@@ -110,7 +110,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
       <p>
         A match belongs to the patch that was live when the match started: its
         start time falls inside the patch's release-to-end window. One patch is
-        open at any moment — its end date is not yet set — and it covers matches
+        open at any moment. Its end date is not yet set, and it covers matches
         up to the present. Once a match is attributed, it never moves to another
         patch retroactively.
       </p>
@@ -125,8 +125,8 @@ const jsonLd = breadcrumbJsonLd(origin, [
       <p>
         Lane Lab economy curves show the 25th, 50th and 75th percentile of net
         worth per time bin for a rank band. The pipeline stores only counts in
-        fixed buckets — three-minute time bins and 1,000 net-worth steps for Lane
-        Lab, one-minute bins and 500 steps on the stats surface — and the
+        fixed buckets: three-minute time bins and 1,000 net-worth steps for Lane
+        Lab, one-minute bins and 500 steps on the stats surface. The
         percentile is reconstructed from those counts when you ask for it. No
         percentile is stored.
       </p>
@@ -134,8 +134,8 @@ const jsonLd = breadcrumbJsonLd(origin, [
         The early-economy verdict takes one net-worth reading per player per
         match, the reading nearest the 9-minute mark between 9:00 and 10:00, and
         reports the win-rate of players at each reading level within a band.
-        Player percentiles average a player's per-match ratios — kills plus
-        assists per death, with deaths floored at one — and rank that average
+        Player percentiles average a player's per-match ratios, kills plus
+        assists per death with deaths floored at one, and rank that average
         against every other player in the same bracket and game mode. The
         &ldquo;improve&rdquo; benchmarks compare a player with averages and
         nearest-rank percentiles per bracket, hero and match-duration bucket,
@@ -149,15 +149,15 @@ const jsonLd = breadcrumbJsonLd(origin, [
         current hour. It computes that window's contribution, folds it exactly
         once into long-lived accumulators, and rebuilds the served tables from
         them. The schedule behind this is a six-hour timer that is currently
-        switched on by hand, so stats refresh in bursts when the pipeline runs —
+        switched on by hand, so stats refresh in bursts when the pipeline runs,
         not on a guaranteed six-hour tick. When the timer will run unattended is
         an operator decision, not something the code decides.
       </p>
       <p>
         You never have to guess how old a number is. Every analytics response
         carries an <code>X-Data-Fresh-As-Of</code> header with the timestamp of
-        the last successful run, and data past its freshness threshold — twelve
-        hours for matchup stats, 48 hours for daily and lane datasets — is flagged
+        the last successful run, and data past its freshness threshold, twelve
+        hours for matchup stats and 48 hours for daily and lane datasets, is flagged
         with <code>X-Data-Stale: true</code> instead of being passed off as fresh.
         A route whose dataset has never been computed answers
         &ldquo;computing&rdquo; rather than inventing a number.

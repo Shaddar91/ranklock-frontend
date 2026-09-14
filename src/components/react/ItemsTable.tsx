@@ -225,7 +225,7 @@ function ItemsTableInner({
             isComputing(error)
               ? computingMessage('item win-rates are being generated', error)
               : isError
-                ? 'The stats API is offline — item win-rates fill in when it comes back online.'
+                ? 'The stats API is offline. Item win-rates fill in when it comes back online.'
                 : 'No data for this category and rank band yet. Try another band or category, or check back after the next refresh.'
           }
         />
@@ -235,7 +235,7 @@ function ItemsTableInner({
         Players, win rate, matches and average buy time: deadlock-api.com item aggregates, {modeLabel} · {band}
         {statsThrough ? `, through ${statsThrough}` : ''}. Category, tier and cost: the item catalog (
         {count(catalog.length)} buildable items; {count(joined.length)} carry win-rate rows this band).
-        {!topHeroServed && ' Most bought on is computing — the item-hero fold has served no rows yet.'} Rank means
+        {!topHeroServed && ' Most bought on is computing. The item-hero fold has served no rows yet.'} Rank means
         badge tier, never an MMR number.
       </p>
     </>

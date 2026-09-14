@@ -18,11 +18,11 @@ export interface LiveStatusLine {
 export function liveStatusLine(input: LiveStatusInput): LiveStatusLine {
   const { phase, hasSnapshot, error, status } = input;
   if (phase === 'pending') return { text: 'Checking API…', className: 'muted' };
-  if (phase === 'ok') return { text: `API reachable — status: ${status ?? 'ok'}`, className: 'ok' };
-  if (isDisabled(error)) return { text: 'API unavailable (analytics disabled) — the site renders without it.', className: 'muted' };
-  if (isComputing(error)) return { text: 'API unavailable (computing) — the site renders without it.', className: 'muted' };
+  if (phase === 'ok') return { text: `API reachable. Status: ${status ?? 'ok'}`, className: 'ok' };
+  if (isDisabled(error)) return { text: 'API unavailable (analytics disabled). The site renders without it.', className: 'muted' };
+  if (isComputing(error)) return { text: 'API unavailable (computing). The site renders without it.', className: 'muted' };
   //a real network/5xx failure only labels the panel "offline" when the build baked no rows either.
   return hasSnapshot
     ? { text: 'Showing the latest snapshot.', className: 'muted' }
-    : { text: 'API unavailable (offline) — the site renders without it.', className: 'muted' };
+    : { text: 'API unavailable (offline). The site renders without it.', className: 'muted' };
 }

@@ -33,11 +33,11 @@ Start the fight where the enemy cannot spread out. Aura of Suffering ramps the l
 
 Pain Battery is the reason you go first. It charges from damage taken and fires shocking bolts once it is full, so absorbing an enemy opener is not a mistake, it is the setup, and holding the fight one exchange longer is usually what completes the charge.
 
-Shocking Reanimation is a second fight, not an escape. He survives the lethal hit, then reanimates with damage and a stun attached, which means the correct time to be at low health is inside the enemy team rather than backing away from it. Commit before the ultimate, not after.
+Shocking Reanimation is a second fight. It is not an escape. He survives the lethal hit, then reanimates with damage and a stun attached, which means the correct time to be at low health is inside the enemy team. Commit before the ultimate fires.
 
 ## How to play Victor as a Damage carry
 
-Use Jumpstart to farm, not to fight. The self-damage buys decaying bonus regeneration and move speed, and on a hero this slow that speed is how camps and waves get cleared between fights. The health it costs comes back; the tempo it buys does not, if you skip it.
+Use Jumpstart to farm. The self-damage buys decaying bonus regeneration and move speed, and on a hero this slow that speed is how camps and waves get cleared between fights. The health it costs comes back; the tempo it buys does not, if you skip it.
 
 Buy sustain before you buy damage, because his sustain is his damage. Healing Tempo goes into his builds 5.5 times more often than the roster average and Healing Booster 4.2 times, and both keep him standing inside his own aura long enough for the ramp to matter.
 
@@ -47,25 +47,25 @@ Then the item table, which is the most emphatic in this batch. Spirit Burn reads
 
 The update never names Victor, and it lands on his healing anyway. Radiant Regeneration's heal on cast fell from 70 to 65 and sits in 13 of his 40 sampled builds, the second widest exposure in this batch; Restorative Locket's Spirit Resistance fell from 10% to 8% and sits in 4. Neither changes the order, both shave the early sustain the lists were written around.
 
-Three of his five sets publish names this page can print, and two of them are current. `SN|P3R : Victor, The Unbreakable` from Account 29715818 is the most favourited at 43,846 and was revised 2026-08-28, after the patch. A second lifetime list from Account 1280552477 at 32,249 favourites was revised 2026-09-04 and carries a streaming handle in its name, so it is credited by account here instead. `gun [by hlupik]` from Account 180316092 holds 3,379 weekly favourites from 2026-05-17 and is the outlier of the group, a weapon build on a hero everyone else builds for spirit. The remaining two weekly sets, 5,722 favourites from Account 1235534992 on 2026-04-13 and 3,481 from Account 393148161 on 2026-05-17, withhold their names for the same reason.
+Three of his five sets publish names this page can print, and two of them are current. `SN|P3R : Victor, The Unbreakable` is the most favourited at 43,846 and was revised 2026-08-28, after the patch. A second lifetime list at 32,249 favourites was revised 2026-09-04 and carries a streaming handle in its name, so it is credited by account here instead. `gun [by hlupik]` holds 3,379 weekly favourites from 2026-05-17 and is the outlier of the group, a weapon build on a hero everyone else builds for spirit. The remaining two weekly sets, 5,722 favourites on 2026-04-13 and 3,481 on 2026-05-17, withhold their names for the same reason.
 
 ## Abilities: what to level and when
 
 All five lists take Pain Battery first, Jumpstart second, Aura of Suffering third and Shocking Reanimation last. Nobody disagrees, and the order tracks what actually wins his lane: the battery turns harassment into damage, and Jumpstart turns the health he has left into farm.
 
-Aura of Suffering third reads late for his signature ability, and it is correct. The aura hurts him while it ramps, so it wants the item support that arrives after the lane rather than the raw points that arrive during it. Take the ultimate last and treat it as a threat the enemy has to respect rather than a button you plan around.
+Aura of Suffering third reads late for his signature ability, and it is correct. The aura hurts him while it ramps, so it wants the item support that arrives after the lane more than the raw points that arrive during it. Take the ultimate last and treat it as a threat the enemy has to respect. Do not plan your fights around it.
 
 ## Hard counters, and how to play around them
 
 Nobody counters Victor outright, which changes the question from who beats him to who costs him the most. Seven is that answer twice over: 49.7% across 396,201 games in the matchup table and 52.0% across 33,179 on the counter endpoint. Graves is next at 51.1% over 26,873 counter games, and Ivy at 52.4% over 27,557.
 
-What all three do is refuse the brawl. Seven and Ivy fight from a distance he cannot cross quickly, and Graves punishes the moment he commits, so the play is to open where they have no room to back away and to accept a slower game rather than chasing them into one.
+What all three do is refuse the brawl. Seven and Ivy fight from a distance he cannot cross quickly, and Graves punishes the moment he commits, so the play is to open where they have no room to back away and to accept a slower game.
 
-Treat the last two as close games rather than bad ones: Kelvin at 50.9% over 159,840 games and McGinnis at 52.4% over 187,637 round out his five narrowest. Against everyone else the table is lopsided: 60.4% of 317,539 games against Mina, 59.8% of 131,750 against Sinclair, 59.5% of 382,075 against Venator, 59.2% of 222,679 against Paradox and 58.9% of 203,456 against Pocket.
+Treat the last two as close games: Kelvin at 50.9% over 159,840 games and McGinnis at 52.4% over 187,637 round out his five narrowest. Against everyone else the table is lopsided: 60.4% of 317,539 games against Mina, 59.8% of 131,750 against Sinclair, 59.5% of 382,075 against Venator, 59.2% of 222,679 against Paradox and 58.9% of 203,456 against Pocket.
 
 ## Items that go well
 
-Buy anti-heal first and treat it as core rather than situational. Spirit Burn at 67.5% over 471,952 games and Scourge at 66.4% over 1,421,080 are the two highest rates on his page, and both exist to stop the enemy out-sustaining a hero whose plan is a long fight.
+Buy anti-heal first and treat it as a core slot in every build. Spirit Burn at 67.5% over 471,952 games and Scourge at 66.4% over 1,421,080 are the two highest rates on his page, and both exist to stop the enemy out-sustaining a hero whose plan is a long fight.
 
 Then buy repetition. Refresher reads 64.6% over 1,319,039 games, Transcendent Cooldown 63.6% over 2,907,836 and Ethereal Shift 63.3% over 1,476,269, which together mean more auras, more reanimations and a way to survive between them. Frenzy at 65.0% over 251,794 games is the one weapon purchase that keeps pace with the spirit list.
 

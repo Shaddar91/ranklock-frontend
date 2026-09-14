@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { abilityOrderSequence, authorLabel, patchesAgo } from '../../../lib/buildMeta';
+import { printableBuildName } from '../../../lib/heroPlay';
 import { RANKED_BRACKETS, rankedBracketLabel } from '../../../lib/heroBuild';
 import { count, DASH } from '../../../lib/format';
 import QueryProvider from '../QueryProvider';
@@ -93,11 +94,12 @@ export function CommunityBuildsTable({
     //never mixes the two and the column header names the one it holds.
     const toRow = (b: TrimmedBuild, winRate: number | null, matches: number | null, author: string): Row => {
       const updated = patchesAgo(b.last_updated_timestamp, patches, nowSeconds);
+      const printable = !!b.name?.trim() && printableBuildName(b.name);
       return {
         key: String(b.hero_build_id),
         buildId: b.hero_build_id,
-        title: b.name?.trim() || author,
-        untitled: !b.name?.trim(),
+        title: printable ? b.name!.trim() : author,
+        untitled: !printable,
         author,
         categories: b.categories.length,
         winRate,
@@ -216,7 +218,7 @@ export function CommunityBuildsTable({
           ))}
           {ranked && rows.length < 3 && (
             <p className="bp-thin">
-              Fewer than 3 builds clear the floor in this bracket — lobby-average badge, 20 matches. The rows above are
+              Fewer than 3 builds clear the floor in this bracket: lobby-average badge, 20 matches. The rows above are
               every one that does; no build from another bracket is padded in.
             </p>
           )}

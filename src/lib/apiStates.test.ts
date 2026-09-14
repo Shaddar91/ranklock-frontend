@@ -67,15 +67,15 @@ describe('retryAfterLabel', () => {
 describe('computingMessage', () => {
   it('surfaces retry_after when the 202 body carries one', () => {
     expect(computingMessage('patch hero stats are being generated', err202('{"status":"computing","retry_after":7200}'))).toBe(
-      'Computing now — patch hero stats are being generated. Check back in ~2 h.',
+      'Computing now: patch hero stats are being generated. Check back in ~2 h.',
     );
   });
   it('falls back to "shortly" when there is no retry hint', () => {
     expect(computingMessage('patch hero stats are being generated', err202())).toBe(
-      'Computing now — patch hero stats are being generated. Check back shortly.',
+      'Computing now: patch hero stats are being generated. Check back shortly.',
     );
     expect(computingMessage('item win-rates are being generated')).toBe(
-      'Computing now — item win-rates are being generated. Check back shortly.',
+      'Computing now: item win-rates are being generated. Check back shortly.',
     );
   });
 });

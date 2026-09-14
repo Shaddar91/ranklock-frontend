@@ -89,7 +89,7 @@ function SlotCard({
   const imbueMoves = hasAbilityScopedMods(item);
   const imbueHint = imbueMoves
     ? 'Route this item’s ability stats onto one ability'
-    : 'This item carries no ability-scoped stats — an imbue changes nothing';
+    : 'This item carries no ability-scoped stats. An imbue changes nothing';
   const imbued = abilities.find((a) => a.ability_id === imbuedTo);
 
   return (
@@ -154,7 +154,7 @@ function SlotCard({
       )}
       {excluded && (
         <div className="chip" style={{ marginTop: 7, padding: '1px 7px', fontSize: 10.5 }}>
-          Not counted — conditionals off
+          Not counted: conditionals off
         </div>
       )}
     </div>
@@ -255,7 +255,7 @@ export default function BuildBoard({
         <div className="panel panel-pad">
           <EmptyState
             title="No items yet"
-            message="Pick items from the shop — any item fits any slot, the 9 inventory slots first."
+            message="Pick items from the shop. Any item fits any slot, the 9 inventory slots first."
             icon="inbox"
           />
         </div>
@@ -291,7 +291,7 @@ export default function BuildBoard({
                 <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{itemLabel(id, byId.get(id))}</span>
                 <span className="flex" style={{ alignItems: 'center', gap: 10 }}>
                   <span className="faint" style={{ fontSize: 11.5 }}>
-                    {known ? 'No open slot — still counted below' : 'Not in this patch’s catalog — not counted'}
+                    {known ? 'No open slot, still counted below' : 'Not in this patch’s catalog, not counted'}
                   </span>
                   <button
                     type="button"

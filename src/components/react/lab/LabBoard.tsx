@@ -50,7 +50,7 @@ function Slots({
             <button
               type="button"
               className={`lab-slot filled ${catClass(item.item_slot_type)}`}
-              title={`${name} — click to remove`}
+              title={`${name}: click to remove`}
               aria-label={`Remove ${name}`}
               onClick={() => onRemove(id)}
             >
@@ -116,7 +116,7 @@ export default function LabBoard({
       </div>
       {layout.extra.length > 0 && (
         <p className="lab-note">
-          {layout.extra.length} item{layout.extra.length === 1 ? '' : 's'} past the 12-slot board — a shopping list
+          {layout.extra.length} item{layout.extra.length === 1 ? '' : 's'} past the 12-slot board: a shopping list
           rather than one loadout.
         </p>
       )}

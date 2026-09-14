@@ -89,7 +89,7 @@ function spanDay(iso: string): string {
 
 function spanText(side: ScopeSide): string {
   if (!side.span_from || !side.span_to) return '';
-  return ` (${spanDay(side.span_from)}–${spanDay(side.span_to)})`;
+  return ` (${spanDay(side.span_from)} to ${spanDay(side.span_to)})`;
 }
 
 export function sideScopeText(label: string, side: ScopeSide, scope: PlayerScope): string {

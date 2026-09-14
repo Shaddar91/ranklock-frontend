@@ -48,7 +48,7 @@ Pillow Toss is what makes either version work. Each hit shortens every other coo
 
 Open with Naptime into a group that has already committed. The gaze slows and blocks movement before it sleeps and detonates, so it is a fight-starter with a windup, and the standard defence against it is to spread out before she casts. That means the value is highest on a team that is already stacked on an objective and lowest on one walking down a lane.
 
-Follow it with throws rather than with a rush. The knockback keeps bodies out of your face and the cooldown refund means the opener pays for its own follow-up, which is the only reason a 680 HP hero at 7.2 m/s can afford to start a fight at all.
+Follow it with throws and keep your distance. The knockback keeps bodies out of your face and the cooldown refund means the opener pays for its own follow-up, which is the only reason a 680 HP hero at 7.2 m/s can afford to start a fight at all.
 
 Buy the survival rows before the exotic ones. Cheat Death reads 57.4% over 290,950 games on her and Diviner's Kevlar 57.5% over 39,581. The first of those is the one you can plan around.
 
@@ -56,7 +56,7 @@ Buy the survival rows before the exotic ones. Cheat Death reads 57.4% over 290,9
 
 Rem was not named in this patch and her exposure to it is small. Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in 9 of her 40 sampled builds; Radiant Regeneration's heal-on-cast cut from 70 to 65 appears in 1. Neither is worth re-planning around.
 
-Two of her five published lists have been revised since the update, which is more than most heroes can say. `The World's Craziest Pillow Fight, But Crazier` from Account 317873560 carries 51,986 favourites and was last touched 2026-09-05; a 51,324-favourite set from Account 1144439143 was revised 2026-08-23, the day after the patch, and publishes a name this page does not reprint. The three weekly lists carry 8,924 favourites from Account 797836364, 7,501 from Account 127414274 and 7,003 from Account 393148161. They date from 2026-04-14 to 2026-05-09 and all publish names in forms not reprinted here.
+Two of her five published lists have been revised since the update, which is more than most heroes can say. `The World's Craziest Pillow Fight, But Crazier` carries 51,986 favourites and was last touched 2026-09-05; a 51,324-favourite set was revised 2026-08-23, the day after the patch, and publishes a name this page does not reprint. The three weekly lists carry 8,924 favourites, 7,501 and 7,003. They date from 2026-04-14 to 2026-05-09 and all publish names in forms not reprinted here.
 
 ## Abilities: what to level and when
 
@@ -70,14 +70,14 @@ The ultimate goes last regardless, and it is not a demotion. Naptime needs a gro
 
 Both of RankLock's lists name the same three heroes, and they are the three worst rows she has anywhere. She wins 40.6% of 403,461 matches against Seven, 41.3% of 332,673 against Victor and 42.2% of 428,813 against Graves; the confirmed counter rows read 40.2% over 28,137 against Victor, 40.5% over 36,475 against Graves and 41.0% over 30,469 against Seven. Kelvin at 44.2% over 210,497 and McGinnis at 44.4% over 233,945 finish the worst five.
 
-There is no item that solves that list, so solve it with position. The nap, the helper, the gaze: everything she does asks her to be near a teammate and stationary, so the counterplay against these three is to do all of it a step further back than feels right and to let Pillow Toss create the space rather than answer for its absence.
+There is no item that solves that list, so solve it with position. The nap, the helper, the gaze: everything she does asks her to be near a teammate and stationary, so the counterplay against these three is to do all of it a step further back than feels right and to let Pillow Toss open the space before you need it.
 
-Her good lanes are quiet ones rather than winning ones: Sinclair at 52.5% over 183,374 matches, Venator at 52.1% over 369,791, Mina at 51.3% over 381,394, Bebop at 50.9% over 421,877 and Silver at 50.7% over 331,460.
+Her good lanes are quiet ones, barely on the right side of even: Sinclair at 52.5% over 183,374 matches, Venator at 52.1% over 369,791, Mina at 51.3% over 381,394, Bebop at 50.9% over 421,877 and Silver at 50.7% over 331,460.
 
 ## Items that go well
 
 The two heroes who beat her hardest are the two she most wants on her own team, and the numbers are not close. Victor is her best reported ally at 54.8% across 21,751 shared games and her worst opponent at 40.2%; Seven is second at 52.8% across 20,039 and beats her at 41.0%. Celeste is the third pairing that clears the floor and it loses, at 49.2% over 22,087.
 
-That is a drafting instruction rather than a curiosity. If either of them is already on your team, Rem gains more than she gives up; if either is on theirs, the lane you are about to take is the worst one on her page.
+That is a drafting instruction. If either of them is already on your team, Rem gains more than she gives up; if either is on theirs, the lane you are about to take is the worst one on her page.
 
 For the slots themselves, buy Cheat Death at 57.4% over 290,950 games and Silencer at 57.6% over 130,667 as the two dependable rows, then Lucky Shot at 56.2% over 149,510. Frenzy at 58.2% over 13,092, Spellslinger at 56.9% over 19,581 and Diviner's Kevlar at 57.5% over 39,581 are the thin ones. They are worth a slot when the game asks for it, never worth building toward.

@@ -30,9 +30,9 @@ Every button pays him for standing on top of someone. Scorn damages the ring aro
 
 ## How to play Mo & Krill as an Offensive initiator
 
-Choose the target before you go under. Burrow commits you: you surface where you decided to surface and the knock-up on the exit is your opening, so the engagement is settled underground rather than improvised on arrival. Land beside the hero your team can finish, not the nearest body.
+Choose the target before you go under. Burrow commits you: you surface where you decided to surface and the knock-up on the exit is your opening, so the engagement is settled underground. Land beside the hero your team can finish. The nearest body is rarely that hero.
 
-Then hold them with Combo and let everyone else spend it. The channel keeps one enemy still while five other people shoot, which makes the ultimate a purchase order for your team's damage rather than yours. Two buys mark out the players who understand that: Phantom Strike, which closes the last stretch of a gap, is bought 3.9 times more often on him than the roster average, and Torment Pulse, damage that ticks on whoever you are standing over, 4.1 times.
+Then hold them with Combo and let everyone else spend it. The channel keeps one enemy still while five other people shoot, which makes the ultimate a purchase order for your team's damage. Two buys mark out the players who understand that: Phantom Strike, which closes the last stretch of a gap, is bought 3.9 times more often on him than the roster average, and Torment Pulse, damage that ticks on whoever you are standing over, 4.1 times.
 
 Keep Sand Blast for after the opener. A disarm is wasted on the hero already knocked into the air and worth a fight against the one still shooting you.
 
@@ -42,7 +42,7 @@ Scorn is not a spell you cast in a fight, it is the reason you are still standin
 
 Buy the amplifiers with the largest tables behind them. Escalating Exposure wins 60.7% of 2,499,870 games on him and Scourge 58.9% of 2,928,652. Those are the two biggest samples the hero has, and both sell the same thing: more damage per second spent in the place he already has to be.
 
-Spirit Burn belongs in that group at 60.6% across 958,120 games. Mystic Reverb is the tempting thin row at 59.2% over 56,986, which makes it a lead rather than a rule.
+Spirit Burn belongs in that group at 60.6% across 958,120 games. Mystic Reverb is the tempting thin row at 59.2% over 56,986, which makes it a lead worth testing before it becomes a rule.
 
 ## How to play Mo & Krill as a Tank
 
@@ -56,7 +56,7 @@ Holding ground has to end something. His curve falls the longer a match runs, so
 
 Mo & Krill was not named in this patch and neither was anything he buys first. Two items in the wider pool moved: Radiant Regeneration lost heal on cast from 70 to 65 and appears in 9 of his 40 sampled builds, and Restorative Locket dropped from 10% Spirit Resistance to 8% and appears in 4. Nine lists in forty is enough to check your own and not enough to redraw it.
 
-Take purchases from the list revised since the update and shape from the rest. The 37,429-favourite lifetime set from Account 1017193917 was last touched 2026-08-28, six days after the patch, and it is the only one of the five that has seen the current game; its published name is not reprinted here. `Dig n Burst -Monicako.` from Account 85281673 is the most favourited on the hero by a distance at 136,866, but it was last revised 2024-09-27, so read its point order and leave its shop where it is. The three weekly lists (5,549 favourites from Account 393148161, 2,976 from Account 135036290 and 2,388 from Account 886705503) were revised between 2026-05-01 and 2026-05-24 and publish their names in characters this page does not reprint.
+Take purchases from the list revised since the update and shape from the rest. The 37,429-favourite lifetime set was last touched 2026-08-28, six days after the patch, and it is the only one of the five that has seen the current game; its published name is not reprinted here. `Dig n Burst -Monicako.` is the most favourited on the hero by a distance at 136,866, but it was last revised 2024-09-27, so read its point order and leave its shop where it is. The three weekly lists (5,549 favourites, 2,976 and 2,388) were revised between 2026-05-01 and 2026-05-24 and publish their names in characters this page does not reprint.
 
 ## Abilities: what to level and when
 
@@ -70,9 +70,9 @@ Combo goes last on four of the five, and that is not a demotion. The ultimate ne
 
 Three heroes beat him, and both of RankLock's lists name the same three. He wins 44.4% of 252,175 matches against Seven, 45.8% of 249,571 against Victor and 46.7% of 255,552 against Graves; the counter rows agree at 46.5% over 29,451 against Victor, 46.7% over 25,974 against Seven and 47.1% over 29,227 against Graves. Kelvin at 46.9% over 117,323 and McGinnis at 47.8% over 123,065 complete the worst five.
 
-Read all three as one problem rather than three. Each of them punishes the moment you are visible and standing still, which is exactly what Scorn asks you to be. Arrive underground instead of on foot, open with the exit knock-up, and save the disarm for whoever is still firing afterwards.
+Read all three as one problem. Each of them punishes the moment you are visible and standing still, which is exactly what Scorn asks you to be. Arrive underground instead of on foot, open with the exit knock-up, and save the disarm for whoever is still firing afterwards.
 
-The lanes that go his way go his way by a margin. He wins 56.7% of 113,338 matches against Sinclair, 55.6% of 258,519 against Venator, 55.4% of 206,882 against Mina, 54.9% of 143,284 against Pocket and 54.1% of 195,326 against Silver. That is five rows where the hero is favoured before anyone presses a button, which is licence to take the fight rather than farm past it.
+The lanes that go his way go his way by a margin. He wins 56.7% of 113,338 matches against Sinclair, 55.6% of 258,519 against Venator, 55.4% of 206,882 against Mina, 54.9% of 143,284 against Pocket and 54.1% of 195,326 against Silver. That is five rows where the hero is favoured before anyone presses a button, which is licence to take the fight.
 
 ## Items that go well
 

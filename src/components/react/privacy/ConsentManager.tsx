@@ -29,8 +29,8 @@ export default function ConsentManager() {
       <Row
         title="Analytics"
         on={analytics}
-        onLabel="Matomo analytics on — first-party cookies are set on this browser."
-        offLabel="Analytics off — no cookies are set, nothing is tracked."
+        onLabel="Matomo analytics on. First-party cookies are set on this browser."
+        offLabel="Analytics off. No cookies are set, nothing is tracked."
         onChange={apply}
       />
 
