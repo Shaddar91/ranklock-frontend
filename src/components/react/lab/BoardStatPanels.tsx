@@ -35,10 +35,11 @@ export default function BoardStatPanels({ stats, boardCount }: { stats: Computed
   return (
     <>
       {CATEGORIES.map((cat: Category) => {
-        const lines = stats[cat];
         const invest = stats.investment?.[cat] ?? null;
         const bonus = invest ? investmentBonusText(invest) : null;
         const gun = cat === 'weapon' ? (stats.weaponDps?.rows ?? []) : [];
+        //A stat the gun rows already fold (clip) would print twice.
+        const lines = stats[cat].filter((line) => !gun.some((g) => g.label === line.label));
         return (
           <section key={cat} className={`lab-cp cat-${cat}`}>
             <div className="lab-cp-h">

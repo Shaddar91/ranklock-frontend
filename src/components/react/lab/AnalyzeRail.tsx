@@ -116,9 +116,9 @@ function StatsCard({
   boardCount: number;
 }) {
   const [tab, setTab] = useState<Category>('weapon');
-  const lines = stats[tab];
   const investRow = stats.investment?.[tab] ?? null;
   const gun = tab === 'weapon' ? (stats.weaponDps?.rows ?? []) : [];
+  const lines = stats[tab].filter((line) => !gun.some((g) => g.label === line.label));
 
   return (
     <section className="lab-card">
