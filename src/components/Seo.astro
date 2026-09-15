@@ -90,15 +90,10 @@ const ldJson = ldGraph ? JSON.stringify(ldGraph).replace(/</g, '\\u003c') : null
 <link rel="canonical" href={canonical} />
 {robotsContent && <meta name="robots" content={robotsContent} />}
 
-<!-- hreflang alternates (C7). Only translated locales + x-default are advertised
-     (untranslated locales are noindex). x-default and en both point at the
-     no-prefix English URL; each newly-translated locale joins this cluster. -->
 {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
 
-<!-- Blog/guides RSS feed autodiscovery (static /rss.xml). -->
 <link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} Guides`} href={rssHref} />
 
-<!-- OpenGraph -->
 <meta property="og:site_name" content={SITE_NAME} />
 <meta property="og:type" content={ogType} />
 <meta property="og:title" content={title} />
@@ -108,7 +103,6 @@ const ldJson = ldGraph ? JSON.stringify(ldGraph).replace(/</g, '\\u003c') : null
 {publishedTime && <meta property="article:published_time" content={publishedTime} />}
 {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
 
-<!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:site" content={TWITTER_HANDLE} />
 <meta name="twitter:title" content={title} />

@@ -59,6 +59,7 @@ const {
   backdrop = true,
 } = Astro.props;
 
+//TrackingProvider + ConsentBanner mount on EVERY page, chrome=false included.
 const atmos = backdrop ? ATMOS : 'off';
 ---
 
@@ -95,8 +96,6 @@ const atmos = backdrop ? ATMOS : 'off';
       locale={currentLocale.code}
     />
 
-    <!-- self-hosted fonts (@font-face in styles/fonts.css); preload the faces that
-         paint above the fold — the .h-hero display face + the nav/heading weight. -->
     <link rel="preload" href="/assets/fonts/chakra-petch-700.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/assets/fonts/chakra-petch-600.woff2" as="font" type="font/woff2" crossorigin />
 
@@ -167,12 +166,6 @@ const atmos = backdrop ? ATMOS : 'off';
       )
     }
     {chrome && <SiteFooter />}
-    <!-- Consent + analytics layer — global on EVERY page (incl. chrome=false).
-         TrackingProvider is behavior-only (renders null): banner-gated Matomo +
-         SPA route-change pageviews + the Consent Mode v2 baseline. ConsentBanner
-         is the gaslamp cookie banner (analytics only — ads consent belongs to
-         Google's CMP). Both are client:load (the eslint client:* guard enforces
-         the directive). Matomo never loads without the analytics grant. -->
     <TrackingProvider client:load />
     <ConsentBanner client:load />
   </body>

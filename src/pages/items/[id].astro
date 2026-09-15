@@ -28,7 +28,7 @@ import {
 import { buyItAgainst, type CounterNote } from '../../lib/itemEditorial';
 import { itemTierLabel, itemTierNumeral } from '../../lib/itemTiers';
 import { toModifierRows } from '../../lib/itemOverlay';
-import { breadcrumbJsonLd } from '../../lib/seo';
+import { breadcrumbJsonLd, SITE_NAME } from '../../lib/seo';
 import { count, duration, pct } from '../../lib/format';
 import { resolveAsset } from '../../lib/assets';
 import { heroPath } from '../../lib/heroSlugs';
@@ -234,11 +234,39 @@ const description =
   item.matches != null
     ? `${name} in Deadlock: win rate over ${count(item.matches)} games, souls cost, when it is bought, and the heroes who build it most.`
     : `${name} in Deadlock: win rate, souls cost, when it is bought, and the heroes who build it most.`;
-const jsonLd = breadcrumbJsonLd(origin, [
-  { name: 'Home', path: '/' },
-  { name: 'Items', path: '/items' },
-  { name, path: canonicalPath },
-]);
+//Entity markup, the same shape the hero pages carry: name the item as a thing inside
+//Deadlock so the page attaches to both entities. No image property — the art host is
+//robots-blocked, so a URL there would be one Google cannot fetch.
+const canonicalUrl = new URL(`${canonicalPath}/`, origin).toString();
+const jsonLd = [
+  breadcrumbJsonLd(origin, [
+    { name: 'Home', path: '/' },
+    { name: 'Items', path: '/items' },
+    { name, path: canonicalPath },
+  ]),
+  {
+    '@type': 'WebPage',
+    name: title,
+    description,
+    url: canonicalUrl,
+    inLanguage: 'en',
+    isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: origin },
+    about: {
+      '@type': 'Thing',
+      name,
+      description: [name, 'is a', slotLabel ? slotLabel.toLowerCase() : null, 'item in Deadlock.']
+        .filter(Boolean)
+        .join(' '),
+      url: canonicalUrl,
+    },
+    mentions: {
+      '@type': 'VideoGame',
+      name: 'Deadlock',
+      publisher: { '@type': 'Organization', name: 'Valve' },
+      gamePlatform: 'PC',
+    },
+  },
+];
 
 const heroNote = 'Share = of that hero’s matches · WR = that hero with the item';
 ---
