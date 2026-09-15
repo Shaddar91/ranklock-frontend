@@ -28,12 +28,15 @@ export interface SoulsSourcePanelProps {
   roster: readonly RosterSlot[];
   matchMode: 'Unranked' | 'Ranked';
   buckets: readonly number[];
+  //account_id -> games in `matchMode`. A zero draws no bar: an empty split is not a zero split.
+  modeGames: Map<number, number | null>;
 }
 
 export default function SoulsSourcePanel({
   roster,
   matchMode,
   buckets,
+  modeGames,
 }: SoulsSourcePanelProps) {
   const players = useQueries({
     queries: roster.map((p) => ({
@@ -80,8 +83,13 @@ export default function SoulsSourcePanel({
         const rows = roster.map((p, i) => ({
           player: p,
           comp: compositionAt(players[i]?.data, bucket),
+          none: modeGames.get(p.account_id) === 0,
         }));
-        const max = Math.max(...rows.map((r) => r.comp.total), ref.total, 1);
+        const max = Math.max(
+          ...rows.filter((r) => !r.none).map((r) => r.comp.total),
+          ref.total,
+          1,
+        );
         return (
           <div className="ll-souls-group" key={bucket}>
             <div className="ll-souls-at">
@@ -90,9 +98,21 @@ export default function SoulsSourcePanel({
             </div>
 
             <div className="ll-souls-bars">
-              {[...rows, { player: null, comp: ref }].map((row, ri) => {
+              {[...rows, { player: null, comp: ref, none: false }].map((row, ri) => {
                 const label = row.player?.name ?? 'Lobby average';
                 const ghost = row.player == null;
+                if (row.none) {
+                  return (
+                    <div className="ll-souls-row" key={row.player?.account_id ?? `ref-${ri}`}>
+                      <span className="ll-souls-who">
+                        <span className="ll-dot" style={{ background: row.player?.color }} />
+                        {label}
+                      </span>
+                      <span className="ll-souls-none">no {matchMode} games</span>
+                      <span className="ll-souls-total tnum">—</span>
+                    </div>
+                  );
+                }
                 return (
                   <div className="ll-souls-row" key={row.player?.account_id ?? `ref-${ri}`}>
                     <span className="ll-souls-who">
@@ -151,6 +171,13 @@ export default function SoulsSourcePanel({
                         {SOULS_GROUP_LABEL[g]}
                       </th>
                       {rows.slice(0, roster.length).map((r) => {
+                        if (r.none) {
+                          return (
+                            <td className="tnum" key={r.player?.account_id ?? g}>
+                              {'—'}
+                            </td>
+                          );
+                        }
                         const v = r.comp.segments.find((s) => s.group === g)?.souls ?? 0;
                         const d = refSouls > 0 ? Math.round(((v - refSouls) / refSouls) * 100) : null;
                         //Taking fewer souls is worse everywhere except losses, where fewer is better.

@@ -250,7 +250,8 @@ export const queryKeys = {
     ['player', id, 'compare-player', params ?? {}] as const,
   playerImprove: (id: number, params?: Query) => ['player', id, 'improve', params ?? {}] as const,
   //per-player economy aggregate (backs the Lane Lab player overlay).
-  playerEconomy: (id: number, game_mode?: GameMode) => ['player', id, 'economy', game_mode ?? null] as const,
+  playerEconomy: (id: number, game_mode?: GameMode, match_mode?: MatchMode) =>
+    ['player', id, 'economy', game_mode ?? null, match_mode ?? null] as const,
   //THE signature per-minute soul curve (your fixed line + the selected league/hero
   //comparison). vs_band/hero fold into params so each league/hero pick caches separately.
   playerEconomyCurve: (id: number, params?: Query) => ['player', id, 'economy-curve', params ?? {}] as const,
@@ -406,8 +407,8 @@ export const api = {
     id: number,
     params?: { hero_id?: number; window?: string; bracket?: number; game_mode?: GameMode },
   ) => apiFetch<ImproveResponse>(`/players/${id}/improve`, { query: params }),
-  getPlayerEconomy: (id: number, game_mode?: GameMode) =>
-    apiFetch<PlayerEconomy>(`/players/${id}/economy`, { query: { game_mode } }),
+  getPlayerEconomy: (id: number, game_mode?: GameMode, match_mode?: MatchMode) =>
+    apiFetch<PlayerEconomy>(`/players/${id}/economy`, { query: { game_mode, match_mode } }),
   getPlayerEconomyCurve: (
     id: number,
     params?: {

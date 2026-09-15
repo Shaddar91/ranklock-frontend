@@ -261,10 +261,13 @@
   gap: 8px;
   align-items: end;
 }
-.ll-bar {
-  display: grid;
-  align-content: end;
-  justify-items: center;
+/* Flex, not grid: a percentage height on a grid item resolves against an auto-sized track, which
+   collapsed every fill to nothing. A flex column has the plot's definite 200px to measure against. */
+.ll-ladder-bar {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
   gap: 4px;
   height: 100%;
   background: transparent;
@@ -272,26 +275,43 @@
   padding: 0;
   cursor: pointer;
 }
-.ll-bar-v {
+.ll-ladder-bar-v {
   font: 500 10px var(--mono);
   color: var(--muted);
 }
-.ll-bar-fill {
+.ll-ladder-bar-fill {
   width: 100%;
+  flex: none;
+  min-height: 3px;
   border-radius: 3px 3px 0 0;
   background: var(--faint);
   border: 1px solid var(--faint);
 }
-.ll-bar.on .ll-bar-fill {
+.ll-ladder-bar.on .ll-ladder-bar-fill {
   background: var(--text-2);
   border-color: var(--text-2);
 }
-.ll-bar.on .ll-bar-v {
+.ll-ladder-bar.on .ll-ladder-bar-v {
   color: var(--text);
 }
 /* Under the sample floor the median is real but thin — hollow says "do not lean on this". */
-.ll-bar.thin .ll-bar-fill {
+.ll-ladder-bar.thin .ll-ladder-bar-fill {
   background: transparent;
+}
+.ll-ladder-bar:hover .ll-ladder-bar-fill {
+  background: color-mix(in oklab, var(--text-2) 50%, transparent);
+  border-color: var(--text-2);
+}
+.ll-ladder-bar:hover .ll-ladder-bar-v {
+  color: var(--text);
+}
+/* Second reference league: outlined, so the filled bar stays the primary one. */
+.ll-ladder-bar.on-b .ll-ladder-bar-fill {
+  background: transparent;
+  border: 2px solid var(--brass-2);
+}
+.ll-ladder-bar.on-b .ll-ladder-bar-v {
+  color: var(--brass-2);
 }
 .ll-ladder-mark {
   position: absolute;
@@ -391,6 +411,11 @@
   flex-grow: 0;
   flex-shrink: 1;
   border-right: 1px solid color-mix(in oklab, var(--ink) 45%, transparent);
+}
+.ll-souls-none {
+  font: 500 11px var(--mono);
+  color: var(--muted);
+  align-self: center;
 }
 .ll-souls-total {
   text-align: right;
@@ -591,6 +616,14 @@
   border: 1px solid var(--border);
   background: var(--surface);
   font: 600 13px var(--display);
+}
+.ll-chip.no-games {
+  border-style: dashed;
+  opacity: 0.75;
+}
+.ll-chip-warn {
+  font: 500 10px var(--mono);
+  color: var(--loss);
 }
 .ll-chip-name {
   max-width: 14ch;
@@ -971,6 +1004,12 @@
 }
 .ll-legend i.dashed {
   border-top-style: dashed;
+}
+.ll-legend i.second {
+  border-top-color: var(--brass-2);
+}
+.ll-legend span.muted {
+  color: var(--muted);
 }
 
 /* ---- 9-minute verdict ---- */

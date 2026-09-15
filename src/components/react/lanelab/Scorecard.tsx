@@ -12,6 +12,7 @@ import {
   type ScorecardMetric,
 } from '../../../lib/lanePercentile';
 import type { RosterSlot } from '../../../lib/laneRoster';
+import { FOLD_060_METRICS } from './usePlayerCurves';
 
 //A metric whose value is a soul/damage/heal total reads as 44,820; a count reads as 8.9.
 const WIDE = new Set(['souls', 'damage', 'damage_taken', 'player_healing', 'damage_mitigated']);
@@ -29,6 +30,11 @@ export interface ScorecardProps {
   //Each player's value per metric at `bucket`, keyed account_id -> metric -> value. Null where the
   //player's curve has no such metric yet, which renders as a pending cell, never as a zero.
   values: Map<number, Map<string, number | null>>;
+  //account_id -> games in `matchMode`; zero means the whole row is empty by right, not pending.
+  modeGames: Map<number, number | null>;
+  //Players whose games in the selected window kept no timeline, so a windowed cell cannot fill.
+  noTimeline: readonly RosterSlot[];
+  windowLabel: string;
   metric: string;
   onPickMetric: (metric: string) => void;
 }
@@ -58,9 +64,13 @@ export default function Scorecard({
   tierName,
   matchMode,
   values,
+  modeGames,
+  noTimeline,
+  windowLabel,
   metric,
   onPickMetric,
 }: ScorecardProps) {
+  const noTimelineIds = new Set(noTimeline.map((p) => p.account_id));
   //One percentiles request per metric: `values` is every player's number in axis order, so a
   //four-player row costs one call rather than four.
   const queries = useQueries({
@@ -96,12 +106,28 @@ export default function Scorecard({
     return roster.map((p) => {
       const v = values.get(p.account_id)?.get(m.key) ?? null;
       if (v == null) {
+        const noGames = modeGames.get(p.account_id) === 0;
+        //A windowed metric reads the retained timelines; the 060 five always read all games.
+        const windowed = !FOLD_060_METRICS.has(m.key);
+        const noWindow = windowed && noTimelineIds.has(p.account_id);
         return {
           text: '—',
-          chip: 'next update',
+          chip: noGames
+            ? `no ${matchMode} games`
+            : noWindow
+              ? `no timeline in ${windowLabel.toLowerCase()}`
+              : FOLD_060_METRICS.has(m.key)
+                ? 'not in older games'
+                : 'next update',
           tone: 'pending' as const,
           standing: null,
-          title: `${m.label}: no ${m.label.toLowerCase()} in ${p.name}'s curve yet`,
+          title: noGames
+            ? `${p.name} has no ${matchMode} games, so there is no ${m.label.toLowerCase()} to read`
+            : noWindow
+              ? `None of ${p.name}'s ${windowLabel.toLowerCase()} games kept a per-minute timeline, so this window has nothing to read. All games does.`
+              : FOLD_060_METRICS.has(m.key)
+                ? `${m.label} was not recorded for ${p.name}'s older games, so it stays blank for them`
+                : `${m.label}: no ${m.label.toLowerCase()} in ${p.name}'s curve yet`,
         };
       }
       const share = res[sent++]?.below_share ?? null;
@@ -188,8 +214,8 @@ export default function Scorecard({
 
       <p className="ll-sc-foot">
         {tierName}: {count(sampleN)} player-games, ranked only · percentile = share of {tierName}{' '}
-        player-games below the value; deaths invert · player lines are {matchMode} · pending columns
-        fill with the next data update
+        player-games below the value; deaths invert · player lines are {matchMode} · a cell reading
+        "not in older games" was never recorded for those games, so it will not fill
       </p>
     </section>
   );

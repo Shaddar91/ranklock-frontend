@@ -36,9 +36,14 @@ export interface LadderPanelProps {
   metricLabel: string;
   bucket: number;
   tier: number;
+  //The optional second reference league, outlined rather than filled. Set in the compare bar.
+  tierB: number | null;
   onPickTier: (tier: number) => void;
   //Each player's own value for `metric` at `bucket`, in real units.
   playerValues: Map<number, number | null>;
+  //account_id -> games in the selected match mode; 0 means every panel below is empty by right.
+  modeGames: Map<number, number | null>;
+  matchMode: 'Unranked' | 'Ranked';
 }
 
 export default function LadderPanel({
@@ -47,8 +52,11 @@ export default function LadderPanel({
   metricLabel,
   bucket,
   tier,
+  tierB,
   onPickTier,
   playerValues,
+  modeGames,
+  matchMode,
 }: LadderPanelProps) {
   const queries = useQueries({
     queries: LEAGUE_TIERS.map((t) => ({
@@ -108,6 +116,7 @@ export default function LadderPanel({
         <p className="ll-sc-note">
           Bar = league median · hollow bar = under the {count(RANK_MIN_SAMPLE)} player-game floor ·
           click a bar to set the reference
+          {tierB == null ? '' : ` · outlined = ${LEAGUE_NAMES[tierB]}, the second reference`}
         </p>
       </header>
 
@@ -118,13 +127,15 @@ export default function LadderPanel({
               <button
                 type="button"
                 key={b.tier}
-                className={`ll-bar${b.tier === tier ? ' on' : ''}${b.thin ? ' thin' : ''}`}
+                className={`ll-ladder-bar${b.tier === tier ? ' on' : ''}${b.tier === tierB ? ' on-b' : ''}${b.thin ? ' thin' : ''}`}
                 onClick={() => onPickTier(b.tier)}
                 title={`${b.name} median ${b.value == null ? 'no sample' : show(metric, b.value)} at ${bucketClock(bucket)} · ${count(b.sample)} player-games`}
               >
-                <span className="ll-bar-v tnum">{b.value == null ? '' : show(metric, b.value)}</span>
+                <span className="ll-ladder-bar-v tnum">
+                  {b.value == null ? '' : show(metric, b.value)}
+                </span>
                 <span
-                  className="ll-bar-fill"
+                  className="ll-ladder-bar-fill"
                   style={{ height: `${b.value == null ? 0 : (b.value / max) * 100}%` }}
                 />
               </button>
@@ -145,21 +156,26 @@ export default function LadderPanel({
         <ul className="ll-ladder-legend">
           {roster.map((p) => {
             const v = playerValues.get(p.account_id) ?? null;
+            const noGames = modeGames.get(p.account_id) === 0;
             //Which league's median the player's own number sits at or above.
             const sits = v == null ? null : bars.filter((b) => b.value != null && b.value <= v).pop();
             return (
               <li key={p.account_id}>
                 <span className="ll-rule" style={{ background: p.color }} />
                 <span style={{ color: p.color }}>{p.name}</span>
-                <span className="tnum">{v == null ? 'pending' : show(metric, v)}</span>
+                <span className="tnum">
+                  {noGames ? '—' : v == null ? 'pending' : show(metric, v)}
+                </span>
                 <small>
-                  {v == null
-                    ? 'no value at this minute'
-                    : sits == null
-                      ? 'below every league'
-                      : sits.tier === 11
-                        ? 'plays like Eternus'
-                        : `sits at ${sits.name}`}
+                  {noGames
+                    ? `no ${matchMode} games`
+                    : v == null
+                      ? 'no value at this minute'
+                      : sits == null
+                        ? 'below every league'
+                        : sits.tier === 11
+                          ? 'plays like Eternus'
+                          : `sits at ${sits.name}`}
                 </small>
               </li>
             );

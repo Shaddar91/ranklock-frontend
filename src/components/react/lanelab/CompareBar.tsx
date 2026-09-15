@@ -7,6 +7,7 @@ import { api, queryKeys } from '../../../lib/apiClient';
 import { count, pct } from '../../../lib/format';
 import { asAccountId, scopeLabel, type RosterSlot } from '../../../lib/laneRoster';
 import { LEAGUE_NAMES, LEAGUE_TIERS } from './LadderPanel';
+import type { LaneMatchMode } from './usePlayerModeGames';
 
 export type WindowKey = 'all' | 'g10' | 'g25' | 'g50' | 'd30';
 
@@ -35,6 +36,63 @@ export function windowParams(key: WindowKey): { last_games?: number; last_days?:
   }
 }
 
+interface LeagueMenuProps {
+  label: string;
+  value: number | null;
+  //The second reference can be cleared; the first cannot.
+  clearable: boolean;
+  samples: Map<number, number>;
+  onPick: (tier: number | null) => void;
+}
+
+function LeagueMenu({ label, value, clearable, samples, onPick }: LeagueMenuProps) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="ll-league">
+      <button type="button" onClick={() => setOpen((v) => !v)}>
+        <small>{label}</small> {value == null ? 'none' : LEAGUE_NAMES[value]}
+      </button>
+      {open && (
+        <div className="ll-league-menu">
+          <p>
+            The reference is one league of Valve display ranks, ranked games only. A league under 500
+            player-games at a minute is not drawn.
+          </p>
+          {clearable && (
+            <button
+              type="button"
+              className={value == null ? 'on' : ''}
+              onClick={() => {
+                onPick(null);
+                setOpen(false);
+              }}
+            >
+              <span>None</span>
+              <small>one reference only</small>
+            </button>
+          )}
+          {LEAGUE_TIERS.map((t) => (
+            <button
+              type="button"
+              key={t}
+              className={t === value ? 'on' : ''}
+              onClick={() => {
+                onPick(t);
+                setOpen(false);
+              }}
+            >
+              <span>{LEAGUE_NAMES[t]}</span>
+              <small className="tnum">
+                {samples.has(t) ? `${count(samples.get(t) ?? 0)} player-games` : ''}
+              </small>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export interface CompareBarProps {
   roster: readonly RosterSlot[];
   full: boolean;
@@ -42,12 +100,17 @@ export interface CompareBarProps {
   onRemove: (account_id: number) => void;
   window: WindowKey;
   onWindow: (w: WindowKey) => void;
-  matchMode: 'Unranked' | 'Ranked';
-  onMatchMode: (m: 'Unranked' | 'Ranked') => void;
+  matchMode: LaneMatchMode;
+  onMatchMode: (m: LaneMatchMode) => void;
   tier: number;
   onTier: (t: number) => void;
+  //The optional second reference league; null when the page compares against one.
+  tierB: number | null;
+  onTierB: (t: number | null) => void;
   //Per-league player-game counts for the dropdown, tier -> n. Empty until the ladder resolves.
   leagueSamples: Map<number, number>;
+  //account_id -> games in the selected mode, so a chip can say a player has none.
+  modeGames: Map<number, number | null>;
   horizonLabel: string;
 }
 
@@ -62,13 +125,15 @@ export default function CompareBar({
   onMatchMode,
   tier,
   onTier,
+  tierB,
+  onTierB,
   leagueSamples,
+  modeGames,
   horizonLabel,
 }: CompareBarProps) {
   const [raw, setRaw] = useState('');
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
-  const [leagueOpen, setLeagueOpen] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setQ(raw.trim()), 220);
@@ -122,20 +187,31 @@ export default function CompareBar({
         <span className="kicker">Compare</span>
 
         <div className="ll-chips">
-          {roster.map((p) => (
-            <span className="ll-chip" key={p.account_id} style={{ borderColor: p.color }}>
-              <span className="ll-dot" style={{ background: p.color }} />
-              <span className="ll-chip-name">{p.name}</span>
-              <small>· {scopeLabel(p.scope)}</small>
-              <button
-                type="button"
-                onClick={() => onRemove(p.account_id)}
-                aria-label={`Remove ${p.name}`}
+          {roster.map((p) => {
+            const noGames = modeGames.get(p.account_id) === 0;
+            return (
+              <span
+                className={`ll-chip${noGames ? ' no-games' : ''}`}
+                key={p.account_id}
+                style={{ borderColor: p.color }}
               >
-                ×
-              </button>
-            </span>
-          ))}
+                <span className="ll-dot" style={{ background: p.color }} />
+                <span className="ll-chip-name">{p.name}</span>
+                {noGames ? (
+                  <small className="ll-chip-warn">no {matchMode} games</small>
+                ) : (
+                  <small>· {scopeLabel(p.scope)}</small>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onRemove(p.account_id)}
+                  aria-label={`Remove ${p.name}`}
+                >
+                  ×
+                </button>
+              </span>
+            );
+          })}
 
           <div className="ll-add">
             <input
@@ -202,35 +278,20 @@ export default function CompareBar({
           ))}
         </div>
 
-        <div className="ll-league">
-          <button type="button" onClick={() => setLeagueOpen((v) => !v)}>
-            <small>League</small> {LEAGUE_NAMES[tier]}
-          </button>
-          {leagueOpen && (
-            <div className="ll-league-menu">
-              <p>
-                The reference is one league of Valve display ranks, ranked games only. A league under
-                500 player-games at a minute is not drawn.
-              </p>
-              {LEAGUE_TIERS.map((t) => (
-                <button
-                  type="button"
-                  key={t}
-                  className={t === tier ? 'on' : ''}
-                  onClick={() => {
-                    onTier(t);
-                    setLeagueOpen(false);
-                  }}
-                >
-                  <span>{LEAGUE_NAMES[t]}</span>
-                  <small className="tnum">
-                    {leagueSamples.has(t) ? `${count(leagueSamples.get(t) ?? 0)} player-games` : ''}
-                  </small>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <LeagueMenu
+          label="League"
+          value={tier}
+          clearable={false}
+          samples={leagueSamples}
+          onPick={(t) => onTier(t ?? tier)}
+        />
+        <LeagueMenu
+          label="Compare to"
+          value={tierB}
+          clearable
+          samples={leagueSamples}
+          onPick={onTierB}
+        />
 
         <span className="ll-pill tnum">
           <span className="ll-dot" />

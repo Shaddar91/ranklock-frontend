@@ -1,6 +1,6 @@
 //One player curve per roster slot for one metric, plus the league band for the same metric. Shared
 //by the curve, the ladder marks and the scorecard so a metric is fetched once per player per view.
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import type { RosterSlot } from '../../../lib/laneRoster';
 import { windowParams, type WindowKey } from './CompareBar';
@@ -14,6 +14,10 @@ export const WINDOWLESS_METRICS = new Set([
   'accuracy',
   'level',
 ]);
+
+//The same five under their other name: the migration-060 arrays fill forward only, so a game
+//folded before that migration carries no value and never will.
+export const FOLD_060_METRICS = WINDOWLESS_METRICS;
 
 //The cohort curve answers in bucket space: a 1000-wide bin reads 44.82 for 44,820 real units.
 const WIDE = new Set(['souls', 'damage', 'damage_taken', 'player_healing', 'damage_mitigated']);
@@ -36,6 +40,27 @@ export interface BandPoint {
   p75: number | null;
   mean: number | null;
   sample: number;
+}
+
+//One league's band for one metric. Called twice by the page: the reference league and, when set,
+//the second one it is compared against.
+export function useLeagueBand(tier: number | null, metric: string): BandPoint[] {
+  const band = useQuery({
+    queryKey: queryKeys.laneEconomyCurve({ tier: tier ?? 0, metric }),
+    queryFn: () => api.getLaneEconomyCurve({ tier: tier as number, metric }),
+    enabled: tier != null,
+    staleTime: 30 * 60 * 1000,
+    retry: false,
+  });
+  const scale = metricScale(metric);
+  return (band.data?.points ?? []).map((pt) => ({
+    bucket: pt.minute_bucket,
+    p25: pt.p25 == null ? null : pt.p25 * scale,
+    p50: pt.p50 == null ? null : pt.p50 * scale,
+    p75: pt.p75 == null ? null : pt.p75 * scale,
+    mean: pt.mean == null ? null : pt.mean * scale,
+    sample: pt.sample_players,
+  }));
 }
 
 export function usePlayerCurves(
@@ -61,18 +86,13 @@ export function usePlayerCurves(
         queryFn: () => api.getPlayerEconomyCurve(p.account_id, params),
         staleTime: 10 * 60 * 1000,
         retry: false,
+        //A window switch holds the previous line until the new one lands, instead of blanking.
+        placeholderData: keepPreviousData,
       };
     }),
   });
 
-  const band = useQuery({
-    queryKey: queryKeys.laneEconomyCurve({ tier, metric }),
-    queryFn: () => api.getLaneEconomyCurve({ tier, metric }),
-    staleTime: 30 * 60 * 1000,
-    retry: false,
-  });
-
-  const scale = metricScale(metric);
+  const bandPoints = useLeagueBand(tier, metric);
 
   const series: PlayerSeries[] = roster.map((p, i) => {
     const q = players[i];
@@ -93,22 +113,10 @@ export function usePlayerCurves(
     };
   });
 
-  const bandPoints: BandPoint[] = (band.data?.points ?? []).map((pt) => ({
-    bucket: pt.minute_bucket,
-    p25: pt.p25 == null ? null : pt.p25 * scale,
-    p50: pt.p50 == null ? null : pt.p50 * scale,
-    p75: pt.p75 == null ? null : pt.p75 * scale,
-    mean: pt.mean == null ? null : pt.mean * scale,
-    sample: pt.sample_players,
-  }));
-
   return {
     series,
     bandPoints,
-    bandPending: band.isPending,
     pending: players.some((q) => q.isPending),
-    //The window the player lines actually used — the five ignore it, and the caption must say so.
-    windowApplied: !WINDOWLESS_METRICS.has(metric),
     coverage: players[0]?.data?.coverage ?? null,
   };
 }

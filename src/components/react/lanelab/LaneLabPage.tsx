@@ -1,6 +1,6 @@
-//The Lane Lab page: one roster, one metric, one league, and eight panels reading them.
+//The Lane Lab page: one roster, one metric, two leagues, and eight panels reading them.
 import { useMemo, useState } from 'react';
-import { useQueries } from '@tanstack/react-query';
+import { keepPreviousData, useQueries } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { shortDate } from '../../../lib/format';
 import { SCORECARD_BUCKETS, SCORECARD_METRICS } from '../../../lib/lanePercentile';
@@ -13,7 +13,9 @@ import VsPanel from './VsPanel';
 import SoulsSourcePanel from './SoulsSourcePanel';
 import VerdictPanel from './VerdictPanel';
 import { useRoster } from './useRoster';
-import { WINDOWLESS_METRICS, usePlayerCurves } from './usePlayerCurves';
+import { FOLD_060_METRICS, WINDOWLESS_METRICS, useLeagueBand, usePlayerCurves } from './usePlayerCurves';
+import { usePlayerModeGames } from './usePlayerModeGames';
+import { useWindowPrefetch } from './useWindowPrefetch';
 import { windowParams } from './CompareBar';
 
 //Oracle: the largest league, and the fallback when nobody on the axis has a ranked game to read a
@@ -24,6 +26,7 @@ export default function LaneLabPage() {
   const { roster, full, add, remove, scope } = useRoster();
   const [metric, setMetric] = useState('damage');
   const [tier, setTier] = useState(DEFAULT_TIER);
+  const [tierB, setTierB] = useState<number | null>(null);
   const [windowKey, setWindowKey] = useState<WindowKey>('all');
   const [matchMode, setMatchMode] = useState<'Unranked' | 'Ranked'>('Unranked');
   const [bucket, setBucket] = useState<number>(SCORECARD_BUCKETS[0]);
@@ -40,7 +43,14 @@ export default function LaneLabPage() {
   })[0];
   const horizonLabel = shortDate(horizon?.data?.max_match_start_time) || 'the latest fold';
 
+  //How many games each player has in the selected mode. Zero is the answer behind every empty
+  //panel below, and each of them says so instead of "pending".
+  const modeGames = usePlayerModeGames(roster, matchMode);
+  const noGames = roster.filter((p) => modeGames.get(p.account_id) === 0);
+  useWindowPrefetch(roster, matchMode, windowKey);
+
   const active = usePlayerCurves(roster, metric, matchMode, windowKey, tier);
+  const bandPointsB = useLeagueBand(tierB, metric);
   //The verdict reads souls at 9:00 whatever the drawn metric is, so it needs its own souls pull.
   const souls = usePlayerCurves(roster, 'souls', matchMode, windowKey, tier);
 
@@ -60,11 +70,16 @@ export default function LaneLabPage() {
           queryFn: () => api.getPlayerEconomyCurve(p.account_id, params),
           staleTime: 10 * 60 * 1000,
           retry: false,
+          //The eleven cells hold their numbers through a window switch instead of going pending.
+          placeholderData: keepPreviousData,
         };
       }),
     ),
   });
 
+  //keepPreviousData holds `status` at success across a re-key, so the memo watches the update
+  //stamp: without it the table would keep the previous window's numbers for good.
+  const scorecardStamp = scorecardQueries.map((q) => `${q.status}:${q.dataUpdatedAt}`).join(',');
   const scorecardValues = useMemo(() => {
     const out = new Map<number, Map<string, number | null>>();
     roster.forEach((p, pi) => {
@@ -80,7 +95,26 @@ export default function LaneLabPage() {
       out.set(p.account_id, row);
     });
     return out;
-  }, [roster, bucket, scorecardQueries.map((q) => q.status).join(','), matchMode, windowKey]);
+  }, [roster, bucket, scorecardStamp, matchMode, windowKey]);
+
+  //A windowed read answers from the retained per-match timelines, and the working set does not keep
+  //every game: a player whose last ten matches kept none gets an empty series, not a slow one.
+  const windowCoverage = useMemo(() => {
+    const out = new Map<number, { matches_with_timeline: number; matches_total: number } | null>();
+    const mi = SCORECARD_METRICS.findIndex((m) => !FOLD_060_METRICS.has(m.key));
+    roster.forEach((p, pi) => {
+      const q = scorecardQueries[pi * SCORECARD_METRICS.length + Math.max(mi, 0)];
+      out.set(p.account_id, q?.data?.coverage ?? null);
+    });
+    return out;
+  }, [roster.map((p) => p.account_id).join(','), scorecardStamp, windowKey, matchMode]);
+  const noTimeline =
+    windowKey === 'all'
+      ? []
+      : roster.filter((p) => {
+          const c = windowCoverage.get(p.account_id);
+          return c != null && c.matches_with_timeline === 0 && c.matches_total > 0;
+        });
 
   //Ladder marks are the active metric at the ladder's own instant, in real units.
   const ladderValues = useMemo(() => {
@@ -123,8 +157,14 @@ export default function LaneLabPage() {
         matchMode={matchMode}
         onMatchMode={setMatchMode}
         tier={tier}
-        onTier={setTier}
+        onTier={(t) => {
+          setTier(t);
+          if (tierB === t) setTierB(null);
+        }}
+        tierB={tierB}
+        onTierB={(t) => setTierB(t === tier ? null : t)}
         leagueSamples={leagueSamples}
+        modeGames={modeGames}
         horizonLabel={horizonLabel}
       />
 
@@ -141,12 +181,7 @@ export default function LaneLabPage() {
         )}
 
         {roster.length > 0 && (
-          <VsPanel
-            roster={roster}
-            matchMode={matchMode}
-            windowLabel={windowLabel}
-            horizonLabel={horizonLabel}
-          />
+          <VsPanel roster={roster} matchMode={matchMode} horizonLabel={horizonLabel} />
         )}
 
         {roster.length > 0 && (
@@ -171,6 +206,9 @@ export default function LaneLabPage() {
               tierName={LEAGUE_NAMES[tier] ?? `Tier ${tier}`}
               matchMode={matchMode}
               values={scorecardValues}
+              modeGames={modeGames}
+              noTimeline={noTimeline}
+              windowLabel={windowLabel}
               metric={metric}
               onPickMetric={setMetric}
             />
@@ -180,12 +218,16 @@ export default function LaneLabPage() {
         <CurvePanel
           series={active.series}
           bandPoints={active.bandPoints}
+          bandPointsB={bandPointsB}
           metric={metric}
           onPickMetric={setMetric}
           tier={tier}
+          tierB={tierB}
           matchMode={matchMode}
           windowLabel={windowLabel}
           coverage={active.coverage}
+          noGames={noGames}
+          noTimeline={noTimeline}
         />
 
         <LadderPanel
@@ -194,12 +236,23 @@ export default function LaneLabPage() {
           metricLabel={metricLabel}
           bucket={bucket}
           tier={tier}
-          onPickTier={setTier}
+          tierB={tierB}
+          onPickTier={(t) => {
+            setTier(t);
+            if (tierB === t) setTierB(null);
+          }}
           playerValues={ladderValues}
+          modeGames={modeGames}
+          matchMode={matchMode}
         />
 
         {roster.length > 0 && (
-          <SoulsSourcePanel roster={roster} matchMode={matchMode} buckets={SCORECARD_BUCKETS} />
+          <SoulsSourcePanel
+            roster={roster}
+            matchMode={matchMode}
+            buckets={SCORECARD_BUCKETS}
+            modeGames={modeGames}
+          />
         )}
 
         <VerdictPanel soulsSeries={souls.series} />
@@ -210,7 +263,9 @@ export default function LaneLabPage() {
 
         <p className="ll-foot">
           Games through {horizonLabel}. The {LEAGUE_NAMES[tier]} reference is ranked games at that
-          Valve display rank. Player lines are {matchMode} only.
+          Valve display rank
+          {tierB == null ? '' : `, and ${LEAGUE_NAMES[tierB]} is the second reference`}. Player lines
+          are {matchMode} only.
         </p>
       </div>
     </>

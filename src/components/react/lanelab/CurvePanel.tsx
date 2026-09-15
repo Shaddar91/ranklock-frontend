@@ -5,8 +5,10 @@ import { useMemo, useState } from 'react';
 import { count, fixed } from '../../../lib/format';
 import { RANK_MIN_SAMPLE } from '../../../lib/laneCurve';
 import { SCORECARD_METRICS } from '../../../lib/lanePercentile';
+import type { RosterSlot } from '../../../lib/laneRoster';
 import { LEAGUE_NAMES } from './LadderPanel';
 import { WINDOWLESS_METRICS, type BandPoint, type PlayerSeries } from './usePlayerCurves';
+import { otherMode, type LaneMatchMode } from './usePlayerModeGames';
 
 const W = 1000;
 const H = 340;
@@ -37,23 +39,34 @@ const niceTop = (raw: number): number => {
 export interface CurvePanelProps {
   series: readonly PlayerSeries[];
   bandPoints: readonly BandPoint[];
+  //The optional second reference league's band, drawn outlined against the first.
+  bandPointsB: readonly BandPoint[];
   metric: string;
   onPickMetric: (m: string) => void;
   tier: number;
-  matchMode: 'Unranked' | 'Ranked';
+  tierB: number | null;
+  matchMode: LaneMatchMode;
   windowLabel: string;
   coverage: { matches_with_timeline: number; matches_total: number } | null;
+  //Roster players with zero games in `matchMode`: their line is absent by right, not pending.
+  noGames: readonly RosterSlot[];
+  //Players whose games in the selected window kept no timeline, so no windowed line can be drawn.
+  noTimeline: readonly RosterSlot[];
 }
 
 export default function CurvePanel({
   series,
   bandPoints,
+  bandPointsB,
   metric,
   onPickMetric,
   tier,
+  tierB,
   matchMode,
   windowLabel,
   coverage,
+  noGames,
+  noTimeline,
 }: CurvePanelProps) {
   const [view, setView] = useState<'total' | 'rate'>('total');
   const [span, setSpan] = useState<'full' | 'early'>('full');
@@ -65,11 +78,16 @@ export default function CurvePanel({
   const sp = canEarly ? span : 'full';
   const metricLabel = SCORECARD_METRICS.find((m) => m.key === metric)?.label ?? metric;
   const tierName = LEAGUE_NAMES[tier] ?? `Tier ${tier}`;
+  const tierBName = tierB == null ? null : (LEAGUE_NAMES[tierB] ?? `Tier ${tierB}`);
 
   //A band minute under the floor is not drawn: the median is real but too thin to compare against.
   const band = useMemo(
     () => bandPoints.filter((p) => p.sample >= RANK_MIN_SAMPLE && p.p50 != null),
     [bandPoints],
+  );
+  const bandB = useMemo(
+    () => bandPointsB.filter((p) => p.sample >= RANK_MIN_SAMPLE && p.p50 != null),
+    [bandPointsB],
   );
 
   const lastBucket = sp === 'early' ? EARLY_BUCKETS : 13;
@@ -87,12 +105,18 @@ export default function CurvePanel({
     return prev == null ? null : (here - prev) / 3;
   };
 
-  const bandAt = (b: number, k: 'p25' | 'p50' | 'p75' | 'mean') =>
-    band.find((p) => p.bucket === b)?.[k] ?? null;
+  const at = (rows: readonly BandPoint[], b: number, k: 'p25' | 'p50' | 'p75' | 'mean') =>
+    rows.find((p) => p.bucket === b)?.[k] ?? null;
+  const bandAt = (b: number, k: 'p25' | 'p50' | 'p75' | 'mean') => at(band, b, k);
+  const bandBAt = (b: number, k: 'p25' | 'p50' | 'p75' | 'mean') => at(bandB, b, k);
   const refGet = vw === 'rate' ? diff((b) => bandAt(b, 'mean')) : (b: number) => bandAt(b, 'p50');
+  const refGetB = vw === 'rate' ? diff((b) => bandBAt(b, 'mean')) : (b: number) => bandBAt(b, 'p50');
   const loGet = (b: number) => bandAt(b, 'p25');
   const hiGet = (b: number) => bandAt(b, 'p75');
+  const loGetB = (b: number) => bandBAt(b, 'p25');
+  const hiGetB = (b: number) => bandBAt(b, 'p75');
   const showBand = vw === 'total' && band.length > 0;
+  const showBandB = vw === 'total' && bandB.length > 0;
 
   const lineGet = (s: PlayerSeries) =>
     vw === 'rate'
@@ -105,8 +129,14 @@ export default function CurvePanel({
       const hi = hiGet(b);
       if (hi != null) drawn.push(hi);
     }
+    if (showBandB) {
+      const hi = hiGetB(b);
+      if (hi != null) drawn.push(hi);
+    }
     const r = refGet(b);
     if (r != null) drawn.push(r);
+    const rb = refGetB(b);
+    if (rb != null) drawn.push(rb);
     for (const s of series) {
       const v = lineGet(s)(b);
       if (v != null) drawn.push(v);
@@ -131,19 +161,26 @@ export default function CurvePanel({
     return d.trim();
   };
 
-  const bandPath = (): string => {
-    const up = buckets.filter((b) => hiGet(b) != null);
+  const bandPath = (
+    hi: (b: number) => number | null,
+    lo: (b: number) => number | null,
+  ): string => {
+    const up = buckets.filter((b) => hi(b) != null);
     if (up.length === 0) return '';
-    const top0 = up.map((b, i) => `${i ? 'L' : 'M'}${xs(b).toFixed(1)},${ys(hiGet(b) as number).toFixed(1)}`);
+    const top0 = up.map((b, i) => `${i ? 'L' : 'M'}${xs(b).toFixed(1)},${ys(hi(b) as number).toFixed(1)}`);
     const down = [...up]
       .reverse()
-      .filter((b) => loGet(b) != null)
-      .map((b) => `L${xs(b).toFixed(1)},${ys(loGet(b) as number).toFixed(1)}`);
+      .filter((b) => lo(b) != null)
+      .map((b) => `L${xs(b).toFixed(1)},${ys(lo(b) as number).toFixed(1)}`);
     return `${top0.join(' ')} ${down.join(' ')} Z`;
   };
 
   const yTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => ({ y: ys(top * f), label: axisLabel(metric, top * f) }));
   const drawable = series.filter((s) => !s.empty);
+  const noGamesIds = new Set(noGames.map((p) => p.account_id));
+  const noTimelineIds = new Set(
+    noTimeline.filter((p) => !noGamesIds.has(p.account_id)).map((p) => p.account_id),
+  );
   const hoverBucket = hover == null ? null : Math.min(Math.max(hover, 1), lastBucket);
 
   return (
@@ -239,7 +276,17 @@ export default function CurvePanel({
             y2={H - PAD.b}
             stroke="var(--border)"
           />
-          {showBand && <path d={bandPath()} fill="var(--text-2)" fillOpacity="0.18" />}
+          {showBand && <path d={bandPath(hiGet, loGet)} fill="var(--text-2)" fillOpacity="0.18" />}
+          {showBandB && (
+            <path
+              d={bandPath(hiGetB, loGetB)}
+              fill="none"
+              stroke="var(--brass-2)"
+              strokeOpacity="0.5"
+              strokeWidth="1"
+              strokeDasharray="3 4"
+            />
+          )}
           <path
             d={path(refGet)}
             fill="none"
@@ -248,6 +295,16 @@ export default function CurvePanel({
             strokeWidth="1.5"
             strokeDasharray="6 5"
           />
+          {bandB.length > 0 && (
+            <path
+              d={path(refGetB)}
+              fill="none"
+              stroke="var(--brass-2)"
+              strokeOpacity="0.75"
+              strokeWidth="1.5"
+              strokeDasharray="6 5"
+            />
+          )}
           {drawable.map((s) => (
             <path
               key={s.player.account_id}
@@ -309,6 +366,13 @@ export default function CurvePanel({
                 ? `${tierName} mean ${fmt(metric, refGet(hoverBucket) ?? 0)}`
                 : `${tierName} p25 ${fmt(metric, loGet(hoverBucket) ?? 0)} · p50 ${fmt(metric, refGet(hoverBucket) ?? 0)} · p75 ${fmt(metric, hiGet(hoverBucket) ?? 0)}`}
             </small>
+            {tierBName != null && bandB.length > 0 && (
+              <small className="tnum">
+                {vw === 'rate'
+                  ? `${tierBName} mean ${fmt(metric, refGetB(hoverBucket) ?? 0)}`
+                  : `${tierBName} p25 ${fmt(metric, loGetB(hoverBucket) ?? 0)} · p50 ${fmt(metric, refGetB(hoverBucket) ?? 0)} · p75 ${fmt(metric, hiGetB(hoverBucket) ?? 0)}`}
+              </small>
+            )}
           </div>
         )}
 
@@ -316,7 +380,11 @@ export default function CurvePanel({
           <p className="ll-curve-note">
             {series.length === 0
               ? `Reference: ${tierName}. Add a player to draw a line.`
-              : `No ${metricLabel.toLowerCase()} in these players' curves yet. It fills from the next pipeline fold. The ${tierName} band is measured.`}
+              : noGames.length === series.length
+                ? `No one on the axis has a ${matchMode} game. Switch the bar to ${otherMode(matchMode)}. The ${tierName} band is measured.`
+                : noGamesIds.size + noTimelineIds.size === series.length
+                  ? `None of these players' ${windowLabel.toLowerCase()} games kept a per-minute timeline. Switch to All games. The ${tierName} band is measured.`
+                  : `No ${metricLabel.toLowerCase()} in these players' curves yet. It fills from the next pipeline fold. The ${tierName} band is measured.`}
           </p>
         )}
       </div>
@@ -329,10 +397,27 @@ export default function CurvePanel({
             {s.peakMatches < 5 && s.peakMatches > 0 ? ` · ${s.peakMatches} games, thin` : ''}
           </span>
         ))}
+        {series
+          .filter((s) => noGamesIds.has(s.player.account_id) || noTimelineIds.has(s.player.account_id))
+          .map((s) => (
+            <span className="muted" key={`none-${s.player.account_id}`}>
+              <i style={{ borderTopColor: s.player.color, borderTopStyle: 'dotted' }} />
+              {s.player.name} ·{' '}
+              {noGamesIds.has(s.player.account_id)
+                ? `no ${matchMode} games`
+                : `no timeline in ${windowLabel.toLowerCase()}`}
+            </span>
+          ))}
         {band.length > 0 && (
           <span>
             <i className="dashed" />
             {tierName}, {vw === 'rate' ? 'mean' : 'middle half'}
+          </span>
+        )}
+        {bandB.length > 0 && tierBName != null && (
+          <span>
+            <i className="dashed second" />
+            {tierBName}, {vw === 'rate' ? 'mean' : 'middle half'}
           </span>
         )}
       </div>
@@ -342,6 +427,11 @@ export default function CurvePanel({
         {band.length > 0
           ? `${tierName} ${vw === 'rate' ? 'mean' : 'band: middle half'} of ${count(band[0]?.sample ?? 0)} player-games, ranked only.`
           : `No ${tierName} minute clears the ${count(RANK_MIN_SAMPLE)} player-game floor.`}{' '}
+        {tierB != null && tierBName != null
+          ? bandB.length > 0
+            ? `${tierBName} is the second reference, drawn outlined. `
+            : `No ${tierBName} minute clears the floor, so the second reference is not drawn. `
+          : ''}
         Player lines: {matchMode}, {windowLabel.toLowerCase()}.
         {WINDOWLESS_METRICS.has(metric)
           ? ' This metric has no windowed form, because the retained timeline carries no such array, so it always reads all games.'
