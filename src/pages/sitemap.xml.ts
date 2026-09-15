@@ -7,7 +7,7 @@ import { TRANSLATED_LOCALES, hreflangAlternates, pagePath } from '../lib/i18n';
 import { releasedRoster } from '../lib/heroRoster';
 import { slugRoster } from '../lib/heroSlugs';
 import { mintablePatches } from '../lib/patchRoutes';
-import type { HeroSummary, Patch } from '../types/api';
+import type { DataHorizonResponse, HeroSummary, Patch } from '../types/api';
 import itemDetail from '../data/items-detail.json';
 
 //Curated SEO sitemap (C7, requirements §7/§8.2). Lists ONLY the indexable English
@@ -29,21 +29,23 @@ interface RouteEntry {
   changefreq?: string;
   priority?: string;
   lastmod?: string;
+  //Numbers come from the match data, so the data horizon is this page's real lastmod.
+  stats?: boolean;
 }
 
 //The fixed English SEO surface. /matches is the indexable recent-matches INDEX
 //(the per-match /matches/:id detail shells are excluded — they are noindex).
 const STATIC_ROUTES: RouteEntry[] = [
-  { path: '/', changefreq: 'daily', priority: '1.0' },
-  { path: '/heroes', changefreq: 'daily', priority: '0.9' },
-  { path: '/tier-list', changefreq: 'daily', priority: '0.8' },
-  { path: '/items', changefreq: 'daily', priority: '0.8' },
-  { path: '/leaderboard', changefreq: 'daily', priority: '0.8' },
-  { path: '/matches', changefreq: 'hourly', priority: '0.7' },
+  { path: '/', changefreq: 'daily', priority: '1.0', stats: true },
+  { path: '/heroes', changefreq: 'daily', priority: '0.9', stats: true },
+  { path: '/tier-list', changefreq: 'daily', priority: '0.8', stats: true },
+  { path: '/items', changefreq: 'daily', priority: '0.8', stats: true },
+  { path: '/leaderboard', changefreq: 'daily', priority: '0.8', stats: true },
+  { path: '/matches', changefreq: 'hourly', priority: '0.7', stats: true },
   { path: '/patches', changefreq: 'daily', priority: '0.7' },
-  { path: '/rank-distribution', changefreq: 'weekly', priority: '0.6' },
-  { path: '/build-lab', changefreq: 'weekly', priority: '0.7' },
-  { path: '/lane-lab', changefreq: 'weekly', priority: '0.7' },
+  { path: '/rank-distribution', changefreq: 'weekly', priority: '0.6', stats: true },
+  { path: '/build-lab', changefreq: 'weekly', priority: '0.7', stats: true },
+  { path: '/lane-lab', changefreq: 'weekly', priority: '0.7', stats: true },
   { path: '/guides', changefreq: 'weekly', priority: '0.8' },
   { path: '/blog', changefreq: 'weekly', priority: '0.7' },
   { path: '/faq', changefreq: 'monthly', priority: '0.4' },
@@ -78,30 +80,51 @@ function urlBlock(entry: RouteEntry): string {
   return `  <url>\n${lines.join('\n')}\n  </url>`;
 }
 
-export const GET: APIRoute = async () => {
-  const routes: RouteEntry[] = [...STATIC_ROUTES];
+//Google reads lastmod and discards changefreq/priority, so every page whose content
+//actually moves has to carry a date it can verify.
+const day = (d: Date): string => d.toISOString().slice(0, 10);
+const newest = (dates: Date[]): string | undefined => dates.map(day).sort().pop();
 
+export const GET: APIRoute = async () => {
   //Blog guides — bounded, real content; lastmod from front-matter dates.
   const posts = await getCollection('blog', ({ data }) => !data.draft);
+  const guides = await getCollection('guides', ({ data }) => !data.draft);
+  const patches = await buildFetch(api.getPatches(), [] as Patch[]);
+  const minted = mintablePatches(patches);
+
+  //The stat pages all redraw off the same match horizon, so they share its date.
+  const horizon = await buildFetch(api.getDataHorizon(), null as DataHorizonResponse | null);
+  const statsLastmod = horizon?.max_match_start_time?.slice(0, 10);
+
+  const indexLastmod: Record<string, string | undefined> = {
+    '/blog': newest(posts.map((e) => e.data.updatedDate ?? e.data.pubDate)),
+    '/guides': newest(guides.map((e) => e.data.updatedDate ?? e.data.pubDate)),
+    '/patches': newest(minted.map((p) => new Date(p.released_at))),
+  };
+
+  const routes: RouteEntry[] = STATIC_ROUTES.map((r) => {
+    const lastmod = r.path in indexLastmod ? indexLastmod[r.path] : r.stats ? statsLastmod : undefined;
+    return lastmod ? { ...r, lastmod } : r;
+  });
+
   for (const post of posts) {
-    const last = (post.data.updatedDate ?? post.data.pubDate).toISOString().slice(0, 10);
+    const last = day(post.data.updatedDate ?? post.data.pubDate);
     routes.push({ path: `/blog/${post.id}`, changefreq: 'monthly', priority: '0.6', lastmod: last });
   }
 
-  //Hero roster and its build pages — bounded curated families off the same roster. No lastmod on
-  //either: their numbers refresh on every data_version build, on no date the front matter knows.
+  //Hero roster and its build pages — bounded curated families off the same roster. Both redraw
+  //from the match horizon, so that is their lastmod.
   //Build-ahead: empty on a cold API, so neither is advertised yet.
   const heroes = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'sitemap.xml');
   for (const h of slugRoster(heroes.filter((h) => h.hero_id != null), 'sitemap.xml')) {
-    routes.push({ path: `/heroes/${h.slug}`, changefreq: 'weekly', priority: '0.7' });
-    routes.push({ path: `/heroes/${h.slug}/build`, changefreq: 'weekly', priority: '0.6' });
+    routes.push({ path: `/heroes/${h.slug}`, changefreq: 'weekly', priority: '0.7', lastmod: statsLastmod });
+    routes.push({ path: `/heroes/${h.slug}/build`, changefreq: 'weekly', priority: '0.6', lastmod: statsLastmod });
   }
 
   //Hero guides — the same published-guide set heroes/[slug]/guide.astro mints its paths from, so
   //the sitemap can never advertise a guide URL that has no page. lastmod from front matter.
-  const guides = await getCollection('guides', ({ data }) => !data.draft);
   for (const guide of guides) {
-    const last = (guide.data.updatedDate ?? guide.data.pubDate).toISOString().slice(0, 10);
+    const last = day(guide.data.updatedDate ?? guide.data.pubDate);
     routes.push({ path: `/heroes/${guide.id}/guide`, changefreq: 'monthly', priority: '0.6', lastmod: last });
   }
 
@@ -111,14 +134,13 @@ export const GET: APIRoute = async () => {
     .filter((id) => Number.isFinite(id))
     .sort((a, b) => a - b);
   for (const id of itemIds) {
-    routes.push({ path: `/items/${id}`, changefreq: 'weekly', priority: '0.6' });
+    routes.push({ path: `/items/${id}`, changefreq: 'weekly', priority: '0.6', lastmod: statsLastmod });
   }
 
   //Per-patch pages — bounded by the same predicate patches/[patch_id].astro mints
   //from, so the sitemap can never advertise a URL that has no page. lastmod is the
   //release date: a patch's changelog is fixed once it ships.
-  const patches = await buildFetch(api.getPatches(), [] as Patch[]);
-  for (const p of mintablePatches(patches)) {
+  for (const p of minted) {
     routes.push({
       path: `/patches/${p.patch_id}`,
       changefreq: 'monthly',

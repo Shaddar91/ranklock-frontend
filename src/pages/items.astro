@@ -7,6 +7,7 @@ import { api } from '../lib/apiClient';
 import { buildFetch, buildFetchNonEmpty } from '../lib/buildData';
 import { breadcrumbJsonLd } from '../lib/seo';
 import { dayDate, shortDate } from '../lib/format';
+import itemDetail from '../data/items-detail.json';
 import type { DataHorizonResponse, HeroSummary, ItemModifier, ItemStat, Patch } from '../types/api';
 
 //SSG items index. Build-time rows (all ranks) seed the island for SEO; the rank bar
@@ -34,6 +35,22 @@ const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Items', path: '/items' },
 ]);
 const path = Astro.url.pathname;
+
+//Every item that has a detail page, as server-rendered links. The island's table only
+//holds the mode and band it fetched, so Street Brawl items and upstream-disabled ones
+//are otherwise reachable from the sitemap alone.
+type CatalogItem = { name: string; slot: string; tier: number; cost: number };
+const allItems = Object.entries(itemDetail as Record<string, CatalogItem>)
+  .map(([id, it]) => ({ id, ...it }))
+  .sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name));
+//Brawl items are priced 9999: they are not buyable in the normal shop.
+const BRAWL_COST = 9999;
+const slotGroups = [
+  { label: 'Weapon', items: allItems.filter((it) => it.slot === 'weapon' && it.cost !== BRAWL_COST) },
+  { label: 'Vitality', items: allItems.filter((it) => it.slot === 'vitality' && it.cost !== BRAWL_COST) },
+  { label: 'Spirit', items: allItems.filter((it) => it.slot === 'spirit' && it.cost !== BRAWL_COST) },
+  { label: 'Street Brawl', items: allItems.filter((it) => it.cost === BRAWL_COST) },
+].filter((g) => g.items.length > 0);
 ---
 
 <BaseLayout
@@ -70,5 +87,27 @@ const path = Astro.url.pathname;
       statsThrough={statsThrough}
       client:load
     />
+
+    <section class="panel panel-pad" style="margin-top:20px;">
+      <h2 class="h-sec" style="margin-bottom:4px;">Every item, by slot</h2>
+      <p class="muted" style="font-size:13px; margin:0 0 12px;">
+        Each item's own page carries its win rate by rank tier, what it costs, when it is bought and the
+        heroes who build it most.
+      </p>
+      {
+        slotGroups.map((g) => (
+          <div style="margin-bottom:14px;">
+            <h3 class="h-sec h-sec-sm" style="margin-bottom:8px;">{g.label}</h3>
+            <div class="flex" style="gap:8px; flex-wrap:wrap;">
+              {g.items.map((it) => (
+                <a class="chip" href={`/items/${it.id}/`} style="text-decoration:none;">
+                  {it.name}
+                </a>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </section>
   </main>
 </BaseLayout>
