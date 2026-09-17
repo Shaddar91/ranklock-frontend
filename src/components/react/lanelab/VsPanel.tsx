@@ -6,12 +6,15 @@ import { api, queryKeys } from '../../../lib/apiClient';
 import { count, fixed } from '../../../lib/format';
 import { scopeLabel, type RosterSlot } from '../../../lib/laneRoster';
 import type { PlayerEconomy } from '../../../types/api';
+import { FOLD_060_BOUNDARY, FOLD_060_METRICS } from './usePlayerCurves';
 import { otherMode, type LaneMatchMode } from './usePlayerModeGames';
 
 type Fmt = 'int' | 'dec';
 
 interface TileSpec {
   label: string;
+  //The Lane Lab metric key behind the tile, when one exists; a null 060 metric reads as never measured.
+  metric?: string;
   //Pulled off /players/{id}/economy.
   read: (e: PlayerEconomy, matches: number) => number | null;
   fmt: Fmt;
@@ -22,13 +25,13 @@ interface TileSpec {
 }
 
 const TILES: readonly TileSpec[] = [
-  { label: 'Souls / min', read: (e) => e.souls_per_min ?? null, fmt: 'int' },
-  { label: 'Last hits / min', read: (e) => e.last_hits_per_min ?? null, fmt: 'dec' },
+  { label: 'Souls / min', metric: 'souls', read: (e) => e.souls_per_min ?? null, fmt: 'int' },
+  { label: 'Last hits / min', metric: 'last_hits', read: (e) => e.last_hits_per_min ?? null, fmt: 'dec' },
   { label: 'Denies', read: (e) => e.avg_denies ?? null, fmt: 'dec' },
-  { label: 'Kills', read: (e) => e.avg_kills ?? null, fmt: 'dec' },
-  { label: 'Deaths', read: (e) => e.avg_deaths ?? null, fmt: 'dec', inverted: true },
-  { label: 'Assists', read: (e) => e.avg_assists ?? null, fmt: 'dec' },
-  { label: 'Damage / min', read: (e) => e.damage_per_min ?? null, fmt: 'int' },
+  { label: 'Kills', metric: 'kills', read: (e) => e.avg_kills ?? null, fmt: 'dec' },
+  { label: 'Deaths', metric: 'deaths', read: (e) => e.avg_deaths ?? null, fmt: 'dec', inverted: true },
+  { label: 'Assists', metric: 'assists', read: (e) => e.avg_assists ?? null, fmt: 'dec' },
+  { label: 'Damage / min', metric: 'damage', read: (e) => e.damage_per_min ?? null, fmt: 'int' },
   { label: 'Games', read: (_e, matches) => matches, fmt: 'int', plain: true },
 ];
 
@@ -92,6 +95,7 @@ export default function VsPanel({ roster, matchMode, horizonLabel }: VsPanelProp
                 <div className="ll-vs-tiles">
                   {TILES.map((t) => {
                     const v = econ ? t.read(econ, matches) : null;
+                    const older = econ != null && v == null && t.metric != null && FOLD_060_METRICS.has(t.metric);
                     const base = first && !t.plain ? t.read(first, first.matches ?? 0) : null;
                     let delta = '';
                     let tone = 'flat';
@@ -114,11 +118,11 @@ export default function VsPanel({ roster, matchMode, horizonLabel }: VsPanelProp
                       <div
                         className={`ll-tile${v == null ? ' pending' : ''}`}
                         key={t.label}
-                        title={`${p.name} ${t.label}: ${v == null ? 'not served yet' : show(v, t.fmt)} · ${count(matches)} ${matchMode} games`}
+                        title={`${p.name} ${t.label}: ${v == null ? (older ? `not measured for games played before ${FOLD_060_BOUNDARY[matchMode]}` : 'not served yet') : show(v, t.fmt)} · ${count(matches)} ${matchMode} games`}
                       >
                         <div className="ll-tile-k">{t.label}</div>
                         <div className="ll-tile-v tnum">
-                          {v == null ? 'pending' : show(v, t.fmt)}
+                          {v == null ? (older ? 'not in older games' : 'pending') : show(v, t.fmt)}
                         </div>
                         <div className={`ll-tile-d tone-${tone}`}>{delta}</div>
                       </div>

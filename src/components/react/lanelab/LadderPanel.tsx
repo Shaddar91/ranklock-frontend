@@ -7,6 +7,7 @@ import { count, fixed } from '../../../lib/format';
 import { RANK_MIN_SAMPLE } from '../../../lib/laneCurve';
 import { bucketClock } from '../../../lib/lanePercentile';
 import type { RosterSlot } from '../../../lib/laneRoster';
+import { FOLD_060_BOUNDARY, FOLD_060_METRICS } from './usePlayerCurves';
 
 //tier 1..11, Initiate to Eternus — the display-rank tiers, NOT the 0..11 lobby band.
 export const LEAGUE_TIERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;
@@ -157,25 +158,35 @@ export default function LadderPanel({
           {roster.map((p) => {
             const v = playerValues.get(p.account_id) ?? null;
             const noGames = modeGames.get(p.account_id) === 0;
+            const older = !noGames && v == null && FOLD_060_METRICS.has(metric);
             //Which league's median the player's own number sits at or above.
             const sits = v == null ? null : bars.filter((b) => b.value != null && b.value <= v).pop();
             return (
-              <li key={p.account_id}>
+              <li
+                key={p.account_id}
+                title={
+                  older
+                    ? `${metricLabel} is not measured for ${p.name}'s games played before ${FOLD_060_BOUNDARY[matchMode]}, so it will not fill`
+                    : undefined
+                }
+              >
                 <span className="ll-rule" style={{ background: p.color }} />
                 <span style={{ color: p.color }}>{p.name}</span>
                 <span className="tnum">
-                  {noGames ? '—' : v == null ? 'pending' : show(metric, v)}
+                  {noGames ? '—' : v == null ? (older ? 'not in older games' : 'pending') : show(metric, v)}
                 </span>
                 <small>
                   {noGames
                     ? `no ${matchMode} games`
-                    : v == null
-                      ? 'no value at this minute'
-                      : sits == null
-                        ? 'below every league'
-                        : sits.tier === 11
-                          ? 'plays like Eternus'
-                          : `sits at ${sits.name}`}
+                    : older
+                      ? `not measured before ${FOLD_060_BOUNDARY[matchMode]}`
+                      : v == null
+                        ? 'no value at this minute'
+                        : sits == null
+                          ? 'below every league'
+                          : sits.tier === 11
+                            ? 'plays like Eternus'
+                            : `sits at ${sits.name}`}
                 </small>
               </li>
             );

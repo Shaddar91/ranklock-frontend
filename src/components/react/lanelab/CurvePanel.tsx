@@ -7,7 +7,12 @@ import { RANK_MIN_SAMPLE } from '../../../lib/laneCurve';
 import { SCORECARD_METRICS } from '../../../lib/lanePercentile';
 import type { RosterSlot } from '../../../lib/laneRoster';
 import { LEAGUE_NAMES } from './LadderPanel';
-import { WINDOWLESS_METRICS, type BandPoint, type PlayerSeries } from './usePlayerCurves';
+import {
+  FOLD_060_BOUNDARY,
+  WINDOWLESS_METRICS,
+  type BandPoint,
+  type PlayerSeries,
+} from './usePlayerCurves';
 import { otherMode, type LaneMatchMode } from './usePlayerModeGames';
 
 const W = 1000;
@@ -384,7 +389,9 @@ export default function CurvePanel({
                 ? `No one on the axis has a ${matchMode} game. Switch the bar to ${otherMode(matchMode)}. The ${tierName} band is measured.`
                 : noGamesIds.size + noTimelineIds.size === series.length
                   ? `None of these players' ${windowLabel.toLowerCase()} games kept a per-minute timeline. Switch to All games. The ${tierName} band is measured.`
-                  : `No ${metricLabel.toLowerCase()} in these players' curves yet. It fills from the next pipeline fold. The ${tierName} band is measured.`}
+                  : WINDOWLESS_METRICS.has(metric)
+                    ? `${metricLabel} is not measured for games played before ${FOLD_060_BOUNDARY[matchMode]}, so these players have no line. It will not fill in later. The ${tierName} band is measured.`
+                    : `No ${metricLabel.toLowerCase()} in these players' curves yet. It fills from the next pipeline fold. The ${tierName} band is measured.`}
           </p>
         )}
       </div>
@@ -434,7 +441,7 @@ export default function CurvePanel({
           : ''}
         Player lines: {matchMode}, {windowLabel.toLowerCase()}.
         {WINDOWLESS_METRICS.has(metric)
-          ? ' This metric has no windowed form, because the retained timeline carries no such array, so it always reads all games.'
+          ? ` This metric has no windowed form, because the retained timeline carries no such array, so it always reads all games. It is only measured for games played from ${FOLD_060_BOUNDARY[matchMode]} onward.`
           : coverage && coverage.matches_total !== coverage.matches_with_timeline
             ? ` ${coverage.matches_with_timeline} of ${coverage.matches_total} games in the window carry a timeline.`
             : ''}

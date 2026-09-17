@@ -1,12 +1,10 @@
-//One player curve per roster slot for one metric, plus the league band for the same metric. Shared
-//by the curve, the ladder marks and the scorecard so a metric is fetched once per player per view.
+//Per metric, one player curve per roster slot plus the league band, each fetched once per player.
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import type { RosterSlot } from '../../../lib/laneRoster';
 import { windowParams, type WindowKey } from './CompareBar';
 
-//The five migration-060 metrics are rejected with a 400 when a window is sent — the retained
-//timeline carries no such arrays, so only the all-games accumulator can answer them.
+//The 060 five 400 on a windowed request: only the all-games accumulator carries their arrays.
 export const WINDOWLESS_METRICS = new Set([
   'damage_taken',
   'player_healing',
@@ -15,9 +13,14 @@ export const WINDOWLESS_METRICS = new Set([
   'level',
 ]);
 
-//The same five under their other name: the migration-060 arrays fill forward only, so a game
-//folded before that migration carries no value and never will.
+//Same five, other name: the arrays fill forward only; a game folded before 060 never gets a value.
 export const FOLD_060_METRICS = WINDOWLESS_METRICS;
+
+//Games folded before this date carry none of the five arrays; per mode so a refold can move one.
+export const FOLD_060_BOUNDARY: Record<'Ranked' | 'Unranked', string> = {
+  Ranked: '14 September 2026',
+  Unranked: '14 September 2026',
+};
 
 //The cohort curve answers in bucket space: a 1000-wide bin reads 44.82 for 44,820 real units.
 const WIDE = new Set(['souls', 'damage', 'damage_taken', 'player_healing', 'damage_mitigated']);
@@ -42,8 +45,7 @@ export interface BandPoint {
   sample: number;
 }
 
-//One league's band for one metric. Called twice by the page: the reference league and, when set,
-//the second one it is compared against.
+//One league's band for one metric; called for the reference league and, when set, the second one.
 export function useLeagueBand(tier: number | null, metric: string): BandPoint[] {
   const band = useQuery({
     queryKey: queryKeys.laneEconomyCurve({ tier: tier ?? 0, metric }),

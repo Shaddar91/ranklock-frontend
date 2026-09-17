@@ -12,7 +12,7 @@ import {
   type ScorecardMetric,
 } from '../../../lib/lanePercentile';
 import type { RosterSlot } from '../../../lib/laneRoster';
-import { FOLD_060_METRICS } from './usePlayerCurves';
+import { FOLD_060_BOUNDARY, FOLD_060_METRICS } from './usePlayerCurves';
 
 //A metric whose value is a soul/damage/heal total reads as 44,820; a count reads as 8.9.
 const WIDE = new Set(['souls', 'damage', 'damage_taken', 'player_healing', 'damage_mitigated']);
@@ -215,7 +215,8 @@ export default function Scorecard({
       <p className="ll-sc-foot">
         {tierName}: {count(sampleN)} player-games, ranked only · percentile = share of {tierName}{' '}
         player-games below the value; deaths invert · player lines are {matchMode} · a cell reading
-        "not in older games" was never recorded for those games, so it will not fill
+        "not in older games" was never measured for games before {FOLD_060_BOUNDARY[matchMode]}, so it
+        will not fill
       </p>
     </section>
   );
