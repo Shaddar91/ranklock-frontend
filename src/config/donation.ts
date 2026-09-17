@@ -1,32 +1,21 @@
-//============================================================================
-//Crypto + Ko-fi donation configuration (ported from cloud-lord's
-//src/config/donation.js, requirements §9.4). Change DONATION_ADDRESS / KOFI_URL
-//to reuse across sites; CHAINS is generic (official token contract addresses,
-//not personal data) and is kept as-is.
-//
-//SECURITY: every address here is a PUBLIC receive address — it must be public to
-//render in a QR. No private key or seed phrase is ever involved (see the ported
-//CryptoDonate/README.md "Security Notes"). Token CONTRACT addresses below are
-//from official sources (Circle for USDC/USDT, OpenZeppelin for DAI) and are the
-//same for every recipient — they are NOT the receive address.
-//
-//Both the EVM receive address and the Ko-fi URL are config-driven and default to
-//empty: the UI shows a clear "not configured" state instead of a broken link /
-//wrong address until they are set. They can be injected at build time via the
-//PUBLIC_DONATION_ADDRESS / PUBLIC_KOFI_URL env vars (CI, never committed) OR by
-//editing the fallback constants below.
-//============================================================================
+//Crypto + Ko-fi donation config, ported from cloud-lord's src/config/donation.js.
+//Every address here is a PUBLIC receive address or an official token contract; no
+//private key is involved. PUBLIC_DONATION_ADDRESS / PUBLIC_KOFI_URL env override the fallbacks.
 
-//RankLock's public EVM receive address — identical across all EVM chains.
-//TODO: set RankLock receive address (set PUBLIC_DONATION_ADDRESS in CI, or replace
-//the '' fallback here with the project's public 0x… address). Do NOT invent one —
-//an empty value renders the "not configured" state; a wrong value loses funds.
-export const DONATION_ADDRESS: string = import.meta.env.PUBLIC_DONATION_ADDRESS ?? '';
+//An unset or blank env value falls through to the fallback ('??' would keep '').
+function envOr(value: string | undefined, fallback: string): string {
+  const v = (value ?? '').trim();
+  return v.length > 0 ? v : fallback;
+}
 
-//RankLock's Ko-fi page (voluntary fiat support — card / PayPal, no crypto wallet).
-//TODO: set RankLock Ko-fi URL (set PUBLIC_KOFI_URL in CI, or replace the '' fallback
-//with e.g. https://ko-fi.com/<handle>). Empty renders the "coming soon" state.
-export const KOFI_URL: string = import.meta.env.PUBLIC_KOFI_URL ?? '';
+//RankLock's public EVM receive address, identical across all EVM chains.
+export const DONATION_ADDRESS: string = envOr(
+  import.meta.env.PUBLIC_DONATION_ADDRESS,
+  '0xf488Eb4bA84B7ba3CF34b59843852499BA05AbBa',
+);
+
+//RankLock's Ko-fi page (card / PayPal). Empty renders the "coming soon" state.
+export const KOFI_URL: string = envOr(import.meta.env.PUBLIC_KOFI_URL, '');
 
 export interface DonationToken {
   symbol: string;
@@ -161,22 +150,20 @@ export const CHAINS: DonationChain[] = [
   },
 ];
 
-//Non-EVM chains are receive-only. Addresses are chain-family-specific (NOT derivable
-//from the EVM address) so each must be set explicitly.
-//TODO: set RankLock's Solana / Tron receive addresses (leave '' to hide the entry —
-//the UI renders only chains whose address is configured). Do NOT invent addresses.
+//Non-EVM chains are receive-only; each address is chain-family-specific, so each is set
+//explicitly. Leave '' to hide an entry (the UI renders only configured chains).
 export const NON_EVM_CHAINS: NonEvmChain[] = [
   {
     family: 'solana',
     name: 'Solana',
-    address: '',
+    address: 'CCdNtPQgfBiSyGVipj7wNfxh4NsLcr9LBQGu1j9nQtwf',
     nativeSymbol: 'SOL',
     note: 'send SOL or any SPL token (e.g., USDC), very cheap',
   },
   {
     family: 'tron',
     name: 'Tron',
-    address: '',
+    address: 'TPnCSwFEWNbgvK9ip7Sey3y9bu7LYL7Tzm',
     nativeSymbol: 'TRX',
     note: 'send TRX or USDT (TRC-20), very cheap',
   },

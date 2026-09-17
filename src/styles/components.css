@@ -1637,13 +1637,6 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
   border-radius: var(--r-pill);
   padding: 11px 16px;
 }
-.support-ads {
-  font-size: 13px;
-  color: var(--muted);
-  margin: 28px 0 0;
-  text-align: center;
-}
-
 /* crypto widget */
 .donate {
   margin-top: 8px;
