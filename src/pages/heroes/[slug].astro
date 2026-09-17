@@ -13,7 +13,7 @@ import HeroFilterBar from '../../components/react/hero/HeroFilterBar';
 import HeroMetaIsland from '../../components/react/hero/HeroMetaIsland';
 import PhaseGrid from '../../components/react/hero/PhaseGrid';
 import { heroArt } from '../../lib/heroArt';
-import { publishedGuideSlugs } from '../../lib/guideRoutes';
+import { publishedGuides, publishedGuideSlugs } from '../../lib/guideRoutes';
 import { releasedRoster } from '../../lib/heroRoster';
 import { heroPath, slugRoster } from '../../lib/heroSlugs';
 import { abilityCards, baseStatRows, perLevelRows, weaponRows } from '../../lib/heroKit';
@@ -59,6 +59,7 @@ const description = hero
   : 'Deadlock hero detail.';
 const canonicalPath = hero ? heroPath(hero.hero_name) : '/heroes';
 const hasGuide = (await publishedGuideSlugs()).has(Astro.params.slug as string);
+const heroGuides = (await publishedGuides()).get(Astro.params.slug as string) ?? [];
 const art = heroArt(hero?.icon_url);
 
 //Entity markup: name the hero as a thing inside Deadlock so this page can be attached to
@@ -85,9 +86,14 @@ const jsonLd = [
             description: `${name} is a playable hero in Deadlock.`,
             url: new URL(canonicalPath, origin).toString(),
             ...(art?.card ? { image: art.card } : {}),
-            subjectOf: hasGuide
-              ? { '@type': 'Article', name: `How to play ${name}`, url: new URL(`${canonicalPath}guide/`, origin).toString() }
-              : undefined,
+            subjectOf:
+              heroGuides.length > 0
+                ? heroGuides.map((g) => ({
+                    '@type': 'Article',
+                    name: g.token === null ? `How to play ${name}` : g.title,
+                    url: new URL(g.path, origin).toString(),
+                  }))
+                : undefined,
           },
           mentions: {
             '@type': 'VideoGame',

@@ -8,6 +8,7 @@ import { releasedRoster } from '../lib/heroRoster';
 import { slugRoster } from '../lib/heroSlugs';
 import { ITEM_SLUGS } from '../lib/itemSlugs';
 import { mintablePatches } from '../lib/patchRoutes';
+import { publishedGuides } from '../lib/guideRoutes';
 import type { DataHorizonResponse, HeroSummary, Patch } from '../types/api';
 
 //Curated SEO sitemap (C7, requirements §7/§8.2). Lists ONLY the indexable English
@@ -122,11 +123,13 @@ export const GET: APIRoute = async () => {
     routes.push({ path: `/heroes/${h.slug}/build`, changefreq: 'weekly', priority: '0.6', lastmod: statsLastmod });
   }
 
-  //Hero guides — the same published-guide set heroes/[slug]/guide.astro mints its paths from, so
-  //the sitemap can never advertise a guide URL that has no page. lastmod from front matter.
-  for (const guide of guides) {
-    const last = day(guide.data.updatedDate ?? guide.data.pubDate);
-    routes.push({ path: `/heroes/${guide.id}/guide`, changefreq: 'monthly', priority: '0.6', lastmod: last });
+  //Hero guides — the same publishedGuides() set and paths the guide routes mint from, so the
+  //sitemap can never advertise a guide URL that has no page. lastmod from front matter.
+  const lastmodByGuide = new Map(guides.map((g) => [g.id, day(g.data.updatedDate ?? g.data.pubDate)]));
+  for (const list of (await publishedGuides()).values()) {
+    for (const guide of list) {
+      routes.push({ path: guide.path, changefreq: 'monthly', priority: '0.6', lastmod: lastmodByGuide.get(guide.id) });
+    }
   }
 
   //Item catalog — bounded family; the same slug map items/[slug].astro mints its paths from.
