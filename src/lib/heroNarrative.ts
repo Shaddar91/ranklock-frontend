@@ -4,6 +4,7 @@
 import { count, duration, fixed, pct } from './format';
 import { BADGE_TIER_LABELS as TIER_LABELS, joinSegs, link, mean, ordinal, quarter, rankDesc, toPct, type Para, type Section, type Seg } from './narrative';
 import { heroPath } from './heroSlugs';
+import { itemPath } from './itemSlugs';
 import type { HeroAbility, HeroBracket, HeroItemWinRate, HeroSummary, MatchupEntry } from '../types/api';
 
 export interface HeroSynergy {
@@ -59,7 +60,6 @@ const heroSeg = (roster: HeroSummary[], id: number, text: string): Seg => {
   const h = roster.find((r) => r.hero_id === id);
   return h ? link(text, heroPath(h.hero_name)) : text;
 };
-const itemHref = (id: number) => `/items/${id}/`;
 
 const joinNames = (names: string[]): string =>
   names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
@@ -376,14 +376,14 @@ function items(input: HeroNarrativeInput): Section | null {
   const first = top[0];
   if (!most || !first) return null;
   const name = input.hero.hero_name;
-  const seg = (r: { id: number; name: string; wr: number }): Seg[] => [link(r.name, itemHref(r.id)), ` (${pct(r.wr)})`];
+  const seg = (r: { id: number; name: string; wr: number }): Seg[] => [link(r.name, itemPath(r.id)), ` (${pct(r.wr)})`];
   const p: Para = [`The items that win most on ${name} are `, ...joinSegs(top.map(seg)), `. `];
   if (top.includes(most)) {
     p.push(`${most.name} is also the most bought item.`);
   } else {
     p.push(
       `The most bought item is `,
-      link(most.name, itemHref(most.id)),
+      link(most.name, itemPath(most.id)),
       ` (${pct(most.wr)}), so the popular buy is not the highest-winning one.`,
     );
   }

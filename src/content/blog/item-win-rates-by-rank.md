@@ -33,10 +33,10 @@ magnitude smaller than the all-ranks figure sitting next to it.
 
 ## What a small bracket does to a win rate
 
-[Glass Cannon](/items/365620721/) reads 56.38% over 476,959 matches at all
+[Glass Cannon](/items/glass-cannon/) reads 56.38% over 476,959 matches at all
 ranks and 64.52% over 217 matches at Ascendant-Eternus, a jump of more than
 eight points on a sample that shrank by a factor of roughly 2,200.
-[Metal Skin](/items/1378931225/) moves the same direction: 40.15% over
+[Metal Skin](/items/metal-skin/) moves the same direction: 40.15% over
 534,479 matches at all ranks against 45.97% over 1,240 at the top bracket.
 Neither jump is evidence that either item plays better at high rank. A rate
 built from a few hundred matches swings hard in both directions, and only
@@ -88,8 +88,8 @@ average, 36.7% of the way into the match; Juggernaut at 36.8 minutes, 82.6%
 in. Glass Cannon's timing compresses as the bracket rises: 31.6 minutes at
 Initiate-Alchemist against 27.4 minutes at Ascendant-Eternus, the one place
 the thin top bracket still says something a reader can use. See the full
-curve on [Improved Spirit's](/items/7409189/) and
-[Juggernaut's](/items/1250307611/) own pages.
+curve on [Improved Spirit's](/items/improved-spirit/) and
+[Juggernaut's](/items/juggernaut/) own pages.
 
 ## The rule
 

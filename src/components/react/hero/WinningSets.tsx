@@ -1,6 +1,7 @@
 //Hero Build §3 left — the folded six-purchase sets. An island rather than SSR markup because
 //every shop tile carries the app-wide item hover card, which needs a React root + QueryProvider.
 import { overlayFromMeta, type OverlayMeta } from '../../../lib/itemOverlay';
+import { itemPath } from '../../../lib/itemSlugs';
 import { count } from '../../../lib/format';
 import type { SetRow } from '../../../lib/heroBuild';
 import QueryProvider from '../QueryProvider';
@@ -46,7 +47,7 @@ function Table({ sets, catalog, abilitySlots, abilityIcons }: WinningSetsProps) 
             {s.entries.map((e, j) =>
               e.shopItem ? (
                 <ItemHoverCard data={overlayFromMeta(e.itemId, catalog[String(e.itemId)])} asChild key={j}>
-                  <a className="bp-tile" href={`/items/${e.itemId}/`} title={e.name}>
+                  <a className="bp-tile" href={itemPath(e.itemId)} title={e.name}>
                     <GameIcon kind="item" name={e.name} src={e.iconUrl} size={30} />
                   </a>
                 </ItemHoverCard>

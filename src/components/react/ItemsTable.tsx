@@ -8,6 +8,7 @@ import { computingMessage } from '../../lib/apiStates';
 import { useGameMode } from '../../lib/useGameMode';
 import { bracketBucket, servedBandLabel } from '../../lib/heroBracket';
 import { useItemsBracket, useItemsSort } from '../../lib/itemsIndexState';
+import { itemPath } from '../../lib/itemSlugs';
 import QueryProvider from './QueryProvider';
 import CategoryNav from './CategoryNav';
 import { DataTable, type DataTableColumn, GameIcon, ItemHoverCard, WinBar } from './ui/index';
@@ -108,7 +109,7 @@ function ItemsTableInner({
         //`asChild`: the link itself is the card trigger (one tab stop, aria-describedby on the <a>).
         render: (it) => (
           <ItemHoverCard asChild data={cardFor(it)}>
-            <a className={`itemsx-item ${slotClass(it.slot)}`} href={`/items/${it.item_id}/`}>
+            <a className={`itemsx-item ${slotClass(it.slot)}`} href={itemPath(it.item_id)}>
               <GameIcon kind="item" name={itemLabel(it)} src={it.icon_url} size={32} />
               <span className="itemsx-item-text">
                 <span className="display itemsx-name">{itemLabel(it)}</span>

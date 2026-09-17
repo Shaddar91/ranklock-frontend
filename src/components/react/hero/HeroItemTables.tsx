@@ -8,6 +8,7 @@ import { api, queryKeys } from '../../../lib/apiClient';
 import { useGameMode } from '../../../lib/useGameMode';
 import { bracketBucket, servedBandLabel, useHeroBracket } from '../../../lib/heroBracket';
 import { overlayFromWire, upgradesFor, type ItemOverlayData } from '../../../lib/itemOverlay';
+import { itemPath } from '../../../lib/itemSlugs';
 import { itemAbility } from '../../../lib/itemDescriptions';
 import { count, minuteClock } from '../../../lib/format';
 import GameIcon from '../ui/GameIcon';
@@ -101,7 +102,7 @@ export default function HeroItemTables({
 
   const ItemCell = ({ id, name, icon }: { id: number; name: string; icon: string | null }) => (
     <ItemHoverCard data={overlayFor(id, name, icon)} asChild>
-      <a className="itbl-item" href={`/items/${id}/`}>
+      <a className="itbl-item" href={itemPath(id)}>
         <GameIcon kind="item" name={name} src={icon ?? meta(id).icon} size={28} />
         <span className="itbl-item-text">
           <span className="display itbl-name">{name}</span>

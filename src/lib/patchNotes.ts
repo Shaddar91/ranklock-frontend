@@ -1,6 +1,7 @@
 //Parses a raw Deadlock changelog into renderable lines plus the hero/item each
 //bullet names, so a patch page can link what the patch actually touched. Nothing
 //is inferred: a line whose leading entity is not in the roster stays plain text.
+import { itemPath } from './itemSlugs';
 
 export interface NoteEntity {
   kind: 'hero' | 'item';
@@ -61,7 +62,7 @@ function entityKeys(source: EntitySource): Map<string, NoteEntity> {
     const prev = byName.get(key);
     if (!prev || i.item_id < prev.item_id) byName.set(key, i);
   }
-  for (const [key, i] of byName) put(key, { kind: 'item', name: i.name, href: `/items/${i.item_id}/` });
+  for (const [key, i] of byName) put(key, { kind: 'item', name: i.name, href: itemPath(i.item_id) });
   return keys;
 }
 

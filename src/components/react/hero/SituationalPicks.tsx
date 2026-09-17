@@ -1,6 +1,7 @@
 //Hero Build §3 right — the four modifier families and the items to swap in. An island because
 //each pick chip carries the app-wide item hover card, which needs a React root + QueryProvider.
 import { overlayFromMeta, type OverlayMeta } from '../../../lib/itemOverlay';
+import { itemPath } from '../../../lib/itemSlugs';
 import type { SituationalGroup } from '../../../lib/heroBuild';
 import QueryProvider from '../QueryProvider';
 import GameIcon from '../ui/GameIcon';
@@ -35,7 +36,7 @@ function Groups({ groups, catalog }: SituationalPicksProps) {
           <div className="bp-sit-picks">
             {g.picks.map((p) => (
               <ItemHoverCard data={overlayFromMeta(p.itemId, catalog[String(p.itemId)])} asChild key={p.itemId}>
-                <a className="bp-chip" href={`/items/${p.itemId}/`} title={p.modifier}>
+                <a className="bp-chip" href={itemPath(p.itemId)} title={p.modifier}>
                   <GameIcon kind="item" name={p.name} src={p.iconUrl} size={24} />
                   <span className="bp-chip-name">{p.name}</span>
                   <span className="bp-chip-wr tnum" style={{ color: p.winRate >= 50 ? 'var(--win)' : 'var(--loss)' }}>

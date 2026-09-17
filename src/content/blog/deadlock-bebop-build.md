@@ -12,8 +12,8 @@ liveItems: [Mystic Reverb, Spirit Burn, Witchmail, Metal Skin]
 ---
 
 Put your souls into spirit scaling and let the pull pay for it. [Mystic
-Reverb](/items/3577481646/) wins 56.3% of the 3,542,289 Bebop games it was
-bought in and [Spirit Burn](/items/343572757/) 55.4% of 2,396,712, on a hero
+Reverb](/items/mystic-reverb/) wins 56.3% of the 3,542,289 Bebop games it was
+bought in and [Spirit Burn](/items/spirit-burn/) 55.4% of 2,396,712, on a hero
 who wins 46.5% of his 2,067,938 games in the 2026-05-01 to 2026-09-03 window.
 Nearly ten points of separation on samples that size is the clearest direction
 any of the four most-picked heroes hands a player. It is a spending plan.
@@ -53,7 +53,7 @@ third. Most of what is left after that is preference.
 Cut the defensive buys before you argue about late slots, because a losing
 hero loses more at the bottom of its table than a winning one does. Disarming
 Hex wins 36.8% of the 323,401 Bebop games it appears in. [Metal
-Skin](/items/1378931225/) wins 38.1% of 523,064. Rusted Barrel wins 39.0% of
+Skin](/items/metal-skin/) wins 38.1% of 523,064. Rusted Barrel wins 39.0% of
 207,780, and Knockdown one row up wins 41.3% of 716,441.
 
 Metal Skin is the clearest of the four. Across every hero on the [items

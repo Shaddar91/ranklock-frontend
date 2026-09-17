@@ -13,7 +13,7 @@ liveItems: [Healing Tempo, Lucky Shot, Spellslinger, Metal Skin]
 
 Build the gun and refuse the armour, because the souls you spend staying alive
 are the souls that never reach Lucky Shot. [Healing
-Tempo](/items/1427630806/) wins 54.8% of the 264,015 Venator games it was
+Tempo](/items/healing-tempo/) wins 54.8% of the 264,015 Venator games it was
 bought in and Lucky Shot 54.0% of 1,021,467, while Metal Skin wins 35.1% of
 360,507, on a hero who wins 45.3% of his 2,012,180 games in the 2026-05-01 to
 2026-09-03 window. Nearly twenty points separate the best qualifying buy from
@@ -39,7 +39,7 @@ Buy the gun lines in the order the table gives them. Counting items with at
 least 146,674 Venator games behind them, 2% of the hero's largest item sample,
 the top of the 2026-05-01 to 2026-09-03 table is Healing Tempo at 54.8% over
 264,015 games, Lucky Shot at 54.0% over 1,021,467, Frenzy at 53.7% over
-427,294, [Spellslinger](/items/2221211450/) at 53.6% over 1,780,148, Silencer
+427,294, [Spellslinger](/items/spellslinger/) at 53.6% over 1,780,148, Silencer
 at 53.2% over 2,655,561, Glass Cannon at 52.6% over 1,075,360 and Siphon
 Bullets at 52.1% over 1,945,604.
 
@@ -61,7 +61,7 @@ and it is the lowest qualifying row on any of the four most-picked heroes.
 
 The rows under it repeat the shape. Slowing Hex wins 40.1% of 181,872 Venator
 games, Bullet Resilience 40.5% of 184,810 and Toxic Bullets 41.7% of 541,755.
-[Metal Skin](/items/1378931225/) and Bullet Resilience are both armour bought
+[Metal Skin](/items/metal-skin/) and Bullet Resilience are both armour bought
 by a Venator who is already being killed, so the table cannot separate the
 item's effect from the state of the game that prompted the buy. The reading
 that survives that caveat is the useful one, and the buy list shows how common

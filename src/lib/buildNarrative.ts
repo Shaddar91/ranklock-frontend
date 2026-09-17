@@ -4,6 +4,7 @@
 import { count, fixed, pct } from './format';
 import { joinSegs, link, ordinal, rankDesc, toPct, type Para, type Section, type Seg } from './narrative';
 import { heroPath } from './heroSlugs';
+import { itemPath } from './itemSlugs';
 import type {
   BuildStatsBuyOrderRow,
   BuildStatsItem,
@@ -119,8 +120,7 @@ const heroSeg = (roster: HeroSummary[], id: number, text: string): Seg => {
   const h = roster.find((r) => r.hero_id === id);
   return h ? link(text, heroPath(h.hero_name)) : text;
 };
-const itemHref = (id: number) => `/items/${id}/`;
-const itemSeg = (it: { item_id: number; item_name?: string | null }): Seg => link(itemName(it), itemHref(it.item_id));
+const itemSeg = (it: { item_id: number; item_name?: string | null }): Seg => link(itemName(it), itemPath(it.item_id));
 
 const setItemSegs = (i: SetItem): Seg[] => (i.n > 1 ? [itemSeg(i), ` x${i.n}`] : [itemSeg(i)]);
 

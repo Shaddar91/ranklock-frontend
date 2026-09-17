@@ -12,7 +12,7 @@ liveItems: [Spirit Burn, Lightning Scroll, Indomitable, Greater Expansion]
 ---
 
 Buy more of the area you already fill, and stop paying for armour. [Spirit
-Burn](/items/343572757/) leads Seven's item table at 61.5% over 1,333,235
+Burn](/items/spirit-burn/) leads Seven's item table at 61.5% over 1,333,235
 games while Metal Skin wins 44.4% of the 415,723 Seven games it appears in, on
 a hero who wins 55.9% of his 2,053,279 games in the 2026-05-01 to 2026-09-03
 window, the highest rate of the 38 heroes on the roster. Seventeen points
@@ -53,7 +53,7 @@ Reach for the lines that make the area bigger and keep it there longer.
 Counting items with at least 153,822 Seven games behind them, 2% of the hero's
 largest item sample, the top of the 2026-05-01 to 2026-09-03 table is Spirit
 Burn at 61.5% over 1,333,235 games, then Diviner's Kevlar at 60.2% over
-208,719, [Lightning Scroll](/items/493591231/) at 59.6% over 1,436,600,
+208,719, [Lightning Scroll](/items/lightning-scroll/) at 59.6% over 1,436,600,
 Indomitable at 59.3% over 2,004,316, Mercurial Magnum at 58.4% over 992,546,
 Greater Expansion at 58.3% over 3,116,091 and Spiritual Overflow at 58.2% over
 4,105,658.

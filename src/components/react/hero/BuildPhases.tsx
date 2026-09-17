@@ -8,6 +8,7 @@ import { bracketBucket, servedBandLabel, useHeroBracket } from '../../../lib/her
 import { bracketLabel } from '../ui/FilterBar';
 import { buildByPhase, buyOrderTrack, type CatalogEntry } from '../../../lib/heroBuild';
 import { overlayFromMeta } from '../../../lib/itemOverlay';
+import { itemPath } from '../../../lib/itemSlugs';
 import { count, minuteClock } from '../../../lib/format';
 import QueryProvider from '../QueryProvider';
 import GameIcon from '../ui/GameIcon';
@@ -102,7 +103,7 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
                 ) : (
                   p.items.map((it) => (
                     <ItemHoverCard data={overlay(it.itemId)} asChild key={it.itemId}>
-                      <a className="phase-row bp-phase-row" href={`/items/${it.itemId}/`}>
+                      <a className="phase-row bp-phase-row" href={itemPath(it.itemId)}>
                         <GameIcon kind="item" name={it.name} src={it.iconUrl} size={32} />
                         <span className="phase-item">
                           <span className="bp-phase-title">
@@ -142,7 +143,7 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
           <div className="bp-track">
             {track.map((s) => (
               <ItemHoverCard data={overlay(s.itemId)} asChild key={s.itemId}>
-                <a className="panel bp-slot" href={`/items/${s.itemId}/`}>
+                <a className="panel bp-slot" href={itemPath(s.itemId)}>
                   <span className="mono bp-slot-n">SLOT {s.pos}</span>
                   <GameIcon kind="item" name={s.name} src={s.iconUrl} size={38} />
                   <span className="display bp-slot-name">{s.name}</span>

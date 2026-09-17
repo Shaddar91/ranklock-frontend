@@ -16,6 +16,7 @@ import { abilityOrderSequence, favoriteCounts, formatUpdated } from '../../../li
 import { isPublicItem, itemMeta } from '../../../lib/itemCatalog';
 import { heroArt } from '../../../lib/heroArt';
 import { heroPath, slugRoster } from '../../../lib/heroSlugs';
+import { itemPath } from '../../../lib/itemSlugs';
 import { releasedRoster } from '../../../lib/heroRoster';
 import { about } from '../../../lib/heroNarrative';
 import { pagePath } from '../../../lib/i18n';
@@ -351,7 +352,7 @@ const jsonLd = [
                       <span class="label-xs">{c.label}</span>
                       <span class="bp-set" style="margin-top:4px;">
                         {c.items.map((i) => (
-                          <a class="bp-chip" href={`/items/${i.id}/`}>
+                          <a class="bp-chip" href={itemPath(i.id)}>
                             <GameArt name={i.name} src={i.icon} wrapClass="iicon" wrapStyle="width:22px; height:22px;" />
                             <span>{i.name}</span>
                           </a>
@@ -473,7 +474,7 @@ const jsonLd = [
                 {play.items.map((i) => (
                   <tr>
                     <td>
-                      <a class="flex" href={`/items/${i.id}/`} style="align-items:center; gap:10px; text-decoration:none;">
+                      <a class="flex" href={itemPath(i.id)} style="align-items:center; gap:10px; text-decoration:none;">
                         <GameArt name={i.name} src={i.iconUrl} wrapClass="iicon" wrapStyle="width:26px; height:26px;" />
                         <span class="display" style="font-weight:600; color:var(--text);">{i.name}</span>
                         {i.cited && <span class="chip">In this guide</span>}

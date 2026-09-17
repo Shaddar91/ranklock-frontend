@@ -36,7 +36,7 @@ describe('parsePatchNotes', () => {
   it('links an item named before the colon', () => {
     const notes = parsePatchNotes('- Radiant Regeneration: Heal on cast reduced from 70 to 65', SOURCE);
     expect(notes.items).toEqual([
-      { kind: 'item', name: 'Radiant Regeneration', href: '/items/2947183272/', lines: 1 },
+      { kind: 'item', name: 'Radiant Regeneration', href: '/items/radiant-regeneration/', lines: 1 },
     ]);
   });
 
@@ -59,7 +59,7 @@ describe('parsePatchNotes', () => {
 
   it('picks the lowest catalog id when two items share a name', () => {
     const notes = parsePatchNotes('- Silencer: Spirit Resistance reduced', SOURCE);
-    expect(notes.items[0]?.href).toBe('/items/1113837674/');
+    expect(notes.items[0]?.href).toBe('/items/silencer/');
   });
 
   it('leaves an unrecognised line unlinked', () => {

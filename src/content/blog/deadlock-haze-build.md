@@ -12,7 +12,7 @@ liveItems: [Lucky Shot, Glass Cannon, Spiritual Overflow, Frenzy]
 ---
 
 Spend your first souls the way every other Haze does, then part ways at the
-slots that decide games. [Lucky Shot](/items/1396247347/) wins 62.2% of the
+slots that decide games. [Lucky Shot](/items/lucky-shot/) wins 62.2% of the
 1,456,555 Haze games it was bought in, Frenzy 62.0% of 432,983 and Glass
 Cannon 61.8% of 843,525, against the 52.5% she wins across 2,174,446 games in
 the 2026-05-01 to 2026-09-03 window. All three sit far down the buy list, and

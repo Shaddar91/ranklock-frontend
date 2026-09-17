@@ -9,6 +9,7 @@ import { itemMeta } from '../../../lib/itemCatalog';
 import { itemAbility } from '../../../lib/itemDescriptions';
 import { catClass, slotTierLabel, type PeerRow } from '../../../lib/itemDetail';
 import { overlayFromWire, upgradesFor, type ItemOverlayData } from '../../../lib/itemOverlay';
+import { itemPath } from '../../../lib/itemSlugs';
 import { rankImg } from '../../../lib/ranks';
 import { count, DASH } from '../../../lib/format';
 import type { CounterNote } from '../../../lib/itemEditorial';
@@ -127,7 +128,7 @@ function RailBlocks({
     size?: number;
   }) => (
     <ItemHoverCard data={overlayFor(id, name, icon)} asChild>
-      <a className={`itemd-tile ${catClass(slot)}`} href={`/items/${id}/`}>
+      <a className={`itemd-tile ${catClass(slot)}`} href={itemPath(id)}>
         <GameIcon kind="item" name={name} src={icon} size={size} />
         <span className="itemd-tile-text">
           <span className="display itemd-tile-name">{name}</span>
@@ -167,7 +168,7 @@ function RailBlocks({
               </span>
               <span className="itemd-pathtext">
                 <span className="itemd-pathname">
-                  <a className="display itemd-tile-name" href={`/items/${n.itemId}/`}>
+                  <a className="display itemd-tile-name" href={itemPath(n.itemId)}>
                     {n.name}
                   </a>
                   <span className="itemd-pathrole">{n.role}</span>

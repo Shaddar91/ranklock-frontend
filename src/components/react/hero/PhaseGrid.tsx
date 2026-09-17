@@ -1,6 +1,7 @@
 //Hero Overview §5 — the recommended build by phase. An island rather than SSR markup because
 //every tile carries the app-wide item hover card, which needs a React root + QueryProvider.
 import { overlayFromMeta, type OverlayMeta } from '../../../lib/itemOverlay';
+import { itemPath } from '../../../lib/itemSlugs';
 import { minuteClock } from '../../../lib/format';
 import type { PhaseCard } from '../../../lib/heroOverview';
 import QueryProvider from '../QueryProvider';
@@ -38,7 +39,7 @@ function Grid({ phases, catalog }: PhaseGridProps) {
           ) : (
             p.items.map((it) => (
               <ItemHoverCard data={overlayFromMeta(it.itemId, catalog[String(it.itemId)])} asChild key={it.itemId}>
-                <a className="phase-row" href={`/items/${it.itemId}/`}>
+                <a className="phase-row" href={itemPath(it.itemId)}>
                   <GameIcon kind="item" name={it.name} src={it.iconUrl} size={32} />
                   <span className="phase-item">
                     <span className="display phase-name">{it.name}</span>

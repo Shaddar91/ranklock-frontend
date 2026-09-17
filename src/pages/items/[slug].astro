@@ -32,6 +32,7 @@ import { breadcrumbJsonLd, SITE_NAME } from '../../lib/seo';
 import { count, duration, pct } from '../../lib/format';
 import { resolveAsset } from '../../lib/assets';
 import { heroPath } from '../../lib/heroSlugs';
+import { ITEM_SLUGS, itemPath } from '../../lib/itemSlugs';
 import type { HeroSummary, ItemDetailResponse, ItemModifier, ItemStat, Patch } from '../../types/api';
 import itemCatalog from '../../data/items-detail.json';
 
@@ -164,7 +165,7 @@ export async function getStaticPaths() {
 
     const components = (detail?.components ?? []).map((e) => edgeView(e, 'Component'));
     return {
-      params: { id },
+      params: { slug: ITEM_SLUGS[itemId] ?? String(itemId) },
       props: {
         item,
         detail,
@@ -228,7 +229,7 @@ const buySub =
     : `sold at ${duration(item.avg_sell_time_s)}${item.avg_sell_time_relative == null ? '' : ` · ${item.avg_sell_time_relative.toFixed(0)}% into the match`}`;
 
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
-const canonicalPath = `/items/${item.item_id}`;
+const canonicalPath = itemPath(item.item_id);
 const title = `${name} Deadlock win rate | RankLock`;
 const description =
   item.matches != null
@@ -237,7 +238,7 @@ const description =
 //Entity markup, the same shape the hero pages carry: name the item as a thing inside
 //Deadlock so the page attaches to both entities. No image property — the art host is
 //robots-blocked, so a URL there would be one Google cannot fetch.
-const canonicalUrl = new URL(`${canonicalPath}/`, origin).toString();
+const canonicalUrl = new URL(canonicalPath, origin).toString();
 const jsonLd = [
   breadcrumbJsonLd(origin, [
     { name: 'Home', path: '/' },

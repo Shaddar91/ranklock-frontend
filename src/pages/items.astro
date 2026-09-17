@@ -7,6 +7,7 @@ import { api } from '../lib/apiClient';
 import { buildFetch, buildFetchNonEmpty } from '../lib/buildData';
 import { breadcrumbJsonLd } from '../lib/seo';
 import { dayDate, shortDate } from '../lib/format';
+import { itemPath } from '../lib/itemSlugs';
 import itemDetail from '../data/items-detail.json';
 import type { DataHorizonResponse, HeroSummary, ItemModifier, ItemStat, Patch } from '../types/api';
 
@@ -100,7 +101,7 @@ const slotGroups = [
             <h3 class="h-sec h-sec-sm" style="margin-bottom:8px;">{g.label}</h3>
             <div class="flex" style="gap:8px; flex-wrap:wrap;">
               {g.items.map((it) => (
-                <a class="chip" href={`/items/${it.id}/`} style="text-decoration:none;">
+                <a class="chip" href={itemPath(Number(it.id))} style="text-decoration:none;">
                   {it.name}
                 </a>
               ))}
