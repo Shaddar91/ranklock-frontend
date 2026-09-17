@@ -6,9 +6,9 @@ import { SITE_ORIGIN } from '../lib/seo';
 import { TRANSLATED_LOCALES, hreflangAlternates, pagePath } from '../lib/i18n';
 import { releasedRoster } from '../lib/heroRoster';
 import { slugRoster } from '../lib/heroSlugs';
+import { ITEM_SLUGS } from '../lib/itemSlugs';
 import { mintablePatches } from '../lib/patchRoutes';
 import type { DataHorizonResponse, HeroSummary, Patch } from '../types/api';
-import itemDetail from '../data/items-detail.json';
 
 //Curated SEO sitemap (C7, requirements §7/§8.2). Lists ONLY the indexable English
 //SEO surface + BOUNDED curated families of dynamic pages (the hero roster, the
@@ -129,13 +129,10 @@ export const GET: APIRoute = async () => {
     routes.push({ path: `/heroes/${guide.id}/guide`, changefreq: 'monthly', priority: '0.6', lastmod: last });
   }
 
-  //Item catalog — bounded family; same static source items/[id].astro builds its paths from.
-  const itemIds = Object.keys(itemDetail as Record<string, unknown>)
-    .map(Number)
-    .filter((id) => Number.isFinite(id))
-    .sort((a, b) => a - b);
-  for (const id of itemIds) {
-    routes.push({ path: `/items/${id}`, changefreq: 'weekly', priority: '0.6', lastmod: statsLastmod });
+  //Item catalog — bounded family; the same slug map items/[slug].astro mints its paths from.
+  const itemSlugs = Object.entries(ITEM_SLUGS).sort(([a], [b]) => Number(a) - Number(b));
+  for (const [, slug] of itemSlugs) {
+    routes.push({ path: `/items/${slug}`, changefreq: 'weekly', priority: '0.6', lastmod: statsLastmod });
   }
 
   //Per-patch pages — bounded by the same predicate patches/[patch_id].astro mints
