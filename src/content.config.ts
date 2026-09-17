@@ -42,6 +42,8 @@ const guides = defineCollection({
     updatedDate: z.coerce.date().optional(),
     author: z.string().default('RankLock team'),
     roles: z.array(z.enum(['support', 'damage', 'tank', 'offensive', 'jungle'])).min(1),
+    //the archetype token of a sibling guide (<slug>--<token>.md); absent = the canonical hero guide.
+    build: z.enum(['weapon', 'spirit', 'support', 'tank', 'hybrid']).optional(),
     counters: z.array(z.string()).default([]),
     synergyItems: z.array(z.string()).default([]),
     buildIds: z.array(z.number().int()).default([]),

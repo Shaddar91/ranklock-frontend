@@ -1,0 +1,49 @@
+---
+//SSG archetype sibling page, one per published <slug>--<token> guide file: the fixed-five-H2
+//build page beside the hero's canonical guide, via the shared GuidePage renderer.
+import GuidePage from '../../../../components/hero/GuidePage.astro';
+import { getCollection, getEntry } from 'astro:content';
+import { api } from '../../../../lib/apiClient';
+import { buildFetch } from '../../../../lib/buildData';
+import { parseGuideId } from '../../../../lib/guideIds';
+import { publishedGuides } from '../../../../lib/guideRoutes';
+import { slugRoster } from '../../../../lib/heroSlugs';
+import { releasedRoster } from '../../../../lib/heroRoster';
+import type { HeroSummary } from '../../../../types/api';
+
+export async function getStaticPaths() {
+  const heroes = releasedRoster(await buildFetch(api.getHeroes(), [] as HeroSummary[]), 'heroes/[slug]/guide/[token]');
+  if (heroes.length === 0) return [];
+  const bySlug = new Map(
+    slugRoster(heroes, 'heroes/[slug]/guide/[token]').map(({ slug, ...hero }) => [slug, hero as HeroSummary]),
+  );
+  const guides = (await getCollection('guides', ({ data }) => !data.draft)).filter((g) => g.id.includes('--'));
+  return guides.map((guide) => {
+    const { slug, token } = parseGuideId(guide.id);
+    const hero = token !== null ? bySlug.get(slug) : undefined;
+    if (!hero || token === null) {
+      throw new Error(`[guide-roster guard] src/content/guides/${guide.id}.md: slug "${slug}" is not on the released roster.`);
+    }
+    return { params: { slug, token }, props: { hero, roster: heroes } };
+  });
+}
+
+const { hero, roster } = Astro.props as { hero: HeroSummary; roster: HeroSummary[] };
+const slug = Astro.params.slug as string;
+const token = Astro.params.token as string;
+const id = `${slug}--${token}`;
+
+const found = await getEntry('guides', id);
+if (!found || found.data.draft) throw new Error(`[guide guard] /heroes/${slug}/guide/${token}/ has no published guide file.`);
+const where = `src/content/guides/${id}.md`;
+if (found.data.heroSlug !== slug) {
+  throw new Error(`[guide-slug guard] ${where}: heroSlug "${found.data.heroSlug}" is not the parent slug "${slug}".`);
+}
+if (found.data.build !== token) {
+  throw new Error(`[guide-build guard] ${where}: build "${found.data.build}" is not the URL token "${token}".`);
+}
+
+const siblings = ((await publishedGuides()).get(slug) ?? []).filter((s) => s.id !== id);
+---
+
+<GuidePage hero={hero} roster={roster} entry={found} token={token} siblings={siblings} />
