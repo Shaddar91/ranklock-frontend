@@ -8,11 +8,13 @@ import {
   hardCounters,
   itemFloor,
   itemsThatGoWell,
+  missingRoleHeadings,
   orderBuilds,
   printableAbilityName,
   printableBuildName,
   roleHeadingText,
   roleNav,
+  undeclaredRoleHeadings,
   type GuideHeading,
   type GuideMeta,
   type HeroPlayInput,
@@ -202,4 +204,33 @@ it('suppresses a build name carrying a handle or profanity, keeps a plain one ve
   const ordered = orderBuilds([build(501), { ...build(502), name: 'HAZE t.tv/qtarsis' }], null);
   expect(ordered.map((b) => b.name)).toEqual(['Build 501', null]);
   expect(ordered[1]?.build.name).toBe('HAZE t.tv/qtarsis');
+});
+
+it('rejects a declared role whose H2 the rendered guide does not carry, and only that role', () => {
+  const headings: GuideHeading[] = [
+    { depth: 2, slug: 'how-to-play-haze-as-a-damage-carry', text: 'How to play Haze as a Damage carry' },
+    { depth: 3, slug: 'decoy-wrong-depth', text: 'How to play Haze as a Tank' },
+  ];
+  expect(missingRoleHeadings(guide({ roles: ['damage'] }), headings)).toEqual([]);
+  expect(missingRoleHeadings(guide({ roles: ['damage', 'tank'] }), headings)).toEqual(['tank']);
+  expect(missingRoleHeadings(guide(), undefined)).toEqual([]);
+  expect(missingRoleHeadings(null, headings)).toEqual([]);
+});
+
+it('flags a role H2 the guide carries without declaring the role', () => {
+  const headings: GuideHeading[] = [
+    { depth: 2, slug: 'how-to-play-haze-as-a-damage-carry', text: 'How to play Haze as a Damage carry' },
+    { depth: 2, slug: 'how-to-play-haze-as-a-tank', text: 'How to play Haze as a Tank' },
+  ];
+  expect(undeclaredRoleHeadings(guide({ roles: ['damage'] }), headings)).toEqual(['tank']);
+  expect(undeclaredRoleHeadings(guide({ roles: ['damage'] }), headings.slice(0, 1))).toEqual([]);
+  expect(undeclaredRoleHeadings(guide({ roles: ['damage', 'tank'] }), headings)).toEqual([]);
+  expect(undeclaredRoleHeadings(guide(), undefined)).toEqual([]);
+});
+
+it('hoists an archetype page\'s own buildIds ahead of the served weekly order', () => {
+  const builds = [build(501), build(502), build(503)];
+  const archetype = guide({ buildIds: [503] });
+  expect(orderBuilds(builds, archetype).map((b) => b.build.hero_build_id)).toEqual([503, 501, 502]);
+  expect(orderBuilds(builds, archetype).map((b) => b.cited)).toEqual([true, false, false]);
 });

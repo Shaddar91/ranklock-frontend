@@ -164,6 +164,29 @@ export function roleNav(
   return out;
 }
 
+export const ROLE_TOKENS: readonly HeroRole[] = ['support', 'damage', 'tank', 'offensive', 'jungle'];
+
+/** Declared roles whose H2 the rendered guide does not carry — the page build rejects these. */
+export function missingRoleHeadings(
+  guide: GuideMeta | null | undefined,
+  headings: GuideHeading[] | undefined,
+): HeroRole[] {
+  if (!guide || !headings) return [];
+  const h2 = headings.filter((h) => h.depth === 2).map((h) => norm(h.text));
+  return guide.roles.filter((token) => !h2.includes(norm(roleHeadingText(guide.hero, token))));
+}
+
+/** Role H2s the guide carries for a role its front matter does not declare — flagged, not rejected. */
+export function undeclaredRoleHeadings(
+  guide: GuideMeta | null | undefined,
+  headings: GuideHeading[] | undefined,
+): HeroRole[] {
+  if (!guide || !headings) return [];
+  const h2 = headings.filter((h) => h.depth === 2).map((h) => norm(h.text));
+  const declared = new Set<HeroRole>(guide.roles);
+  return ROLE_TOKENS.filter((token) => !declared.has(token) && h2.includes(norm(roleHeadingText(guide.hero, token))));
+}
+
 //One /matchups row per (opponent, bracket, game mode): merge before ranking, and recompute the
 //win rate from the summed totals — averaging the served win_rate weights a 200-game bracket
 //like a 500,000-game one (heroNarrative.ts:80-90).

@@ -23,11 +23,12 @@ import { pagePath } from '../../lib/i18n';
 import { BUILD_DISPLAY, parseGuideId, type BuildToken, type PublishedGuide } from '../../lib/guideIds';
 import {
   buildHeroPlay,
+  missingRoleHeadings,
   roleHeadingText,
   ROLE_LABEL,
+  undeclaredRoleHeadings,
   type AbilityDescription,
   type GuideMeta,
-  type HeroRole,
   printableSectionLabel,
 } from '../../lib/heroPlay';
 import type {
@@ -68,7 +69,6 @@ const name = hero.hero_name;
 const { Content, headings } = await render(entry);
 
 const norm = (s: string): string => s.trim().toLowerCase();
-const ROLE_TOKENS: readonly HeroRole[] = ['support', 'damage', 'tank', 'offensive', 'jungle'];
 
 const where = `src/content/guides/${entry.id}.md`;
 if (entry.data.heroSlug !== parseGuideId(entry.id).slug) {
@@ -76,17 +76,11 @@ if (entry.data.heroSlug !== parseGuideId(entry.id).slug) {
 }
 const h2 = headings.filter((h) => h.depth === 2).map((h) => norm(h.text));
 if (token === null) {
-  for (const role of entry.data.roles) {
-    const want = roleHeadingText(entry.data.hero, role);
-    if (!h2.includes(norm(want))) {
-      throw new Error(`[guide-role guard] ${where}: declares "${role}" but carries no H2 "${want}".`);
-    }
+  for (const role of missingRoleHeadings(entry.data, headings)) {
+    throw new Error(`[guide-role guard] ${where}: declares "${role}" but carries no H2 "${roleHeadingText(entry.data.hero, role)}".`);
   }
-  const declared = new Set<string>(entry.data.roles);
-  for (const role of ROLE_TOKENS) {
-    if (!declared.has(role) && h2.includes(norm(roleHeadingText(entry.data.hero, role)))) {
-      console.warn(`[guide-role guard] ${where}: carries the H2 for "${role}", which its front matter does not declare.`);
-    }
+  for (const role of undeclaredRoleHeadings(entry.data, headings)) {
+    console.warn(`[guide-role guard] ${where}: carries the H2 for "${role}", which its front matter does not declare.`);
   }
 } else {
   for (const want of ARCHETYPE_H2) {
