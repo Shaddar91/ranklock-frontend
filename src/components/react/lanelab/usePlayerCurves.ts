@@ -18,7 +18,7 @@ export const FOLD_060_METRICS = WINDOWLESS_METRICS;
 
 //Games folded before this date carry none of the five arrays; per mode so a refold can move one.
 export const FOLD_060_BOUNDARY: Record<'Ranked' | 'Unranked', string> = {
-  Ranked: '14 September 2026',
+  Ranked: '21 July 2026',
   Unranked: '14 September 2026',
 };
 
