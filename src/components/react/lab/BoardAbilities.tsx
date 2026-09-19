@@ -21,6 +21,8 @@ function cell(value: AbilityValue | null, unit = ''): string {
   return value == null ? DASH : `${num(value.value)}${unit}`;
 }
 
+const ROMAN: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III' };
+
 export default function BoardAbilities({ rows, mods, slots, icons, tier }: BoardAbilitiesProps) {
   const folded = abilitiesWithBuild(rows.map((r) => r.baseline), mods);
   const assumed = [...new Set(folded.flatMap((f) => f.assumed))];
@@ -30,7 +32,7 @@ export default function BoardAbilities({ rows, mods, slots, icons, tier }: Board
     <section>
       <SectionHeader
         kicker="What does my spell do now"
-        title={`Abilities with this board · tier ${tier}`}
+        title={`Abilities with this board · tier ${ROMAN[tier] ?? tier}`}
       />
       <div className="lab-card lab-card-flush">
         {rows.length === 0 ? (

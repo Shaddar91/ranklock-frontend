@@ -1352,6 +1352,7 @@
 }
 .phase-head .mono {
   font-size: 12px;
+  font-weight: 500;
 }
 .phase-row {
   display: grid;
@@ -1605,7 +1606,7 @@
   color: var(--muted);
 }
 .patch-note {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-2);
   text-wrap: pretty;
 }
