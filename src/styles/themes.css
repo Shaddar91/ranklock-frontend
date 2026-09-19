@@ -300,11 +300,11 @@
   --cyan-deep: #ea580c;
   --cyan-deeper: #c2410c;
   --glow-you: rgba(251, 146, 60, 0.5);
-  --brass-1: #f3b765;
-  --brass-2: #d2843a;
-  --brass-3: #9c5722;
-  --brass-4: #6b3a18;
-  --brass-edge: #ec9a4a;
+  --brass-1: #e8c987;
+  --brass-2: #c79a4e;
+  --brass-3: #9a6f30;
+  --brass-4: #6b4a21;
+  --brass-edge: #d8b066;
 }
 [data-theme='foundry'] .app-bg {
   background:
