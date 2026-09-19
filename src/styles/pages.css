@@ -852,32 +852,7 @@
   font: 500 11px var(--mono);
 }
 
-/* §4 community builds: the bracket selector, the ability chips and the updated badge */
-.bp-brackets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-.bp-brk {
-  padding: 6px 11px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: var(--raised);
-  color: var(--muted);
-  font: 600 12px var(--display);
-  cursor: pointer;
-  transition: var(--t-fast);
-}
-.bp-brk:hover {
-  border-color: var(--cyan-deep);
-  color: var(--text-2);
-}
-.bp-brk.on {
-  border-color: var(--brass-3);
-  background: var(--overlay);
-  color: var(--brass-1);
-}
+/* §4 community builds: the ability chips and the updated badge */
 .bp-btitle {
   min-width: 0;
 }

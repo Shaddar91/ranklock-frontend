@@ -1,12 +1,11 @@
 //Hero Build §4 / Build Lab §13 — the published builds ranked by their upstream 30-day win rate.
-//One island, two mount points: the Build page adds the rank bracket selector, the lab mount adds
-//the per-row Import. The bracket is page state, never a URL: one URL per intent (brief rule 7).
-import { useMemo, useState } from 'react';
+//One island, two mount points: the Build page opens on the default ranked bracket, the lab mount
+//reads weekly and adds the per-row Import.
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { abilityOrderSequence, authorLabel, patchesAgo } from '../../../lib/buildMeta';
 import { printableBuildName } from '../../../lib/heroPlay';
-import { RANKED_BRACKETS, rankedBracketLabel } from '../../../lib/heroBuild';
 import { count, DASH } from '../../../lib/format';
 import QueryProvider from '../QueryProvider';
 import SectionHeader from '../ui/SectionHeader';
@@ -28,7 +27,7 @@ export interface CommunityBuildsProps {
   initialSelection?: Selection;
   initialRanked?: RankedBuildsResponse | null;
   kicker?: string;
-  //Off in the lab: the Build page is the primary surface for the rank filter (04 §4).
+  //Off in the lab: the ranked bracket read is the Build page's (04 §4).
   brackets?: boolean;
   //Supplied by the lab mount only; a row whose id never rode the wire cannot be imported.
   onImport?: (buildId: number) => void;
@@ -37,7 +36,7 @@ export interface CommunityBuildsProps {
 export type Selection = 'weekly' | RankedBracketKey;
 
 //The weekly-favorites join scores only a handful of its rows, so the table cannot rank on
-//the win-rate column here; the bracket chips above it can.
+//the win-rate column here; the ranked route can.
 const WEEKLY_NOTE = 'Trending across all ranks by weekly favorites · most rows carry no 30-day win rate';
 const IMPORT_NOTE = 'Import opens the build in Analyze';
 
@@ -78,7 +77,7 @@ export function CommunityBuildsTable({
   brackets = true,
   onImport,
 }: CommunityBuildsProps) {
-  const [selection, setSelection] = useState<Selection>(brackets ? initialSelection : 'weekly');
+  const selection: Selection = brackets ? initialSelection : 'weekly';
   const ranked = brackets && selection !== 'weekly';
 
   const { data, isPending, isError } = useQuery({
@@ -128,29 +127,6 @@ export function CommunityBuildsTable({
   return (
     <section id="community">
       <SectionHeader kicker={kicker} title="Community builds" note={note} />
-      {brackets && (
-        <div className="bp-brackets" role="group" aria-label="Rank bracket">
-          <button
-            type="button"
-            className={selection === 'weekly' ? 'bp-brk on' : 'bp-brk'}
-            aria-pressed={selection === 'weekly'}
-            onClick={() => setSelection('weekly')}
-          >
-            Trending
-          </button>
-          {RANKED_BRACKETS.map((option) => (
-            <button
-              type="button"
-              key={option.key}
-              className={selection === option.key ? 'bp-brk on' : 'bp-brk'}
-              aria-pressed={selection === option.key}
-              onClick={() => setSelection(option.key)}
-            >
-              {rankedBracketLabel(option)}
-            </button>
-          ))}
-        </div>
-      )}
 
       {ranked && isPending ? (
         <EmptyState title="Loading" message="Fetching the builds that win in this bracket." />
