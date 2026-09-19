@@ -1941,6 +1941,32 @@ ins.adsbygoogle[data-ad-status='unfilled'] {
   line-height: 1.4;
   color: var(--text-2);
 }
+.itemcard-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.itemcard-chips-sec {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+}
+.itemcard-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--raised);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.itemcard-chipv {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text);
+}
 .itemcard-passive {
   color: var(--muted);
 }

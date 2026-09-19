@@ -1,6 +1,6 @@
 //The shared item hover card (design Lab §15), rendered inside a Tooltip: category-tinted
 //header with icon, name, cost and slot · tier; the full modifier list; the Active / Passive
-//block with its cooldown; "Upgrades from / into"; and the investment / resale footer.
+//block with its cooldown and number chips; "Upgrades from / into"; and the investment / resale footer.
 //One card for every item tile in the app — mount it through ItemHoverCard.
 import type { ItemOverlayData } from '../../../lib/itemOverlay';
 import { slotName } from '../../../lib/itemDetail';
@@ -14,6 +14,19 @@ function modValue(value: number, isPercent: boolean): string {
   const sign = value > 0 ? '+' : '';
   const v = Number.isInteger(value) ? String(value) : value.toFixed(1);
   return `${sign}${v}${isPercent ? '%' : ''}`;
+}
+
+function NumberChips({ mods }: { mods: ItemOverlayData['modifiers'] }) {
+  return (
+    <div className="itemcard-chips">
+      {mods.map((m, i) => (
+        <span key={`${m.property_type}-${i}`} className="itemcard-chip">
+          <b className="itemcard-chipv">{modValue(m.value, m.is_percent)}</b>
+          {m.label ?? m.property_type}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function UpgradeList({ label, refs }: { label: string; refs: UpgradeRef[] }) {
@@ -98,6 +111,13 @@ export default function ItemOverlayCard({
               <span className="label-xs">Passive</span> {passive}
             </p>
           )}
+          {data.modifiers.length > 0 && <NumberChips mods={data.modifiers} />}
+        </div>
+      )}
+
+      {!(text || passive || data.ability?.imbue) && data.modifiers.length > 0 && (
+        <div className="itemcard-chips-sec">
+          <NumberChips mods={data.modifiers} />
         </div>
       )}
 
