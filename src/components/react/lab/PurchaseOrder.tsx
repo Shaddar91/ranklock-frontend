@@ -1,4 +1,4 @@
-//Lab §4 — the board's items in purchase order, grouped by the phase a median-farming lobby
+//Lab §4: the board's items in purchase order, grouped by the phase a median-farming player
 //reaches their running total in, with the upgrade-difference paid column and the slot note.
 import { GameIcon, ItemHoverCard, SectionHeader } from '../ui/index';
 import { count, DASH } from '../../../lib/format';
@@ -68,7 +68,7 @@ function Row({ row }: { row: PurchaseRow }) {
 
 export default function PurchaseOrder({ groups, total, owned, phased, band }: PurchaseOrderProps) {
   const foot = phased
-    ? `Paid pays the upgrade difference when a component is already owned. The build states no upgrade route, so that is assumed. Phase = the band holding the minute a median-farming lobby affords the running total (RankLock public matches p50, all heroes, ${band}); the build carries no timings of its own.`
+    ? `Paid pays the upgrade difference when a component is already owned. The build states no upgrade route, so that is assumed. Phase = the band holding the minute a median-farming player affords the running total (RankLock public matches p50, all heroes, ${band}); the build carries no timings of its own.`
     : 'Paid pays the upgrade difference when a component is already owned. The build states no upgrade route, so that is assumed. No economy curve is served right now, so the rows are not split into phases.';
 
   return (

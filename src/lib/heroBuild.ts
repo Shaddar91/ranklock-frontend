@@ -1,8 +1,7 @@
 //Hero Build arithmetic: the phase split and its core/situational rule, the buy-order track
-//with cumulative cost and the minute a median-farming lobby affords it, the four modifier
+//with cumulative cost and the minute a median-farming player affords it, the four modifier
 //families behind the situational picks, and the folded purchase sets.
 import { PHASE_BANDS } from './heroOverview';
-import { getRank } from './ranks';
 import { SOULS_AT_ZERO } from './laneCurve';
 import { toModifierRows, formatModifier } from './itemOverlay';
 import { itemTierNumeral } from './itemTiers';
@@ -15,27 +14,10 @@ import type {
   RankedBracketKey,
 } from '../types/api';
 
-export interface RankedBracketOption {
-  key: RankedBracketKey;
-  tiers: readonly [number, number];
-}
-
-//The four brackets the ranked route serves; the badge bounds stay server-side, so a bracket
-//is named here only by the pinned ladder tiers its key spells out.
-export const RANKED_BRACKETS: readonly RankedBracketOption[] = [
-  { key: 'initiate-sentinel', tiers: [1, 4] },
-  { key: 'mystic-emissary', tiers: [5, 7] },
-  { key: 'oracle-phantom', tiers: [8, 9] },
-  { key: 'ascendant-eternus', tiers: [10, 11] },
-];
-
-//The bracket the Build page opens on: the served surface that carries a 30-day win rate on
-//every row, which is the shape the design's Community builds table draws.
+//The one ranked-builds key the Build page reads. Upstream hero-build-stats filters on the match's
+//average rank and serves no all-ranks key, so one key is pinned: the best-populated on the
+//2026-09-20 probe. The page names the served span beside the table instead of offering a choice.
 export const DEFAULT_RANKED_BRACKET: RankedBracketKey = 'oracle-phantom';
-
-export function rankedBracketLabel(option: RankedBracketOption): string {
-  return `${getRank(option.tiers[0]).name} to ${getRank(option.tiers[1]).name}`;
-}
 
 export interface CatalogEntry {
   itemId: number;

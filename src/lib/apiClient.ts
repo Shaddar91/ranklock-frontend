@@ -253,7 +253,7 @@ export const queryKeys = {
   playerEconomy: (id: number, game_mode?: GameMode, match_mode?: MatchMode) =>
     ['player', id, 'economy', game_mode ?? null, match_mode ?? null] as const,
   //THE signature per-minute soul curve (your fixed line + the selected league/hero
-  //comparison). vs_band/hero fold into params so each league/hero pick caches separately.
+  //comparison). tier/hero fold into params so each league/hero pick caches separately.
   playerEconomyCurve: (id: number, params?: Query) => ['player', id, 'economy-curve', params ?? {}] as const,
   //rank_distribution stays mode-AGNOSTIC (per-player badge histogram — product
   //decision, migration 022); the param exists only for forward-compat symmetry.
@@ -271,8 +271,8 @@ export const queryKeys = {
   laneFarmCurve: (params?: Query) => ['lane-lab', 'farm-curve', params ?? {}] as const,
   laneEarlyEconVerdict: (params?: Query) => ['lane-lab', 'early-econ-verdict', params ?? {}] as const,
   lanePercentiles: (params?: Query) => ['lane-lab', 'percentiles', params ?? {}] as const,
-  //Souls-by-source (migration 048): the tier cohort curve + the player's own line. band/hero and
-  //match_mode fold into params so each rank/hero/track caches separately.
+  //Souls-by-source: the league curve + the player's own line. tier/hero and match_mode fold into
+  //params so each rank/hero/track caches separately.
   laneSoulsSources: (params?: Query) => ['lane-lab', 'souls-sources', params ?? {}] as const,
   playerSoulsSources: (id: number, params?: Query) => ['player', id, 'souls-sources', params ?? {}] as const,
   //data-age freshness metadata (the "Stats through {date}" chip + sample windows).
@@ -297,12 +297,10 @@ export const api = {
     game_mode?: GameMode;
     match_mode?: MatchMode;
   }) => apiFetchWithTotal<LeaderboardEntry[]>('/leaderboard', { query: params }),
-  //`band` is a single rank tier 0..11 (badge/10, migration 025 hero_band_mv) — the SAME 12-band
-  //ladder Lane Lab filters on. Prefer it over the coarse 4-way `bracket`; omit both for all-ranks.
+  //`band` is one tier 0..11 of the player's own rank (migration 062 hero_band_mv), the same ladder
+  //Lane Lab filters on. Prefer it over the coarse 4-way `bracket`; omit both for all ranks.
   getHeroes: (params?: { bracket?: HeroBracket; band?: number; patch_id?: number; game_mode?: GameMode }) =>
     apiFetch<HeroSummary[]>('/heroes', { query: params }),
-  getHeroStats: (id: number, bracket?: HeroBracket, game_mode?: GameMode) =>
-    apiFetch<HeroSummary>(`/heroes/${id}/stats`, { query: { bracket, game_mode } }),
   //?scored=1 additionally carries each build's upstream 30-day numbers (win_rate_30d /
   //matches / wins / players), all null when upstream has no row at the badge floor.
   getHeroBuilds: <S extends boolean = false>(id: number, sort?: BuildSort, scored?: S) =>
@@ -463,8 +461,15 @@ export const api = {
     tier?: number;
     division?: number;
   }) => laneLabFetch<LaneCurveResponse>('/lane-lab/farm-curve', { query: params }),
-  getLaneEarlyEconVerdict: (params?: { band?: number; game_mode?: GameMode }) =>
-    laneLabFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
+  //`tier` = players at that Valve rank tier (ranked games); `band` is the older name for the same
+  //number. Omit both for every ranked player.
+  getLaneEarlyEconVerdict: (params?: {
+    band?: number;
+    tier?: number;
+    rank?: number;
+    division?: number;
+    game_mode?: GameMode;
+  }) => laneLabFetch<EarlyEconVerdictResponse>('/lane-lab/early-econ-verdict', { query: params }),
   //The scorecard's percentile cells: one call carries every player's value for one metric at one
   //minute. `minute` is the curve's own minute_bucket (wall seconds = minute * 180, so 12:00 = 4);
   //`values` are real units, comma-joined in the caller's player order, at most 8.
@@ -477,11 +482,17 @@ export const api = {
     tier?: number;
     division?: number;
   }) => laneLabFetch<PercentilesResponse>('/lane-lab/percentiles', { query: params }),
-  //Cohort souls-by-source (migration 048) — the tier half of the "you vs tier" stack. `band` is the
-  //rank tier (badge/10, 0..11; omit to aggregate all bands); `metric_group` narrows to one source
-  //(unknown ⇒ all six). RICH_ANALYTICS-gated (501 off, 202 until the first fold); `match_mode` per 047.
-  getLaneSoulsSources: (params?: { band?: number; metric_group?: string; match_mode?: MatchMode }) =>
-    laneLabFetch<SoulsCohortResponse>('/lane-lab/souls-sources', { query: params }),
+  //League souls-by-source, the reference half of the "you vs league" stack. `tier` = players at that
+  //Valve rank tier (ranked games); `band` is the older name for the same number; omit both for every
+  //ranked player. `metric_group` narrows to one source. RICH_ANALYTICS-gated (501 off, 202 until the first fold).
+  getLaneSoulsSources: (params?: {
+    band?: number;
+    tier?: number;
+    rank?: number;
+    division?: number;
+    metric_group?: string;
+    match_mode?: MatchMode;
+  }) => laneLabFetch<SoulsCohortResponse>('/lane-lab/souls-sources', { query: params }),
   //Ranked player-games per Valve rank at the busiest 180s bucket (migration 057,
   //analytics.rank_population). `game_mode` is accepted for forward-compat; the
   //view returns one group today ('Normal','Ranked') and the client filters it.

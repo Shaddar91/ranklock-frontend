@@ -11,10 +11,10 @@ interface LiveStatChipProps {
   bracket?: string;
 }
 
-export default function LiveStatChip({ kind = 'hero', name, wr, iconUrl, bracket = 'Archon' }: LiveStatChipProps) {
+export default function LiveStatChip({ kind = 'hero', name, wr, iconUrl, bracket = 'all ranks' }: LiveStatChipProps) {
   const good = wr >= 50;
   return (
-    <span className="livechip" title={`Live win-rate · ${bracket} bracket`}>
+    <span className="livechip" title={`Live win-rate · ${bracket}`}>
       <GameIcon kind={kind} name={name} src={iconUrl} size={20} />
       <span className="display" style={{ fontSize: 12.5, color: 'var(--text)' }}>
         {name}

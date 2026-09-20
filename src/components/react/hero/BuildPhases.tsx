@@ -1,10 +1,11 @@
-//Hero Build §1-§2 — what to buy in each phase and the order the board fills, both driven by
-//the sticky rank filter because /items/stats is the one Build source served per badge bracket.
+//Hero Build §1-§2: what to buy in each phase and the order the board fills, both driven by the
+//sticky rank filter. /items/stats is a deadlock-api.com aggregate filtered by the match's average
+//rank; the affordability curve is RankLock's own, keyed on the player's rank tier.
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { useGameMode } from '../../../lib/useGameMode';
-import { bracketBucket, servedBandLabel, useHeroBracket } from '../../../lib/heroBracket';
+import { bracketBucket, upstreamRankScope, useHeroBracket } from '../../../lib/heroBracket';
 import { bracketLabel } from '../ui/FilterBar';
 import { buildByPhase, buyOrderTrack, type CatalogEntry } from '../../../lib/heroBuild';
 import { overlayFromMeta } from '../../../lib/itemOverlay';
@@ -49,21 +50,21 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
   });
 
   //The affordability baseline follows the rank pick; the baked all-ranks curve stands in
-  //until the banded one lands, so a slot never renders an empty affordable-at column.
-  const { data: banded } = useQuery({
-    queryKey: queryKeys.laneFarmCurve({ band: bracket === 'all' ? null : bracket, metric: 'souls' }),
-    queryFn: () => api.getLaneFarmCurve({ band: bracket === 'all' ? undefined : bracket, metric: 'souls' }),
+  //until the rank's own curve lands, so a slot never renders an empty affordable-at column.
+  const { data: ranked } = useQuery({
+    queryKey: queryKeys.laneFarmCurve({ tier: bracket === 'all' ? null : bracket, metric: 'souls' }),
+    queryFn: () => api.getLaneFarmCurve({ tier: bracket === 'all' ? undefined : bracket, metric: 'souls' }),
     enabled: bracket !== 'all',
     staleTime: 60 * 60_000,
   });
 
   const index = useMemo(() => new Map(catalog.map((c) => [c.itemId, c])), [catalog]);
-  const points = bracket === 'all' ? curve : (banded?.points ?? curve);
+  const points = bracket === 'all' ? curve : (ranked?.points ?? curve);
   const phases = useMemo(() => buildByPhase(itemStats, index), [itemStats, index]);
   const track = useMemo(() => buyOrderTrack(itemStats, index, points, slots), [itemStats, index, points, slots]);
   const overlay = (itemId: number) => overlayFromMeta(itemId, index.get(itemId));
-  const band = servedBandLabel(bracket);
-  const paceLabel = bracket === 'all' ? 'all ranks' : `${bracketLabel(bracket)} lobbies`;
+  const scope = upstreamRankScope(bracket);
+  const paceLabel = bracket === 'all' ? 'all ranks' : `${bracketLabel(bracket)} rank`;
 
   return (
     <>
@@ -71,7 +72,7 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
         <SectionHeader
           kicker="What to buy and when"
           title="The build by phase"
-          note={`Minute = average buy time · WR = games where the item was bought in that phase · ${band} · Core is RankLock editorial`}
+          note={`Minute = average buy time · WR = games where the item was bought in that phase · ${scope} · Core is RankLock editorial`}
           action={
             <a className="btn btn-brass btn-caps" href="/build-lab/">
               Open in Build Lab
@@ -99,7 +100,7 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
                   <span className="num">Games</span>
                 </div>
                 {p.items.length === 0 ? (
-                  <p className="muted phase-empty">No item clears this band yet.</p>
+                  <p className="muted phase-empty">No item lands in this phase yet.</p>
                 ) : (
                   p.items.map((it) => (
                     <ItemHoverCard data={overlay(it.itemId)} asChild key={it.itemId}>
@@ -135,7 +136,7 @@ function Sections({ heroId, initialItemStats, catalog, curve, slots = 12 }: Buil
         <SectionHeader
           kicker="In what order"
           title="Buy order by slot"
-          note={`Souls = cumulative board cost · minute = when a median-farming lobby (${paceLabel}) can afford the slot`}
+          note={`Souls = cumulative board cost · minute = when a median-farming player (${paceLabel}) can afford the slot`}
         />
         {track.length === 0 ? (
           <EmptyState tone="cold" title="Computing" message="Item costs and buy times are still folding. This block refreshes hourly." />

@@ -1,7 +1,6 @@
-//"Where the souls come from" — the roster's souls split at 12:00 and 36:00 as one stacked bar per
-//player, plus a per-source delta table against the reference. The reference is the LOBBY-average
-//cohort: /lane-lab/souls-sources takes `band` only and ignores `tier=`, so this block cannot follow
-//the league picked in the bar and says so in its caption.
+//"Where the souls come from": the roster's souls split at 12:00 and 36:00 as one stacked bar per
+//player, plus a per-source delta table against the reference, players at the league picked in the
+//bar (ranked games, /lane-lab/souls-sources?tier=).
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { count } from '../../../lib/format';
@@ -27,6 +26,9 @@ const GROUP_COLOR: Record<SoulsGroup, string> = {
 export interface SoulsSourcePanelProps {
   roster: readonly RosterSlot[];
   matchMode: 'Unranked' | 'Ranked';
+  //Reference league, tier 1..11, and its name.
+  tier: number;
+  tierName: string;
   buckets: readonly number[];
   //account_id -> games in `matchMode`. A zero draws no bar: an empty split is not a zero split.
   modeGames: Map<number, number | null>;
@@ -35,6 +37,8 @@ export interface SoulsSourcePanelProps {
 export default function SoulsSourcePanel({
   roster,
   matchMode,
+  tier,
+  tierName,
   buckets,
   modeGames,
 }: SoulsSourcePanelProps) {
@@ -55,8 +59,8 @@ export default function SoulsSourcePanel({
   });
 
   const reference = useQuery({
-    queryKey: queryKeys.laneSoulsSources({ match_mode: matchMode }),
-    queryFn: () => api.getLaneSoulsSources({ match_mode: matchMode }),
+    queryKey: queryKeys.laneSoulsSources({ tier, match_mode: matchMode }),
+    queryFn: () => api.getLaneSoulsSources({ tier, match_mode: matchMode }),
     staleTime: 30 * 60 * 1000,
     retry: false,
   });
@@ -99,7 +103,7 @@ export default function SoulsSourcePanel({
 
             <div className="ll-souls-bars">
               {[...rows, { player: null, comp: ref, none: false }].map((row, ri) => {
-                const label = row.player?.name ?? 'Lobby average';
+                const label = row.player?.name ?? `${tierName} average`;
                 const ghost = row.player == null;
                 if (row.none) {
                   return (
@@ -158,7 +162,7 @@ export default function SoulsSourcePanel({
                       {p.name}
                     </th>
                   ))}
-                  <th>Lobby avg</th>
+                  <th>{tierName} avg</th>
                 </tr>
               </thead>
               <tbody>
@@ -204,8 +208,7 @@ export default function SoulsSourcePanel({
 
       <p className="ll-sc-foot">
         Lane creeps pay everyone on a timer, so the gap opens on neutrals, heroes and objectives. The
-        reference is the lobby-average cohort across every rank, because /lane-lab/souls-sources takes a
-        lobby band only, so it does not follow the league picked above.
+        reference is players at {tierName} rank, ranked games, and follows the league picked above.
       </p>
     </section>
   );

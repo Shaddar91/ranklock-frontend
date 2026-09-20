@@ -4,7 +4,7 @@ import type { Patch } from '../types/api';
 
 //Oldest-patch predicate (deep-audit B8): the first tracked patch has nothing
 //earlier to diff against, so its movers empty-state must say that instead of
-//"No gainers for this bracket".
+//"No gainers at this rank bracket".
 
 const patch = (patch_id: string, released_at: string, is_current = false): Patch => ({
   patch_id,

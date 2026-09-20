@@ -5,7 +5,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { breadcrumbJsonLd } from '../lib/seo';
 
-const LAST_UPDATED = '2026-08-29';
+const LAST_UPDATED = '2026-09-20';
 
 const faqs = [
   {
@@ -18,15 +18,15 @@ const faqs = [
   },
   {
     q: 'What does the rank on a stat page actually mean?',
-    a: `It is a badge, not an MMR number. The upstream match data assigns each match a team-average badge, and every player in the match carries their team's badge for that game. A player's own badge is the badge of their latest match. No stat on RankLock is computed from raw MMR.`,
+    a: `The player's own Valve rank: the display rank each player held when they entered a ranked match, as the match data records it, for ranked matches from 7 Aug 2026 on. It is stored as a badge number, tier times 10 plus the subrank, on one 11 to 116 scale. A player's own rank is the rank from their latest ranked match. No stat on RankLock is computed from raw MMR.`,
   },
   {
-    q: 'Why do all six players on a team share one badge?',
-    a: `Because the badge in the source data is a team average, not an individual rating. The upstream match record carries one badge per team, and the pipeline assigns it to all six player rows of that team at load time.`,
+    q: 'What about unranked matches, or matches before 7 Aug 2026?',
+    a: `They carry no per-player rank, so they count only in the "All ranks" view, which includes every player. Until 31 Jul 2026 the upstream data carried one team-average badge per match instead; that basis is retired and drives no rank cohort on the site.`,
   },
   {
     q: 'Does RankLock use MMR?',
-    a: `No. Raw MMR is never stored or served; only the rounded badge exists. The per-day MMR history endpoint still answers but is empty for most accounts, because the upstream MMR feed no longer delivers data. Player pages show the last 1,000 badged matches instead.`,
+    a: `No. Raw MMR is never stored or served; only the Valve rank badge exists. The per-day MMR history endpoint still answers but is empty for most accounts, because the upstream MMR feed no longer delivers data. Player pages show the last 1,000 matches with a rank instead.`,
   },
   {
     q: `How is a hero's win-rate calculated?`,
@@ -46,7 +46,7 @@ const faqs = [
   },
   {
     q: 'What do the rank brackets on matchup pages mean?',
-    a: `Five badge ranges: 11 to 36, 41 to 56, 61 to 76, 81 to 96 and 101 to 116, plus an all-ranks view. The API labels them with the game's rank names. The lowest runs Initiate to Alchemist, the highest Ascendant to Eternus. Filtering matchups by bracket constrains the badge of the hero you are viewing from, not the opponent's.`,
+    a: `Five brackets of the player's own rank, badge ranges 11 to 36, 41 to 56, 61 to 76, 81 to 96 and 101 to 116, plus an all-ranks view. The API labels them with the game's rank names. The lowest runs Initiate to Acolyte, the highest Ascendant to Eternus. Filtering matchups by bracket constrains the rank of the player on the hero you are viewing from, not the opponent's.`,
   },
   {
     q: 'How often do the stats update?',
@@ -62,11 +62,11 @@ const faqs = [
   },
   {
     q: 'Where do item stats, counters and synergies come from?',
-    a: `Two different places. All-ranks item win-rates are computed by RankLock from its own match data. Item stats by bracket, hero counters and hero synergies are proxied from deadlock-api's analytics service, not computed from RankLock data. Per-rank item win-rates are not published at all. The read returns empty rather than a fabricated number.`,
+    a: `Two different places. Item win-rates per hero and per rank are computed by RankLock from its own match data, on the player's own rank. Item stats by rank bracket on the items page, hero counters and hero synergies are proxied from deadlock-api's analytics service, not computed from RankLock data; the rank filter there is the match's average rank, and the page says so.`,
   },
   {
     q: 'Can I compare my economy against higher-ranked players?',
-    a: `Partly. Lane Lab serves the 25th, 50th and 75th percentile net-worth curves per rank band, and your own per-minute economy curve can be read for your account. The direct overlay against the band above you requires a service that is built but not deployed, so those routes are not served today.`,
+    a: `Yes. Lane Lab draws the 25th, 50th and 75th percentile net-worth curves for players at any Valve rank you pick, ranked games from 7 Aug 2026 on, and puts your own per-minute curve on the same axis. The profile page's soul curve compares against a player-rank league the same way.`,
   },
 ];
 

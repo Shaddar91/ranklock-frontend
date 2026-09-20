@@ -239,7 +239,7 @@ function RailBlocks({
       </section>
 
       <section className="itemd-card itemd-pad">
-        <RailHead title="Win rate by rank" note="badge tier of the match" />
+        <RailHead title="Win rate by rank" note="the player's own rank, ranked games" />
         {rankPending ? (
           <Skeleton height={200} />
         ) : !byRank || byRank.tiers.length === 0 ? (

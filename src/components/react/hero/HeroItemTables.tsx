@@ -1,12 +1,13 @@
-//Hero Overview §7 — what players buy (rank-aware) beside what wins (Wilson-ranked).
+//Hero Overview §7: what players buy (rank-aware) beside what wins (Wilson-ranked).
+//The buy rows are deadlock-api.com aggregates, whose rank filter is the match's average rank.
 //The win-rate table joins names/icons from the catalog because the served rows carry
-//only item_id, and it stays on the all-rank aggregate: the per-band fold has no rows
-//yet, so banding it would empty the table instead of answering the filter.
+//only item_id, and it stays on the all-ranks aggregate: the per-rank fold has no rows
+//yet, so filtering it by rank would empty the table instead of answering the filter.
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { useGameMode } from '../../../lib/useGameMode';
-import { bracketBucket, servedBandLabel, useHeroBracket } from '../../../lib/heroBracket';
+import { bracketBucket, upstreamRankScope, useHeroBracket } from '../../../lib/heroBracket';
 import { overlayFromWire, upgradesFor, type ItemOverlayData } from '../../../lib/itemOverlay';
 import { itemPath } from '../../../lib/itemSlugs';
 import { itemAbility } from '../../../lib/itemDescriptions';
@@ -126,7 +127,7 @@ export default function HeroItemTables({
       <SectionHeader
         kicker="What players buy vs what wins"
         title={`Items on ${heroName}`}
-        note={`Buys = ${heroName} matches with the item · ${servedBandLabel(bracket)} · WR ranked by Wilson lower bound, all ranks`}
+        note={`Buys = ${heroName} matches with the item · ${upstreamRankScope(bracket)} · WR ranked by Wilson lower bound, all ranks`}
       />
       <div className="itbl-grid">
         <div className="panel itbl">

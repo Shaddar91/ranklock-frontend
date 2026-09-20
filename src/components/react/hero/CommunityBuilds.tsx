@@ -1,17 +1,25 @@
-//Hero Build §4 / Build Lab §13 — the published builds ranked by their upstream 30-day win rate.
-//One island, two mount points: the Build page opens on the default ranked bracket, the lab mount
-//reads weekly and adds the per-row Import.
+//Hero Build §4 / Build Lab §13: the published builds ranked by their upstream 30-day win rate.
+//One island, two mount points: the Build page reads the ranked route (one upstream sample, no
+//bracket choice), the lab mount reads weekly and adds the per-row Import.
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { abilityOrderSequence, authorLabel, patchesAgo } from '../../../lib/buildMeta';
+import { tierSpanLabel } from '../../../lib/brackets';
 import { printableBuildName } from '../../../lib/heroPlay';
 import { count, DASH } from '../../../lib/format';
 import QueryProvider from '../QueryProvider';
 import SectionHeader from '../ui/SectionHeader';
 import EmptyState from '../ui/EmptyState';
 import AbilityGlyph from '../ui/AbilityGlyph';
-import type { CommunityBuild, Patch, RankedBracketKey, RankedBuildsResponse, TrimmedBuild } from '../../../types/api';
+import type {
+  CommunityBuild,
+  Patch,
+  RankedBracketInfo,
+  RankedBracketKey,
+  RankedBuildsResponse,
+  TrimmedBuild,
+} from '../../../types/api';
 
 export interface CommunityBuildsProps {
   heroId: number;
@@ -22,12 +30,12 @@ export interface CommunityBuildsProps {
   abilityIcons?: Record<string, string | null>;
   patches: Pick<Patch, 'released_at'>[];
   nowSeconds: number;
-  //The bracket the page opens on, with its rows baked at build time so the table renders
-  //its win-rate column in the static HTML.
+  //The ranked key the page bakes rows for, so the table renders its win-rate column in the
+  //static HTML.
   initialSelection?: Selection;
   initialRanked?: RankedBuildsResponse | null;
   kicker?: string;
-  //Off in the lab: the ranked bracket read is the Build page's (04 §4).
+  //Off in the lab: the ranked read is the Build page's (04 §4).
   brackets?: boolean;
   //Supplied by the lab mount only; a row whose id never rode the wire cannot be imported.
   onImport?: (buildId: number) => void;
@@ -39,6 +47,10 @@ export type Selection = 'weekly' | RankedBracketKey;
 //the win-rate column here; the ranked route can.
 const WEEKLY_NOTE = 'Trending across all ranks by weekly favorites · most rows carry no 30-day win rate';
 const IMPORT_NOTE = 'Import opens the build in Analyze';
+
+//Upstream keys its sample on the match's average rank; the served badge bounds name the span.
+const spanLabel = (b: RankedBracketInfo): string =>
+  tierSpanLabel([Math.floor(b.min_badge / 10), Math.floor(b.max_badge / 10)]);
 
 interface Row {
   key: string;
@@ -119,8 +131,8 @@ export function CommunityBuildsTable({
 
   const base = ranked
     ? data
-      ? `Real 30-day win rate, minimum ${data.min_matches} matches · Wilson lower bound breaks ties · ${data.source}`
-      : 'Real 30-day win rate · deadlock-api.com hero-build-stats, lobby-average badge'
+      ? `Real 30-day win rate, minimum ${data.min_matches} matches · Wilson lower bound breaks ties · deadlock-api.com hero-build-stats, upstream 30-day sample, matches averaging ${spanLabel(data.bracket)}`
+      : 'Real 30-day win rate · deadlock-api.com hero-build-stats, upstream 30-day sample'
     : WEEKLY_NOTE;
   const note = onImport ? `${base} · ${IMPORT_NOTE}` : base;
 
@@ -129,13 +141,13 @@ export function CommunityBuildsTable({
       <SectionHeader kicker={kicker} title="Community builds" note={note} />
 
       {ranked && isPending ? (
-        <EmptyState title="Loading" message="Fetching the builds that win in this bracket." />
+        <EmptyState title="Loading" message="Fetching the builds that win." />
       ) : ranked && isError ? (
-        <EmptyState title="Unavailable" message="The bracket list could not be fetched. Trending is still above." />
+        <EmptyState title="Unavailable" message="The ranked build list could not be fetched. Trending is still above." />
       ) : rows.length === 0 ? (
         <EmptyState
           title="No build clears the floor"
-          message="No published build in this bracket has 20 matches at a lobby-average badge inside it. Nothing from a neighbouring bracket is shown in its place."
+          message="No published build has 20 matches in the upstream 30-day sample."
         />
       ) : (
         <div className={onImport ? 'panel bp-table bp-table-import' : 'panel bp-table'}>
@@ -194,8 +206,8 @@ export function CommunityBuildsTable({
           ))}
           {ranked && rows.length < 3 && (
             <p className="bp-thin">
-              Fewer than 3 builds clear the floor in this bracket: lobby-average badge, 20 matches. The rows above are
-              every one that does; no build from another bracket is padded in.
+              Fewer than 3 builds clear the 20-match floor in the upstream 30-day sample. The rows above are every
+              one that does.
             </p>
           )}
         </div>

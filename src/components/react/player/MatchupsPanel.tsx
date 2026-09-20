@@ -12,7 +12,7 @@ import { buildAheadMessage } from './AnalyticsPanels';
 import { ITEM_BUCKETS } from '../../../lib/brackets';
 import { count, pct, shortDate } from '../../../lib/format';
 import {
-  defaultBucketForBadge,
+  defaultBucketForRank,
   matchupWindowHi,
   panelState,
   topPlayedHeroes,
@@ -99,7 +99,7 @@ export default function MatchupsPanel({ id }: { id: number }) {
   const heroesPlayed = usePlayerHeroesPlayed(id);
   //null = not yet chosen -> open on the player's own rank; a pick then sticks.
   const [pickedBucket, setPickedBucket] = useState<number | null>(null);
-  const bucket = pickedBucket ?? defaultBucketForBadge(profile.data?.badge);
+  const bucket = pickedBucket ?? defaultBucketForRank(profile.data?.badge);
 
   const top3 = topPlayedHeroes(heroesPlayed.data, 3);
 

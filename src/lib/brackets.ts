@@ -1,45 +1,40 @@
-//============================================================================
-//Rank-bracket buckets — the "meta at your rank" filter model (C4).
-//
-//THE ITEMS BUG FIX (requirements §B.5 / §7.7): the old UI labelled item
-//brackets with raw MMR-score ranges, while the backend filters by BADGE TIER.
-//These buckets are labelled by Deadlock RANK TIERS / emblems instead, so the
-//filter reads "Ascendant–Eternus", never "MMR 4500–6000".
-//
-//Two backends, two param encodings (verified against deadlock-backend/src):
-//  • /items/stats?bracket=<int 0..5>  — `bracket_badge_range`:
-//        1: badge 11–36  Initiate–Alchemist     2: 41–56  Arcanist–Ritualist
-//        3: 61–76  Emissary–Archon              4: 81–96  Oracle–Phantom
-//        5: 101–116 Ascendant–Eternus           0: all
-//  • /heroes?bracket=<low|mid|high|top>  — `valid_brackets = [low,mid,high,top]`
-//        (the hero_bracket_mv string convention; absent = all/current MV).
-//
-//Both selectors render rank emblems + a tier-range label via lib/ranks, so the
-//"badge tiers, not MMR ranges" contract holds across heroes AND items.
-//============================================================================
+//Rank-bracket buckets for the items, patch, profile-matchup and leaderboard filters: the integer
+//0..5 the API takes (on the player's own rank), labelled by the ladder tiers each bracket spans.
+import { getRank } from './ranks';
+
 export interface RankBucket {
-  //stable selector key. ITEM buckets use the integer the API wants (0..5);
-  //Leaderboard buckets use arbitrary string keys (not sent to the API).
+  //ITEM buckets use the integer the API wants (0..5); leaderboard buckets use string keys that
+  //never reach the API.
   key: string | number;
-  //tier-range label (emblem-backed) — never an MMR range.
   label: string;
-  //compact label for tight chrome.
   short: string;
-  //rank tiers spanned (for emblem display); empty = "All ranks".
+  //rank tiers spanned; empty = all ranks.
   tiers: number[];
 }
 
-//Items: the exact 0–5 integer buckets the backend maps to badge ranges.
+export function tierSpanLabel(tiers: readonly number[]): string {
+  if (tiers.length === 0) return 'All ranks';
+  const lo = getRank(Math.min(...tiers)).name;
+  const hi = getRank(Math.max(...tiers)).name;
+  return lo === hi ? lo : `${lo} to ${hi}`;
+}
+
+export function rankBucket(key: string | number, tiers: number[], short?: string): RankBucket {
+  const lowest = tiers.length === 0 ? 'All' : `${getRank(Math.min(...tiers)).name}+`;
+  return { key, label: tierSpanLabel(tiers), short: short ?? lowest, tiers };
+}
+
+//The five brackets /items/stats?bracket= and the analytics tables share: badge 11-36, 41-56,
+//61-76, 81-96 and 101-116 on the same 11..116 scale.
 export const ITEM_BUCKETS: readonly RankBucket[] = [
-  { key: 0, label: 'All ranks', short: 'All', tiers: [] },
-  { key: 1, label: 'Initiate to Alchemist', short: 'Initiate+', tiers: [1, 2, 3] },
-  { key: 2, label: 'Arcanist to Ritualist', short: 'Arcanist+', tiers: [4, 5] },
-  { key: 3, label: 'Emissary to Archon', short: 'Emissary+', tiers: [6, 7] },
-  { key: 4, label: 'Oracle to Phantom', short: 'Oracle+', tiers: [8, 9] },
-  { key: 5, label: 'Ascendant to Eternus', short: 'Ascendant+', tiers: [10, 11] },
+  rankBucket(0, []),
+  rankBucket(1, [1, 2, 3]),
+  rankBucket(2, [4, 5]),
+  rankBucket(3, [6, 7]),
+  rankBucket(4, [8, 9]),
+  rankBucket(5, [10, 11]),
 ];
 
-//An item bucket key → the API's integer bracket (0 = all).
 export function itemBracketParam(key: RankBucket['key']): number {
   return typeof key === 'number' ? key : 0;
 }
@@ -49,11 +44,8 @@ export function itemHeroParam(hero: number): number | undefined {
   return Number.isInteger(hero) && hero > 0 ? hero : undefined;
 }
 
-//A rank band's tiers → the inclusive badge range the backend's /leaderboard
-//filters on (badge = tier*10 + subrank, subranks I–VI). Mirrors the verified
-//items `bracket_badge_range` convention (tier*10+1 … tier*10+6): Oracle–Phantom
-//(tiers 8,9) → 81…96, Ascendant–Eternus (10,11) → 101…116. Empty tiers ("All
-//ranks") → null so the caller omits both params and gets the full ladder.
+//A bracket's tiers → the inclusive badge range /leaderboard filters on (badge = tier*10 + subrank,
+//subranks I to VI); empty tiers → null so the caller omits both params and gets the full ladder.
 export function badgeRangeForTiers(
   tiers: readonly number[],
 ): { min_badge: number; max_badge: number } | null {

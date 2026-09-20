@@ -31,7 +31,7 @@ export function useHeroBracket(): HeroBracketControl {
   return { bracket, setBracket };
 }
 
-//Analytics bands by PAIRS of tiers — backend brackets.rs bracket_badge_range.
+//The five brackets of the player's own rank, by neighbouring tiers (backend brackets.rs bracket_badge_range).
 const BANDS: readonly (readonly number[])[] = [[1, 2, 3], [4, 5], [6, 7], [8, 9], [10, 11]];
 
 export function bracketBucket(value: BracketValue): number | undefined {
@@ -47,4 +47,16 @@ export function servedBandLabel(value: BracketValue): string {
   const lo = getRank(tiers[0] as number).name;
   const hi = getRank(tiers[tiers.length - 1] as number).name;
   return `${lo} to ${hi}`;
+}
+
+//Scope line for a block RankLock computes on each player's own rank.
+export function servedRankScope(value: BracketValue): string {
+  const label = servedBandLabel(value);
+  return label === 'All ranks' ? 'all ranks' : `players ranked ${label}`;
+}
+
+//Scope line for a block fed by deadlock-api.com aggregates, which filter on the match's average rank.
+export function upstreamRankScope(value: BracketValue): string {
+  const label = servedBandLabel(value);
+  return label === 'All ranks' ? 'all ranks' : `matches averaging ${label}`;
 }

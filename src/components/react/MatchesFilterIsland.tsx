@@ -7,7 +7,6 @@ import { api, queryKeys } from '../../lib/apiClient';
 import QueryProvider from './QueryProvider';
 import { Icon } from './ui/index';
 import { count, DASH, duration, shortDate } from '../../lib/format';
-import { rankFromBadge, subLabel } from '../../lib/ranks';
 import { gameModeLabel, isRanked, type MatchesModeSlug } from '../../lib/matchesMode';
 import { useMatchesRanked } from '../../lib/useMatchesRanked';
 import {
@@ -19,12 +18,7 @@ import {
   pagerWindow,
   recentMatchesParams,
 } from '../../lib/matchesPager';
-import type { Badge, MatchRow } from '../../types/api';
-
-function badgeLabel(b: Badge): string {
-  const rk = rankFromBadge(b);
-  return rk ? subLabel(rk.tier, rk.sub) : '—';
-}
+import type { MatchRow } from '../../types/api';
 
 function winnerLabel(team: number | null): string {
   return team === 0 ? 'Amber' : team === 1 ? 'Sapphire' : '—';
@@ -125,10 +119,6 @@ function MatchesInner({ initialRows, initialTotal }: MatchesIslandProps) {
   //null, so fill the same 5-wide window from a bound ("Last" stays disabled until real).
   const displayLast = last ?? (hasNext ? Math.max(page + 2, 5) : page);
 
-  const hasTeamBadges = rows.some(
-    (m) => rankFromBadge(m.average_badge_team0) != null || rankFromBadge(m.average_badge_team1) != null,
-  );
-
   return (
     <div>
       <div className="flex" style={{ gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -175,8 +165,6 @@ function MatchesInner({ initialRows, initialTotal }: MatchesIslandProps) {
                 <tr>
                   <th><span className="th-static">Match</span></th>
                   <th><span className="th-static">Mode</span></th>
-                  {hasTeamBadges && <th><span className="th-static">Amber rank</span></th>}
-                  {hasTeamBadges && <th><span className="th-static">Sapphire rank</span></th>}
                   <th className="num"><span className="th-static">Duration</span></th>
                   <th><span className="th-static">Result</span></th>
                 </tr>
@@ -206,8 +194,6 @@ function MatchesInner({ initialRows, initialTotal }: MatchesIslandProps) {
                           )}
                         </div>
                       </td>
-                      {hasTeamBadges && <td><span className="amber-c">{badgeLabel(m.average_badge_team0)}</span></td>}
-                      {hasTeamBadges && <td><span className="sap-c">{badgeLabel(m.average_badge_team1)}</span></td>}
                       <td className="num"><span className="tnum">{duration(m.duration_s)}</span></td>
                       <td>
                         <span className={'chip' + (m.winning_team === 0 ? ' gold' : '')}>{winnerLabel(m.winning_team)} win</span>

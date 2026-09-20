@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { bracketBucket, servedBandLabel } from './heroBracket';
+import { bracketBucket, servedBandLabel, servedRankScope, upstreamRankScope } from './heroBracket';
 
-describe('bracketBucket — a picked tier resolves to the band the routes serve', () => {
-  it('maps the 11 ranked tiers onto the backend 1-5 badge brackets', () => {
+describe('bracketBucket — a picked tier resolves to the bracket the routes serve', () => {
+  it('maps the 11 ranked tiers onto the backend 1-5 rank brackets', () => {
     expect([1, 2, 3].map(bracketBucket)).toEqual([1, 1, 1]);
     expect([4, 5].map(bracketBucket)).toEqual([2, 2]);
     expect([6, 7].map(bracketBucket)).toEqual([3, 3]);
@@ -27,5 +27,16 @@ describe('servedBandLabel — names the band off the pinned ladder', () => {
   it('carries no retired rank name', () => {
     const labels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(servedBandLabel).join(' ');
     expect(labels).not.toMatch(/Archon|Alchemist|Arcanist/);
+  });
+});
+
+describe('scope lines — who a bracket covers, per data source', () => {
+  it('names players at their own rank for RankLock-computed blocks', () => {
+    expect(servedRankScope(7)).toBe('players ranked Ritualist to Emissary');
+    expect(servedRankScope('all')).toBe('all ranks');
+  });
+  it('names the match average for upstream item aggregates', () => {
+    expect(upstreamRankScope(7)).toBe('matches averaging Ritualist to Emissary');
+    expect(upstreamRankScope('all')).toBe('all ranks');
   });
 });

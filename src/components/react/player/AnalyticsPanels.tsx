@@ -736,10 +736,10 @@ export function CategorizedSection({ id }: { id: number }) {
   return (
     <div>
       <div className="between" style={{ margin: '4px 0 12px', flexWrap: 'wrap', gap: 10 }}>
-        <span className="label-xs">Categorized performance · {compare ? 'you vs tier' : 'every stat vs your bracket'}</span>
+        <span className="label-xs">Categorized performance · {compare ? 'you vs tier' : 'every stat vs your rank bracket'}</span>
         <div className="brkfilter" style={{ padding: 3, flexWrap: 'nowrap', flexShrink: 0 }}>
           <button type="button" className={'minitog' + (!compare ? ' on' : '')} onClick={() => setCompare(false)} aria-pressed={!compare}>
-            vs bracket
+            vs your rank bracket
           </button>
           <button type="button" className={'minitog' + (compare ? ' on' : '')} onClick={() => setCompare(true)} aria-pressed={compare}>
             Compare

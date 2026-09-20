@@ -34,7 +34,8 @@ function Footnote({ footnote }: { footnote: HeroFootnoteStrings }) {
     <p className="hero-footnote">
       {`Win rates, KDA, souls, matchups and item buys: RankLock public matches · ${modeLabel} · ${servedBandLabel(bracket)} · ${footnote.matchWindow}. ` +
         `Item win rates and ability orders: deadlock-api.com aggregates, ${footnote.itemWindow}${floor}; the sample sits beside every rate. ` +
-        `Kit and base stats: client ${footnote.kitPatch}. Rank means badge tier, never an MMR number.`}
+        `Kit and base stats: client ${footnote.kitPatch}. Rank = the player's own Valve rank, ranked games since 7 Aug 2026; ` +
+        `the item-buy rows follow the rank bar through deadlock-api.com's filter, which is the match's average rank.`}
     </p>
   );
 }

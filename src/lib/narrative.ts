@@ -1,4 +1,6 @@
 //Shared shapes + helpers for the build-time prose on hero and item pages.
+import { ITEM_BUCKETS } from './brackets';
+
 export type Seg = string | { text: string; href: string };
 export type Para = Seg[];
 export interface Section {
@@ -8,15 +10,10 @@ export interface Section {
 
 export const link = (text: string, href: string): Seg => ({ text, href });
 
-//Badge buckets 1-5 shared by /items/stats?bracket= and analytics.hero_matchup_rates
-//(deadlock-analytics BRACKET_RANGES / bracket_badge_range) — Valve tier names, never MMR.
-export const BADGE_TIER_LABELS: Record<number, string> = {
-  1: 'Initiate to Alchemist',
-  2: 'Arcanist to Ritualist',
-  3: 'Emissary to Archon',
-  4: 'Oracle to Phantom',
-  5: 'Ascendant to Eternus',
-};
+//Rank brackets 1-5 of the player's own rank, as the matchup tables key them; labels follow lib/ranks.
+export const RANK_BRACKET_LABELS: Record<number, string> = Object.fromEntries(
+  ITEM_BUCKETS.filter((b) => b.tiers.length > 0).map((b) => [b.key as number, b.label]),
+);
 
 export function ordinal(n: number): string {
   const v = n % 100;

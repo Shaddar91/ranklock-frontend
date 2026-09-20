@@ -141,7 +141,7 @@ function HeroesTableInner({ initialRows, guideSlugs, statsThrough }: HeroesTable
           loading={isPending}
           sort={sort}
           onSortChange={setSort}
-          caption="Hero meta: win rate, pick rate, KDA and games by rank tier"
+          caption="Hero meta: win rate, pick rate, KDA and games by the player's own rank"
           emptyTitle={
             isComputing(error) ? 'Hero meta is computing' : isError ? 'Hero meta unavailable' : 'No heroes for this rank yet'
           }
@@ -150,14 +150,14 @@ function HeroesTableInner({ initialRows, guideSlugs, statsThrough }: HeroesTable
               ? computingMessage('the hero meta table is being generated', error)
               : isError
                 ? 'The stats API is offline. The meta table fills in when it comes back online.'
-                : 'No data for this rank tier yet. Try another rank or check back after the next refresh. Low ranks are sampled thinly.'
+                : 'No data for players at this rank yet. Try another rank or check back after the next refresh. Low ranks are sampled thinly.'
           }
         />
       </div>
       <p className="itemsx-foot">
-        Win rate, pick rate and KDA: RankLock public matches, ranked, the rank bar's tier
-        {statsThrough ? `, through ${statsThrough}` : ''}. Tier is RankLock's own cut on win rate. Rank means badge
-        tier, never an MMR number.
+        Win rate, pick rate and KDA: RankLock public matches, ranked, players at the rank bar's tier
+        {statsThrough ? `, through ${statsThrough}` : ''}. Tier is RankLock's own cut on win rate. Rank = the
+        player's own Valve rank, ranked games since 7 Aug 2026.
       </p>
     </>
   );

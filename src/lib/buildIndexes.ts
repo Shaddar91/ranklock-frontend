@@ -1,28 +1,14 @@
-//Build-time caches shared by the prerendered hero and item pages: one fetch per
-//build for the per-bracket rosters and the hero -> item win-rate index.
+//Build-time caches shared by the prerendered hero and item pages: one fetch per build for the
+//data horizon, the all-ranks souls curve, the hero -> item win-rate index and the item detail rows.
 import { api } from './apiClient';
 import { buildFetch } from './buildData';
 import type {
   DataHorizonResponse,
-  HeroBracket,
   HeroItemWinRate,
   HeroSummary,
   ItemDetailResponse,
   LaneCurvePoint,
 } from '../types/api';
-
-export interface BracketDef {
-  key: HeroBracket;
-  label: string;
-}
-
-//Backend hero_bracket_mv (migration 003): badge < 80 low, < 100 mid, < 116 high, else top.
-export const HERO_BRACKETS: readonly BracketDef[] = [
-  { key: 'low', label: 'Obscurus to Archon' },
-  { key: 'mid', label: 'Oracle and Phantom' },
-  { key: 'high', label: 'Ascendant and Eternus 1 to 5' },
-  { key: 'top', label: 'Eternus 6' },
-];
 
 const memo = new Map<string, Promise<unknown>>();
 function once<T>(key: string, make: () => Promise<T>): Promise<T> {
@@ -45,17 +31,6 @@ export function soulsCurve(): Promise<LaneCurvePoint[]> {
   return once('soulsCurve', async () => {
     const res = await buildFetch(api.getLaneFarmCurve({ metric: 'souls' }), null);
     return (res?.points ?? []).filter((p) => p.p50 != null && p.t_seconds <= 3600);
-  });
-}
-
-export function rosterByBracket(): Promise<Map<HeroBracket, HeroSummary[]>> {
-  return once('rosterByBracket', async () => {
-    const entries = await Promise.all(
-      HERO_BRACKETS.map(
-        async (b) => [b.key, await buildFetch(api.getHeroes({ bracket: b.key }), [] as HeroSummary[])] as const,
-      ),
-    );
-    return new Map<HeroBracket, HeroSummary[]>(entries);
   });
 }
 

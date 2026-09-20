@@ -1,12 +1,13 @@
-//Items index island (/items, client:load) — the slot x tier category nav and the
+//Items index island (/items, client:load): the slot x tier category nav and the
 //win-rate table card. The rank bar and the sort presets are sibling islands sharing
-//itemsIndexState. Rank is a badge tier (the filter serves the band it falls in).
+//itemsIndexState. The rows are deadlock-api.com aggregates, whose rank filter is the
+//match's average rank (the bar's tier maps to the bracket it falls in).
 import { useCallback, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, isComputing, queryKeys } from '../../lib/apiClient';
 import { computingMessage } from '../../lib/apiStates';
 import { useGameMode } from '../../lib/useGameMode';
-import { bracketBucket, servedBandLabel } from '../../lib/heroBracket';
+import { bracketBucket, servedBandLabel, upstreamRankScope } from '../../lib/heroBracket';
 import { useItemsBracket, useItemsSort } from '../../lib/itemsIndexState';
 import { itemPath } from '../../lib/itemSlugs';
 import QueryProvider from './QueryProvider';
@@ -58,7 +59,7 @@ function ItemsTableInner({
   const { data, isPending, isError, error } = useQuery({
     queryKey: queryKeys.items(bucket, mode),
     queryFn: () => api.getItems(bucket, mode),
-    //Seed only the view the rows were baked for (all ranks, Normal); every other band fetches.
+    //Seed only the view the rows were baked for (all ranks, Normal); every other bracket fetches.
     initialData: bucket == null && mode === 'Normal' ? initialRows : undefined,
     placeholderData: keepPreviousData,
   });
@@ -189,6 +190,7 @@ function ItemsTableInner({
   );
 
   const band = servedBandLabel(bracket);
+  const scope = upstreamRankScope(bracket);
   const preset = activePreset(sort);
   const modeLabel = mode === 'StreetBrawl' ? 'Street Brawl' : 'Normal';
 
@@ -211,7 +213,7 @@ function ItemsTableInner({
           loading={isPending}
           sort={sort}
           onSortChange={setSort}
-          caption={`Item win rates for ${categoryTitle(category)} at ${band} (badge tiers), with the average buy time`}
+          caption={`Item win rates for ${categoryTitle(category)}, ${scope}, with the average buy time`}
           emptyTitle={
             //202 = healthy, deliberately gating; "offline" is reserved for real network/5xx failure.
             isComputing(error)
@@ -219,15 +221,15 @@ function ItemsTableInner({
               : isError
                 ? 'Item stats unavailable'
                 : category.slot
-                  ? `No ${categoryTitle(category)} rows in this band yet`
-                  : 'No items for this band yet'
+                  ? `No ${categoryTitle(category)} rows at this rank yet`
+                  : 'No items at this rank yet'
           }
           emptyMessage={
             isComputing(error)
               ? computingMessage('item win-rates are being generated', error)
               : isError
                 ? 'The stats API is offline. Item win-rates fill in when it comes back online.'
-                : 'No data for this category and rank band yet. Try another band or category, or check back after the next refresh.'
+                : 'No data for this category at this rank yet. Try another rank or category, or check back after the next refresh.'
           }
         />
       </div>
@@ -235,9 +237,10 @@ function ItemsTableInner({
       <p className="itemsx-foot">
         Players, win rate, matches and average buy time: deadlock-api.com item aggregates, {modeLabel} · {band}
         {statsThrough ? `, through ${statsThrough}` : ''}. Category, tier and cost: the item catalog (
-        {count(catalog.length)} buildable items; {count(joined.length)} carry win-rate rows this band).
-        {!topHeroServed && ' Most bought on is computing. The item-hero fold has served no rows yet.'} Rank means
-        badge tier, never an MMR number.
+        {count(catalog.length)} buildable items; {count(joined.length)} carry win-rate rows at this rank).
+        {!topHeroServed && ' Most bought on is computing. The item-hero fold has served no rows yet.'} The rank
+        filter here is deadlock-api.com&apos;s, keyed on the match&apos;s average rank; RankLock&apos;s own stats
+        use each player&apos;s own Valve rank.
       </p>
     </>
   );

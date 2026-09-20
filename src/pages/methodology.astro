@@ -3,7 +3,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { breadcrumbJsonLd } from '../lib/seo';
 
-const LAST_UPDATED = '2026-08-29';
+const LAST_UPDATED = '2026-09-20';
 const origin = (Astro.site ?? new URL('https://ranklock.app')).origin;
 const jsonLd = breadcrumbJsonLd(origin, [
   { name: 'Home', path: '/' },
@@ -47,36 +47,44 @@ const jsonLd = breadcrumbJsonLd(origin, [
 
       <h2>What a rank means on RankLock</h2>
       <p>
-        No stat on RankLock is computed from raw MMR. The pipeline does not read a
-        player's MMR number at all. What it reads is a <strong>badge</strong>: a
-        team-average rank value that the upstream match data assigns to every
-        player in the match. All six players on a team carry the same badge for
-        that match.
+        No stat on RankLock is computed from raw MMR. Every rank cohort is keyed on
+        the <strong>player's own Valve rank</strong>: the display rank each player
+        holds when they enter a ranked match, as the match data records it. Ranked
+        matches carry it from 7 Aug 2026 on. Earlier matches and every unranked
+        match carry no per-player rank, so they appear only in the &ldquo;All
+        ranks&rdquo; view, which counts every player. Until 31 Jul 2026 the
+        upstream data carried a team-average badge per match instead; that basis is
+        retired and drives no cohort here.
       </p>
-      <p>The badge drives three groupings, depending on the page:</p>
+      <p>
+        The rank is stored as a badge number, tier &times; 10 plus the subrank, on
+        one 11 to 116 scale (Initiate I to Eternus VI). It drives two groupings,
+        depending on the page:
+      </p>
       <ul>
         <li>
-          <strong>A 12-band ladder</strong>: band = badge &divide; 10, giving bands
-          0 to 11. This powers the rank selector on hero pages.
+          <strong>A single rank tier</strong>: badge &divide; 10, Initiate to
+          Eternus. The heroes table, the tier list and Lane Lab filter on it.
         </li>
         <li>
-          <strong>Five brackets</strong>: badge ranges 11 to 36, 41 to 56,
-          61 to 76, 81 to 96 and 101 to 116, plus an &ldquo;all
-          ranks&rdquo; view. The API labels them with the game's rank names,
-          Initiate to Seeker at the bottom, Ascendant to Eternus at the
-          top. Matchup stats use this grouping.
-        </li>
-        <li>
-          <strong>A 4-way bracket</strong>: low (below 80), mid (below 100), high
-          (below 116) and top (116 and up). Hero pages offer this as a simpler
-          filter.
+          <strong>Five rank brackets</strong>: neighbouring tiers on the same scale,
+          badge ranges 11 to 36, 41 to 56, 61 to 76, 81 to 96 and 101 to 116, plus
+          &ldquo;All ranks&rdquo;. The API labels them with the game's rank names,
+          Initiate to Acolyte at the bottom, Ascendant to Eternus at the top.
+          Matchups, patch stats, player percentiles and the leaderboard filter use
+          this grouping.
         </li>
       </ul>
       <p>
-        A player's own badge is the badge of their latest match. The leaderboard
-        keeps one row per account and game mode, uses the player's latest non-null
-        match badge, requires at least five matches, and sorts by badge, highest
+        A player's own rank is the rank from their latest ranked match. The
+        leaderboard keeps one row per account and game mode, uses that latest
+        non-null rank, requires at least five matches, and sorts by it, highest
         first.
+      </p>
+      <p>
+        One exception: item stats by rank on the items page and the ranked community
+        builds come from deadlock-api.com aggregates, whose rank filter is the
+        match's average rank. Those blocks say so where they render.
       </p>
 
       <h2>How win-rates and pick-rates are calculated</h2>
@@ -103,7 +111,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
         Matchup pages answer a narrower question: when hero A faces hero B, how
         often does A win? The win-rate there is A's wins divided by the matches
         where both heroes appeared, computed per game mode. Filtering that view
-        by bracket constrains side A's badge only.
+        by rank bracket constrains the rank of the player on side A only.
       </p>
 
       <h2>How a match is assigned to a patch</h2>
@@ -124,7 +132,7 @@ const jsonLd = breadcrumbJsonLd(origin, [
       <h2>Lane Lab and player stats</h2>
       <p>
         Lane Lab economy curves show the 25th, 50th and 75th percentile of net
-        worth per time bin for a rank band. The pipeline stores only counts in
+        worth per time bin for players at one Valve rank, ranked games. The pipeline stores only counts in
         fixed buckets: three-minute time bins and 1,000 net-worth steps for Lane
         Lab, one-minute bins and 500 steps on the stats surface. The
         percentile is reconstructed from those counts when you ask for it. No
@@ -133,13 +141,13 @@ const jsonLd = breadcrumbJsonLd(origin, [
       <p>
         The early-economy verdict takes one net-worth reading per player per
         match, the reading nearest the 9-minute mark between 9:00 and 10:00, and
-        reports the win-rate of players at each reading level within a band.
-        Player percentiles average a player's per-match ratios, kills plus
-        assists per death with deaths floored at one, and rank that average
-        against every other player in the same bracket and game mode. The
-        &ldquo;improve&rdquo; benchmarks compare a player with averages and
-        nearest-rank percentiles per bracket, hero and match-duration bucket,
-        computed from normal-mode matches only.
+        reports the win-rate at each reading level for players at the selected
+        rank, or for every ranked player. Player percentiles average a player's
+        per-match ratios, kills plus assists per death with deaths floored at one,
+        and rank that average against every other player in the same rank bracket
+        and game mode. The &ldquo;improve&rdquo; benchmarks compare a player with
+        averages and nearest-rank percentiles per rank bracket, hero and
+        match-duration bucket, computed from normal-mode matches only.
       </p>
 
       <h2>When the numbers refresh</h2>
@@ -167,10 +175,10 @@ const jsonLd = breadcrumbJsonLd(origin, [
       <ul>
         <li>
           <strong>Raw MMR.</strong> No MMR number is stored or served anywhere;
-          only the rounded badge exists. The per-day MMR history endpoint still
+          only the Valve rank badge exists. The per-day MMR history endpoint still
           answers, but it is empty for most accounts because the upstream MMR
-          feed no longer delivers data. Player pages show the last 1,000 badged
-          matches instead.
+          feed no longer delivers data. Player pages show the last 1,000 matches
+          with a rank instead.
         </li>
         <li>
           <strong>Account-level rank counts.</strong> The <a href="/rank-distribution/">rank distribution</a> page
@@ -178,26 +186,17 @@ const jsonLd = breadcrumbJsonLd(origin, [
           twenty ranked matches in the window is counted twenty times.
         </li>
         <li>
-          <strong>Per-rank item win-rates.</strong> Item win-rates are computed
-          for all ranks only. The per-rank read exists but returns empty rather
-          than a fabricated number.
-        </li>
-        <li>
           <strong>Item tiers, counters and synergies computed by RankLock.</strong>
-          Item stats by bracket, hero counters and hero synergies are proxied from
-          deadlock-api's analytics service and are labeled by that origin in the
-          API. The all-ranks item win-rates are the one item dataset RankLock
-          computes itself.
+          Item stats by rank bracket, hero counters and hero synergies are proxied
+          from deadlock-api's analytics service and are labeled by that origin in
+          the API; the rank filter there is the match's average rank. Item
+          win-rates per hero and per rank are the item dataset RankLock computes
+          itself, on the player's own rank.
         </li>
         <li>
           <strong>Arbitrary per-player match timelines.</strong> The detail tier
           is never scanned in bulk to answer a request. The single carve-out is a
           player's own economy curve in Lane Lab.
-        </li>
-        <li>
-          <strong>Cohort overlay against your own rank.</strong> Comparing your
-          economy curve with your own rank band requires a service that is built
-          but not deployed, so those routes are not served.
         </li>
       </ul>
 

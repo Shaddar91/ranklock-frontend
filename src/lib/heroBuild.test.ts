@@ -4,8 +4,6 @@ import {
   buildByPhase,
   buyOrderTrack,
   catalogIndex,
-  RANKED_BRACKETS,
-  rankedBracketLabel,
   situationalGroups,
   winningSets,
 } from './heroBuild';
@@ -168,15 +166,6 @@ describe('winningSets — the folded purchase sets, abilities flagged not filter
 
   it('sorts by Wilson lower bound, not by raw win rate', () => {
     expect(winningSets(sets, catalog).map((s) => s.games)).toEqual([1672, 900]);
-  });
-});
-
-describe('RANKED_BRACKETS — the served keys stay spelled by the pinned ladder', () => {
-  it('names every bracket from ranks.ts, so a ladder rename cannot desync the key', () => {
-    for (const option of RANKED_BRACKETS) {
-      const slug = rankedBracketLabel(option).toLowerCase().replace(/\sto\s/, '-');
-      expect(slug).toBe(option.key);
-    }
   });
 });
 

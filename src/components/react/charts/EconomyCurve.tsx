@@ -78,7 +78,7 @@ interface EconomyCurveProps {
   playerLabel?: string;
   player2Label?: string;
   //Thin-sample rendering (Component 11 / B6): true fades the corresponding player line so a
-  //curve resting on fewer than THIN_SAMPLE_MIN_MATCHES games reads as tentative next to the
+  //curve resting on fewer than five games reads as tentative next to the
   //million-sample rank bands. The lines are already dashed; faint is the thinness signal.
   playerFaint?: boolean;
   player2Faint?: boolean;

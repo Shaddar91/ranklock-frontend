@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   counterRows,
-  defaultBucketForBadge,
+  defaultBucketForRank,
   matchupWindowHi,
   panelState,
   topPlayedHeroes,
@@ -50,16 +50,16 @@ describe('counterRows — a hero’s worst matchups', () => {
   });
 });
 
-describe('defaultBucketForBadge — the selector opens on the player’s own rank', () => {
-  it('maps a badge tier to the ITEM_BUCKETS entry spanning it', () => {
-    expect(defaultBucketForBadge(13)).toBe(1); //tier 1 Initiate -> Initiate-Alchemist
-    expect(defaultBucketForBadge(64)).toBe(3); //tier 6 Emissary -> Emissary-Archon
-    expect(defaultBucketForBadge(115)).toBe(5); //tier 11 Eternus -> Ascendant-Eternus
+describe('defaultBucketForRank — the selector opens on the player’s own rank', () => {
+  it('maps the tier of the player’s own rank to the ITEM_BUCKETS entry spanning it', () => {
+    expect(defaultBucketForRank(13)).toBe(1); //tier 1 Initiate -> Initiate to Acolyte
+    expect(defaultBucketForRank(64)).toBe(3); //tier 6 Ritualist -> Ritualist to Emissary
+    expect(defaultBucketForRank(115)).toBe(5); //tier 11 Eternus -> Ascendant to Eternus
   });
-  it('falls back to 0 (All ranks) for an unknown badge or a tier no bucket spans', () => {
-    expect(defaultBucketForBadge(null)).toBe(0);
-    expect(defaultBucketForBadge(undefined)).toBe(0);
-    expect(defaultBucketForBadge(5)).toBe(0); //tier 0 Obscurus — spanned by no bucket
+  it('falls back to 0 (All ranks) for an unknown rank or a tier no bucket spans', () => {
+    expect(defaultBucketForRank(null)).toBe(0);
+    expect(defaultBucketForRank(undefined)).toBe(0);
+    expect(defaultBucketForRank(5)).toBe(0); //tier 0 Obscurus — spanned by no bucket
   });
 });
 

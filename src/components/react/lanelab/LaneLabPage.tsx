@@ -250,12 +250,14 @@ export default function LaneLabPage() {
           <SoulsSourcePanel
             roster={roster}
             matchMode={matchMode}
+            tier={tier}
+            tierName={LEAGUE_NAMES[tier] ?? `Tier ${tier}`}
             buckets={SCORECARD_BUCKETS}
             modeGames={modeGames}
           />
         )}
 
-        <VerdictPanel soulsSeries={souls.series} />
+        <VerdictPanel soulsSeries={souls.series} tier={tier} tierName={LEAGUE_NAMES[tier] ?? `Tier ${tier}`} />
 
         {roster.length > 0 && (
           <GamesPanel roster={roster} matchMode={matchMode} onScope={scope} />

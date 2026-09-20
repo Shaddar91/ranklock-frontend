@@ -37,10 +37,10 @@ export function counterRows(
     });
 }
 
-//The bracket the selector opens on: the player's own rank bucket. Unknown badge or
-//a tier no bucket spans (Obscurus) → 0 = All ranks.
-export function defaultBucketForBadge(badge: number | null | undefined): number {
-  const tier = rankFromBadge(badge)?.tier;
+//The bracket the selector opens on: the one holding the player's own latest rank (profile.badge,
+//a Valve rank as tier*10 + subrank). Unknown rank or a tier no bracket spans (Obscurus) → 0 = All ranks.
+export function defaultBucketForRank(rank: number | null | undefined): number {
+  const tier = rankFromBadge(rank)?.tier;
   if (tier == null) return 0;
   const bucket = ITEM_BUCKETS.find((b) => b.tiers.includes(tier));
   return typeof bucket?.key === 'number' ? bucket.key : 0;

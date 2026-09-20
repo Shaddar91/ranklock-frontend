@@ -207,10 +207,10 @@ export function PerformancePanel({ id }: { id: number }) {
           Percentiles
         </div>
         <h2 className="h-sec" style={{ fontSize: 17, marginBottom: 4 }}>
-          Where you rank within each bracket
+          Where you rank within each rank bracket
         </h2>
         <p className="faint" style={{ fontSize: 12, marginBottom: 12 }}>
-          Percentile among players of the same bracket. Higher is better; 87th = better than 87% of them.
+          Percentile among players of the same rank bracket. Higher is better; 87th = better than 87% of them.
         </p>
         {isPending ? (
           <p className="muted">Loading percentiles…</p>
@@ -221,7 +221,7 @@ export function PerformancePanel({ id }: { id: number }) {
             <table className="dt">
               <thead>
                 <tr>
-                  <th><span className="th-static">Bracket</span></th>
+                  <th><span className="th-static">Rank bracket</span></th>
                   <th className="num"><span className="th-static">KDA</span></th>
                   <th className="num"><span className="th-static">Net worth</span></th>
                   <th className="num"><span className="th-static">Win rate</span></th>
@@ -307,7 +307,7 @@ export function ReadinessCard({ id }: { id: number }) {
           <p className="muted" style={{ fontSize: 12.5, margin: '0 0 12px', lineHeight: 1.5 }}>
             You meet or beat the {target} median on <b className="mono">{data.metrics_met}</b> of{' '}
             <b className="mono">{data.metrics_total}</b> metrics.
-            {data.clamped ? ' You are in the top band, so the target is the top band itself.' : ''}
+            {data.clamped ? ' You are at the top rank, so the target is the top rank itself.' : ''}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {data.metrics.map((m, i) => {
@@ -725,9 +725,9 @@ export function ComparePanel({ id }: { id: number }) {
             League compare · {data.hero_name}
           </div>
           <h2 className="h-sec" style={{ fontSize: 17 }}>
-            You ({data.you.tier_name}) vs {data.cohort.tier_name}{' '}
+            You ({data.you.tier_name}) vs players at {data.cohort.tier_name} rank{' '}
             <span className="faint" style={{ fontWeight: 400, fontSize: 13 }}>
-              (badges {data.cohort.badge_lo} to {data.cohort.badge_hi}, n={count(data.cohort.sample_size)})
+              (n={count(data.cohort.sample_size)})
             </span>
           </h2>
         </div>

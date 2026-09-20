@@ -1,6 +1,6 @@
-//"What your souls at 9:00 are worth in wins" — the all-ranks win rate per 1000-soul bucket of net
-//worth at 9:00, with each player's measured 9:00 value placed on it. /lane-lab/early-econ-verdict
-//takes a lobby `band` only and ignores tier=, so this ladder is every rank together and says so.
+//"What your souls at 9:00 are worth in wins": the win rate per 1000-soul bucket of net worth at 9:00
+//for players at the picked league (ranked games, /lane-lab/early-econ-verdict?tier=), with each
+//player's measured 9:00 value placed on it.
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { count, pct } from '../../../lib/format';
@@ -14,12 +14,15 @@ const NINE_MIN_BUCKET = 3;
 export interface VerdictPanelProps {
   //Each player's souls curve — the 9:00 value is read straight off it, never projected from a pace.
   soulsSeries: readonly PlayerSeries[];
+  //Reference league, tier 1..11, and its name.
+  tier: number;
+  tierName: string;
 }
 
-export default function VerdictPanel({ soulsSeries }: VerdictPanelProps) {
+export default function VerdictPanel({ soulsSeries, tier, tierName }: VerdictPanelProps) {
   const verdict = useQuery({
-    queryKey: queryKeys.laneEarlyEconVerdict({}),
-    queryFn: () => api.getLaneEarlyEconVerdict({}),
+    queryKey: queryKeys.laneEarlyEconVerdict({ tier }),
+    queryFn: () => api.getLaneEarlyEconVerdict({ tier }),
     staleTime: 60 * 60 * 1000,
     retry: false,
   });
@@ -46,7 +49,7 @@ export default function VerdictPanel({ soulsSeries }: VerdictPanelProps) {
           <h2 className="h-sec">What your souls at 9:00 are worth in wins</h2>
         </div>
         <p className="ll-sc-note">
-          Win rate by net worth at 9:00 · all ranks together · {count(totalGames)} player-games
+          Win rate by net worth at 9:00 · players at {tierName} rank · {count(totalGames)} player-games
         </p>
       </header>
 

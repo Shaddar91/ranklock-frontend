@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
 import { useGameMode } from '../../../lib/useGameMode';
-import { bracketBucket, servedBandLabel, useHeroBracket } from '../../../lib/heroBracket';
+import { bracketBucket, servedRankScope, useHeroBracket } from '../../../lib/heroBracket';
 import { duoRows, matchupRows, mergeMatchups, type DuoRow, type MatchupRow } from '../../../lib/heroOverview';
 import { count } from '../../../lib/format';
 import { heroArt } from '../../../lib/heroArt';
@@ -111,7 +111,7 @@ export default function MatchupPanels({
   const toPanelRow = (r: MatchupRow): PanelRow => ({ ...r, id: r.opponentId });
   const duoPanelRow = (r: DuoRow): PanelRow => ({ ...r, id: r.partnerId });
 
-  const note = `Δ = win rate minus the expected rate from both heroes' overall win rates · ${servedBandLabel(bracket)} · duos have no rank axis`;
+  const note = `Δ = win rate minus the expected rate from both heroes' overall win rates · ${servedRankScope(bracket)} · duos have no rank axis`;
 
   return (
     <section id="matchups">

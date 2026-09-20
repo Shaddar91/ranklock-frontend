@@ -14,7 +14,7 @@ import QueryProvider from './QueryProvider';
 import { DataTable, type DataTableColumn, Icon, RankBadge, WinBar } from './ui/index';
 import BucketFilter from './ui/BucketFilter';
 import SearchBox from './SearchBox';
-import { badgeRangeForTiers, type RankBucket } from '../../lib/brackets';
+import { badgeRangeForTiers, rankBucket, type RankBucket } from '../../lib/brackets';
 import { rankFromBadge, subLabel } from '../../lib/ranks';
 import { count, DASH } from '../../lib/format';
 import type { LeaderboardEntry } from '../../types/api';
@@ -31,15 +31,14 @@ import {
 
 type RankedEntry = LeaderboardEntry & { rank: number };
 
-//Leaderboard-specific bands: top players cluster in the upper tiers, so the
-//filter offers All + the meaningful high/top bands (rank-emblem labelled).
+//Leaderboard rank brackets on the player's own rank, labelled by the ladder tiers each spans.
 const LEADERBOARD_BUCKETS: readonly RankBucket[] = [
-  { key: 'all',      label: 'All ranks',             short: 'All',      tiers: []         },
-  { key: 'initiate', label: 'Initiate to Alchemist', short: 'Initiate', tiers: [1, 2, 3] },
-  { key: 'arcanist', label: 'Arcanist to Ritualist', short: 'Arcanist', tiers: [4, 5]    },
-  { key: 'emissary', label: 'Emissary to Archon',    short: 'Emissary', tiers: [6, 7]    },
-  { key: 'high',     label: 'Oracle to Phantom',     short: 'High',     tiers: [8, 9]    },
-  { key: 'top',      label: 'Ascendant to Eternus',  short: 'Top',      tiers: [10, 11]  },
+  rankBucket('all', []),
+  rankBucket('initiate', [1, 2, 3]),
+  rankBucket('arcanist', [4, 5]),
+  rankBucket('emissary', [6, 7]),
+  rankBucket('high', [8, 9], 'High'),
+  rankBucket('top', [10, 11], 'Top'),
 ];
 
 const MEDAL = ['var(--gold)', '#cfd6df', '#c08457'];
@@ -156,8 +155,8 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
     setPage(1);
   }
 
-  //Server-driven band filter: the band sends min_badge/max_badge (badge tiers,
-  //labelled by rank emblem) and offset/limit page the ladder server-side.
+  //Server-driven rank filter: a bracket sends min_badge/max_badge on the player's own rank
+  //(labelled by rank emblem) and offset/limit page the ladder server-side.
   const band = LEADERBOARD_BUCKETS.find((b) => b.key === bucket);
   const badgeRange = badgeRangeForTiers(band?.tiers ?? []);
   //Past the backend offset ceiling the deep, unbanded ladder seeks by ?after_rank= (index-time keyset);
@@ -296,14 +295,14 @@ function LeaderboardInner({ initialRows }: { initialRows: LeaderboardEntry[] }) 
         initialSort={{ key: 'rank', dir: 1 }}
         caption="Top Deadlock players by rank"
         emptyTitle={
-          isComputing(error) ? 'Ladder is computing' : isError ? 'Leaderboard unavailable' : 'No players in this band yet'
+          isComputing(error) ? 'Ladder is computing' : isError ? 'Leaderboard unavailable' : 'No players at this rank yet'
         }
         emptyMessage={
           isComputing(error)
             ? computingMessage('the ladder is being generated', error)
             : isError
               ? 'The stats API is offline. The ladder fills in when it comes back online.'
-              : 'No ranked players for this band yet. Try another bracket or check back after the next data refresh.'
+              : 'No ranked players at this rank yet. Try another rank bracket or check back after the next data refresh.'
         }
       />
       {ranked.length > 0 || last !== null ? (

@@ -178,17 +178,6 @@ export const usePlayerSoulsSources = (id: number, hero?: number) => {
   });
 };
 
-export const useCohortSoulsSources = (band?: number) => {
-  const { matchMode } = useMatchMode();
-  const mm = matchModeQuery(matchMode);
-  return useQuery({
-    queryKey: queryKeys.laneSoulsSources({ band, match_mode: mm }),
-    queryFn: () => api.getLaneSoulsSources({ band, match_mode: mm }),
-    retry: false,
-    placeholderData: keepPreviousData,
-  });
-};
-
 //Compare-to-a-specific-player: `vs` is the other player's account_id (gates the
 //fetch — undefined/0 means no player picked yet). opts is the shared scope: hero_id
 //(0 = all heroes) plus the window bound (last_games XOR last_days). retry:false so a

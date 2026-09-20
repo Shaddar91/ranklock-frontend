@@ -52,7 +52,7 @@ function MoversColumn({
   //tracked patch the truth is structural — nothing earlier exists to diff (B8).
   const emptyLine = oldestPatch
     ? 'First tracked patch: no earlier patch to compare against.'
-    : `No ${tone === 'win' ? 'gainers' : 'losers'} for this bracket.`;
+    : `No ${tone === 'win' ? 'gainers' : 'losers'} at this rank bracket.`;
   return (
     <div className="panel" style={{ padding: '14px 16px' }}>
       <div className="between" style={{ marginBottom: 4 }}>
@@ -86,7 +86,7 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const activeId = selectedId ?? patches.find((p) => p.is_current)?.patch_id ?? patches[0]?.patch_id ?? null;
 
-  //Bracket filter — patches use the SAME integer 0–5 badge buckets as items
+  //Rank filter: patches use the same integer 0..5 brackets of the player's own rank as items
   //(0 = all). Reuse the items bucket model + emblem filter.
   const [bucket, setBucket] = useState<RankBucket['key']>(0);
   const bracket = typeof bucket === 'number' ? bucket : 0;
@@ -274,14 +274,14 @@ function PatchTrackerInner({ initialPatches }: { initialPatches: Patch[] }) {
               ? 'Patch stats are computing'
               : detailQ.isError
                 ? 'Patch stats unavailable'
-                : 'No hero stats for this bracket yet'
+                : 'No hero stats at this rank bracket yet'
           }
           emptyMessage={
             isComputing(detailQ.error)
               ? computingMessage('patch hero stats are being generated', detailQ.error)
               : detailQ.isError
                 ? 'The stats API is offline. Patch hero stats fill in when it comes back.'
-                : 'No data for this patch and bracket yet. Try another bracket or check back after the next refresh.'
+                : 'No data for this patch at this rank bracket yet. Try another rank bracket or check back after the next refresh.'
           }
         />
       </div>

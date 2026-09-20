@@ -1,6 +1,6 @@
 //Tier-list island (client:load on /tier-list). Astro server-renders it at build
 //time from `initialRows`, so the six tier blocks are real HTML with no JS; the
-//rank filter then refetches that band and re-grades it client-side.
+//rank filter then refetches the players at that rank and re-grades client-side.
 import { useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, isComputing, queryKeys } from '../../lib/apiClient';
@@ -15,12 +15,13 @@ import { count, pct, pickShare } from '../../lib/format';
 import { gradedCount, tierBlocks, type TierBlock } from '../../lib/tierList';
 import type { HeroSummary } from '../../types/api';
 
-//Same 12-tier ladder the heroes table filters on (lib/ranks index === tier === badge/10).
+//Same ladder the heroes table filters on (lib/ranks index === tier); the API's `band` is the
+//tier of the player's own rank.
 const FULL_TIERS: number[] = RANKS.filter((r) => r.tier > 0).map((r) => r.tier);
 
-const bandParam = (v: BracketValue): number | undefined => (v === 'all' ? undefined : v);
+const tierParam = (v: BracketValue): number | undefined => (v === 'all' ? undefined : v);
 
-const bandLabel = (v: BracketValue): string => (v === 'all' ? 'all ranks' : getRank(v).name);
+const tierLabel = (v: BracketValue): string => (v === 'all' ? 'all ranks' : getRank(v).name);
 
 function blockSummary(block: TierBlock<HeroSummary>): string {
   const n = block.heroes.length;
@@ -53,13 +54,13 @@ function HeroCard({ hero, totalPicks }: { hero: HeroSummary; totalPicks: number 
 
 function TierListInner({ initialRows }: { initialRows: HeroSummary[] }) {
   const { mode } = useGameMode();
-  const [band, setBand] = useState<BracketValue>('all');
+  const [tier, setTier] = useState<BracketValue>('all');
 
   const { data, isPending, isError, error } = useQuery({
-    queryKey: queryKeys.heroes({ band: band === 'all' ? 'all' : band, game_mode: mode }),
-    queryFn: () => api.getHeroes({ band: bandParam(band), game_mode: mode }),
+    queryKey: queryKeys.heroes({ band: tier === 'all' ? 'all' : tier, game_mode: mode }),
+    queryFn: () => api.getHeroes({ band: tierParam(tier), game_mode: mode }),
     //The build-time seed is the DEFAULT-mode all-ranks page, so it applies to that view only.
-    initialData: band === 'all' && mode === 'Normal' ? initialRows : undefined,
+    initialData: tier === 'all' && mode === 'Normal' ? initialRows : undefined,
     placeholderData: keepPreviousData,
   });
 
@@ -74,13 +75,13 @@ function TierListInner({ initialRows }: { initialRows: HeroSummary[] }) {
       ? 'The stats API did not answer, so no hero could be graded on this view.'
       : isPending
         ? 'Loading hero win rates.'
-        : `No hero has enough tracked matches at ${bandLabel(band)} to be graded.`;
+        : `No hero has enough tracked matches at ${tierLabel(tier)} to be graded.`;
 
   return (
     <div className="tl">
       <div className="between tl-controls">
         <span className="label-xs">Re-grade at your rank</span>
-        <BracketFilter value={band} onChange={setBand} tiers={FULL_TIERS} />
+        <BracketFilter value={tier} onChange={setTier} tiers={FULL_TIERS} />
       </div>
 
       {graded === 0 ? (
@@ -88,7 +89,7 @@ function TierListInner({ initialRows }: { initialRows: HeroSummary[] }) {
       ) : (
         <>
           <p className="tl-scope">
-            {graded} heroes graded at {bandLabel(band)}.
+            {graded} heroes graded at {tierLabel(tier)}.
           </p>
           {blocks.map((block) => (
             <section key={block.tier} className="tl-tier" aria-labelledby={`tier-${block.tier}`}>
@@ -102,7 +103,7 @@ function TierListInner({ initialRows }: { initialRows: HeroSummary[] }) {
                 <span className="label-xs tl-cut">{block.label}</span>
               </header>
               {block.heroes.length === 0 ? (
-                <p className="tl-tier-sum faint">No hero at {bandLabel(band)} grades {block.tier}.</p>
+                <p className="tl-tier-sum faint">No hero at {tierLabel(tier)} grades {block.tier}.</p>
               ) : (
                 <>
                   <p className="tl-tier-sum">{blockSummary(block)}</p>

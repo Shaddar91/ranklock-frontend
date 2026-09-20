@@ -264,10 +264,10 @@ export default function Styleguide() {
         </div>
       </Section>
 
-      <Section kicker="Filters" title="Bracket / rank-emblem filter">
+      <Section kicker="Filters" title="Rank filter (the player's own rank)">
         <BracketFilter value={bracket} onChange={setBracket} />
         <p className="muted" style={{ marginTop: 10 }}>
-          Selected: <span className="cyan-c">{bracket === 'all' ? 'All brackets' : subLabel(bracket)}</span>
+          Selected: <span className="cyan-c">{bracket === 'all' ? 'All ranks' : subLabel(bracket)}</span>
         </p>
       </Section>
 
@@ -287,9 +287,9 @@ export default function Styleguide() {
             rowKey={(h) => h.id}
             loading={loadingTable}
             initialSort={{ key: 'wr', dir: -1 }}
-            caption="Hero meta: win rate, pick rate, KDA by rank bracket"
+            caption="Hero meta: win rate, pick rate, KDA by the player's own rank"
             emptyTitle="No heroes match"
-            emptyMessage="No data for this bracket yet. Try another filter."
+            emptyMessage="No data at this rank yet. Try another filter."
           />
         </div>
       </Section>
