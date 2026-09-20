@@ -2,7 +2,7 @@
 //every page reads about that hero: its own kit, its named matchups read across the
 //ladder, its head-to-head stat lines, partners, items and rank pattern.
 import { count, duration, fixed, pct } from './format';
-import { BADGE_TIER_LABELS as TIER_LABELS, joinSegs, link, mean, ordinal, quarter, rankDesc, toPct, type Para, type Section, type Seg } from './narrative';
+import { RANK_BRACKET_LABELS as TIER_LABELS, joinSegs, link, mean, ordinal, quarter, rankDesc, toPct, type Para, type Section, type Seg } from './narrative';
 import { heroPath } from './heroSlugs';
 import { itemPath } from './itemSlugs';
 import type { HeroAbility, HeroBracket, HeroItemWinRate, HeroSummary, MatchupEntry } from '../types/api';
@@ -195,7 +195,7 @@ function kit(input: HeroNarrativeInput): Section | null {
   return { heading: `${name}'s kit`, paras: [[sentence]] };
 }
 
-//Whether the named matchup holds across the badge buckets, and how far it moves.
+//Whether the named matchup holds across the rank brackets, and how far it moves.
 function ladderLine(input: HeroNarrativeInput, opponent: Opponent): string | null {
   const perTier = input.tierMatchups
     .map((t) => {
@@ -457,10 +457,10 @@ function byRank(input: HeroNarrativeInput): Section | null {
   const delta = hi.wr - lo.wr;
   let trend: string;
   if (delta >= 1.5)
-    trend = `${name} gets better as the lobby gets better: ${fixed(delta, 1)} points higher at ${hi.label} than at ${lo.label}, the pattern of a hero whose ceiling needs mechanics or coordination to reach.`;
+    trend = `${name} gets better as the player's rank rises: ${fixed(delta, 1)} points higher at ${hi.label} than at ${lo.label}, the pattern of a hero whose ceiling needs mechanics or coordination to reach.`;
   else if (delta <= -1.5)
     trend = `${name} loses ${fixed(-delta, 1)} points between ${lo.label} and ${hi.label}, which usually means its strengths are easier to punish for coordinated teams.`;
-  else trend = `Its win rate is close to flat across ranks (${pct(lo.wr)} to ${pct(hi.wr)}), so what this page says applies at your badge too.`;
+  else trend = `Its win rate is close to flat across ranks (${pct(lo.wr)} to ${pct(hi.wr)}), so what this page says applies at your rank too.`;
   const shareDelta = hi.share - lo.share;
   if (Math.abs(shareDelta) >= 0.5) {
     trend += ` It is picked ${shareDelta > 0 ? 'more' : 'less'} often at the top, ${pct(hi.share)} of slots at ${hi.label} against ${pct(lo.share)} at ${lo.label}.`;

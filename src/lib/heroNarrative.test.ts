@@ -53,7 +53,7 @@ const full = (hero: HeroSummary) =>
       { item_id: 12, item_name: 'Extra Health', win_rate: 0.5, games: 800000 },
     ],
     brackets: [
-      { key: 'low', label: 'Obscurus to Archon', roster: [mk(4, 'Haze', 54, 900000), mk(2, 'Seven', 53, 800000), mk(1, 'Abrams', 49, 500000)] },
+      { key: 'low', label: 'Obscurus to Emissary', roster: [mk(4, 'Haze', 54, 900000), mk(2, 'Seven', 53, 800000), mk(1, 'Abrams', 49, 500000)] },
       { key: 'high', label: 'Ascendant and Eternus 1 to 5', roster: [mk(4, 'Haze', 50, 90000), mk(2, 'Seven', 57, 100000), mk(1, 'Abrams', 51, 40000)] },
     ],
   });
@@ -80,7 +80,7 @@ describe('heroNarrative', () => {
     expect(text).toContain('Boundless Spirit (63.0%)');
     expect(text).toContain('Improved Spirit is also the most bought item');
     expect(text).toContain('lower-volume buys');
-    expect(text).toContain('loses 4.0 points between Obscurus to Archon and Ascendant and Eternus 1 to 5');
+    expect(text).toContain('loses 4.0 points between Obscurus to Emissary and Ascendant and Eternus 1 to 5');
     const hrefs = sections.flatMap((s) => s.paras.flat()).filter((seg) => typeof seg !== 'string').map((seg) => (seg as { href: string }).href);
     expect(hrefs).toContain('/heroes/abrams/');
     expect(hrefs).toContain('/items/10/');
@@ -104,10 +104,11 @@ describe('heroNarrative', () => {
       "Haze's kit\nHaze plays through Sleep Dagger, Smoke Bomb and Fixation, with Bullet Dance as its ultimate.",
     );
   });
-  it('reads the named matchups across the badge buckets', () => {
+  it('reads the named matchups across the rank brackets, labelled by the pinned ladder', () => {
     const text = plainText(heroNarrative(full(haze)));
-    expect(text).toContain('The Abrams matchup holds at every tier, 56.5% at Initiate to Alchemist and 58.5% at Ascendant to Eternus');
-    expect(text).toContain('It loses to Seven at every tier, 44.0% at Initiate to Alchemist and 44.0% at Ascendant to Eternus');
+    expect(text).toContain('The Abrams matchup holds at every tier, 56.5% at Initiate to Acolyte and 58.5% at Ascendant to Eternus');
+    expect(text).toContain('It loses to Seven at every tier, 44.0% at Initiate to Acolyte and 44.0% at Ascendant to Eternus');
+    expect(text).not.toMatch(/Archon|Alchemist|Arcanist/);
     expect(text).toContain('The number moves less than a point across the ladder');
   });
   it('states souls, deaths and objective damage per named opponent', () => {
