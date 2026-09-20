@@ -143,7 +143,7 @@ export const usePlayerReadiness = (id: number, opts?: { target_tier?: number }) 
 //unfiltered read would blend the two tracks. Unranked omits the param → byte-identical.
 export const usePlayerEconomyCurve = (
   id: number,
-  opts?: { metric?: string; vs_band?: number; hero?: number },
+  opts?: { metric?: string; vs_band?: number; tier?: number; hero?: number },
 ) => {
   const { matchMode } = useMatchMode();
   const params = { ...(opts ?? {}), match_mode: matchModeQuery(matchMode) };

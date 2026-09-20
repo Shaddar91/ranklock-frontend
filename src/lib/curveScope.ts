@@ -17,6 +17,8 @@ export type SigView = (typeof SIG_VIEWS)[number]['key'];
 
 export const DEFAULT_CURVE_METRIC: CurveMetric = 'souls';
 export const DEFAULT_SIG_VIEW: SigView = 'gap';
+//Oracle: the largest ranked league, the reference until a player's own rank is on record.
+export const DEFAULT_LEAGUE_TIER = 8;
 
 export const CURVE_METRIC_PARAM = 'metric';
 export const SIG_VIEW_PARAM = 'view';

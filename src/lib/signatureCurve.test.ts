@@ -60,14 +60,14 @@ describe('mergeSignatureCurve', () => {
     //Fed out of order (min 6 before min 3) — output must come back sorted.
     const out = mergeSignatureCurve(resp([youPt(360, 2500), youPt(180, 1000)], null));
     expect(out).toEqual([
-      { min: 3, you: 1000 },
-      { min: 6, you: 2500 },
+      { min: 3, you: 1000, youN: 5 },
+      { min: 6, you: 2500, youN: 5 },
     ]);
   });
 
   it('maps a comparison point to cmp (p50) and band ([p25, p75])', () => {
     const [pt] = mergeSignatureCurve(resp([], [cmpPt(180, 800, 1000, 1200)]));
-    expect(pt).toEqual({ min: 3, cmp: 1000, band: [800, 1200] });
+    expect(pt).toEqual({ min: 3, cmp: 1000, cmpN: 50, band: [800, 1200] });
   });
 
   it('drops the band when either p25 or p75 is null, but keeps cmp', () => {
@@ -85,7 +85,7 @@ describe('mergeSignatureCurve', () => {
   it('unions `you` and the cohort onto the same minute datum', () => {
     const out = mergeSignatureCurve(resp([youPt(180, 1000)], [cmpPt(180, 800, 900, 1000)]));
     expect(out).toHaveLength(1);
-    expect(out[0]).toEqual({ min: 3, you: 1000, cmp: 900, band: [800, 1000] });
+    expect(out[0]).toEqual({ min: 3, you: 1000, youN: 5, cmp: 900, cmpN: 50, band: [800, 1000] });
   });
 
   it('rounds t_seconds to the nearest whole game minute', () => {

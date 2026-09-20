@@ -41,26 +41,35 @@ import { signatureDelta } from '../../../lib/signatureCurve';
 export interface SignaturePoint {
   //game minute (t_seconds / 60) — the x value.
   min: number;
-  //YOUR value at this minute (the fixed personal curve), or absent for a gap.
   you?: number;
-  //the comparison cohort median (p50) at this minute, or absent.
+  //the league median (p50) at this minute, or absent.
   cmp?: number;
-  //the comparison cohort p25..p75 spread, or absent. Recharts draws a range Area when
-  //the datum resolves to a [low, high] tuple.
+  //the league p25..p75 spread; recharts draws a range Area from a [low, high] tuple.
   band?: [number, number];
+  //games of yours alive at this minute / league player-games behind the median.
+  youN?: number;
+  cmpN?: number;
 }
 
 //The Gap ("delta") view's per-minute datum: your signed distance to the cohort median,
 //against a zero baseline. Derived from SignaturePoint by signatureDelta (lib/signatureCurve).
 export interface SignatureDeltaPoint {
-  //game minute — the x value.
   min: number;
-  //you − cohort p50 at this minute: positive = ahead, negative = behind.
+  //you − league p50 at this minute: positive = ahead, negative = behind.
   delta: number;
-  //the cohort's p25..p75 re-centred on its own median ([p25−p50, p75−p50]), so the band
-  //straddles zero; absent when the cohort had no band at this minute.
+  //the league's p25..p75 re-centred on its median so the band straddles zero.
   deltaBand?: [number, number];
+  youN?: number;
+  cmpN?: number;
 }
+
+type TooltipItem = { dataKey?: unknown; payload?: { youN?: number; cmpN?: number } };
+const withN = (text: string, item: TooltipItem | undefined, youKey: string, cmpKey: string) => {
+  const key = item?.dataKey;
+  const n = key === youKey ? item?.payload?.youN : key === cmpKey ? item?.payload?.cmpN : undefined;
+  if (n == null) return text;
+  return `${text} · ${n.toLocaleString()} ${key === youKey ? (n === 1 ? 'game' : 'games') : 'player-games'}`;
+};
 
 interface SignatureCurveProps {
   data: SignaturePoint[];
@@ -81,6 +90,8 @@ interface SignatureCurveProps {
   //present immediately. (recharts' mount animation never finishes under headless
   //virtual-time, so a screenshot of an animated chart is blank.)
   animate?: boolean;
+  //under the player-games floor: the you-line is drawn faint.
+  thin?: boolean;
 }
 
 const fmtK = (v: ChartFmtValue) =>
@@ -103,6 +114,7 @@ export default function SignatureCurve({
   comparisonLabel,
   metricLabel = 'souls',
   animate = true,
+  thin = false,
 }: SignatureCurveProps) {
   //GAP view — one signed line (you − cohort median) against a zero baseline (the cohort's
   //own median), with the cohort's middle-50% shaded around zero. Renders the exact quantity
@@ -140,7 +152,9 @@ export default function SignatureCurve({
             contentStyle={tooltipContentStyle}
             labelStyle={tooltipLabelStyle}
             itemStyle={tooltipItemStyle}
-            formatter={(v: ChartFmtValue) => `${fmtSigned(v)} ${metricLabel}`}
+            formatter={(v: ChartFmtValue, _name: unknown, item: TooltipItem) =>
+              withN(`${fmtSigned(v)} ${metricLabel}`, item, 'delta', 'deltaBand')
+            }
             labelFormatter={(m) => `Minute ${m}`}
           />
           {/* cohort middle-50% re-centred on its median — the band straddles the baseline. */}
@@ -178,6 +192,7 @@ export default function SignatureCurve({
             dataKey="delta"
             stroke={sigSeriesColor.you}
             strokeWidth={3}
+            strokeOpacity={thin ? 0.45 : 1}
             dot={{ r: 2, fill: sigSeriesColor.you, strokeWidth: 0 }}
             activeDot={{ r: 4 }}
             connectNulls
@@ -262,7 +277,9 @@ export default function SignatureCurve({
           contentStyle={tooltipContentStyle}
           labelStyle={tooltipLabelStyle}
           itemStyle={tooltipItemStyle}
-          formatter={(v: ChartFmtValue) => `${fmtK(v)} ${metricLabel}`}
+          formatter={(v: ChartFmtValue, _name: unknown, item: TooltipItem) =>
+            withN(`${fmtK(v)} ${metricLabel}`, item, 'you', 'cmp')
+          }
           labelFormatter={(m) => `Minute ${m}`}
         />
         {/* legendType="plainline" forces each swatch to a colour+dash line segment, so the
@@ -315,6 +332,7 @@ export default function SignatureCurve({
           dataKey="you"
           stroke={sigSeriesColor.you}
           strokeWidth={3}
+          strokeOpacity={thin ? 0.45 : 1}
           dot={{ r: 2, fill: sigSeriesColor.you, strokeWidth: 0 }}
           activeDot={{ r: 4 }}
           connectNulls

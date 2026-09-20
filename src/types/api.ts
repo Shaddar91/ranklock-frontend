@@ -714,7 +714,7 @@ export interface PlayerCurveComparisonPoint {
   sample_players: number;
 }
 export interface PlayerCurveComparison {
-  //the selected league (rank tier 0..11, badge/10); null = all-bands cohort, or any rank cohort.
+  //legacy team-average band; always null since the profile compares against player-rank cohorts.
   band: number | null;
   //the selected hero, or null for the all-hero cohort.
   hero_id: number | null;

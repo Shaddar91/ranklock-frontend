@@ -29,7 +29,6 @@ import SoulsSourceChart from '../charts/SoulsSourceChart';
 import { sigSeriesColor, useSigSeriesWords } from '../charts/chartTheme';
 import { CatPanel } from './StatLine';
 import {
-  useCohortSoulsSources,
   useCompare,
   useComparePlayer,
   useImprove,
@@ -43,13 +42,19 @@ import { useCompareTarget } from './useCompareTarget';
 import { PlayerScopeControls } from './PlayerScopeControls';
 import { ShareCompareButton } from './ShareCompareButton';
 import { scopeCaption, scopeParams } from '../../../lib/playerScope';
-import { CURVE_METRICS, SIG_VIEWS, type SigView } from '../../../lib/curveScope';
+import { CURVE_METRICS, DEFAULT_LEAGUE_TIER, SIG_VIEWS, type SigView } from '../../../lib/curveScope';
 import { useCurveScope } from '../../../lib/useCurveScope';
 import { playerCardUrl, playerShareUrl, resolveFrozenWindow, type PlayerShareSelection } from '../../../lib/playerShare';
 import { combatRows, compareRadarVsPlayer, economyRows, efficiencyRows, laningRows, selfShapeAxes } from '../../../lib/playstyle';
-import { mergeSignatureCurve, curveMarker } from '../../../lib/signatureCurve';
-import { buildSoulsSourceSeries, hasCohortSouls, isPlayerSoulsEmpty } from '../../../lib/soulsSources';
-import { RANKS, chasingTier, getRank, rankFromBadge } from '../../../lib/ranks';
+import {
+  COHORT_MIN_PLAYER_GAMES,
+  THIN_PLAYER_GAMES,
+  curveMarker,
+  mergeSignatureCurve,
+  playerPeakGames,
+} from '../../../lib/signatureCurve';
+import { buildSoulsSourceSeries, isPlayerSoulsEmpty } from '../../../lib/soulsSources';
+import { RANKS, getRank, rankFromBadge } from '../../../lib/ranks';
 import { count, fixed } from '../../../lib/format';
 import type { SearchResult } from '../../../types/api';
 
@@ -307,17 +312,11 @@ export function PlaystyleRadarPanel({ id }: { id: number }) {
 
 //---- signature economy view -------------------------------------------------
 
-//THE signature coaching chart (C3): the player's OWN per-minute curve, FIXED, overlaid on a
-//comparison cohort they pick. The LEAGUE selector (rank tier) and the HERO selector move
-//ONLY the comparison line — `you` is invariant. Colours/caption words come from
-//sigSeriesColor/useSigSeriesWords (both keyed to the active skin) so the legend, the
-//caption, and the lines can never disagree — in any skin.
-function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number | null }) {
-  const sigWords = useSigSeriesWords(); //active skin's series color words
-  //league: undefined = "auto" (chaseTier — the rank you're chasing, lifted by the parent
-  //off the profile badge); null = All ranks (vs_band omitted); number = a rank tier 0..11.
-  //hero: undefined = all heroes (no hero filter). All four are URL-backed (useCurveScope)
-  //so the share link and the header's Share button can read them from any island.
+//THE signature coaching chart: the player's OWN per-minute line, FIXED, against a league of
+//players holding that rank (ranked games since 7 Aug 2026). LEAGUE and HERO move only the
+//league line. league: undefined = the parent's default, null = all ranks, number = tier 1..11.
+function SignatureCurvePanel({ id, defaultTier }: { id: number; defaultTier: number }) {
+  const sigWords = useSigSeriesWords();
   const { metric, view, band, hero, setMetric, setView, setBand, setHero } = useCurveScope();
   const { mode } = useGameMode();
   const { matchMode } = useMatchMode();
@@ -325,9 +324,9 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
   const { target } = useCompareTarget();
 
   const heroesPlayed = usePlayerHeroesPlayed(id);
-  const effBand = band === undefined ? chaseTier : band; //null => All ranks
+  const effBand = band === undefined ? defaultTier : band; //null => all ranks
 
-  const curve = usePlayerEconomyCurve(id, { metric, vs_band: effBand ?? undefined, hero });
+  const curve = usePlayerEconomyCurve(id, { metric, tier: effBand ?? undefined, hero });
 
   const noun = CURVE_METRICS.find((m) => m.key === metric)!.noun;
   const heroOptions = [...(heroesPlayed.data ?? [])].sort((a, b) => b.matches_played - a.matches_played);
@@ -337,8 +336,36 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
   const hasCmp = (comparison?.points.length ?? 0) > 0;
   const heroName = hero != null ? heroOptions.find((h) => h.hero_id === hero)?.hero_name : null;
   const tierName = effBand != null ? getRank(effBand).name : 'All ranks';
-  const cmpLabel = hasCmp ? `${tierName}${heroName ? ` · ${heroName}` : ''} average` : undefined;
-  const marker = curveMarker(points);
+  const cmpLabel = hasCmp ? `${tierName}${heroName ? ` · ${heroName}` : ''} median` : undefined;
+  const marker = curveMarker(points, 20);
+  const peak = playerPeakGames(curve.data);
+  const thin = peak > 0 && peak < THIN_PLAYER_GAMES;
+  //Where you sit in the league at the marker minute (share of league player-games below your
+  //value). League-wide only: the percentiles endpoint has no hero scope.
+  const markerBucket = marker ? Math.round(marker.min / 3) : 0;
+  const markerValue = marker ? String(Math.round(marker.you)) : '';
+  const pct = useQuery({
+    queryKey: queryKeys.lanePercentiles({ tier: effBand ?? 0, metric, minute: markerBucket, values: markerValue }),
+    queryFn: () => api.getLanePercentiles({ tier: effBand as number, metric, minute: markerBucket, values: markerValue }),
+    enabled: effBand != null && marker != null && hero == null && markerBucket >= 1,
+    retry: false,
+  });
+  const share = hero == null && effBand != null ? (pct.data?.results?.[0]?.below_share ?? null) : null;
+  const pctChip =
+    share == null
+      ? null
+      : share >= 0.5
+        ? `top ${Math.max(1, Math.round((1 - share) * 100))}%`
+        : `bottom ${Math.max(1, Math.round(share * 100))}%`;
+  const leagueSentence =
+    effBand != null
+      ? `${tierName} = players holding ${tierName} rank in ranked games since 7 Aug 2026${heroName ? `, on ${heroName}` : ''}.`
+      : `All ranks = every ranked player since 7 Aug 2026${heroName ? `, on ${heroName}` : ''}.`;
+  const floorSentence = `Minutes under ${THIN_PLAYER_GAMES} of your games (or 5% of your peak) and league minutes under ${count(COHORT_MIN_PLAYER_GAMES)} player-games are not drawn${thin ? `; your line peaks at ${peak} game${peak === 1 ? '' : 's'}, read it as an anecdote` : ''}.`;
+  const noCohortSentence =
+    curve.data?.comparison == null
+      ? `No ${tierName} line yet: the league fold has not served this metric.`
+      : `No ${tierName} minute clears the ${count(COHORT_MIN_PLAYER_GAMES)} player-game floor${heroName ? ` on ${heroName}` : ''}; pick a larger league.`;
   //Gap needs a cohort; with none the delta is undefined, so force Totals (the ungated
   //you-line) and hide the Gap toggle — the panel never shows an empty Gap chart.
   const effView: SigView = hasCmp ? view : 'totals';
@@ -354,7 +381,7 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
         aria-label="Choose the league to compare against"
       >
         <option value="">All ranks</option>
-        {RANKS.map((r) => (
+        {RANKS.filter((r) => r.tier >= 1).map((r) => (
           <option key={r.tier} value={r.tier}>
             {r.name}
           </option>
@@ -438,6 +465,11 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
           {heroSelector}
         </div>
         <div className="flex" style={{ gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          {pctChip && marker && (
+            <span className={'chip ' + ((share ?? 0) >= 0.5 ? 'win' : 'loss')} style={{ fontSize: 12 }}>
+              {pctChip} of {tierName} at {marker.min}:00
+            </span>
+          )}
           {viewToggle}
           {metricToggle}
           <ShareLinkButton
@@ -463,7 +495,14 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
         />
       ) : (
         <>
-          <SignatureCurve data={points} mode={effView} youLabel="You" comparisonLabel={cmpLabel} metricLabel={noun} />
+          <SignatureCurve
+            data={points}
+            mode={effView}
+            youLabel="You"
+            comparisonLabel={cmpLabel}
+            metricLabel={noun}
+            thin={thin}
+          />
           {/* Caption colour words are driven by useSigSeriesWords/sigSeriesColor — the
               SAME skin-keyed source the chart lines read — so a word can never name a
               colour the line doesn't render (the C3 no-phantom-cyan guarantee), in any
@@ -472,30 +511,26 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
           {effView === 'gap' ? (
             <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
               The <b style={{ color: sigSeriesColor.you }}>{sigWords.you}</b> line is your{' '}
-              <b style={{ color: sigSeriesColor.you }}>gap</b> to{' '}
-              <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b>: how many {noun} you&rsquo;re{' '}
-              <b style={{ color: 'var(--win)' }}>ahead</b> (above the baseline) or{' '}
-              <b style={{ color: 'var(--loss)' }}>behind</b> (below it) at each minute. The{' '}
-              <b style={{ color: sigSeriesColor.comparison }}>dashed baseline</b> is the cohort median; the shaded band
-              is their middle 50% (25th to 75th percentile), so riding above the band means you&rsquo;re beating
-              three-quarters of them. Re-pick the league or hero and the gap is re-measured against that cohort.
+              <b style={{ color: sigSeriesColor.you }}>gap</b> to the{' '}
+              <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b> at each minute:{' '}
+              <b style={{ color: 'var(--win)' }}>ahead</b> above the baseline,{' '}
+              <b style={{ color: 'var(--loss)' }}>behind</b> below it. The shaded band is the league&rsquo;s middle
+              half (25th to 75th percentile) around its median. {leagueSentence} {floorSentence}
             </p>
           ) : (
             <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
               The <b style={{ color: sigSeriesColor.you }}>{sigWords.you}</b> line is{' '}
-              <b style={{ color: sigSeriesColor.you }}>you</b>: your real per-minute {noun}, and it stays put when you
-              switch league or hero.{' '}
+              <b style={{ color: sigSeriesColor.you }}>you</b>: your average {noun} at each minute across your games
+              still running then. It stays put when you switch league or hero.{' '}
               {cmpLabel ? (
                 <>
-                  The <b style={{ color: sigSeriesColor.comparison }}>{sigWords.comparison} dashed</b> line is{' '}
-                  <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b>:{' '}
-                  the cohort you picked; the shaded
-                  band is their 25th to 75th percentile. Only this line moves when you change the selectors.
+                  The <b style={{ color: sigSeriesColor.comparison }}>{sigWords.comparison} dashed</b> line is the{' '}
+                  <b style={{ color: sigSeriesColor.comparison }}>{cmpLabel}</b>; the shaded band is the league&rsquo;s
+                  middle half. {leagueSentence} {floorSentence}
                 </>
               ) : (
                 <>
-                  Pick a league to overlay the cohort you&rsquo;re chasing
-                  {effBand != null ? `. ${tierName}'s cohort has no per-minute sample yet` : ''}.
+                  {noCohortSentence} {floorSentence}
                 </>
               )}
             </p>
@@ -503,11 +538,17 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
           {marker && cmpLabel && (
             <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '8px 0 0', lineHeight: 1.5 }}>
               At <b className="mono">{marker.min}:00</b> you had{' '}
-              <b className="mono" style={{ color: sigSeriesColor.you }}>{count(marker.you)}</b> {noun}; {cmpLabel} was{' '}
-              <b className="mono" style={{ color: sigSeriesColor.comparison }}>{count(marker.cmp)}</b>.{' '}
+              <b className="mono" style={{ color: sigSeriesColor.you }}>{count(marker.you)}</b> {noun}; the {cmpLabel}{' '}
+              was <b className="mono" style={{ color: sigSeriesColor.comparison }}>{count(marker.cmp)}</b>
+              {marker.cmpN != null ? ` (${count(marker.cmpN)} player-games)` : ''}.{' '}
               <b style={{ color: marker.gap >= 0 ? 'var(--win)' : 'var(--loss)' }}>
                 You&rsquo;re {count(Math.abs(marker.gap))} {noun} {marker.gap >= 0 ? 'ahead' : 'behind'}
               </b>
+              {pctChip ? (
+                <>
+                  , in the <b>{pctChip}</b> of {tierName} players at that minute
+                </>
+              ) : null}
               .
             </p>
           )}
@@ -523,17 +564,16 @@ function SignatureCurvePanel({ id, chaseTier }: { id: number; chaseTier: number 
 //lost to deaths as a line below zero (never mixed into the stack). The player line is ungated; the
 //tier rides the rich-analytics tier (drawn only once it has folded). match_mode follows the page's
 //Unranked/Ranked selector; game_mode is Normal-only server-side (Brawl gets the note).
-function SoulsSourcePanel({ id, band }: { id: number; band?: number }) {
+function SoulsSourcePanel({ id }: { id: number }) {
   const { matchMode } = useMatchMode();
   const player = usePlayerSoulsSources(id);
-  const cohort = useCohortSoulsSources(band);
-  const rows = buildSoulsSourceSeries(player.data, cohort.data);
-  const cohortHas = hasCohortSouls(cohort.data);
+  //No league reference: the souls-source fold is keyed by the frozen lobby-average band only.
+  const rows = buildSoulsSourceSeries(player.data, undefined);
 
   return (
     <div>
       <div className="label-xs" style={{ marginBottom: 12 }}>
-        Souls source: you vs tier
+        Souls source: you
       </div>
       {player.isPending ? (
         <Loading label="Loading your souls sources" />
@@ -554,10 +594,10 @@ function SoulsSourcePanel({ id, band }: { id: number; band?: number }) {
         />
       ) : (
         <>
-          <SoulsSourceChart data={rows} showTier={cohortHas} />
+          <SoulsSourceChart data={rows} showTier={false} />
           <p className="muted" style={{ fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
-            Each colour is a souls source stacked into your net worth at that minute: <b>solid bars are you</b>,
-            {cohortHas ? ' faded bars your tier' : ' your tier fills in after the next refresh'}. Souls{' '}
+            Each colour is a souls source stacked into your net worth at that minute: <b>solid bars are you</b>.
+            A league reference comes once the souls-source fold is keyed by player rank. Souls{' '}
             <b style={{ color: 'var(--loss)' }}>lost to deaths</b> are the line below zero, never mixed into the stack.
             {matchMode === 'Ranked' ? ' Ranked matches only.' : ''}
           </p>
@@ -569,64 +609,37 @@ function SoulsSourcePanel({ id, band }: { id: number; band?: number }) {
 }
 
 export function EconomyPanel({ id }: { id: number }) {
-  //'one_up' makes the "vs the rank you're chasing" kicker literally true — the
-  //cohort is the tier directly above the player, not the player's own tier.
-  const cmp = useCompare(id, { league_offset: 'one_up' });
-  //ONE chasing tier, lifted off the profile badge (compare's one_up cohort equals it):
-  //title, explanation line and the curve's LEAGUE default all derive from it.
+  //Default league = the player's own league when their latest ranked rank is on record, else
+  //DEFAULT_LEAGUE_TIER (the largest league). The LEAGUE selector overrides it.
   const profile = usePlayer(id);
-  const chaseTier = chasingTier(profile.data?.badge);
-  const chaseName = chaseTier != null ? getRank(chaseTier).name : null;
-  const currentTier = rankFromBadge(profile.data?.badge)?.tier ?? null;
-  const souls = cmp.data?.you.souls_per_min ?? null;
-  const cohortSouls = cmp.data?.cohort.souls_per_min ?? null;
-  const cohortTier = chaseName ?? cmp.data?.cohort.tier_name ?? null;
-  const gap = souls != null && cohortSouls != null ? souls - cohortSouls : null;
+  const { band } = useCurveScope();
+  const ownTier = rankFromBadge(profile.data?.badge)?.tier ?? null;
+  const ownLeague = ownTier != null && ownTier >= 1 ? ownTier : null;
+  const defaultTier = ownLeague ?? DEFAULT_LEAGUE_TIER;
+  const shownTier = band === undefined ? defaultTier : band;
 
   return (
     <div className="brass-frame" style={{ padding: '18px 20px' }}>
       <span className="corner tl" />
       <span className="corner br" />
-      <div className="between" style={{ marginBottom: 6, flexWrap: 'wrap', gap: 10 }}>
-        <div>
-          <div className="kicker" style={{ marginBottom: 4 }}>
-            Signature · vs the rank you&rsquo;re chasing
-          </div>
-          <h2 className="h-sec" style={{ fontSize: 17 }}>
-            Soul curve vs {cohortTier ?? 'tier'}
-          </h2>
-          {currentTier != null && chaseName != null && (
-            <p className="faint" style={{ fontSize: 11, margin: '4px 0 0', lineHeight: 1.4 }}>
-              The rank you&rsquo;re chasing = one league above your current rank ({getRank(currentTier).name} →{' '}
-              {chaseName}). Change LEAGUE to compare against any other.
-            </p>
-          )}
+      <div style={{ marginBottom: 6 }}>
+        <div className="kicker" style={{ marginBottom: 4 }}>
+          Signature · you vs a league
         </div>
-        {gap != null && (
-          <span className={'chip ' + (gap >= 0 ? 'win' : 'loss')} style={{ fontSize: 12 }}>
-            {gap >= 0 ? '+' : '−'}
-            {count(Math.abs(gap))} souls/min
-          </span>
-        )}
+        <h2 className="h-sec" style={{ fontSize: 17 }}>
+          Soul curve vs {shownTier == null ? 'all ranks' : getRank(shownTier).name}
+        </h2>
+        <p className="faint" style={{ fontSize: 11, margin: '4px 0 0', lineHeight: 1.4 }}>
+          {ownLeague != null
+            ? `Your own league (${getRank(ownLeague).name}) is the default. Change LEAGUE to compare against any other.`
+            : `${getRank(DEFAULT_LEAGUE_TIER).name} is the largest league and the default until your own rank is on record (a ranked game since 7 Aug 2026).`}
+        </p>
       </div>
-      {souls != null ? (
-        <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '0 0 14px', lineHeight: 1.5 }}>
-          You average <b className="cyan-c mono">{count(souls)}</b> souls/min; {cohortTier ?? 'the next tier'} averages{' '}
-          <b className="mono" style={{ color: 'var(--muted)' }}>{count(cohortSouls)}</b>.
-        </p>
-      ) : (
-        <p className="muted" style={{ fontSize: 13, margin: '0 0 14px' }}>
-          Economy comparison fills in once /compare serves this player.
-        </p>
-      )}
-      {/* THE signature per-minute curve (C3): your FIXED soul curve overlaid on a league
-          (+hero) cohort you pick — served by /players/:id/economy-curve. */}
-      <SignatureCurvePanel id={id} chaseTier={chaseTier} />
+      <SignatureCurvePanel id={id} defaultTier={defaultTier} />
       <div className="deco-rule" style={{ margin: '18px 0 14px' }}>
         <span className="dia" />
       </div>
-      {/* Per-source souls stack (migration 048): where your net worth comes from, you vs your tier. */}
-      <SoulsSourcePanel id={id} band={currentTier ?? undefined} />
+      <SoulsSourcePanel id={id} />
     </div>
   );
 }

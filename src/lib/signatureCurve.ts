@@ -20,7 +20,7 @@ export function mergeSignatureCurve(resp: PlayerEconomyCurveResponse | undefined
 
   for (const p of resp.you ?? []) {
     const min = minuteOf(p.t_seconds);
-    byMin.set(min, { ...at(min), min, you: p.value });
+    byMin.set(min, { ...at(min), min, you: p.value, youN: p.matches });
   }
   for (const p of resp.comparison?.points ?? []) {
     const min = minuteOf(p.t_seconds);
@@ -28,6 +28,7 @@ export function mergeSignatureCurve(resp: PlayerEconomyCurveResponse | undefined
       ...at(min),
       min,
       cmp: p.p50 ?? undefined,
+      cmpN: p.sample_players,
       band: p.p25 != null && p.p75 != null ? [p.p25, p.p75] : undefined,
     });
   }
@@ -40,15 +41,24 @@ export function mergeSignatureCurve(resp: PlayerEconomyCurveResponse | undefined
 export function curveMarker(
   points: SignaturePoint[],
   targetMin = 10,
-): { min: number; you: number; cmp: number; gap: number } | null {
-  let best: { min: number; you: number; cmp: number; gap: number } | null = null;
+): { min: number; you: number; cmp: number; gap: number; youN?: number; cmpN?: number } | null {
+  let best: { min: number; you: number; cmp: number; gap: number; youN?: number; cmpN?: number } | null = null;
   for (const p of points) {
     if (p.you == null || p.cmp == null) continue;
     if (best == null || Math.abs(p.min - targetMin) < Math.abs(best.min - targetMin)) {
-      best = { min: p.min, you: p.you, cmp: p.cmp, gap: p.you - p.cmp };
+      best = { min: p.min, you: p.you, cmp: p.cmp, gap: p.you - p.cmp, youN: p.youN, cmpN: p.cmpN };
     }
   }
   return best;
+}
+
+//Sample floors, mirrored from the backend (player_curve.rs): a player line whose peak is under
+//THIN_PLAYER_GAMES is served whole and drawn thin; league minutes under COHORT_MIN_PLAYER_GAMES
+//player-games are never served.
+export const THIN_PLAYER_GAMES = 5;
+export const COHORT_MIN_PLAYER_GAMES = 500;
+export function playerPeakGames(resp: PlayerEconomyCurveResponse | undefined): number {
+  return (resp?.you ?? []).reduce((m, p) => Math.max(m, p.matches), 0);
 }
 
 //The Gap ("delta") series: for every minute where BOTH your curve and the cohort median
@@ -63,6 +73,8 @@ export function signatureDelta(points: SignaturePoint[]): SignatureDeltaPoint[] 
       min: p.min,
       delta: p.you - p.cmp,
       deltaBand: p.band ? [p.band[0] - p.cmp, p.band[1] - p.cmp] : undefined,
+      youN: p.youN,
+      cmpN: p.cmpN,
     });
   }
   return out;
