@@ -111,6 +111,7 @@ function BuildLabInner({ roster, weapons }: { roster: RosterSlug[]; weapons: Wea
       <LabHeroRow
         roster={rosterArt.data ?? []}
         playable={heroes}
+        guides={roster}
         heroId={heroId}
         onHero={setHeroId}
       />

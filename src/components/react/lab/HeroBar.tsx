@@ -53,7 +53,13 @@ export function HeroSelect({
   );
 }
 
-export function HowToPlayLink({ hero, roster }: { hero: HeroBaseStats | null; roster: RosterSlug[] }) {
+export function HowToPlayLink({
+  hero,
+  roster,
+}: {
+  hero: Pick<HeroBaseStats, 'hero_id' | 'hero_name'> | null;
+  roster: RosterSlug[];
+}) {
   const row = hero ? roster.find((r) => r.hero_id === hero.hero_id) : undefined;
   if (!hero || !row?.hasGuide) return null;
   return (
