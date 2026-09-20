@@ -340,6 +340,10 @@ function SignatureCurvePanel({ id, defaultTier }: { id: number; defaultTier: num
   const marker = curveMarker(points, 20);
   const peak = playerPeakGames(curve.data);
   const thin = peak > 0 && peak < THIN_PLAYER_GAMES;
+  //The API answers an unwindowed request with a window only when the promoted line was empty and
+  //it fell back to the retained raw timeline (the last few weeks of games): say so.
+  const fallbackDays = curve.data?.window?.kind === 'days' ? curve.data.window.n : null;
+  const fallbackCoverage = curve.data?.coverage ?? null;
   //Where you sit in the league at the marker minute (share of league player-games below your
   //value). League-wide only: the percentiles endpoint has no hero scope.
   const markerBucket = marker ? Math.round(marker.min / 3) : 0;
@@ -361,7 +365,11 @@ function SignatureCurvePanel({ id, defaultTier }: { id: number; defaultTier: num
     effBand != null
       ? `${tierName} = players holding ${tierName} rank in ranked games since 7 Aug 2026${heroName ? `, on ${heroName}` : ''}.`
       : `All ranks = every ranked player since 7 Aug 2026${heroName ? `, on ${heroName}` : ''}.`;
-  const floorSentence = `Minutes under ${THIN_PLAYER_GAMES} of your games (or 5% of your peak) and league minutes under ${count(COHORT_MIN_PLAYER_GAMES)} player-games are not drawn${thin ? `; your line peaks at ${peak} game${peak === 1 ? '' : 's'}, read it as an anecdote` : ''}.`;
+  const floorSentence = `Minutes under ${THIN_PLAYER_GAMES} of your games (or 5% of your peak) and league minutes under ${count(COHORT_MIN_PLAYER_GAMES)} player-games are not drawn${thin ? `; your line peaks at ${peak} game${peak === 1 ? '' : 's'}, read it as an anecdote` : ''}.${
+    fallbackDays != null
+      ? ` Your line covers your last ${fallbackDays} days only${fallbackCoverage ? ` (${count(fallbackCoverage.matches_with_timeline)} of ${count(fallbackCoverage.matches_total)} games carry a timeline)` : ''} while the full history is refolded.`
+      : ''
+  }`;
   const noCohortSentence =
     curve.data?.comparison == null
       ? `No ${tierName} line yet: the league fold has not served this metric.`
