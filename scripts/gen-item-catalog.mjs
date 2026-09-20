@@ -47,8 +47,7 @@ import { fileURLToPath } from 'node:url';
 
 const CHECK = process.argv.includes('--check');
 
-//301-redirects to https://api.deadlock-api.com/v1/assets/items (fetch follows it).
-const SRC = 'https://assets.deadlock-api.com/v2/items';
+const SRC = 'https://api.deadlock-api.com/v1/assets/items';
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/items-catalog.json');
 const OUT_DETAIL = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/items-detail.json');
 const OUT_DESC = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/item-descriptions.json');

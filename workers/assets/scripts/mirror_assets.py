@@ -2,7 +2,7 @@
 """Mirror Deadlock assets (ranks, heroes, items) from the community
 deadlock-api assets service into a local directory tree + manifests.
 
-Source:  https://assets.deadlock-api.com/v2/{ranks,heroes,items}
+Source:  https://api.deadlock-api.com/v1/assets/{ranks,heroes,items}
          (community-run, MIT-licensed code; art is extracted from Valve's
          Deadlock game files and remains Valve IP — we do not own it.)
 
@@ -40,7 +40,7 @@ import time
 import urllib.request
 from urllib.error import HTTPError, URLError
 
-API_BASE = "https://assets.deadlock-api.com/v2"
+API_BASE = "https://api.deadlock-api.com/v1/assets"
 USER_AGENT = "ranklock-asset-mirror"
 CATEGORIES = ("ranks", "heroes", "items")
 

@@ -24,7 +24,7 @@
 //of this indirection.
 
 //The community image CDN we hotlink by default (the image BUCKET host — not the
-//metadata API host assets.deadlock-api.com). Kept as the default base so v1 is
+//metadata API api.deadlock-api.com/v1/assets). Kept as the default base so v1 is
 //identical until the flip.
 export const DEADLOCK_ASSETS_HOST = 'https://assets-bucket.deadlock-api.com';
 

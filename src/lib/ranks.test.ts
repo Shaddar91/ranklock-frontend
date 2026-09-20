@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { chasingTier, getRank, rankBadgeImg, rankFromBadge, rankImg, RANKS } from './ranks';
 
-//The assets.deadlock-api.com /v2/ranks ladder pinned 2026-09-11 — Acolyte/Sentinel/Mystic
+//The api.deadlock-api.com /v1/assets/ranks ladder pinned 2026-09-11 — Acolyte/Sentinel/Mystic
 //replaced Alchemist/Arcanist/Ritualist at 3-5 and Archon left the ladder entirely.
 describe('RANKS', () => {
   it('is the pinned 12-tier ladder, index === tier', () => {

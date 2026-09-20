@@ -1,6 +1,6 @@
 //Deadlock rank ladder: 12 tiers (Obscurus … Eternus), each with a subrank I–VI.
 //The API exposes a player's rank as one `badge` = tier*10 + subrank (types/api.ts).
-//Names and colors are the assets.deadlock-api.com /v2/ranks ladder, probed 2026-09-11.
+//Names and colors are the api.deadlock-api.com /v1/assets/ranks ladder, probed 2026-09-11.
 
 export interface RankMeta {
   tier: number;

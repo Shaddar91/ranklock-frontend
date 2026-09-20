@@ -7,7 +7,7 @@ import type { StatRow } from './heroKit';
 //hero_id (as a string key, it crosses an island prop) -> the primary gun.
 export type WeaponTable = Record<string, WeaponInfo>;
 
-const ITEMS_URL = 'https://assets.deadlock-api.com/v2/items';
+const ITEMS_URL = 'https://api.deadlock-api.com/v1/assets/items';
 //Ranges arrive in Source units (inches); the client shows metres.
 const UNITS_PER_METRE = 39.37;
 
