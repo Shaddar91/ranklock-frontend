@@ -831,6 +831,7 @@ export interface BuildStatsItem {
   item_id: number;
   item_name?: string | null;
   icon_url?: string | null;
+  is_shop_item?: boolean;
 }
 
 export interface BuildStatsItemSet {

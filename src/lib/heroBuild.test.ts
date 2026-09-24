@@ -167,6 +167,22 @@ describe('winningSets — the folded purchase sets, abilities flagged not filter
   it('sorts by Wilson lower bound, not by raw win rate', () => {
     expect(winningSets(sets, catalog).map((s) => s.games)).toEqual([1672, 900]);
   });
+
+  it('trusts the served is_shop_item over catalog membership', () => {
+    const served: BuildStatsItemSet[] = [
+      {
+        items: [
+          { item_id: 811521119, item_name: 'Tesla Bullets', icon_url: null, is_shop_item: true },
+          { item_id: 99, item_name: 'Fixation', icon_url: null, is_shop_item: false },
+        ],
+        games: 2004,
+        wins: 1038,
+        win_rate: 0.518,
+        wilson_lower: 0.496,
+      },
+    ];
+    expect(winningSets(served, catalog)[0]?.entries.map((e) => e.shopItem)).toEqual([true, false]);
+  });
 });
 
 describe('situationalGroups — the slow family renames its own modifier', () => {

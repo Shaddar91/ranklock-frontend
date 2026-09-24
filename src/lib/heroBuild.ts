@@ -312,7 +312,7 @@ export function winningSets(
         itemId: item.item_id,
         name: item.item_name ?? `Item ${item.item_id}`,
         iconUrl: item.icon_url ?? null,
-        shopItem: catalog.has(item.item_id),
+        shopItem: item.is_shop_item ?? catalog.has(item.item_id),
       }));
       return { entries, games: s.games, winRate: s.win_rate * 100, wilson: s.wilson_lower * 100 };
     });
