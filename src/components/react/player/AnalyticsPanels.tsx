@@ -16,7 +16,7 @@
 //  • CategorizedSection   — Combat/Economy (from /improve) + Laning/Efficiency
 //                           (from /compare), with a vs-bracket ⇄ compare toggle.
 //============================================================================
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, isComputing, isDisabled, isNotFound, isUnauthorized, queryKeys } from '../../../lib/apiClient';
 import { useGameMode } from '../../../lib/useGameMode';
@@ -330,14 +330,14 @@ function SignatureCurvePanel({ id, defaultTier }: { id: number; defaultTier: num
 
   const noun = CURVE_METRICS.find((m) => m.key === metric)!.noun;
   const heroOptions = [...(heroesPlayed.data ?? [])].sort((a, b) => b.matches_played - a.matches_played);
-  const points = mergeSignatureCurve(curve.data);
+  const points = useMemo(() => mergeSignatureCurve(curve.data), [curve.data]);
   const hasYou = points.some((p) => p.you != null);
   const comparison = curve.data?.comparison ?? null;
   const hasCmp = (comparison?.points.length ?? 0) > 0;
   const heroName = hero != null ? heroOptions.find((h) => h.hero_id === hero)?.hero_name : null;
   const tierName = effBand != null ? getRank(effBand).name : 'All ranks';
   const cmpLabel = hasCmp ? `${tierName}${heroName ? ` · ${heroName}` : ''} median` : undefined;
-  const marker = curveMarker(points, 20);
+  const marker = useMemo(() => curveMarker(points, 20), [points]);
   const peak = playerPeakGames(curve.data);
   const thin = peak > 0 && peak < THIN_PLAYER_GAMES;
   //The API answers an unwindowed request with a window only when the promoted line was empty and
@@ -576,7 +576,7 @@ function SoulsSourcePanel({ id }: { id: number }) {
   const { matchMode } = useMatchMode();
   const player = usePlayerSoulsSources(id);
   //No league reference: the souls-source fold is keyed by the frozen lobby-average band only.
-  const rows = buildSoulsSourceSeries(player.data, undefined);
+  const rows = useMemo(() => buildSoulsSourceSeries(player.data, undefined), [player.data]);
 
   return (
     <div>
@@ -736,10 +736,10 @@ export function CategorizedSection({ id }: { id: number }) {
   const improve = useImprove(id);
   const cmp = useCompare(id, {});
 
-  const combat = improve.data ? combatRows(improve.data) : [];
-  const economy = improve.data ? economyRows(improve.data) : [];
-  const laning = cmp.data ? laningRows(cmp.data) : [];
-  const efficiency = cmp.data ? efficiencyRows(cmp.data) : [];
+  const combat = useMemo(() => (improve.data ? combatRows(improve.data) : []), [improve.data]);
+  const economy = useMemo(() => (improve.data ? economyRows(improve.data) : []), [improve.data]);
+  const laning = useMemo(() => (cmp.data ? laningRows(cmp.data) : []), [cmp.data]);
+  const efficiency = useMemo(() => (cmp.data ? efficiencyRows(cmp.data) : []), [cmp.data]);
 
   return (
     <div>

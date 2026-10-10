@@ -6,7 +6,7 @@
 //surfaces (action item 3) — scaffolded against their contracts, empty until
 //served.
 //============================================================================
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Chip, EmptyState, GameIcon, Icon, RankBadge } from '../ui/index';
 import { buildAheadMessage, humanize, PlaystyleRadarPanel, SEV } from './AnalyticsPanels';
@@ -60,8 +60,8 @@ export function RecentMatchesPanel({ id }: { id: number }) {
   const { ranked, setRanked } = useMatchesRanked();
   const { data, isPending, isError } = usePlayerMatches(id, 25, game_mode);
   //borrow icon_url from the hero ledger (PlayerMatchRow carries no icon).
-  const heroes = usePlayerHeroes(id).data ?? [];
-  const iconOf = new Map(heroes.map((h) => [h.hero_id, h.icon_url] as const));
+  const heroes = usePlayerHeroes(id).data;
+  const iconOf = useMemo(() => new Map((heroes ?? []).map((h) => [h.hero_id, h.icon_url] as const)), [heroes]);
   //client-filter the fetched page by match_mode (rows carry it), mirroring the /matches list.
   const rows = filterRowsByRanked(data ?? [], ranked);
 
@@ -161,7 +161,7 @@ export function RecentMatchesPanel({ id }: { id: number }) {
 
 export function HeroLedgerPanel({ id }: { id: number }) {
   const { data, isPending, isError } = usePlayerHeroes(id);
-  const rows = [...(data ?? [])].sort((a, b) => b.matches - a.matches);
+  const rows = useMemo(() => [...(data ?? [])].sort((a, b) => b.matches - a.matches), [data]);
 
   if (isPending) return <p className="muted">Loading hero ledger…</p>;
   if (isError || rows.length === 0) {
@@ -616,7 +616,7 @@ export function ComparePanel({ id }: { id: number }) {
   //Hero selector sourced from the real /heroes-played endpoint (§A.4 success
   //criterion: derive the hero list from heroes-played, NOT from /matches).
   const heroesPlayed = usePlayerHeroesPlayed(id);
-  const heroOptions = [...(heroesPlayed.data ?? [])].sort((a, b) => b.matches_played - a.matches_played);
+  const heroOptions = useMemo(() => [...(heroesPlayed.data ?? [])].sort((a, b) => b.matches_played - a.matches_played), [heroesPlayed.data]);
   //Shared with the radar and ComparePlayerPicker below (usePlayerScope, URL-backed) — was its
   //own local copy that could silently disagree with the rest of the page's hero selection.
   const { scope, setHero } = usePlayerScope();
