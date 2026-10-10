@@ -659,6 +659,19 @@ export interface PercentilesResponse {
   results: PercentileResult[];
 }
 
+export interface ScorecardAccount {
+  account_id: number;
+  values: Record<string, number | null>;
+}
+export interface LeaguePeak {
+  tier: number;
+  peak_sample_players: number;
+}
+export interface LaneScorecardResponse {
+  accounts: ScorecardAccount[];
+  leagues: LeaguePeak[];
+}
+
 //GET /lane-lab/early-econ-verdict?band=  (VerdictResponse). Per-9-min-souls-bucket
 //win rate (wins/games, 0..1) — "does your 9-minute economy predict the win?".
 //souls_floor = souls_bucket_9min * 1000 (the bucket's lower souls edge).

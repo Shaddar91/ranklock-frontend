@@ -31,6 +31,7 @@ import type {
   ItemStat,
   ItemTimingResponse,
   LaneCurveResponse,
+  LaneScorecardResponse,
   LeaderboardEntry,
   MatchDetail,
   MatchInspect,
@@ -271,6 +272,7 @@ export const queryKeys = {
   laneFarmCurve: (params?: Query) => ['lane-lab', 'farm-curve', params ?? {}] as const,
   laneEarlyEconVerdict: (params?: Query) => ['lane-lab', 'early-econ-verdict', params ?? {}] as const,
   lanePercentiles: (params?: Query) => ['lane-lab', 'percentiles', params ?? {}] as const,
+  laneScorecard: (params?: Query) => ['lane-lab', 'scorecard', params ?? {}] as const,
   //Souls-by-source: the league curve + the player's own line. tier/hero and match_mode fold into
   //params so each rank/hero/track caches separately.
   laneSoulsSources: (params?: Query) => ['lane-lab', 'souls-sources', params ?? {}] as const,
@@ -482,6 +484,12 @@ export const api = {
     tier?: number;
     division?: number;
   }) => laneLabFetch<PercentilesResponse>('/lane-lab/percentiles', { query: params }),
+  getLaneScorecard: (params: {
+    accounts: string;
+    metric: string;
+    bucket: number;
+    match_mode: MatchMode;
+  }) => laneLabFetch<LaneScorecardResponse>('/lane-lab/scorecard', { query: params }),
   //League souls-by-source, the reference half of the "you vs league" stack. `tier` = players at that
   //Valve rank tier (ranked games); `band` is the older name for the same number; omit both for every
   //ranked player. `metric_group` narrows to one source. RICH_ANALYTICS-gated (501 off, 202 until the first fold).
