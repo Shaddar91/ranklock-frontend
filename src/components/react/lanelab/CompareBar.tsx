@@ -107,7 +107,7 @@ export interface CompareBarProps {
   //The optional second reference league; null when the page compares against one.
   tierB: number | null;
   onTierB: (t: number | null) => void;
-  //Per-league player-game counts for the dropdown, tier -> n. Empty until the ladder resolves.
+  //Per-league player-game counts for the dropdown, tier -> n. Empty until useScorecard resolves them.
   leagueSamples: Map<number, number>;
   //account_id -> games in the selected mode, so a chip can say a player has none.
   modeGames: Map<number, number | null>;

@@ -663,10 +663,12 @@ export interface ScorecardAccount {
   account_id: number;
   values: Record<string, number | null>;
 }
+
 export interface LeaguePeak {
   tier: number;
   peak_sample_players: number;
 }
+
 export interface LaneScorecardResponse {
   accounts: ScorecardAccount[];
   leagues: LeaguePeak[];

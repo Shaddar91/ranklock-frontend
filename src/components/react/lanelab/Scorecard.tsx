@@ -1,5 +1,5 @@
 //"Where you stand" — the roster's value for each of the eleven metrics at one instant, with its
-//percentile inside the chosen league underneath. Values come from each player's own curve; the
+//percentile inside the chosen league underneath. Values come from useScorecard; the
 //percentiles from /lane-lab/percentiles, one call per metric carrying every player's value at once.
 import { useQueries } from '@tanstack/react-query';
 import { api, queryKeys } from '../../../lib/apiClient';
