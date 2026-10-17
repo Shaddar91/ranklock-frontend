@@ -24,6 +24,12 @@ async function getText(url) {
   return res.text();
 }
 
+function shiftDay(date, days) {
+  const t = new Date(`${date}T00:00:00Z`);
+  t.setUTCDate(t.getUTCDate() + days);
+  return t.toISOString().slice(0, 10);
+}
+
 //The registry can lag Valve, so the record's date is checked against /patches too.
 export async function resolvePatch(recordDate) {
   const current = await getJson(`${API_BASE}/patches/current`);
@@ -33,9 +39,11 @@ export async function resolvePatch(recordDate) {
   }
   log({ event: 'patch-registry-mismatch', current: current.patch_id ?? null, record_date: recordDate });
   const list = await getJson(`${API_BASE}/patches`);
-  const row = list.find((p) => p.patch_id === recordDate)
-    ?? list.find((p) => (p.released_at ?? '').slice(0, 10) === recordDate);
-  if (!row) fail(`no patch registry row matches the record date ${recordDate}`);
+  const byDate = (d) => list.find((p) => p.patch_id === d)
+    ?? list.find((p) => (p.released_at ?? '').slice(0, 10) === d);
+  //Valve posts the evening before the wiki's changelog date, so a day either side still matches.
+  const row = byDate(recordDate) ?? byDate(shiftDay(recordDate, 1)) ?? byDate(shiftDay(recordDate, -1));
+  if (!row) fail(`no patch registry row matches the record date ${recordDate} (or a day either side)`);
   log({ event: 'patch-resolved', patch_id: row.patch_id, via: 'list' });
   return row;
 }
