@@ -22,10 +22,10 @@ describe('heroSlug', () => {
 });
 
 describe('pinned identity table', () => {
-  it('covers the 38 released heroes with unique non-empty slugs', () => {
-    expect(HERO_IDENTITY).toHaveLength(38);
+  it('covers the 44 pinned heroes with unique non-empty slugs', () => {
+    expect(HERO_IDENTITY).toHaveLength(44);
     const slugs = HERO_IDENTITY.map((h) => h.slug);
-    expect(new Set(slugs).size).toBe(38);
+    expect(new Set(slugs).size).toBe(44);
     expect(slugs.every((s) => s.length > 0)).toBe(true);
   });
   it('resolves ids and slugs both ways', () => {
@@ -36,7 +36,7 @@ describe('pinned identity table', () => {
     expect(idOf('nobody')).toBeNull();
   });
   it('maps every numeric hero URL to a 301 at its slug, apex and per locale', () => {
-    expect(Object.keys(HERO_ID_REDIRECTS)).toHaveLength(38 * 7);
+    expect(Object.keys(HERO_ID_REDIRECTS)).toHaveLength(44 * 7);
     expect(HERO_ID_REDIRECTS['/heroes/13']).toEqual({ status: 301, destination: '/heroes/haze/' });
     expect(HERO_ID_REDIRECTS['/heroes/4']).toEqual({ status: 301, destination: '/heroes/lady-geist/' });
     expect(HERO_ID_REDIRECTS['/ru/heroes/13']).toEqual({ status: 301, destination: '/ru/heroes/haze/' });

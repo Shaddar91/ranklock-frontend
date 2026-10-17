@@ -28,7 +28,8 @@ const PINNED: readonly [number, string][] = [
   [31, 'Lash'], [35, 'Viscous'], [50, 'Pocket'], [52, 'Mirage'], [58, 'Vyper'],
   [60, 'Sinclair'], [63, 'Mina'], [64, 'Drifter'], [65, 'Venator'], [66, 'Victor'],
   [67, 'Paige'], [69, 'The Doorman'], [72, 'Billy'], [76, 'Graves'], [77, 'Apollo'],
-  [79, 'Rem'], [80, 'Silver'], [81, 'Celeste'],
+  [79, 'Rem'], [80, 'Silver'], [81, 'Celeste'], [78, 'Deadman Danny'], [84, 'Rat King'],
+  [85, 'Solomon'], [86, 'Violet'], [87, 'Nurse Harrow'], [88, 'Baba'],
 ];
 
 export const HERO_IDENTITY: readonly HeroIdentity[] = PINNED.map(([hero_id, hero_name]) => ({
