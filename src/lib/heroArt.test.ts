@@ -5,7 +5,7 @@ import upstream from './fixtures/upstream-hero-backgrounds.json';
 
 const OURS = 'https://assets.ranklock.app';
 const UP = `${DEADLOCK_ASSETS_HOST}/assets-api-res/images/heroes`;
-const UP_ICONS = `${DEADLOCK_ASSETS_HOST}/assets-api-res/icons`;
+const UP_ICONS = `${DEADLOCK_ASSETS_HOST}/assets-api-res/icons/heroes/hero_names`;
 const BEBOP_CARD = `${UP}/bebop_card.png`;
 
 describe('heroClass', () => {
@@ -59,10 +59,12 @@ describe('heroArt', () => {
     expect(heroArt(`${UP}/digger_card.png`, OURS)?.nameSvg).toBe(`${UP_ICONS}/mo_krill.svg`);
     expect(heroArt(`${UP}/spectre_card.png`)?.nameSvg).toBe(`${UP_ICONS}/lady_geist.svg`);
     expect(heroArt(`${UP}/doorman_card.png`, OURS)?.nameSvg).toBe(`${UP_ICONS}/doorman.svg`);
+    expect(heroArt(`${UP}/chessmaster_card.png`, OURS)?.nameSvg).toBe(`${UP_ICONS}/solomon.svg`);
+    expect(heroArt(`${UP}/artist_card.png`, OURS)?.nameSvg).toBe(`${UP_ICONS}/violet.svg`);
   });
 
   it('keys the background plate by the upstream stem for every released hero', () => {
-    expect(upstream.heroes).toHaveLength(38);
+    expect(upstream.heroes).toHaveLength(43);
     for (const h of upstream.heroes) {
       const card = `${UP}/${h.icon_hero_card}_card.png`;
       expect(heroArt(card, OURS)?.background, h.name).toBe(`${OURS}/heroes/backgrounds/${h.background_image}.webp`);

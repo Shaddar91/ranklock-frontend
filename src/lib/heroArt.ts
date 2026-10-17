@@ -21,9 +21,11 @@ const CARD_URL = /^(.*\/heroes\/)([a-z0-9_]+)_card\.(?:png|webp)$/;
 //Name wordmarks are keyed upstream by display name, not class; only the differing ones are listed.
 const NAME_SVG_SLUG: Record<string, string> = {
   archer: 'grey_talon',
+  artist: 'violet',
   astro: 'holliday',
   bookworm: 'paige',
   bull: 'abrams',
+  chessmaster: 'solomon',
   chrono: 'paradox',
   digger: 'mo_krill',
   engineer: 'mcginnis',
@@ -63,6 +65,6 @@ export function heroArt(iconUrl: string | null | undefined, base?: string): Hero
     vertical: art(`${cls}_vertical`),
     background: art(`backgrounds/${backdropStem(cls)}`),
     //wordmarks live outside the mirrored /images/ key space, so they stay on the upstream host.
-    nameSvg: `${DEADLOCK_ASSETS_HOST}/assets-api-res/icons/${NAME_SVG_SLUG[cls] ?? cls}.svg`,
+    nameSvg: `${DEADLOCK_ASSETS_HOST}/assets-api-res/icons/heroes/hero_names/${NAME_SVG_SLUG[cls] ?? cls}.svg`,
   };
 }

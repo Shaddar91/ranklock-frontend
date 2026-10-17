@@ -40,7 +40,7 @@ describe('heroBackdropArt', () => {
   });
 
   it('resolves every released hero to the plate upstream ships, on both bases', () => {
-    expect(RELEASED).toHaveLength(38);
+    expect(RELEASED).toHaveLength(43);
     for (const h of RELEASED) {
       expect(backdropStem(h.icon_hero_card), h.name).toBe(h.background_image);
       expect(heroBackdropArt(h.icon_hero_card, OURS), h.name).toEqual({

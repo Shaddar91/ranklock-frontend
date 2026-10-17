@@ -1,7 +1,7 @@
 {
-  "source": "https://assets.deadlock-api.com/v2/heroes",
-  "fetched": "2026-09-02",
-  "filter": "disabled == false; icon_hero_card and background_image are the upstream file stems",
+  "source": "https://api.deadlock-api.com/v1/assets/heroes",
+  "fetched": "2026-10-17",
+  "filter": "disabled == false and has a card (87 Nurse Harrow has none); icon_hero_card and background_image are the upstream file stems",
   "heroes": [
     {
       "id": 1,
@@ -214,6 +214,12 @@
       "background_image": "fencer_bg"
     },
     {
+      "id": 78,
+      "name": "Deadman Danny",
+      "icon_hero_card": "deadpack",
+      "background_image": "deadpack_bg"
+    },
+    {
       "id": 79,
       "name": "Rem",
       "icon_hero_card": "familiar",
@@ -230,6 +236,30 @@
       "name": "Celeste",
       "icon_hero_card": "unicorn",
       "background_image": "unicorn_bg"
+    },
+    {
+      "id": 84,
+      "name": "Rat King",
+      "icon_hero_card": "ratking",
+      "background_image": "ratking_bg"
+    },
+    {
+      "id": 85,
+      "name": "Solomon",
+      "icon_hero_card": "chessmaster",
+      "background_image": "chessmaster_bg"
+    },
+    {
+      "id": 86,
+      "name": "Violet",
+      "icon_hero_card": "artist",
+      "background_image": "artist_bg"
+    },
+    {
+      "id": 88,
+      "name": "Baba",
+      "icon_hero_card": "baba",
+      "background_image": "baba_bg"
     }
   ]
 }
